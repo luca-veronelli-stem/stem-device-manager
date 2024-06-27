@@ -11,13 +11,35 @@ public class SerialPortManager
         _serialPort.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);
     }
 
-    public void Open()
+    public bool Open()
     {
-        if (!_serialPort.IsOpen)
+        try
         {
-            _serialPort.Open();
+            if (!_serialPort.IsOpen)
+            {
+                _serialPort.Open();
+            }
+            return true; // Indica che la porta è stata aperta con successo
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            Console.WriteLine($"UnauthorizedAccessException: {ex.Message}");
+        }
+        catch (IOException ex)
+        {
+            Console.WriteLine($"IOException: {ex.Message}");
+        }
+        catch (ArgumentException ex)
+        {
+            Console.WriteLine($"ArgumentException: {ex.Message}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.WriteLine($"InvalidOperationException: {ex.Message}");
+        }
+        return false; // Indica che l'apertura della porta è fallita
     }
+
 
     public void Close()
     {

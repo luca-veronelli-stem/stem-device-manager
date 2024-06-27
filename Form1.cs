@@ -6,6 +6,7 @@ namespace StemPC
 {
     public partial class Form1 : Form
     {
+        private UInt16 Prescaler1s=0;
         private Terminal _terminal;
         private SerialPortManager _serialPortManager;
 
@@ -15,11 +16,22 @@ namespace StemPC
             _terminal = new Terminal(); // Inizializza l'istanza di Terminal
             _serialPortManager = new SerialPortManager("COM3", 19200); ;// Inizializza l'istanza di SerialManager
             UpdateTerminal(DateTime.Now + ": Stem Protocol Companion v0.1");
+            timerBaseTime.Enabled = true;
         }
 
         private void UpdateTerminal(string message)
         {
             terminalOut.Text = _terminal.WriteLog(message);
+        }
+
+        private void timerBaseTime_Tick(object sender, EventArgs e)
+        {
+            if (Prescaler1s>0) Prescaler1s--;
+            else
+            {
+                Prescaler1s = 10;
+          //      UpdateTerminal(DateTime.Now + "");
+            }
         }
     }
 }

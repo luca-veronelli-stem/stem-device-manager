@@ -28,11 +28,13 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             tabControl = new TabControl();
             tabPage1 = new TabPage();
             terminalOut = new RichTextBox();
             tabPage2 = new TabPage();
+            timerBaseTime = new System.Windows.Forms.Timer(components);
             tabControl.SuspendLayout();
             tabPage1.SuspendLayout();
             SuspendLayout();
@@ -80,6 +82,10 @@
             tabPage2.Text = "Init";
             tabPage2.UseVisualStyleBackColor = true;
             // 
+            // timerBaseTime
+            // 
+            timerBaseTime.Tick += timerBaseTime_Tick;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -100,5 +106,6 @@
         private TabPage tabPage1;
         private TabPage tabPage2;
         private RichTextBox terminalOut;
+        private System.Windows.Forms.Timer timerBaseTime;
     }
 }
