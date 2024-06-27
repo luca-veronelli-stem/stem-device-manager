@@ -15,12 +15,19 @@ namespace StemPC
         public void WriteLine(string message)
         {
             _log.AppendLine(message);
-            Console.WriteLine(message);
+            // Puoi anche scrivere sulla console se vuoi
+            // Console.WriteLine(message);
         }
 
         public string GetLog()
         {
             return _log.ToString();
+        }
+
+        public string WriteLog(string message)
+        {
+            WriteLine(message);
+            return _log.ToString(); 
         }
     }
 }

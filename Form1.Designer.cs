@@ -31,7 +31,7 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             tabControl = new TabControl();
             tabPage1 = new TabPage();
-            Terminal = new RichTextBox();
+            terminalOut = new RichTextBox();
             tabPage2 = new TabPage();
             tabControl.SuspendLayout();
             tabPage1.SuspendLayout();
@@ -50,7 +50,7 @@
             // 
             // tabPage1
             // 
-            tabPage1.Controls.Add(Terminal);
+            tabPage1.Controls.Add(terminalOut);
             tabPage1.Location = new Point(4, 24);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new Padding(3);
@@ -59,16 +59,16 @@
             tabPage1.Text = "Debug";
             tabPage1.UseVisualStyleBackColor = true;
             // 
-            // Terminal
+            // terminalOut
             // 
-            Terminal.BackColor = SystemColors.WindowFrame;
-            Terminal.Dock = DockStyle.Fill;
-            Terminal.ForeColor = SystemColors.Info;
-            Terminal.Location = new Point(3, 3);
-            Terminal.Name = "Terminal";
-            Terminal.Size = new Size(762, 392);
-            Terminal.TabIndex = 0;
-            Terminal.Text = "";
+            terminalOut.BackColor = SystemColors.WindowFrame;
+            terminalOut.Dock = DockStyle.Fill;
+            terminalOut.ForeColor = SystemColors.Info;
+            terminalOut.Location = new Point(3, 3);
+            terminalOut.Name = "terminalOut";
+            terminalOut.Size = new Size(762, 392);
+            terminalOut.TabIndex = 0;
+            terminalOut.Text = "";
             // 
             // tabPage2
             // 
@@ -99,6 +99,6 @@
         private TabControl tabControl;
         private TabPage tabPage1;
         private TabPage tabPage2;
-        private RichTextBox Terminal;
+        private RichTextBox terminalOut;
     }
 }
