@@ -64,4 +64,9 @@ public class SerialPortManager
         Console.WriteLine($"Data Received: {inData}");
         // Puoi aggiungere ulteriori logiche per gestire i dati ricevuti
     }
+
+    public string[] GetPorts()
+    {
+        return SerialPort.GetPortNames();
+    }
 }

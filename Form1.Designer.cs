@@ -34,9 +34,13 @@
             tabPage1 = new TabPage();
             terminalOut = new RichTextBox();
             tabPage2 = new TabPage();
+            tabPage3 = new TabPage();
+            label1 = new Label();
+            listBoxSerialPorts = new ListBox();
             timerBaseTime = new System.Windows.Forms.Timer(components);
             tabControl.SuspendLayout();
             tabPage1.SuspendLayout();
+            tabPage3.SuspendLayout();
             SuspendLayout();
             // 
             // tabControl
@@ -44,6 +48,7 @@
             tabControl.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             tabControl.Controls.Add(tabPage1);
             tabControl.Controls.Add(tabPage2);
+            tabControl.Controls.Add(tabPage3);
             tabControl.Location = new Point(12, 12);
             tabControl.Name = "tabControl";
             tabControl.SelectedIndex = 0;
@@ -82,6 +87,38 @@
             tabPage2.Text = "Init";
             tabPage2.UseVisualStyleBackColor = true;
             // 
+            // tabPage3
+            // 
+            tabPage3.Controls.Add(label1);
+            tabPage3.Controls.Add(listBoxSerialPorts);
+            tabPage3.Location = new Point(4, 24);
+            tabPage3.Name = "tabPage3";
+            tabPage3.Padding = new Padding(3);
+            tabPage3.Size = new Size(768, 398);
+            tabPage3.TabIndex = 2;
+            tabPage3.Text = "UART";
+            tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label1.Location = new Point(587, 3);
+            label1.Name = "label1";
+            label1.Size = new Size(150, 15);
+            label1.TabIndex = 1;
+            label1.Text = "SERIAL PORTS AVAILABLE";
+            // 
+            // listBoxSerialPorts
+            // 
+            listBoxSerialPorts.FormattingEnabled = true;
+            listBoxSerialPorts.ItemHeight = 15;
+            listBoxSerialPorts.Location = new Point(556, 21);
+            listBoxSerialPorts.Name = "listBoxSerialPorts";
+            listBoxSerialPorts.Size = new Size(197, 169);
+            listBoxSerialPorts.TabIndex = 0;
+            listBoxSerialPorts.SelectedIndexChanged += listBoxSerialPorts_SelectedIndexChanged;
+            // 
             // timerBaseTime
             // 
             timerBaseTime.Tick += timerBaseTime_Tick;
@@ -97,6 +134,8 @@
             Text = "STEM Protocol Companion";
             tabControl.ResumeLayout(false);
             tabPage1.ResumeLayout(false);
+            tabPage3.ResumeLayout(false);
+            tabPage3.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -107,5 +146,8 @@
         private TabPage tabPage2;
         private RichTextBox terminalOut;
         private System.Windows.Forms.Timer timerBaseTime;
+        private TabPage tabPage3;
+        private Label label1;
+        private ListBox listBoxSerialPorts;
     }
 }
