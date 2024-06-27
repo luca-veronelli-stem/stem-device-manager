@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("STEMPC")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ee73eddfb3449960d5e0696bd437c020484e3db3")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+17aeab5e7f1a1d89a281f4e0e30f66181c3f19c9")]
 [assembly: System.Reflection.AssemblyProductAttribute("STEMPC")]
 [assembly: System.Reflection.AssemblyTitleAttribute("STEMPC")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

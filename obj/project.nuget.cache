@@ -1,8 +1,16 @@
 {
   "version": 2,
-  "dgSpecHash": "azOfKUj4QphtgGySBK/13USU4gYdi5kV3xwWQJjXvdh/lny3z0yYuLPknHeqS0quLSEh6IYHadFBJPl94JahmQ==",
+  "dgSpecHash": "s6lPzzBsyfCz3AIVBf4/AMUUIWZuLbi36Dy+3bNQaixDBMXE6RjiSbtpVlsOg9GwefXMJqyt6KHP5xfyGVqOSg==",
   "success": true,
   "projectFilePath": "C:\\Users\\Michele\\OneDrive\\Dati\\Lavoro\\VSProjects\\StemProtocolCompanion\\STEMPC.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\Michele\\.nuget\\packages\\runtime.linux-arm.runtime.native.system.io.ports\\8.0.0\\runtime.linux-arm.runtime.native.system.io.ports.8.0.0.nupkg.sha512",
+    "C:\\Users\\Michele\\.nuget\\packages\\runtime.linux-arm64.runtime.native.system.io.ports\\8.0.0\\runtime.linux-arm64.runtime.native.system.io.ports.8.0.0.nupkg.sha512",
+    "C:\\Users\\Michele\\.nuget\\packages\\runtime.linux-x64.runtime.native.system.io.ports\\8.0.0\\runtime.linux-x64.runtime.native.system.io.ports.8.0.0.nupkg.sha512",
+    "C:\\Users\\Michele\\.nuget\\packages\\runtime.native.system.io.ports\\8.0.0\\runtime.native.system.io.ports.8.0.0.nupkg.sha512",
+    "C:\\Users\\Michele\\.nuget\\packages\\runtime.osx-arm64.runtime.native.system.io.ports\\8.0.0\\runtime.osx-arm64.runtime.native.system.io.ports.8.0.0.nupkg.sha512",
+    "C:\\Users\\Michele\\.nuget\\packages\\runtime.osx-x64.runtime.native.system.io.ports\\8.0.0\\runtime.osx-x64.runtime.native.system.io.ports.8.0.0.nupkg.sha512",
+    "C:\\Users\\Michele\\.nuget\\packages\\system.io.ports\\8.0.0\\system.io.ports.8.0.0.nupkg.sha512"
+  ],
   "logs": []
 }
