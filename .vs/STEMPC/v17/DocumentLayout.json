@@ -7,6 +7,14 @@
       "RelativeMoniker": "D:0:0:{C3D252DA-C8CD-4956-9B07-B15B26E72577}|STEMPC.csproj|solutionrelative:form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{C3D252DA-C8CD-4956-9B07-B15B26E72577}|STEMPC.csproj|c:\\users\\michele\\onedrive\\dati\\lavoro\\vsprojects\\stemprotocolcompanion\\stempc.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|",
+      "RelativeMoniker": "D:0:0:{C3D252DA-C8CD-4956-9B07-B15B26E72577}|STEMPC.csproj|solutionrelative:stempc.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3D252DA-C8CD-4956-9B07-B15B26E72577}|STEMPC.csproj|c:\\users\\michele\\onedrive\\dati\\lavoro\\vsprojects\\stemprotocolcompanion\\stempc.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{C3D252DA-C8CD-4956-9B07-B15B26E72577}|STEMPC.csproj|solutionrelative:stempc.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{C3D252DA-C8CD-4956-9B07-B15B26E72577}|STEMPC.csproj|c:\\users\\michele\\onedrive\\dati\\lavoro\\vsprojects\\stemprotocolcompanion\\serialport.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C3D252DA-C8CD-4956-9B07-B15B26E72577}|STEMPC.csproj|solutionrelative:serialport.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -22,7 +30,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 6,
           "Children": [
             {
               "$type": "Bookmark",
@@ -35,6 +43,35 @@
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "STEMPC",
+              "DocumentMoniker": "C:\\Users\\Michele\\OneDrive\\Dati\\Lavoro\\VSProjects\\StemProtocolCompanion\\STEMPC.csproj",
+              "RelativeDocumentMoniker": "STEMPC.csproj",
+              "ToolTip": "C:\\Users\\Michele\\OneDrive\\Dati\\Lavoro\\VSProjects\\StemProtocolCompanion\\STEMPC.csproj",
+              "RelativeToolTip": "STEMPC.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAASAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2024-11-20T20:39:05.185Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "STEMPC",
+              "DocumentMoniker": "C:\\Users\\Michele\\OneDrive\\Dati\\Lavoro\\VSProjects\\StemProtocolCompanion\\STEMPC.csproj",
+              "RelativeDocumentMoniker": "STEMPC.csproj",
+              "ToolTip": "C:\\Users\\Michele\\OneDrive\\Dati\\Lavoro\\VSProjects\\StemProtocolCompanion\\STEMPC.csproj",
+              "RelativeToolTip": "STEMPC.csproj",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2024-11-20T21:12:25.449Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -50,20 +87,20 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 4,
               "Title": "Form1.Designer.cs",
               "DocumentMoniker": "C:\\Users\\Michele\\OneDrive\\Dati\\Lavoro\\VSProjects\\StemProtocolCompanion\\Form1.Designer.cs",
               "RelativeDocumentMoniker": "Form1.Designer.cs",
               "ToolTip": "C:\\Users\\Michele\\OneDrive\\Dati\\Lavoro\\VSProjects\\StemProtocolCompanion\\Form1.Designer.cs",
               "RelativeToolTip": "Form1.Designer.cs",
-              "ViewState": "AgIAAHUAAAAAAAAAAAAuwHUAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAKMAAAAAAAAAAAAuwKMAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-06-27T21:27:49.114Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 3,
               "Title": "SerialPort.cs",
               "DocumentMoniker": "C:\\Users\\Michele\\OneDrive\\Dati\\Lavoro\\VSProjects\\StemProtocolCompanion\\SerialPort.cs",
               "RelativeDocumentMoniker": "SerialPort.cs",

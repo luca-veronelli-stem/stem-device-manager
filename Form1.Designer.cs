@@ -34,13 +34,17 @@
             tableLayoutPanel1 = new TableLayoutPanel();
             tabControl = new TabControl();
             tabPage2 = new TabPage();
+            tableLayoutPanel2 = new TableLayoutPanel();
+            button1 = new Button();
+            tabPage1 = new TabPage();
             tabPage3 = new TabPage();
             label1 = new Label();
             listBoxSerialPorts = new ListBox();
             terminalOut = new RichTextBox();
-            tabPage1 = new TabPage();
             tableLayoutPanel1.SuspendLayout();
             tabControl.SuspendLayout();
+            tabPage2.SuspendLayout();
+            tableLayoutPanel2.SuspendLayout();
             tabPage3.SuspendLayout();
             SuspendLayout();
             // 
@@ -77,6 +81,7 @@
             // 
             // tabPage2
             // 
+            tabPage2.Controls.Add(tableLayoutPanel2);
             tabPage2.Location = new Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3);
@@ -84,6 +89,47 @@
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Code Gen";
             tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // tableLayoutPanel2
+            // 
+            tableLayoutPanel2.ColumnCount = 4;
+            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 27F));
+            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 27F));
+            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 27F));
+            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 19F));
+            tableLayoutPanel2.Controls.Add(button1, 3, 3);
+            tableLayoutPanel2.Dock = DockStyle.Fill;
+            tableLayoutPanel2.Location = new Point(3, 3);
+            tableLayoutPanel2.Name = "tableLayoutPanel2";
+            tableLayoutPanel2.RowCount = 4;
+            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            tableLayoutPanel2.Size = new Size(780, 320);
+            tableLayoutPanel2.TabIndex = 0;
+            // 
+            // button1
+            // 
+            button1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            button1.Image = (Image)resources.GetObject("button1.Image");
+            button1.ImageAlign = ContentAlignment.MiddleLeft;
+            button1.Location = new Point(633, 243);
+            button1.Name = "button1";
+            button1.Size = new Size(144, 74);
+            button1.TabIndex = 0;
+            button1.Text = "Generate code";
+            button1.TextImageRelation = TextImageRelation.ImageBeforeText;
+            button1.UseVisualStyleBackColor = true;
+            // 
+            // tabPage1
+            // 
+            tabPage1.Location = new Point(4, 24);
+            tabPage1.Name = "tabPage1";
+            tabPage1.Size = new Size(786, 326);
+            tabPage1.TabIndex = 3;
+            tabPage1.Text = "Test";
+            tabPage1.UseVisualStyleBackColor = true;
             // 
             // tabPage3
             // 
@@ -127,15 +173,6 @@
             terminalOut.TabIndex = 4;
             terminalOut.Text = "";
             // 
-            // tabPage1
-            // 
-            tabPage1.Location = new Point(4, 24);
-            tabPage1.Name = "tabPage1";
-            tabPage1.Size = new Size(786, 326);
-            tabPage1.TabIndex = 3;
-            tabPage1.Text = "Test";
-            tabPage1.UseVisualStyleBackColor = true;
-            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -148,6 +185,8 @@
             WindowState = FormWindowState.Maximized;
             tableLayoutPanel1.ResumeLayout(false);
             tabControl.ResumeLayout(false);
+            tabPage2.ResumeLayout(false);
+            tableLayoutPanel2.ResumeLayout(false);
             tabPage3.ResumeLayout(false);
             tabPage3.PerformLayout();
             ResumeLayout(false);
@@ -163,5 +202,7 @@
         private ListBox listBoxSerialPorts;
         private RichTextBox terminalOut;
         private TabPage tabPage1;
+        private TableLayoutPanel tableLayoutPanel2;
+        private Button button1;
     }
 }

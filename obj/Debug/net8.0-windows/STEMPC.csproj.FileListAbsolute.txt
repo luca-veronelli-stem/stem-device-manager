@@ -42,3 +42,4 @@ C:\Users\Michele\OneDrive\Dati\Lavoro\VSProjects\StemProtocolCompanion\bin\Debug
 C:\Users\Michele\OneDrive\Dati\Lavoro\VSProjects\StemProtocolCompanion\bin\Debug\net8.0-windows\runtimes\win\lib\net8.0\System.IO.Ports.dll
 C:\Users\Michele\OneDrive\Dati\Lavoro\VSProjects\StemProtocolCompanion\obj\Debug\net8.0-windows\STEMPC.csproj.AssemblyReference.cache
 C:\Users\Michele\OneDrive\Dati\Lavoro\VSProjects\StemProtocolCompanion\obj\Debug\net8.0-windows\STEMPC.csproj.Up2Date
+C:\Users\Michele\OneDrive\Dati\Lavoro\VSProjects\StemProtocolCompanion\obj\Debug\net8.0-windows\STEMPC.Properties.Resources.resources
