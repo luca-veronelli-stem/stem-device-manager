@@ -30,61 +30,59 @@
         {
             components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+            timerBaseTime = new System.Windows.Forms.Timer(components);
+            tableLayoutPanel1 = new TableLayoutPanel();
             tabControl = new TabControl();
-            tabPage1 = new TabPage();
-            terminalOut = new RichTextBox();
             tabPage2 = new TabPage();
             tabPage3 = new TabPage();
             label1 = new Label();
             listBoxSerialPorts = new ListBox();
-            timerBaseTime = new System.Windows.Forms.Timer(components);
+            terminalOut = new RichTextBox();
+            tabPage1 = new TabPage();
+            tableLayoutPanel1.SuspendLayout();
             tabControl.SuspendLayout();
-            tabPage1.SuspendLayout();
             tabPage3.SuspendLayout();
             SuspendLayout();
+            // 
+            // timerBaseTime
+            // 
+            timerBaseTime.Tick += timerBaseTime_Tick;
+            // 
+            // tableLayoutPanel1
+            // 
+            tableLayoutPanel1.ColumnCount = 1;
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tableLayoutPanel1.Controls.Add(tabControl, 0, 0);
+            tableLayoutPanel1.Controls.Add(terminalOut, 0, 1);
+            tableLayoutPanel1.Dock = DockStyle.Fill;
+            tableLayoutPanel1.Location = new Point(0, 0);
+            tableLayoutPanel1.Name = "tableLayoutPanel1";
+            tableLayoutPanel1.RowCount = 1;
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 80F));
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+            tableLayoutPanel1.Size = new Size(800, 450);
+            tableLayoutPanel1.TabIndex = 2;
             // 
             // tabControl
             // 
             tabControl.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            tabControl.Controls.Add(tabPage1);
             tabControl.Controls.Add(tabPage2);
+            tabControl.Controls.Add(tabPage1);
             tabControl.Controls.Add(tabPage3);
-            tabControl.Location = new Point(12, 12);
+            tabControl.Location = new Point(3, 3);
             tabControl.Name = "tabControl";
             tabControl.SelectedIndex = 0;
-            tabControl.Size = new Size(776, 426);
-            tabControl.TabIndex = 1;
-            // 
-            // tabPage1
-            // 
-            tabPage1.Controls.Add(terminalOut);
-            tabPage1.Location = new Point(4, 24);
-            tabPage1.Name = "tabPage1";
-            tabPage1.Padding = new Padding(3);
-            tabPage1.Size = new Size(768, 398);
-            tabPage1.TabIndex = 0;
-            tabPage1.Text = "Debug";
-            tabPage1.UseVisualStyleBackColor = true;
-            // 
-            // terminalOut
-            // 
-            terminalOut.BackColor = SystemColors.WindowFrame;
-            terminalOut.Dock = DockStyle.Fill;
-            terminalOut.ForeColor = SystemColors.Info;
-            terminalOut.Location = new Point(3, 3);
-            terminalOut.Name = "terminalOut";
-            terminalOut.Size = new Size(762, 392);
-            terminalOut.TabIndex = 0;
-            terminalOut.Text = "";
+            tabControl.Size = new Size(794, 354);
+            tabControl.TabIndex = 5;
             // 
             // tabPage2
             // 
             tabPage2.Location = new Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new Size(768, 398);
+            tabPage2.Size = new Size(786, 326);
             tabPage2.TabIndex = 1;
-            tabPage2.Text = "Init";
+            tabPage2.Text = "Code Gen";
             tabPage2.UseVisualStyleBackColor = true;
             // 
             // tabPage3
@@ -94,7 +92,7 @@
             tabPage3.Location = new Point(4, 24);
             tabPage3.Name = "tabPage3";
             tabPage3.Padding = new Padding(3);
-            tabPage3.Size = new Size(768, 398);
+            tabPage3.Size = new Size(786, 326);
             tabPage3.TabIndex = 2;
             tabPage3.Text = "UART";
             tabPage3.UseVisualStyleBackColor = true;
@@ -103,7 +101,7 @@
             // 
             label1.AutoSize = true;
             label1.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            label1.Location = new Point(587, 3);
+            label1.Location = new Point(590, 6);
             label1.Name = "label1";
             label1.Size = new Size(150, 15);
             label1.TabIndex = 1;
@@ -117,37 +115,53 @@
             listBoxSerialPorts.Name = "listBoxSerialPorts";
             listBoxSerialPorts.Size = new Size(197, 169);
             listBoxSerialPorts.TabIndex = 0;
-            listBoxSerialPorts.SelectedIndexChanged += listBoxSerialPorts_SelectedIndexChanged;
             // 
-            // timerBaseTime
+            // terminalOut
             // 
-            timerBaseTime.Tick += timerBaseTime_Tick;
+            terminalOut.BackColor = SystemColors.WindowFrame;
+            terminalOut.Dock = DockStyle.Fill;
+            terminalOut.ForeColor = SystemColors.Info;
+            terminalOut.Location = new Point(3, 363);
+            terminalOut.Name = "terminalOut";
+            terminalOut.Size = new Size(794, 84);
+            terminalOut.TabIndex = 4;
+            terminalOut.Text = "";
+            // 
+            // tabPage1
+            // 
+            tabPage1.Location = new Point(4, 24);
+            tabPage1.Name = "tabPage1";
+            tabPage1.Size = new Size(786, 326);
+            tabPage1.TabIndex = 3;
+            tabPage1.Text = "Test";
+            tabPage1.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
-            Controls.Add(tabControl);
+            Controls.Add(tableLayoutPanel1);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "Form1";
-            Text = "STEM Protocol Companion";
+            Text = "STEM Protocol Manager";
+            WindowState = FormWindowState.Maximized;
+            tableLayoutPanel1.ResumeLayout(false);
             tabControl.ResumeLayout(false);
-            tabPage1.ResumeLayout(false);
             tabPage3.ResumeLayout(false);
             tabPage3.PerformLayout();
             ResumeLayout(false);
         }
 
         #endregion
-
-        private TabControl tabControl;
-        private TabPage tabPage1;
-        private TabPage tabPage2;
-        private RichTextBox terminalOut;
         private System.Windows.Forms.Timer timerBaseTime;
+        private TableLayoutPanel tableLayoutPanel1;
+        private TabControl tabControl;
+        private TabPage tabPage2;
         private TabPage tabPage3;
         private Label label1;
         private ListBox listBoxSerialPorts;
+        private RichTextBox terminalOut;
+        private TabPage tabPage1;
     }
 }

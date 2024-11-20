@@ -16,7 +16,7 @@ namespace StemPC
             InitializeComponent();
             _terminal = new Terminal(); // Inizializza l'istanza di Terminal
             _serialPortManager = new SerialPortManager("COM3", 19200); ;// Inizializza l'istanza di SerialManager
-            UpdateTerminal(DateTime.Now + ": Stem Protocol Companion v0.1");
+            UpdateTerminal(DateTime.Now + ": Stem Protocol Manager v0.1");
             timerBaseTime.Enabled = true;
 
             // Ottieni tutte le porte seriali disponibili
