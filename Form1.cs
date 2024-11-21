@@ -7,11 +7,21 @@ namespace StemPC
     public partial class Form1 : Form
     {
         private UInt16 Prescaler1s = 0;
+
+        //**************************
+        //  Terminal variables
+        //************************** 
         private Terminal _terminal;
+
+        //**************************
+        //  Serial port variables
+        //**************************
         private SerialPortManager _serialPortManager;
         private SerialPortManager _serialPort;
 
-        // Code gen variables
+        //**************************
+        //  Code gen variables
+        //**************************
         // Esempio di lista di stringhe popolata tramite interfaccia grafica
         List<string> configurazioni = new List<string>
         {
@@ -35,6 +45,14 @@ namespace StemPC
         string codeFilePath;
         SP_Code_Generator configGenerator;
 
+        //**************************
+        //  Excel variables
+        //**************************
+        string ExcelfilePath = "Test.xlsx";
+        // Lista per contenere le righe lette
+        List<ExcelHandler.RowData> IndirizziProtocollo;
+        ExcelHandler hExcel;
+
         public Form1()
         {
             InitializeComponent();
@@ -54,6 +72,17 @@ namespace StemPC
             // Crea un'istanza della classe SP_Config_Generator e chiama il metodo per generare il file
             configGenerator = new SP_Code_Generator();
             codeFilePath = "SP_Config.h";
+
+            //test excel
+            hExcel = new ExcelHandler();
+            IndirizziProtocollo = new List<ExcelHandler.RowData>();
+            hExcel.EstraiIndirizziProtocollo(IndirizziProtocollo, ExcelfilePath);
+            // Stampa i risultati (per verifica)
+            foreach (ExcelHandler.RowData item in IndirizziProtocollo)
+            {
+                UpdateTerminal(item.ToString());
+            }
+
         }
 
         private void UpdateTerminal(string message)
