@@ -11,10 +11,36 @@ namespace StemPC
         private SerialPortManager _serialPortManager;
         private SerialPortManager _serialPort;
 
+        // Code gen variables
+        // Esempio di lista di stringhe popolata tramite interfaccia grafica
+        List<string> configurazioni = new List<string>
+        {
+            "CAN_COMM_CHANNEL_USED",
+            "NUM_ACTIVE_CAN_PORTS=2",
+            "SER_COMM_CHANNEL_USED",
+            "SIZEOF_SERIAL_RX_BUFFER=250",
+            "SIZEOF_SERIAL_TX_BUFFER=100",
+            "NUM_ACTIVE_SERIAL_PORTS=1",
+            "SP_NL_MINIMUM_TIME_BETWEEN_PACKETS=15",
+            "SP_NL_TX_QUEUE_SIZE=30",
+            "SP_ROUTER_COMMUNICATION_CHANNELS=3",
+            "SP_ROUTER_CROSS_TABLE_N_ENTRIES=3",
+            "SP_DEVICE_TABLE_N_ENTRIES=2",
+            "BUFFER_TX_LEN_MAX=100",
+            "BUFFER_RX_LEN_MAX=1100",
+            "LOGS_FAT_SIZE=100", 
+            "MAX_NUM_OF_VARIABLES_IN_LOG=30", 
+            "CONFIG_TABLE_ELEMENT_SIZE=20" 
+        };
+        string codeFilePath;
+        SP_Code_Generator configGenerator;
+
         public Form1()
         {
             InitializeComponent();
+
             _terminal = new Terminal(); // Inizializza l'istanza di Terminal
+
             _serialPortManager = new SerialPortManager("COM3", 19200); ;// Inizializza l'istanza di SerialManager
             UpdateTerminal(DateTime.Now + ": Stem Protocol Manager v0.1");
             timerBaseTime.Enabled = true;
@@ -23,6 +49,11 @@ namespace StemPC
             // e aggiungi le porte alla ListBox
             listBoxSerialPorts.Items.Clear();
             listBoxSerialPorts.Items.AddRange(_serialPortManager.GetPorts());
+
+            //inizializza il code generator
+            // Crea un'istanza della classe SP_Config_Generator e chiama il metodo per generare il file
+            configGenerator = new SP_Code_Generator();
+            codeFilePath = "SP_Config.h";
         }
 
         private void UpdateTerminal(string message)
@@ -60,6 +91,12 @@ namespace StemPC
             //{
             //    MessageBox.Show($"Failed to open port {selectedPort}. Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             //}
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            configGenerator.GeneraFileDiTesto(configurazioni, codeFilePath);
+            UpdateTerminal($"File generato con successo: {codeFilePath}");
         }
     }
 }
