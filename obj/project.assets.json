@@ -239,9 +239,9 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Michele\\OneDrive\\Dati\\Lavoro\\VSProjects\\StemProtocolCompanion\\STEMPC.csproj",
-      "projectName": "STEMPC",
-      "projectPath": "C:\\Users\\Michele\\OneDrive\\Dati\\Lavoro\\VSProjects\\StemProtocolCompanion\\STEMPC.csproj",
+      "projectUniqueName": "C:\\Users\\Michele\\OneDrive\\Dati\\Lavoro\\VSProjects\\StemProtocolCompanion\\STEMPM.csproj",
+      "projectName": "STEMPM",
+      "projectPath": "C:\\Users\\Michele\\OneDrive\\Dati\\Lavoro\\VSProjects\\StemProtocolCompanion\\STEMPM.csproj",
       "packagesPath": "C:\\Users\\Michele\\.nuget\\packages\\",
       "outputPath": "C:\\Users\\Michele\\OneDrive\\Dati\\Lavoro\\VSProjects\\StemProtocolCompanion\\obj\\",
       "projectStyle": "PackageReference",
