@@ -57,6 +57,9 @@ namespace StemPC
         {
             InitializeComponent();
 
+            //aggiungi tabcan
+            tabControl.TabPages.Add(new CanTabPage());
+   
             _terminal = new Terminal(); // Inizializza l'istanza di Terminal
 
             _serialPortManager = new SerialPortManager("COM3", 19200); ;// Inizializza l'istanza di SerialManager
