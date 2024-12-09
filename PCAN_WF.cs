@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Reflection.Emit;
+using System.Text;
 using System.Threading.Tasks;
 using Peak.Can.Basic;
 using Peak.Can.Basic.BackwardCompatibility;
@@ -19,7 +20,7 @@ public partial class CanTabPage : TabPage
     private TextBox canIdEntry;
     private TextBox dataEntry;
     private System.Windows.Forms.Label connectionStatusLabel;
-    private ListBox receivedMessagesView;
+    private ListView receivedMessagesView;
 
     private const TPCANHandle Channel = 0x51; // PCAN_USB
     private TPCANBaudrate BaudRate;
@@ -58,7 +59,14 @@ public partial class CanTabPage : TabPage
             TextAlign = ContentAlignment.MiddleLeft
         };
 
-        this.receivedMessagesView = new ListBox { Dock = DockStyle.Fill };
+        // Inizializzazione del ListView
+        this.receivedMessagesView = new ListView
+        {
+            Dock = DockStyle.Fill,
+            View = View.Details,
+            FullRowSelect = true
+        };
+        this.receivedMessagesView.Columns.Add("Messaggi", -2, HorizontalAlignment.Left);
 
         // Layout flessibile
         var layout = new TableLayoutPanel
@@ -108,29 +116,213 @@ public partial class CanTabPage : TabPage
 
     private void OnSendClicked(object sender, EventArgs e)
     {
-        // Codice per l'invio dei messaggi CAN
+        // Controlla se il dispositivo è connesso
+        if (!IsConnected)
+        {
+            MessageBox.Show("PCAN non connesso!", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
+        }
+
+        try
+        {
+            // Leggi il CAN ID e i dati
+            string canIdText = canIdEntry.Text.Trim();
+            string dataText = dataEntry.Text.Trim();
+
+            if (string.IsNullOrEmpty(canIdText) || string.IsNullOrEmpty(dataText))
+            {
+                MessageBox.Show("Inserire un CAN ID e i dati!", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // Crea un messaggio CAN
+            TPCANMsg canMessage = new TPCANMsg
+            {
+                ID = Convert.ToUInt32(canIdText, 16),
+                LEN = (byte)dataText.Split(' ').Length,
+                MSGTYPE = TPCANMessageType.PCAN_MESSAGE_STANDARD,
+                DATA = new byte[8]
+            };
+
+            // Popola i dati nel messaggio
+            var dataBytes = dataText.Split(' ').Select(byte.Parse).ToArray();
+            for (int i = 0; i < canMessage.LEN && i < 8; i++)
+            {
+                canMessage.DATA[i] = dataBytes[i];
+            }
+
+            // Invia il messaggio
+            var result = PCANBasic.Write(Channel, ref canMessage);
+
+            if (result == TPCANStatus.PCAN_ERROR_OK)
+            {
+                // Ottieni il timestamp
+                string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+
+                // Aggiungi il messaggio al ListView con colore verde
+                var listViewItem = new ListViewItem($"{timestamp} - TX: ID=0x{canMessage.ID:X} Dati={dataText}")
+                {
+                    ForeColor = Color.Green
+                };
+                receivedMessagesView.Items.Add(listViewItem);
+                receivedMessagesView.EnsureVisible(receivedMessagesView.Items.Count - 1); // Scrolla all'ultimo messaggio
+            }
+            else
+            {
+                MessageBox.Show($"Errore durante l'invio: {result}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Errore nel formato dei dati: {ex.Message}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 
     private void UpdateConnectionStatus()
     {
-        var result = PCANBasic.Initialize(Channel, BaudRate);
-        if (result == TPCANStatus.PCAN_ERROR_OK)
-        {
-            IsConnected = true;
-            connectionStatusLabel.Text = "Stato: Connesso";
-            connectionStatusLabel.ForeColor = Color.Green;
-        }
-        else
-        {
-            IsConnected = false;
-            connectionStatusLabel.Text = $"Stato: Disconnesso ({result})";
-            connectionStatusLabel.ForeColor = Color.Red;
+        if (IsConnected == false) { 
+            var result = PCANBasic.Initialize(Channel, BaudRate);
+
+            if (result == TPCANStatus.PCAN_ERROR_OK)
+            {
+                IsConnected = true;
+                connectionStatusLabel.Text = "Stato: Connesso";
+                connectionStatusLabel.ForeColor = Color.Green;
+            }
+            else
+            {
+                IsConnected = false;
+                connectionStatusLabel.Text = $"Stato: Disconnesso ({result})";
+                connectionStatusLabel.ForeColor = Color.Red;
+            }
         }
     }
 
     private async Task ReadCANMessages()
     {
-        // Codice per la lettura dei messaggi CAN
+        while (true)
+        {
+            if (!connectionStatusLabel.IsHandleCreated)
+                continue;
+
+            try
+            {
+                // Controlla lo stato della connessione
+                var status = PCANBasic.GetStatus(Channel);
+                if (status != TPCANStatus.PCAN_ERROR_OK)
+                {
+                    // La connessione è persa, tentativo di riconnessione
+                    Invoke((Action)(() =>
+                    {
+                        connectionStatusLabel.Text = "Stato: Disconnesso";
+                        connectionStatusLabel.ForeColor = Color.Red;
+
+                        var disconnectionItem = new ListViewItem("Connessione persa. Tentativo di riconnessione...")
+                        {
+                            ForeColor = Color.Red
+                        };
+                        receivedMessagesView.Items.Add(disconnectionItem);
+                        receivedMessagesView.EnsureVisible(receivedMessagesView.Items.Count - 1);
+                    }));
+
+                    IsConnected = false;
+
+                    // Prova a riconnettersi
+                    var reconnectResult = PCANBasic.Initialize(Channel, BaudRate);
+                    if (reconnectResult == TPCANStatus.PCAN_ERROR_OK)
+                    {
+                        Invoke((Action)(() =>
+                        {
+                            connectionStatusLabel.Text = "Stato: Connesso";
+                            connectionStatusLabel.ForeColor = Color.Green;
+
+                            var reconnectionItem = new ListViewItem("Riconnessione avvenuta con successo.")
+                            {
+                                ForeColor = Color.Green
+                            };
+                            receivedMessagesView.Items.Add(reconnectionItem);
+                            receivedMessagesView.EnsureVisible(receivedMessagesView.Items.Count - 1);
+                        }));
+                        IsConnected = true;
+                    }
+                    else
+                    {
+                        // Aspetta un po' prima di riprovare
+                        await Task.Delay(1000);
+                        continue;
+                    }
+                }
+                else
+                {
+                    IsConnected = true;
+                    // La connessione è attiva
+                    Invoke((Action)(() =>
+                    {
+                        connectionStatusLabel.Text = "Stato: Connesso";
+                        connectionStatusLabel.ForeColor = Color.Green;
+                    }));
+                }
+
+                // Legge il messaggio CAN
+                TPCANMsg canMessage;
+                TPCANTimestamp canTimestamp;
+                var result = PCANBasic.Read(Channel, out canMessage, out canTimestamp);
+
+                if (result == TPCANStatus.PCAN_ERROR_OK)
+                {
+                    // Ottieni il timestamp come data e ora completi
+                    string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+
+                    // Estrai i dati dal messaggio
+                    string dataString = string.Join(" ", canMessage.DATA.Take(canMessage.LEN).Select(b => b.ToString("X2")));
+
+                    // Costruisci il contenuto del messaggio
+                    string messageContent = $"{timestamp} - RX: ID=0x{canMessage.ID:X} Dati={dataString}";
+
+                    // Aggiungi il messaggio alla lista con colore blu
+                    var listViewItem = new ListViewItem(messageContent)
+                    {
+                        ForeColor = Color.Blue
+                    };
+                    Invoke((Action)(() =>
+                    {
+                        receivedMessagesView.Items.Add(listViewItem);
+                        receivedMessagesView.EnsureVisible(receivedMessagesView.Items.Count - 1);
+                    }));
+                }
+                else if (result != TPCANStatus.PCAN_ERROR_QRCVEMPTY)
+                {
+                    // Log degli errori diversi dalla coda vuota
+                    StringBuilder errorTextB = new StringBuilder(256);
+                    PCANBasic.GetErrorText(result, 0, errorTextB);
+                    string errorText = errorTextB.ToString();
+
+                    Invoke((Action)(() =>
+                    {
+                        var errorItem = new ListViewItem($"Errore CAN: {errorText}")
+                        {
+                            ForeColor = Color.Red
+                        };
+                        receivedMessagesView.Items.Add(errorItem);
+                        receivedMessagesView.EnsureVisible(receivedMessagesView.Items.Count - 1);
+                    }));
+                }
+            }
+            catch (Exception ex)
+            {
+                Invoke((Action)(() =>
+                {
+                    var errorItem = new ListViewItem($"Errore durante la lettura: {ex.Message}")
+                    {
+                        ForeColor = Color.Red
+                    };
+                    receivedMessagesView.Items.Add(errorItem);
+                    receivedMessagesView.EnsureVisible(receivedMessagesView.Items.Count - 1);
+                }));
+            }
+
+            await Task.Delay(50); // Ritardo per ridurre il carico del loop
+        }
     }
 }
 
