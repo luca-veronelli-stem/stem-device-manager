@@ -38,9 +38,9 @@ namespace StemPC
             "SP_DEVICE_TABLE_N_ENTRIES=2",
             "BUFFER_TX_LEN_MAX=100",
             "BUFFER_RX_LEN_MAX=1100",
-            "LOGS_FAT_SIZE=100", 
-            "MAX_NUM_OF_VARIABLES_IN_LOG=30", 
-            "CONFIG_TABLE_ELEMENT_SIZE=20" 
+            "LOGS_FAT_SIZE=100",
+            "MAX_NUM_OF_VARIABLES_IN_LOG=30",
+            "CONFIG_TABLE_ELEMENT_SIZE=20"
         };
         string codeFilePath;
         SP_Code_Generator configGenerator;
@@ -59,7 +59,7 @@ namespace StemPC
 
             //aggiungi tabcan
             tabControl.TabPages.Add(new CanTabPage());
-   
+
             _terminal = new Terminal(); // Inizializza l'istanza di Terminal
 
             _serialPortManager = new SerialPortManager("COM3", 19200); ;// Inizializza l'istanza di SerialManager
@@ -75,6 +75,9 @@ namespace StemPC
             // Crea un'istanza della classe SP_Config_Generator e chiama il metodo per generare il file
             configGenerator = new SP_Code_Generator();
             codeFilePath = "SP_Config.h";
+
+            //Seleziona il tab del protocollo
+            tabControl.SelectedTab = tabPageProtocol; // Seleziona la TabPage con nome 'tabPagePrototocol'
 
             //test excel
             hExcel = new ExcelHandler();
@@ -129,6 +132,15 @@ namespace StemPC
         {
             configGenerator.GeneraFileDiTesto(configurazioni, codeFilePath);
             UpdateTerminal($"File generato con successo: {codeFilePath}");
+        }
+
+        private void MaskedTextBox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            // Permetti solo caratteri esadecimali (0-9, A-F, a-f) e Backspace
+            if (!Uri.IsHexDigit(e.KeyChar) && e.KeyChar != (char)Keys.Back)
+            {
+                e.Handled = true; // Blocca il carattere non valido
+            }
         }
     }
 }
