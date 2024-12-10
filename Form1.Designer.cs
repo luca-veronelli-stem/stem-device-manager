@@ -60,7 +60,7 @@
             textBox1 = new TextBox();
             label12 = new Label();
             label13 = new Label();
-            richTextBox1 = new RichTextBox();
+            richTextBoxTx = new RichTextBox();
             label3 = new Label();
             buttonSendPS = new Button();
             tabPageUART = new TabPage();
@@ -196,7 +196,7 @@
             tableLayoutPanelProtocol.Controls.Add(textBox1, 3, 1);
             tableLayoutPanelProtocol.Controls.Add(label12, 0, 2);
             tableLayoutPanelProtocol.Controls.Add(label13, 0, 3);
-            tableLayoutPanelProtocol.Controls.Add(richTextBox1, 1, 3);
+            tableLayoutPanelProtocol.Controls.Add(richTextBoxTx, 1, 3);
             tableLayoutPanelProtocol.Controls.Add(label3, 0, 0);
             tableLayoutPanelProtocol.Controls.Add(buttonSendPS, 9, 4);
             tableLayoutPanelProtocol.Dock = DockStyle.Fill;
@@ -484,15 +484,15 @@
             label13.Text = "Pacchetto";
             label13.TextAlign = ContentAlignment.MiddleCenter;
             // 
-            // richTextBox1
+            // richTextBoxTx
             // 
-            richTextBox1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            tableLayoutPanelProtocol.SetColumnSpan(richTextBox1, 9);
-            richTextBox1.Location = new Point(81, 198);
-            richTextBox1.Name = "richTextBox1";
-            richTextBox1.Size = new Size(702, 59);
-            richTextBox1.TabIndex = 26;
-            richTextBox1.Text = "";
+            richTextBoxTx.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            tableLayoutPanelProtocol.SetColumnSpan(richTextBoxTx, 9);
+            richTextBoxTx.Location = new Point(81, 198);
+            richTextBoxTx.Name = "richTextBoxTx";
+            richTextBoxTx.Size = new Size(702, 59);
+            richTextBoxTx.TabIndex = 26;
+            richTextBoxTx.Text = "";
             // 
             // label3
             // 
@@ -518,6 +518,7 @@
             buttonSendPS.TabIndex = 27;
             buttonSendPS.Text = "Invia";
             buttonSendPS.UseVisualStyleBackColor = true;
+            buttonSendPS.Click += buttonSendPS_Click;
             // 
             // tabPageUART
             // 
@@ -619,7 +620,7 @@
         private TextBox textBoxAddress;
         private Label label12;
         private Label label13;
-        private RichTextBox richTextBox1;
+        private RichTextBox richTextBoxTx;
         private Button buttonSendPS;
     }
 }
