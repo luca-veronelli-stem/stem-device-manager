@@ -38,6 +38,7 @@
             button1 = new Button();
             tabPageProtocol = new TabPage();
             tableLayoutPanelProtocol = new TableLayoutPanel();
+            textBoxAddress = new TextBox();
             textBox7 = new TextBox();
             textBox6 = new TextBox();
             textBox5 = new TextBox();
@@ -56,12 +57,16 @@
             label2 = new Label();
             comboBoxMachine = new ComboBox();
             comboBoxCommand = new ComboBox();
-            label3 = new Label();
             textBox1 = new TextBox();
+            label12 = new Label();
+            label13 = new Label();
+            richTextBox1 = new RichTextBox();
+            label3 = new Label();
             tabPageUART = new TabPage();
             label1 = new Label();
             listBoxSerialPorts = new ListBox();
             terminalOut = new RichTextBox();
+            button2 = new Button();
             tableLayoutPanel1.SuspendLayout();
             tabControl.SuspendLayout();
             tabPageCodeGen.SuspendLayout();
@@ -169,6 +174,7 @@
             tableLayoutPanelProtocol.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10F));
             tableLayoutPanelProtocol.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10F));
             tableLayoutPanelProtocol.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10F));
+            tableLayoutPanelProtocol.Controls.Add(textBoxAddress, 1, 2);
             tableLayoutPanelProtocol.Controls.Add(textBox7, 9, 1);
             tableLayoutPanelProtocol.Controls.Add(textBox6, 8, 1);
             tableLayoutPanelProtocol.Controls.Add(textBox5, 7, 1);
@@ -187,22 +193,37 @@
             tableLayoutPanelProtocol.Controls.Add(label2, 1, 0);
             tableLayoutPanelProtocol.Controls.Add(comboBoxMachine, 0, 1);
             tableLayoutPanelProtocol.Controls.Add(comboBoxCommand, 2, 1);
-            tableLayoutPanelProtocol.Controls.Add(label3, 0, 0);
             tableLayoutPanelProtocol.Controls.Add(textBox1, 3, 1);
+            tableLayoutPanelProtocol.Controls.Add(label12, 0, 2);
+            tableLayoutPanelProtocol.Controls.Add(label13, 0, 3);
+            tableLayoutPanelProtocol.Controls.Add(richTextBox1, 1, 3);
+            tableLayoutPanelProtocol.Controls.Add(label3, 0, 0);
+            tableLayoutPanelProtocol.Controls.Add(button2, 9, 4);
             tableLayoutPanelProtocol.Dock = DockStyle.Fill;
             tableLayoutPanelProtocol.Location = new Point(0, 0);
             tableLayoutPanelProtocol.Name = "tableLayoutPanelProtocol";
-            tableLayoutPanelProtocol.RowCount = 3;
-            tableLayoutPanelProtocol.RowStyles.Add(new RowStyle(SizeType.Percent, 35F));
-            tableLayoutPanelProtocol.RowStyles.Add(new RowStyle(SizeType.Percent, 35F));
-            tableLayoutPanelProtocol.RowStyles.Add(new RowStyle(SizeType.Percent, 30F));
+            tableLayoutPanelProtocol.RowCount = 5;
+            tableLayoutPanelProtocol.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+            tableLayoutPanelProtocol.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+            tableLayoutPanelProtocol.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+            tableLayoutPanelProtocol.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+            tableLayoutPanelProtocol.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
             tableLayoutPanelProtocol.Size = new Size(786, 326);
             tableLayoutPanelProtocol.TabIndex = 2;
+            // 
+            // textBoxAddress
+            // 
+            textBoxAddress.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            textBoxAddress.Location = new Point(81, 133);
+            textBoxAddress.MaxLength = 2;
+            textBoxAddress.Name = "textBoxAddress";
+            textBoxAddress.Size = new Size(72, 23);
+            textBoxAddress.TabIndex = 24;
             // 
             // textBox7
             // 
             textBox7.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            textBox7.Location = new Point(705, 117);
+            textBox7.Location = new Point(705, 68);
             textBox7.MaxLength = 2;
             textBox7.Name = "textBox7";
             textBox7.Size = new Size(78, 23);
@@ -212,7 +233,7 @@
             // textBox6
             // 
             textBox6.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            textBox6.Location = new Point(627, 117);
+            textBox6.Location = new Point(627, 68);
             textBox6.MaxLength = 2;
             textBox6.Name = "textBox6";
             textBox6.Size = new Size(72, 23);
@@ -222,7 +243,7 @@
             // textBox5
             // 
             textBox5.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            textBox5.Location = new Point(549, 117);
+            textBox5.Location = new Point(549, 68);
             textBox5.MaxLength = 2;
             textBox5.Name = "textBox5";
             textBox5.Size = new Size(72, 23);
@@ -232,7 +253,7 @@
             // textBox4
             // 
             textBox4.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            textBox4.Location = new Point(471, 117);
+            textBox4.Location = new Point(471, 68);
             textBox4.MaxLength = 2;
             textBox4.Name = "textBox4";
             textBox4.Size = new Size(72, 23);
@@ -242,7 +263,7 @@
             // textBox3
             // 
             textBox3.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            textBox3.Location = new Point(393, 117);
+            textBox3.Location = new Point(393, 68);
             textBox3.MaxLength = 2;
             textBox3.Name = "textBox3";
             textBox3.Size = new Size(72, 23);
@@ -252,7 +273,7 @@
             // textBox2
             // 
             textBox2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            textBox2.Location = new Point(315, 117);
+            textBox2.Location = new Point(315, 68);
             textBox2.MaxLength = 2;
             textBox2.Name = "textBox2";
             textBox2.Size = new Size(72, 23);
@@ -263,7 +284,7 @@
             // 
             comboBox1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             comboBox1.FormattingEnabled = true;
-            comboBox1.Location = new Point(81, 117);
+            comboBox1.Location = new Point(81, 68);
             comboBox1.Name = "comboBox1";
             comboBox1.Size = new Size(72, 23);
             comboBox1.TabIndex = 15;
@@ -272,9 +293,11 @@
             // 
             label11.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label11.AutoSize = true;
-            label11.Location = new Point(705, 0);
+            label11.BackColor = Color.LightGray;
+            label11.Location = new Point(707, 5);
+            label11.Margin = new Padding(5);
             label11.Name = "label11";
-            label11.Size = new Size(78, 114);
+            label11.Size = new Size(74, 55);
             label11.TabIndex = 13;
             label11.Text = "Byte7 (HEX)";
             label11.TextAlign = ContentAlignment.MiddleCenter;
@@ -283,9 +306,11 @@
             // 
             label10.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label10.AutoSize = true;
-            label10.Location = new Point(627, 0);
+            label10.BackColor = Color.LightGray;
+            label10.Location = new Point(629, 5);
+            label10.Margin = new Padding(5);
             label10.Name = "label10";
-            label10.Size = new Size(72, 114);
+            label10.Size = new Size(68, 55);
             label10.TabIndex = 12;
             label10.Text = "Byte6 (HEX)";
             label10.TextAlign = ContentAlignment.MiddleCenter;
@@ -294,9 +319,11 @@
             // 
             label9.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label9.AutoSize = true;
-            label9.Location = new Point(549, 0);
+            label9.BackColor = Color.LightGray;
+            label9.Location = new Point(551, 5);
+            label9.Margin = new Padding(5);
             label9.Name = "label9";
-            label9.Size = new Size(72, 114);
+            label9.Size = new Size(68, 55);
             label9.TabIndex = 11;
             label9.Text = "Byte5 (HEX)";
             label9.TextAlign = ContentAlignment.MiddleCenter;
@@ -305,9 +332,11 @@
             // 
             label8.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label8.AutoSize = true;
-            label8.Location = new Point(471, 0);
+            label8.BackColor = Color.LightGray;
+            label8.Location = new Point(473, 5);
+            label8.Margin = new Padding(5);
             label8.Name = "label8";
-            label8.Size = new Size(72, 114);
+            label8.Size = new Size(68, 55);
             label8.TabIndex = 10;
             label8.Text = "Byte4 (HEX)";
             label8.TextAlign = ContentAlignment.MiddleCenter;
@@ -316,9 +345,11 @@
             // 
             label7.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label7.AutoSize = true;
-            label7.Location = new Point(393, 0);
+            label7.BackColor = Color.LightGray;
+            label7.Location = new Point(395, 5);
+            label7.Margin = new Padding(5);
             label7.Name = "label7";
-            label7.Size = new Size(72, 114);
+            label7.Size = new Size(68, 55);
             label7.TabIndex = 9;
             label7.Text = "Byte3 (HEX)";
             label7.TextAlign = ContentAlignment.MiddleCenter;
@@ -327,9 +358,11 @@
             // 
             label6.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label6.AutoSize = true;
-            label6.Location = new Point(315, 0);
+            label6.BackColor = Color.LightGray;
+            label6.Location = new Point(317, 5);
+            label6.Margin = new Padding(5);
             label6.Name = "label6";
-            label6.Size = new Size(72, 114);
+            label6.Size = new Size(68, 55);
             label6.TabIndex = 8;
             label6.Text = "Byte2 (HEX)";
             label6.TextAlign = ContentAlignment.MiddleCenter;
@@ -338,9 +371,11 @@
             // 
             label5.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label5.AutoSize = true;
-            label5.Location = new Point(237, 0);
+            label5.BackColor = Color.LightGray;
+            label5.Location = new Point(239, 5);
+            label5.Margin = new Padding(5);
             label5.Name = "label5";
-            label5.Size = new Size(72, 114);
+            label5.Size = new Size(68, 55);
             label5.TabIndex = 7;
             label5.Text = "Byte1 (HEX)";
             label5.TextAlign = ContentAlignment.MiddleCenter;
@@ -349,9 +384,11 @@
             // 
             label4.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label4.AutoSize = true;
-            label4.Location = new Point(159, 0);
+            label4.BackColor = Color.LightGray;
+            label4.Location = new Point(161, 5);
+            label4.Margin = new Padding(5);
             label4.Name = "label4";
-            label4.Size = new Size(72, 114);
+            label4.Size = new Size(68, 55);
             label4.TabIndex = 6;
             label4.Text = "Comando";
             label4.TextAlign = ContentAlignment.MiddleCenter;
@@ -360,9 +397,11 @@
             // 
             label2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label2.AutoSize = true;
-            label2.Location = new Point(81, 0);
+            label2.BackColor = Color.LightGray;
+            label2.Location = new Point(83, 5);
+            label2.Margin = new Padding(5);
             label2.Name = "label2";
-            label2.Size = new Size(72, 114);
+            label2.Size = new Size(68, 55);
             label2.TabIndex = 3;
             label2.Text = "Scheda";
             label2.TextAlign = ContentAlignment.MiddleCenter;
@@ -371,7 +410,7 @@
             // 
             comboBoxMachine.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             comboBoxMachine.FormattingEnabled = true;
-            comboBoxMachine.Location = new Point(3, 117);
+            comboBoxMachine.Location = new Point(3, 68);
             comboBoxMachine.Name = "comboBoxMachine";
             comboBoxMachine.Size = new Size(72, 23);
             comboBoxMachine.TabIndex = 5;
@@ -380,31 +419,69 @@
             // 
             comboBoxCommand.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             comboBoxCommand.FormattingEnabled = true;
-            comboBoxCommand.Location = new Point(159, 117);
+            comboBoxCommand.Location = new Point(159, 68);
             comboBoxCommand.Name = "comboBoxCommand";
             comboBoxCommand.Size = new Size(72, 23);
             comboBoxCommand.TabIndex = 14;
             // 
-            // label3
-            // 
-            label3.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            label3.AutoSize = true;
-            label3.Location = new Point(3, 0);
-            label3.Name = "label3";
-            label3.Size = new Size(72, 114);
-            label3.TabIndex = 4;
-            label3.Text = "Macchina";
-            label3.TextAlign = ContentAlignment.MiddleCenter;
-            // 
             // textBox1
             // 
             textBox1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            textBox1.Location = new Point(237, 117);
+            textBox1.Location = new Point(237, 68);
             textBox1.MaxLength = 2;
             textBox1.Name = "textBox1";
             textBox1.Size = new Size(72, 23);
             textBox1.TabIndex = 16;
             textBox1.KeyPress += MaskedTextBox_KeyPress;
+            // 
+            // label12
+            // 
+            label12.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            label12.AutoSize = true;
+            label12.BackColor = Color.LightGray;
+            label12.Location = new Point(5, 135);
+            label12.Margin = new Padding(5);
+            label12.Name = "label12";
+            label12.Size = new Size(68, 55);
+            label12.TabIndex = 23;
+            label12.Text = "Indirizzo";
+            label12.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // label13
+            // 
+            label13.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            label13.AutoSize = true;
+            label13.BackColor = Color.LightGray;
+            label13.Location = new Point(5, 200);
+            label13.Margin = new Padding(5);
+            label13.Name = "label13";
+            label13.Size = new Size(68, 55);
+            label13.TabIndex = 25;
+            label13.Text = "Pacchetto";
+            label13.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // richTextBox1
+            // 
+            richTextBox1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            tableLayoutPanelProtocol.SetColumnSpan(richTextBox1, 9);
+            richTextBox1.Location = new Point(81, 198);
+            richTextBox1.Name = "richTextBox1";
+            richTextBox1.Size = new Size(702, 59);
+            richTextBox1.TabIndex = 26;
+            richTextBox1.Text = "";
+            // 
+            // label3
+            // 
+            label3.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            label3.AutoSize = true;
+            label3.BackColor = Color.LightGray;
+            label3.Location = new Point(5, 5);
+            label3.Margin = new Padding(5);
+            label3.Name = "label3";
+            label3.Size = new Size(68, 55);
+            label3.TabIndex = 4;
+            label3.Text = "Macchina";
+            label3.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // tabPageUART
             // 
@@ -447,6 +524,16 @@
             terminalOut.Size = new Size(794, 84);
             terminalOut.TabIndex = 4;
             terminalOut.Text = "";
+            // 
+            // button2
+            // 
+            button2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            button2.Location = new Point(705, 263);
+            button2.Name = "button2";
+            button2.Size = new Size(78, 60);
+            button2.TabIndex = 27;
+            button2.Text = "Invia";
+            button2.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
@@ -503,5 +590,10 @@
         private TextBox textBox4;
         private TextBox textBox3;
         private TextBox textBox2;
+        private TextBox textBoxAddress;
+        private Label label12;
+        private Label label13;
+        private RichTextBox richTextBox1;
+        private Button button2;
     }
 }
