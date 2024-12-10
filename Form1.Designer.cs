@@ -62,7 +62,7 @@
             label13 = new Label();
             richTextBox1 = new RichTextBox();
             label3 = new Label();
-            button2 = new Button();
+            buttonSendPS = new Button();
             tabPageUART = new TabPage();
             label1 = new Label();
             listBoxSerialPorts = new ListBox();
@@ -198,7 +198,7 @@
             tableLayoutPanelProtocol.Controls.Add(label13, 0, 3);
             tableLayoutPanelProtocol.Controls.Add(richTextBox1, 1, 3);
             tableLayoutPanelProtocol.Controls.Add(label3, 0, 0);
-            tableLayoutPanelProtocol.Controls.Add(button2, 9, 4);
+            tableLayoutPanelProtocol.Controls.Add(buttonSendPS, 9, 4);
             tableLayoutPanelProtocol.Dock = DockStyle.Fill;
             tableLayoutPanelProtocol.Location = new Point(0, 0);
             tableLayoutPanelProtocol.Name = "tableLayoutPanelProtocol";
@@ -294,7 +294,9 @@
             // 
             label11.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label11.AutoSize = true;
-            label11.BackColor = Color.LightGray;
+            label11.BackColor = Color.RoyalBlue;
+            label11.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label11.ForeColor = SystemColors.ControlLightLight;
             label11.Location = new Point(707, 5);
             label11.Margin = new Padding(5);
             label11.Name = "label11";
@@ -307,7 +309,9 @@
             // 
             label10.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label10.AutoSize = true;
-            label10.BackColor = Color.LightGray;
+            label10.BackColor = Color.RoyalBlue;
+            label10.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label10.ForeColor = SystemColors.ControlLightLight;
             label10.Location = new Point(629, 5);
             label10.Margin = new Padding(5);
             label10.Name = "label10";
@@ -320,7 +324,9 @@
             // 
             label9.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label9.AutoSize = true;
-            label9.BackColor = Color.LightGray;
+            label9.BackColor = Color.RoyalBlue;
+            label9.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label9.ForeColor = SystemColors.ControlLightLight;
             label9.Location = new Point(551, 5);
             label9.Margin = new Padding(5);
             label9.Name = "label9";
@@ -333,7 +339,9 @@
             // 
             label8.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label8.AutoSize = true;
-            label8.BackColor = Color.LightGray;
+            label8.BackColor = Color.RoyalBlue;
+            label8.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label8.ForeColor = SystemColors.ControlLightLight;
             label8.Location = new Point(473, 5);
             label8.Margin = new Padding(5);
             label8.Name = "label8";
@@ -346,7 +354,9 @@
             // 
             label7.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label7.AutoSize = true;
-            label7.BackColor = Color.LightGray;
+            label7.BackColor = Color.RoyalBlue;
+            label7.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label7.ForeColor = SystemColors.ControlLightLight;
             label7.Location = new Point(395, 5);
             label7.Margin = new Padding(5);
             label7.Name = "label7";
@@ -359,7 +369,9 @@
             // 
             label6.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label6.AutoSize = true;
-            label6.BackColor = Color.LightGray;
+            label6.BackColor = Color.RoyalBlue;
+            label6.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label6.ForeColor = SystemColors.ControlLightLight;
             label6.Location = new Point(317, 5);
             label6.Margin = new Padding(5);
             label6.Name = "label6";
@@ -372,7 +384,9 @@
             // 
             label5.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label5.AutoSize = true;
-            label5.BackColor = Color.LightGray;
+            label5.BackColor = Color.RoyalBlue;
+            label5.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label5.ForeColor = SystemColors.ControlLightLight;
             label5.Location = new Point(239, 5);
             label5.Margin = new Padding(5);
             label5.Name = "label5";
@@ -385,7 +399,9 @@
             // 
             label4.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label4.AutoSize = true;
-            label4.BackColor = Color.LightGray;
+            label4.BackColor = Color.RoyalBlue;
+            label4.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label4.ForeColor = SystemColors.ControlLightLight;
             label4.Location = new Point(161, 5);
             label4.Margin = new Padding(5);
             label4.Name = "label4";
@@ -398,7 +414,9 @@
             // 
             label2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label2.AutoSize = true;
-            label2.BackColor = Color.LightGray;
+            label2.BackColor = Color.RoyalBlue;
+            label2.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label2.ForeColor = SystemColors.ControlLightLight;
             label2.Location = new Point(83, 5);
             label2.Margin = new Padding(5);
             label2.Name = "label2";
@@ -440,7 +458,9 @@
             // 
             label12.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label12.AutoSize = true;
-            label12.BackColor = Color.LightGray;
+            label12.BackColor = Color.RoyalBlue;
+            label12.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label12.ForeColor = SystemColors.ControlLightLight;
             label12.Location = new Point(5, 135);
             label12.Margin = new Padding(5);
             label12.Name = "label12";
@@ -453,7 +473,9 @@
             // 
             label13.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label13.AutoSize = true;
-            label13.BackColor = Color.LightGray;
+            label13.BackColor = Color.RoyalBlue;
+            label13.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label13.ForeColor = SystemColors.ControlLightLight;
             label13.Location = new Point(5, 200);
             label13.Margin = new Padding(5);
             label13.Name = "label13";
@@ -476,7 +498,9 @@
             // 
             label3.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label3.AutoSize = true;
-            label3.BackColor = Color.LightGray;
+            label3.BackColor = Color.RoyalBlue;
+            label3.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label3.ForeColor = SystemColors.ControlLightLight;
             label3.Location = new Point(5, 5);
             label3.Margin = new Padding(5);
             label3.Name = "label3";
@@ -485,15 +509,15 @@
             label3.Text = "Macchina";
             label3.TextAlign = ContentAlignment.MiddleCenter;
             // 
-            // button2
+            // buttonSendPS
             // 
-            button2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            button2.Location = new Point(705, 263);
-            button2.Name = "button2";
-            button2.Size = new Size(78, 60);
-            button2.TabIndex = 27;
-            button2.Text = "Invia";
-            button2.UseVisualStyleBackColor = true;
+            buttonSendPS.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            buttonSendPS.Location = new Point(705, 263);
+            buttonSendPS.Name = "buttonSendPS";
+            buttonSendPS.Size = new Size(78, 60);
+            buttonSendPS.TabIndex = 27;
+            buttonSendPS.Text = "Invia";
+            buttonSendPS.UseVisualStyleBackColor = true;
             // 
             // tabPageUART
             // 
@@ -596,6 +620,6 @@
         private Label label12;
         private Label label13;
         private RichTextBox richTextBox1;
-        private Button button2;
+        private Button buttonSendPS;
     }
 }

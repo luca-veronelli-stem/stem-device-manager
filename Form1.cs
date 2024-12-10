@@ -96,7 +96,7 @@ namespace StemPC
             }
 
             _terminal.WriteLog("--------------------------------------------------------------------");
-            comboBoxCommand.Items.Clear ();
+            comboBoxCommand.Items.Clear();
             // Stampa i risultati (per verifica)
             foreach (ExcelHandler.CommandData item in Comandi)
             {
@@ -203,11 +203,16 @@ namespace StemPC
                         {
                             textBoxAddress.Text = item.Indirizzo.ToString();
                         }
-                           
+
                     }
                 }
 
             }
+        }
+
+        private void buttonSendPS_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
