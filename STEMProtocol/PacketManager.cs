@@ -8,18 +8,18 @@ using System.Collections.Concurrent;
 
 public class PacketManager
 {
-    private int _id;
+    private uint _id;
     private bool _canRunning = false;
     private bool _bluetoothRunning = false;
     private Dictionary<int, List<byte[]>> packetQueues = new Dictionary<int, List<byte[]>>();
     private NetworkLayer _networkPacket;
 
-    public PacketManager(int id)
+    public PacketManager(uint id)
     {
         _id = id;
     }
 
-    public int Id
+    public uint Id
     {
         get { return _id; }
         set { _id = value; }

@@ -234,14 +234,14 @@ public class NetworkLayer : TransportLayer
 {
     private string _interface;
     private int _version;
-    private int _recipientId;
+    private uint _recipientId;
     private int _packetChunkSize;
     private byte[] _netInfo;
     private byte[] _networkHeader;
     private byte[] _networkPacket;
-    private List<Tuple<byte[], int, byte[]>> _networkPackets;
+    private List<Tuple<byte[], uint, byte[]>> _networkPackets;
 
-    public NetworkLayer(string interfaceType, int version, int recipientId, byte[] data, bool pack = true)
+    public NetworkLayer(string interfaceType, int version, uint recipientId, byte[] data, bool pack = true)
         : base(data[0], BitConverter.ToInt32(data, 1), data.Skip(7).ToArray(), pack)
     {
         _interface = interfaceType.ToLower();
@@ -278,7 +278,7 @@ public class NetworkLayer : TransportLayer
         }
     }
 
-    public int RecipientId
+    public uint RecipientId
     {
         get { return _recipientId; }
         set
@@ -311,7 +311,7 @@ public class NetworkLayer : TransportLayer
         set { _networkPacket = value; }
     }
 
-    public List<Tuple<byte[], int, byte[]>> NetworkPackets
+    public List<Tuple<byte[], uint, byte[]>> NetworkPackets
     {
         get { return _networkPackets; }
     }
@@ -352,7 +352,7 @@ public class NetworkLayer : TransportLayer
     private void BuildNetworkPackets()
     {
         var chunks = SplitDataIntoChunks();
-        _networkPackets = new List<Tuple<byte[], int, byte[]>>();
+        _networkPackets = new List<Tuple<byte[], uint, byte[]>>();
         int remainingChunks = chunks.Count - 1;
         int packetId = 1;
 

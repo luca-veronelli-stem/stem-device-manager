@@ -54,6 +54,11 @@ namespace StemPC
         List<ExcelHandler.CommandData> Comandi;
         ExcelHandler hExcel;
 
+        //**************************
+        //  STEM Protocol variables
+        //**************************
+        uint RecipientId;
+
         public Form1()
         {
             InitializeComponent();
@@ -85,6 +90,8 @@ namespace StemPC
             IndirizziProtocollo = new List<ExcelHandler.RowData>();
             Comandi = new List<ExcelHandler.CommandData>();
             hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, ExcelfilePath);
+
+            RecipientId = 0;
 
             _terminal.WriteLog("--------------------------------------------------------------------");
             // Stampa i risultati (per verifica)
@@ -201,7 +208,8 @@ namespace StemPC
                         //popola il combo delle schede
                         if ((item.Scheda == schedaSelezionata) && (item.Macchina == comboBoxMachine.SelectedItem.ToString()))
                         {
-                            textBoxAddress.Text = item.Indirizzo.ToString();
+                            label12.Text = ($"Indirizzo\n {item.Indirizzo.ToString()}");
+                            RecipientId = Convert.ToUInt32(item.Indirizzo.Substring(2), 16);
                         }
 
                     }
@@ -213,37 +221,38 @@ namespace StemPC
         private void buttonSendPS_Click(object sender, EventArgs e)
         {
             // Esempio di utilizzo del PacketManager per inviare pacchetti tramite CAN e Bluetooth
-            int senderId = 8; // ID del mittente
-            int recipientId = 2; // ID del destinatario
-            byte[] data = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A }; // Dati del pacchetto da inviare
+            uint senderId = 8; // ID del mittente
+            uint recipientId = RecipientId; // ID del destinatario
+            byte[] data = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0xFF, 0xFF, 0x01, 0x02}; // Dati del pacchetto da inviare
 
             // Creazione di un pacchetto di livello applicazione con dati
             //ApplicationLayer appLayer = new ApplicationLayer(1, 2, data, true);
 
             //// Creazione di un pacchetto di livello di rete con dati
-            NetworkLayer networkLayer = new NetworkLayer("can", 1, recipientId, data,true);
+            NetworkLayer networkLayer = new NetworkLayer("can", 1, recipientId, data, true);
 
             // Configurazione del PacketManager
             PacketManager packetManager = new PacketManager(senderId);
+
+            // stampa il pacchetto dell'application layer
+            richTextBoxTx.AppendText("-- APPLICATION --\n");
+            richTextBoxTx.AppendText($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}\n");
+
+            // stampa il pacchetto del transport layer
+            richTextBoxTx.AppendText("-- TRANSPORT --\n");
+            richTextBoxTx.AppendText($"{string.Join(" ", networkLayer.TransportPacket.Select(b => b.ToString("X2")))}\n");
 
             // stampa i pacchetti del network layer
             richTextBoxTx.AppendText("-- NETWORK --\n");
             foreach (var item in networkLayer.NetworkPackets)
             {
                 // _netInfo, _recipientId, chunk
-                richTextBoxTx.AppendText($"NetInfo: {string.Join(" ", item.Item1)}\n");
-                richTextBoxTx.AppendText($"RxId: {item.Item2}\n");
-                richTextBoxTx.AppendText($"Chunk: {string.Join(" ", item.Item3)}\n");
+                richTextBoxTx.AppendText($"NetInfo: {string.Join(" ", item.Item1.Select(b => b.ToString("X2")))} ");
+                richTextBoxTx.AppendText($"Id: {item.Item2.ToString("X2")} ");
+                richTextBoxTx.AppendText($"Chunk: {string.Join(" ", item.Item3.Select(b => b.ToString("X2")))}\n");
             }
-            // stampa il pacchetto del transport layer
-                richTextBoxTx.AppendText("-- TRANSPORT --\n");
-                richTextBoxTx.AppendText($"{string.Join(" ", networkLayer.TransportPacket)}\n");
-
-            // stampa il pacchetto dell'application layer
-            richTextBoxTx.AppendText("-- APPLICATION --\n");
-            richTextBoxTx.AppendText($"{string.Join(" ", networkLayer.ApplicationPacket)}\n");
-
-
+         
+           
 
             //// Simulazione invio di pacchetti tramite CAN
             //List<Tuple<byte[], int, byte[]>> canPackets = networkLayer.NetworkPackets;
