@@ -51,6 +51,7 @@ namespace StemPC
         string ExcelfilePath = "Dizionari STEM.xlsx";
         // Lista per contenere le righe lette
         List<ExcelHandler.RowData> IndirizziProtocollo;
+        List<ExcelHandler.CommandData> Comandi;
         ExcelHandler hExcel;
 
         public Form1()
@@ -82,22 +83,26 @@ namespace StemPC
             //test excel
             hExcel = new ExcelHandler();
             IndirizziProtocollo = new List<ExcelHandler.RowData>();
-            hExcel.EstraiIndirizziProtocollo(IndirizziProtocollo, ExcelfilePath);
+            Comandi = new List<ExcelHandler.CommandData>();
+            hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, ExcelfilePath);
 
+            _terminal.WriteLog("--------------------------------------------------------------------");
             // Stampa i risultati (per verifica)
             foreach (ExcelHandler.RowData item in IndirizziProtocollo)
             {
                 UpdateTerminal(item.ToTerminal());
                 //popola il combo macchine
                 if (!comboBoxMachine.Items.Contains(item.Macchina)) comboBoxMachine.Items.Add(item.Macchina);
-                //   comboBoxBoard.Items.Add(item.Scheda);
-                // comboBoxCommand.Items.Add(item.)
             }
 
-            //Aggiorna i combo box del test protocollo
-
-
-
+            _terminal.WriteLog("--------------------------------------------------------------------");
+            // Stampa i risultati (per verifica)
+            foreach (ExcelHandler.RowData item in IndirizziProtocollo)
+            {
+                UpdateTerminal(item.ToTerminal());
+                //popola il combo macchine
+                if (!comboBoxMachine.Items.Contains(item.Macchina)) comboBoxMachine.Items.Add(item.Macchina);
+            }
         }
 
         private void UpdateTerminal(string message)
