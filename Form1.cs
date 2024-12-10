@@ -96,12 +96,13 @@ namespace StemPC
             }
 
             _terminal.WriteLog("--------------------------------------------------------------------");
+            comboBoxCommand.Items.Clear ();
             // Stampa i risultati (per verifica)
-            foreach (ExcelHandler.RowData item in IndirizziProtocollo)
+            foreach (ExcelHandler.CommandData item in Comandi)
             {
                 UpdateTerminal(item.ToTerminal());
                 //popola il combo macchine
-                if (!comboBoxMachine.Items.Contains(item.Macchina)) comboBoxMachine.Items.Add(item.Macchina);
+                if ((!comboBoxCommand.Items.Contains(item.Name)) && (!item.Name.Contains("risposta")) && (!item.Name.Contains("Risposta"))) comboBoxCommand.Items.Add(item.Name);
             }
         }
 

@@ -90,7 +90,7 @@ public class ExcelHandler
                         !string.IsNullOrWhiteSpace(cmdL))
                     {
                         // Aggiungi un oggetto RowData alla lista
-                        IndirizziProtocollo.Add(new RowData(name, cmdH, cmdL));
+                        Commandi.Add(new CommandData(name, cmdH, cmdL));
                     }
                 }
             }
