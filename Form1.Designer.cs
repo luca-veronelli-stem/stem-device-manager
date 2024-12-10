@@ -501,7 +501,9 @@
             // richTextBoxTx
             // 
             richTextBoxTx.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            richTextBoxTx.BackColor = SystemColors.Window;
             tableLayoutPanelProtocol.SetColumnSpan(richTextBoxTx, 8);
+            richTextBoxTx.ForeColor = SystemColors.WindowText;
             richTextBoxTx.Location = new Point(159, 100);
             richTextBoxTx.Name = "richTextBoxTx";
             richTextBoxTx.Size = new Size(624, 157);

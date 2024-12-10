@@ -223,7 +223,7 @@ namespace StemPC
             // Esempio di utilizzo del PacketManager per inviare pacchetti tramite CAN e Bluetooth
             uint senderId = 8; // ID del mittente
             uint recipientId = RecipientId; // ID del destinatario
-            byte[] data = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0xFF, 0xFF, 0x01, 0x02}; // Dati del pacchetto da inviare
+            byte[] data = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0xFF, 0xFF, 0x00, 0x01}; // Dati del pacchetto da inviare
 
             // Creazione di un pacchetto di livello applicazione con dati
             //ApplicationLayer appLayer = new ApplicationLayer(1, 2, data, true);
@@ -252,11 +252,10 @@ namespace StemPC
                 richTextBoxTx.AppendText($"Chunk: {string.Join(" ", item.Item3.Select(b => b.ToString("X2")))}\n");
             }
          
-           
 
-            //// Simulazione invio di pacchetti tramite CAN
-            //List<Tuple<byte[], int, byte[]>> canPackets = networkLayer.NetworkPackets;
-            //bool sentThroughCan = packetManager.SendThroughCAN(canPackets);
+            // Simulazione invio di pacchetti tramite CAN
+            List<Tuple<byte[], uint, byte[]>> canPackets = networkLayer.NetworkPackets;
+            bool sentThroughCan = packetManager.SendThroughCAN(canPackets);
             //Console.WriteLine($"Pacchetti inviati tramite CAN: {sentThroughCan}");
         }
     }

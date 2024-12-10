@@ -43,7 +43,7 @@ public class PacketManager
         set { _networkPacket = value; }
     }
 
-    public bool SendThroughCAN(List<Tuple<byte[], int, byte[]>> networkPackets)
+    public bool SendThroughCAN(List<Tuple<byte[], uint, byte[]>> networkPackets)
     {
         try
         {
@@ -200,21 +200,13 @@ public class PacketManager
     }
 }
 
-//public class NetworkLayer
-//{
-//    public NetworkLayer(string interfaceType, int version, int recipientId, byte[] data, bool pack)
-//    {
-//        // Implementation for network layer processing
-//    }
-//}
-
 public class CANMessage
 {
-    public int ArbitrationId { get; }
+    public uint ArbitrationId { get; }
     public byte[] Data { get; }
     public bool IsErrorFrame { get; }
 
-    public CANMessage(int arbitrationId, byte[] data, bool isErrorFrame)
+    public CANMessage(uint arbitrationId, byte[] data, bool isErrorFrame)
     {
         ArbitrationId = arbitrationId;
         Data = data;
