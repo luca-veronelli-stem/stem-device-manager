@@ -48,7 +48,7 @@ namespace StemPC
         //**************************
         //  Excel variables
         //**************************
-        string ExcelfilePath = "Test.xlsx";
+        string ExcelfilePath = "Dizionari STEM.xlsx";
         // Lista per contenere le righe lette
         List<ExcelHandler.RowData> IndirizziProtocollo;
         ExcelHandler hExcel;
@@ -83,11 +83,20 @@ namespace StemPC
             hExcel = new ExcelHandler();
             IndirizziProtocollo = new List<ExcelHandler.RowData>();
             hExcel.EstraiIndirizziProtocollo(IndirizziProtocollo, ExcelfilePath);
+
             // Stampa i risultati (per verifica)
             foreach (ExcelHandler.RowData item in IndirizziProtocollo)
             {
-                UpdateTerminal(item.ToString());
+                UpdateTerminal(item.ToTerminal());
+                //popola il combo macchine
+                if (!comboBoxMachine.Items.Contains(item.Macchina)) comboBoxMachine.Items.Add(item.Macchina);
+                //   comboBoxBoard.Items.Add(item.Scheda);
+                // comboBoxCommand.Items.Add(item.)
             }
+
+            //Aggiorna i combo box del test protocollo
+
+
 
         }
 
@@ -140,6 +149,58 @@ namespace StemPC
             if (!Uri.IsHexDigit(e.KeyChar) && e.KeyChar != (char)Keys.Back)
             {
                 e.Handled = true; // Blocca il carattere non valido
+            }
+        }
+
+        private void comboBoxMachine_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            // Verifica che il mittente sia effettivamente un ComboBox
+            if (sender is ComboBox comboBoxCorrente)
+            {
+                // Verifica se è stato selezionato un elemento valido
+                if (comboBoxCorrente.SelectedIndex != -1)
+                {
+                    // Ottieni la stringa correntemente selezionata
+                    string macchinaSelezionata = comboBoxCorrente.SelectedItem.ToString();
+
+                    comboBoxBoard.Items.Clear(); //azzera i nomi delle schede
+
+                    // Cerca i nomi della macchina
+                    foreach (ExcelHandler.RowData item in IndirizziProtocollo)
+                    {
+                        //popola il combo delle schede
+                        if (item.Macchina == macchinaSelezionata)
+                            comboBoxBoard.Items.Add(item.Scheda);
+                        // comboBoxCommand.Items.Add(item.)
+                    }
+                }
+
+            }
+        }
+
+        private void comboBoxBoard_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            // Verifica che il mittente sia effettivamente un ComboBox
+            if (sender is ComboBox comboBoxCorrente)
+            {
+                // Verifica se è stato selezionato un elemento valido
+                if (comboBoxCorrente.SelectedIndex != -1)
+                {
+                    // Ottieni la stringa correntemente selezionata
+                    string schedaSelezionata = comboBoxCorrente.SelectedItem.ToString();
+
+                    // Cerca i nomi della macchina
+                    foreach (ExcelHandler.RowData item in IndirizziProtocollo)
+                    {
+                        //popola il combo delle schede
+                        if ((item.Scheda == schedaSelezionata) && (item.Macchina == comboBoxMachine.SelectedItem.ToString()))
+                        {
+                            textBoxAddress.Text = item.Indirizzo.ToString();
+                        }
+                           
+                    }
+                }
+
             }
         }
     }

@@ -6,6 +6,7 @@ using static ExcelHandler;
 
 public class ExcelHandler
 {
+
     // Definizione del tipo di dato personalizzato
     public class RowData
     {
@@ -20,7 +21,7 @@ public class ExcelHandler
             Indirizzo = indirizzo;
         }
 
-        public override string ToString()
+        public string ToTerminal()
         {
             return $"Macchina: {Macchina}, Scheda: {Scheda}, Indirizzo: {Indirizzo}";
         }

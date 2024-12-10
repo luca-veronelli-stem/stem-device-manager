@@ -45,7 +45,7 @@
             textBox4 = new TextBox();
             textBox3 = new TextBox();
             textBox2 = new TextBox();
-            comboBox1 = new ComboBox();
+            comboBoxBoard = new ComboBox();
             label11 = new Label();
             label10 = new Label();
             label9 = new Label();
@@ -62,11 +62,11 @@
             label13 = new Label();
             richTextBox1 = new RichTextBox();
             label3 = new Label();
+            button2 = new Button();
             tabPageUART = new TabPage();
             label1 = new Label();
             listBoxSerialPorts = new ListBox();
             terminalOut = new RichTextBox();
-            button2 = new Button();
             tableLayoutPanel1.SuspendLayout();
             tabControl.SuspendLayout();
             tabPageCodeGen.SuspendLayout();
@@ -181,7 +181,7 @@
             tableLayoutPanelProtocol.Controls.Add(textBox4, 6, 1);
             tableLayoutPanelProtocol.Controls.Add(textBox3, 5, 1);
             tableLayoutPanelProtocol.Controls.Add(textBox2, 4, 1);
-            tableLayoutPanelProtocol.Controls.Add(comboBox1, 1, 1);
+            tableLayoutPanelProtocol.Controls.Add(comboBoxBoard, 1, 1);
             tableLayoutPanelProtocol.Controls.Add(label11, 9, 0);
             tableLayoutPanelProtocol.Controls.Add(label10, 8, 0);
             tableLayoutPanelProtocol.Controls.Add(label9, 7, 0);
@@ -280,14 +280,15 @@
             textBox2.TabIndex = 17;
             textBox2.KeyPress += MaskedTextBox_KeyPress;
             // 
-            // comboBox1
+            // comboBoxBoard
             // 
-            comboBox1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            comboBox1.FormattingEnabled = true;
-            comboBox1.Location = new Point(81, 68);
-            comboBox1.Name = "comboBox1";
-            comboBox1.Size = new Size(72, 23);
-            comboBox1.TabIndex = 15;
+            comboBoxBoard.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            comboBoxBoard.FormattingEnabled = true;
+            comboBoxBoard.Location = new Point(81, 68);
+            comboBoxBoard.Name = "comboBoxBoard";
+            comboBoxBoard.Size = new Size(72, 23);
+            comboBoxBoard.TabIndex = 15;
+            comboBoxBoard.SelectedIndexChanged += comboBoxBoard_SelectedIndexChanged;
             // 
             // label11
             // 
@@ -414,6 +415,7 @@
             comboBoxMachine.Name = "comboBoxMachine";
             comboBoxMachine.Size = new Size(72, 23);
             comboBoxMachine.TabIndex = 5;
+            comboBoxMachine.SelectedIndexChanged += comboBoxMachine_SelectedIndexChanged;
             // 
             // comboBoxCommand
             // 
@@ -483,6 +485,16 @@
             label3.Text = "Macchina";
             label3.TextAlign = ContentAlignment.MiddleCenter;
             // 
+            // button2
+            // 
+            button2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            button2.Location = new Point(705, 263);
+            button2.Name = "button2";
+            button2.Size = new Size(78, 60);
+            button2.TabIndex = 27;
+            button2.Text = "Invia";
+            button2.UseVisualStyleBackColor = true;
+            // 
             // tabPageUART
             // 
             tabPageUART.Controls.Add(label1);
@@ -525,16 +537,6 @@
             terminalOut.TabIndex = 4;
             terminalOut.Text = "";
             // 
-            // button2
-            // 
-            button2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            button2.Location = new Point(705, 263);
-            button2.Name = "button2";
-            button2.Size = new Size(78, 60);
-            button2.TabIndex = 27;
-            button2.Text = "Invia";
-            button2.UseVisualStyleBackColor = true;
-            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -573,7 +575,7 @@
         private Label label3;
         private Label label2;
         private ComboBox comboBoxMachine;
-        private ComboBox comboBox1;
+        private ComboBox comboBoxBoard;
         private Label label11;
         private Label label10;
         private Label label9;
