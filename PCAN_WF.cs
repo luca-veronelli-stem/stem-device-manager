@@ -228,7 +228,7 @@ public partial class CanTabPage : TabPage
             {
                 ID = CANID,
                 LEN = (byte) data.Length,
-                MSGTYPE = TPCANMessageType.PCAN_MESSAGE_STANDARD,
+                MSGTYPE = TPCANMessageType.PCAN_MESSAGE_EXTENDED,
                 DATA = new byte[8]
             };
 

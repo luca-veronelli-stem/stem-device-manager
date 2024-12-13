@@ -241,12 +241,15 @@ public class NetworkLayer : TransportLayer
     private byte[] _networkPacket;
     private List<Tuple<byte[], uint, byte[]>> _networkPackets;
 
+    private int packetId;
+
     public NetworkLayer(string interfaceType, int version, uint recipientId, byte[] data, bool pack = true)
         : base(data[0], BitConverter.ToInt32(data, 1), data.Skip(7).ToArray(), pack)
     {
         _interface = interfaceType.ToLower();
         _version = version;
         _recipientId = recipientId;
+        packetId = 0;
         SetPacketChunkSize();
         if (pack)
         {
@@ -354,15 +357,19 @@ public class NetworkLayer : TransportLayer
         var chunks = SplitDataIntoChunks();
         _networkPackets = new List<Tuple<byte[], uint, byte[]>>();
         int remainingChunks = chunks.Count - 1;
-        int packetId = 1;
+        //rolling code del packid
+        if (packetId < 7) packetId++;
+        else packetId = 0;
+        //indicatore primo chunck
+        int setLength = 1;
 
         foreach (var chunk in chunks)
         {
-            int setLength = packetId == 1 ? 1 : 0;
             BuildNetInfo(packetId, setLength, remainingChunks);
             var networkPacket = Tuple.Create(_netInfo, _recipientId, chunk);
             _networkPackets.Add(networkPacket);
             remainingChunks--;
+            setLength = 0;
         }
     }
 
