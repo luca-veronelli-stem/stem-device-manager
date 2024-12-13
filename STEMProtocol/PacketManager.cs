@@ -201,7 +201,7 @@ namespace PS_PacketManager
             {
                 var unifiedPacket = packetQueues[packetId].SelectMany(chunk => chunk).ToArray();
                 packetQueues[packetId].Clear();
-                _networkPacket = new NetworkLayer(interfaceType, version, _id, unifiedPacket, false);
+                _networkPacket = new NetworkLayer(interfaceType, version, _id, unifiedPacket, true);
                 //Packet is ready, decode it
                 _networkPacket.SP_PacketReady();
             }

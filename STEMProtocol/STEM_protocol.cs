@@ -400,6 +400,10 @@ public class NetworkLayer : TransportLayer
 
     public void SP_PacketReady()
     {
+        //Se il transport layer è a posto
+
+        Form1.FormRef.DecodeCommandSP(ApplicationPacket);
+        //decodifica l'app layer e mettilo nel RichTextBoxTx
 
     }
 }

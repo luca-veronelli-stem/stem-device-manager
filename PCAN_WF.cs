@@ -370,10 +370,11 @@ public partial class CanTabPage : TabPage
                     }));
 
                     //Lancia l'interprete protocollo stem
-                    //(uint arbitrationId, byte[] data, bool isErrorFrame)
-                    CANMessage msg = new CANMessage(canMessage.ID, canMessage.DATA, false);
 
-                    RXpacketManager.ProcessCANPacket(msg);
+                    ////(uint arbitrationId, byte[] data, bool isErrorFrame)
+                    //CANMessage msg = new CANMessage(canMessage.ID, canMessage.DATA, false);
+
+                    //RXpacketManager.ProcessCANPacket(msg);
                
                 }
                 else if (result != TPCANStatus.PCAN_ERROR_QRCVEMPTY)

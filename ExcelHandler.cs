@@ -46,10 +46,10 @@ public class ExcelHandler
         }
     }
 
-    public void EstraiDatiProtocollo(List<RowData> IndirizziProtocollo, List<CommandData> Commandi, string filePath)
+    public void EstraiDatiProtocollo(List<RowData> IndirizziProtocollo, List<CommandData> Comandi, string filePath)
     {
         IndirizziProtocollo.Clear();
-        Commandi.Clear();
+        Comandi.Clear();
         try
         {
             using (var workbook = new XLWorkbook(filePath))
@@ -90,7 +90,7 @@ public class ExcelHandler
                         !string.IsNullOrWhiteSpace(cmdL))
                     {
                         // Aggiungi un oggetto RowData alla lista
-                        Commandi.Add(new CommandData(name, cmdH, cmdL));
+                        Comandi.Add(new CommandData(name, cmdH, cmdL));
                     }
                 }
             }

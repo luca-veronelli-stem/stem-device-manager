@@ -339,6 +339,13 @@ namespace StemPC
             SelectedCommand = (short) comboBoxCommand.SelectedIndex;
         }
 
-
+        public void DecodeCommandSP(byte[] payload)
+        {
+            if (payload[1] < Comandi.Count)
+            {
+                richTextBoxTx.AppendText($"Risposta a comando {Comandi[payload[1]].Name} ricevuta1!");
+                
+            }
+        }
     }
 }
