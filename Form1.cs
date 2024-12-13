@@ -1,6 +1,7 @@
 using Microsoft.VisualBasic.Logging;
 using System.Windows.Forms;
 using System.IO.Ports; // used for serial port
+using PS_PacketManager;
 
 namespace StemPC
 {
@@ -60,6 +61,8 @@ namespace StemPC
         public uint RecipientId;
         public short SelectedCommand;
         public RollingCodeGenerator RollingCodeGen;
+        public uint senderId;              // ID del mittente
+
 
         //**************************
         //  public Elements instances
@@ -72,6 +75,12 @@ namespace StemPC
             InitializeComponent();
 
             FormRef = this;
+
+            RecipientId = 0;
+            SelectedCommand = 0;
+            senderId = 8;
+            RollingCodeGen = new RollingCodeGenerator();
+
 
             CanTabPageRef = new CanTabPage();
             //aggiungi tabcan
@@ -102,9 +111,7 @@ namespace StemPC
             Comandi = new List<ExcelHandler.CommandData>();
             hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, ExcelfilePath);
 
-            RecipientId = 0;
-            SelectedCommand = 0;
-            RollingCodeGen = new RollingCodeGenerator();
+
 
             _terminal.WriteLog("--------------------------------------------------------------------");
             // Stampa i risultati (per verifica)
@@ -236,6 +243,7 @@ namespace StemPC
             }
         }
 
+ 
         private void buttonSendPS_Click(object sender, EventArgs e)
         {
             //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -276,7 +284,7 @@ namespace StemPC
 
             //TL
             byte cryptFlag = 0x00;         // Nessuna crittografia
-            int senderId = 8;               // ID del mittente
+            
             
             //NL
             string interfaceType = "can";   // Interfaccia CAN
@@ -330,5 +338,7 @@ namespace StemPC
         {
             SelectedCommand = (short) comboBoxCommand.SelectedIndex;
         }
+
+
     }
 }

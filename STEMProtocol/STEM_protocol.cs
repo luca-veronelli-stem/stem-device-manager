@@ -397,5 +397,10 @@ public class NetworkLayer : TransportLayer
         }
         return chunks;
     }
+
+    public void SP_PacketReady()
+    {
+
+    }
 }
 

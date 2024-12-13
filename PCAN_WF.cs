@@ -5,15 +5,18 @@ using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using DocumentFormat.OpenXml.Wordprocessing;
 using Peak.Can.Basic;
 using Peak.Can.Basic.BackwardCompatibility;
 using StemPC;
 using TPCANHandle = System.Byte;
+using PS_PacketManager;
 
-public class CanMessage
+
+public class CanMessagePCAN
 {
     public string Content { get; set; }
-    public Color Color { get; set; }
+    public System.Drawing.Color Color { get; set; }
 }
 
 public partial class CanTabPage : TabPage
@@ -28,13 +31,16 @@ public partial class CanTabPage : TabPage
     private const TPCANHandle Channel = 0x51; // PCAN_USB
     private TPCANBaudrate BaudRate;
     private bool IsConnected = false;
-    private ObservableCollection<CanMessage> messages = new ObservableCollection<CanMessage>();
+    private ObservableCollection<CanMessagePCAN> messages = new ObservableCollection<CanMessagePCAN>();
+
+    private PacketManager RXpacketManager;
 
     public CanTabPage()
     {
         InitializeComponents();
         BaudRate = TPCANBaudrate.PCAN_BAUD_100K;
         UpdateConnectionStatus();
+        RXpacketManager=new PacketManager(Form1.FormRef.senderId);
         Task.Run(ReadCANMessages);
     }
 
@@ -57,7 +63,7 @@ public partial class CanTabPage : TabPage
         this.connectionStatusLabel = new System.Windows.Forms.Label
         {
             Text = "Stato: Disconnesso",
-            ForeColor = Color.Red,
+            ForeColor = System.Drawing.Color.Red,
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleLeft
         };
@@ -66,7 +72,7 @@ public partial class CanTabPage : TabPage
         this.receivedMessagesView = new ListView
         {
             Dock = DockStyle.Fill,
-            View = View.Details,
+            View = System.Windows.Forms.View.Details,
             FullRowSelect = true
         };
         this.receivedMessagesView.Columns.Add("Messaggi", -2, HorizontalAlignment.Left);
@@ -165,7 +171,7 @@ public partial class CanTabPage : TabPage
                 // Aggiungi il messaggio al ListView con colore verde
                 var listViewItem = new ListViewItem($"{timestamp} - TX: ID=0x{canMessage.ID:X} Dati={dataText}")
                 {
-                    ForeColor = Color.Green
+                    ForeColor = System.Drawing.Color.Green
                 };
                 receivedMessagesView.Items.Add(listViewItem);
                 receivedMessagesView.EnsureVisible(receivedMessagesView.Items.Count - 1); // Scrolla all'ultimo messaggio
@@ -190,13 +196,13 @@ public partial class CanTabPage : TabPage
             {
                 IsConnected = true;
                 connectionStatusLabel.Text = "Stato: Connesso";
-                connectionStatusLabel.ForeColor = Color.Green;
+                connectionStatusLabel.ForeColor = System.Drawing.Color.Green;
             }
             else
             {
                 IsConnected = false;
                 connectionStatusLabel.Text = $"Stato: Disconnesso ({result})";
-                connectionStatusLabel.ForeColor = Color.Red;
+                connectionStatusLabel.ForeColor = System.Drawing.Color.Red;
             }
         }
     }
@@ -254,7 +260,7 @@ public partial class CanTabPage : TabPage
                 // Aggiungi il messaggio al ListView con colore verde
                 var listViewItem = new ListViewItem($"{timestamp} - TX: ID=0x{canMessage.ID:X} Dati={hexString}")
                 {
-                    ForeColor = Color.Green
+                    ForeColor = System.Drawing.Color.Green
                 };
                 receivedMessagesView.Items.Add(listViewItem);
                 receivedMessagesView.EnsureVisible(receivedMessagesView.Items.Count - 1); // Scrolla all'ultimo messaggio
@@ -287,7 +293,7 @@ public partial class CanTabPage : TabPage
                     Invoke((Action)(() =>
                     {
                         connectionStatusLabel.Text = "Stato: Disconnesso";
-                        connectionStatusLabel.ForeColor = Color.Red;
+                        connectionStatusLabel.ForeColor = System.Drawing.Color.Red;
 
                         //var disconnectionItem = new ListViewItem("Connessione persa. Tentativo di riconnessione...")
                         //{
@@ -307,11 +313,11 @@ public partial class CanTabPage : TabPage
                         Invoke((Action)(() =>
                         {
                             connectionStatusLabel.Text = "Stato: Connesso";
-                            connectionStatusLabel.ForeColor = Color.Green;
+                            connectionStatusLabel.ForeColor = System.Drawing.Color.Green;
 
                             var reconnectionItem = new ListViewItem("Riconnessione avvenuta con successo.")
                             {
-                                ForeColor = Color.Green
+                                ForeColor = System.Drawing.Color.Green
                             };
                             receivedMessagesView.Items.Add(reconnectionItem);
                             receivedMessagesView.EnsureVisible(receivedMessagesView.Items.Count - 1);
@@ -332,7 +338,7 @@ public partial class CanTabPage : TabPage
                     Invoke((Action)(() =>
                     {
                         connectionStatusLabel.Text = "Stato: Connesso";
-                        connectionStatusLabel.ForeColor = Color.Green;
+                        connectionStatusLabel.ForeColor = System.Drawing.Color.Green;
                     }));
                 }
 
@@ -355,13 +361,20 @@ public partial class CanTabPage : TabPage
                     // Aggiungi il messaggio alla lista con colore blu
                     var listViewItem = new ListViewItem(messageContent)
                     {
-                        ForeColor = Color.Blue
+                        ForeColor = System.Drawing.Color.Blue
                     };
                     Invoke((Action)(() =>
                     {
                         receivedMessagesView.Items.Add(listViewItem);
                         receivedMessagesView.EnsureVisible(receivedMessagesView.Items.Count - 1);
                     }));
+
+                    //Lancia l'interprete protocollo stem
+                    //(uint arbitrationId, byte[] data, bool isErrorFrame)
+                    CANMessage msg = new CANMessage(canMessage.ID, canMessage.DATA, false);
+
+                    RXpacketManager.ProcessCANPacket(msg);
+               
                 }
                 else if (result != TPCANStatus.PCAN_ERROR_QRCVEMPTY)
                 {
@@ -374,7 +387,7 @@ public partial class CanTabPage : TabPage
                     {
                         var errorItem = new ListViewItem($"Errore CAN: {errorText}")
                         {
-                            ForeColor = Color.Red
+                            ForeColor = System.Drawing.Color.Red
                         };
                         receivedMessagesView.Items.Add(errorItem);
                         receivedMessagesView.EnsureVisible(receivedMessagesView.Items.Count - 1);
@@ -387,7 +400,7 @@ public partial class CanTabPage : TabPage
                 {
                     var errorItem = new ListViewItem($"Errore durante la lettura: {ex.Message}")
                     {
-                        ForeColor = Color.Red
+                        ForeColor = System.Drawing.Color.Red
                     };
                     receivedMessagesView.Items.Add(errorItem);
                     receivedMessagesView.EnsureVisible(receivedMessagesView.Items.Count - 1);
