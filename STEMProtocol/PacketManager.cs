@@ -5,6 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Collections.Concurrent;
+using System.Windows.Forms;
+using StemPC;
 
 public class PacketManager
 {
@@ -226,7 +228,22 @@ public class CANBus : IDisposable
 
     public void Send(CANMessage message)
     {
-        // Implementation to send message through CAN
+
+    //    public class CANMessage
+    //{
+    //    public uint ArbitrationId { get; }
+    //    public byte[] Data { get; }
+    //    public bool IsErrorFrame { get; }
+
+    //    public CANMessage(uint arbitrationId, byte[] data, bool isErrorFrame)
+    //    {
+    //        ArbitrationId = arbitrationId;
+    //        Data = data;
+    //        IsErrorFrame = isErrorFrame;
+    //    }
+    //}
+    // Implementation to send message through CAN
+    Form1.FormRef.CanTabPageRef.SendCANMessage(message.ArbitrationId, message.Data);
     }
 
     public void Dispose()

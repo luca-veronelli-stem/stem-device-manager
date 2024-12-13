@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.ObjectModel;
 using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using Peak.Can.Basic;
 using Peak.Can.Basic.BackwardCompatibility;
+using StemPC;
 using TPCANHandle = System.Byte;
 
 public class CanMessage
@@ -198,6 +201,75 @@ public partial class CanTabPage : TabPage
         }
     }
 
+
+    public void SendCANMessage(uint CANID, byte[] data)
+    {
+        // Controlla se il dispositivo è connesso
+        if (!IsConnected)
+        {
+            MessageBox.Show("PCAN non connesso!", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
+        }
+
+        try
+        {
+            //// Leggi il CAN ID e i dati
+            //string canIdText = canIdEntry.Text.Trim();
+            //string dataText = dataEntry.Text.Trim();
+
+            //if (string.IsNullOrEmpty(canIdText) || string.IsNullOrEmpty(dataText))
+            //{
+            //    MessageBox.Show("Inserire un CAN ID e i dati!", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            //    return;
+            //}
+
+            // Crea un messaggio CAN
+            TPCANMsg canMessage = new TPCANMsg
+            {
+                ID = CANID,
+                LEN = (byte) data.Length,
+                MSGTYPE = TPCANMessageType.PCAN_MESSAGE_STANDARD,
+                DATA = new byte[8]
+            };
+
+            // Popola i dati nel messaggio
+          //  var dataBytes = dataText.Split(' ').Select(byte.Parse).ToArray();
+            for (int i = 0; i < canMessage.LEN && i < 8; i++)
+            {
+                canMessage.DATA[i] = data[i];
+            }
+
+            // Invia il messaggio
+            var result = PCANBasic.Write(Channel, ref canMessage);
+
+            if (result == TPCANStatus.PCAN_ERROR_OK)
+            {
+                // Ottieni il timestamp
+                string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                string hexString = string.Join(" ", canMessage.DATA.Select(b => b.ToString("X2")));
+
+
+                Form1.FormRef.UpdateTerminal($"{timestamp} - TX: ID=0x{canMessage.ID:X} Dati={hexString}");
+
+                //// Aggiungi il messaggio al ListView con colore verde
+                //var listViewItem = new ListViewItem($"{timestamp} - TX: ID=0x{canMessage.ID:X} Dati={hexString}")
+                //{
+                //    ForeColor = Color.Green
+                //};
+                //receivedMessagesView.Items.Add(listViewItem);
+                //receivedMessagesView.EnsureVisible(receivedMessagesView.Items.Count - 1); // Scrolla all'ultimo messaggio
+            }
+            else
+            {
+                MessageBox.Show($"Errore durante l'invio: {result}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Errore nel formato dei dati: {ex.Message}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
     private async Task ReadCANMessages()
     {
         while (true)
@@ -217,12 +289,13 @@ public partial class CanTabPage : TabPage
                         connectionStatusLabel.Text = "Stato: Disconnesso";
                         connectionStatusLabel.ForeColor = Color.Red;
 
-                        var disconnectionItem = new ListViewItem("Connessione persa. Tentativo di riconnessione...")
-                        {
-                            ForeColor = Color.Red
-                        };
-                        receivedMessagesView.Items.Add(disconnectionItem);
-                        receivedMessagesView.EnsureVisible(receivedMessagesView.Items.Count - 1);
+                        //var disconnectionItem = new ListViewItem("Connessione persa. Tentativo di riconnessione...")
+                        //{
+                        //    ForeColor = Color.Red
+                        //};
+
+                        //receivedMessagesView.Items.Add(disconnectionItem);
+                        //receivedMessagesView.EnsureVisible(receivedMessagesView.Items.Count - 1);
                     }));
 
                     IsConnected = false;
