@@ -58,6 +58,7 @@ namespace StemPC
         //  STEM Protocol variables
         //**************************
         public uint RecipientId;
+        public short SelectedCommand;
 
         //**************************
         //  public Elements instances
@@ -69,7 +70,7 @@ namespace StemPC
         {
             InitializeComponent();
 
-            FormRef=this;
+            FormRef = this;
 
             CanTabPageRef = new CanTabPage();
             //aggiungi tabcan
@@ -101,6 +102,7 @@ namespace StemPC
             hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, ExcelfilePath);
 
             RecipientId = 0;
+            SelectedCommand = 0;
 
             _terminal.WriteLog("--------------------------------------------------------------------");
             // Stampa i risultati (per verifica)
@@ -225,6 +227,8 @@ namespace StemPC
                         }
 
                     }
+
+                    comboBoxCommand.SelectedIndex = 0;
                 }
 
             }
@@ -237,10 +241,36 @@ namespace StemPC
             //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
             // Creazione del pacchetto a livello applicativo
-            byte cmdInit = 0x01; // Comando di inizializzazione
-            byte cmdOpt = 0x02;  // Opzione di comando
-            byte[] payload = { 0x10, 0x20, 0x30 }; // Dati di esempio
+            byte cmdInit = (byte)(SelectedCommand >> 8);//comando byte alto
+            byte cmdOpt = (byte)(SelectedCommand);//comando byte basso 
 
+            // Array di TextBox: sostituisci con i tuoi effettivi TextBox
+            TextBox[] textBoxes = { textBox1, textBox2, textBox3, textBox4, textBox5, textBox6, textBox7 };
+
+            // Lista per raccogliere i valori validi
+            List<byte> byteList = new List<byte>();
+
+            // Itera su ogni TextBox
+            foreach (var textBox in textBoxes)
+            {
+                if (!string.IsNullOrWhiteSpace(textBox.Text)) // Ignora TextBox vuoti o spazi bianchi
+                {
+                    if (byte.TryParse(textBox.Text, System.Globalization.NumberStyles.HexNumber, null, out byte value))
+                    {
+                        byteList.Add(value); // Aggiungi il valore valido alla lista
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Valore non valido nel campo {textBox.Name}. Inserisci un valore esadecimale valido (0-FF).",
+                                        "Errore di input", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return; // Esce se c'è un errore di input
+                    }
+                }
+            }
+
+            byte[] payload = byteList.ToArray();
+
+            //  byte[] payload = { 0x10, 0x20, 0x30 }; // Buffer dati
             // Crea il pacchetto a livello applicativo
             var appLayer = new ApplicationLayer(cmdInit, cmdOpt, payload);
 
@@ -280,40 +310,45 @@ namespace StemPC
 
             bool result = packetManager.SendThroughCAN(networkPackets);
 
-         //   // Esempio di utilizzo del PacketManager per inviare pacchetti tramite CAN e Bluetooth
-         ////   uint senderId = 8; // ID del mittente
-         ////   uint recipientId = RecipientId; // ID del destinatario
-         //   byte[] data = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0xFF, 0xFF, 0x01, 0x02, 0x10, 0x20, 030 }; // Dati del pacchetto da inviare
+            //   // Esempio di utilizzo del PacketManager per inviare pacchetti tramite CAN e Bluetooth
+            ////   uint senderId = 8; // ID del mittente
+            ////   uint recipientId = RecipientId; // ID del destinatario
+            //   byte[] data = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0xFF, 0xFF, 0x01, 0x02, 0x10, 0x20, 030 }; // Dati del pacchetto da inviare
 
-         //   //// Creazione di un pacchetto di livello di rete con dati
-         //   NetworkLayer networkLayer2 = new NetworkLayer("can", 1, recipientId, data, true);
+            //   //// Creazione di un pacchetto di livello di rete con dati
+            //   NetworkLayer networkLayer2 = new NetworkLayer("can", 1, recipientId, data, true);
 
-         //   // Configurazione del PacketManager
-         ////   PacketManager packetManager2 = new PacketManager(senderId);
+            //   // Configurazione del PacketManager
+            ////   PacketManager packetManager2 = new PacketManager(senderId);
 
-         //   // stampa il pacchetto dell'application layer
-         //   richTextBoxTx.AppendText("-- APPLICATION 2--\n");
-         //   richTextBoxTx.AppendText($"{string.Join(" ", networkLayer2.ApplicationPacket.Select(b => b.ToString("X2")))}\n");
+            //   // stampa il pacchetto dell'application layer
+            //   richTextBoxTx.AppendText("-- APPLICATION 2--\n");
+            //   richTextBoxTx.AppendText($"{string.Join(" ", networkLayer2.ApplicationPacket.Select(b => b.ToString("X2")))}\n");
 
-         //   // stampa il pacchetto del transport layer
-         //   richTextBoxTx.AppendText("-- TRANSPORT 2--\n");
-         //   richTextBoxTx.AppendText($"{string.Join(" ", networkLayer2.TransportPacket.Select(b => b.ToString("X2")))}\n");
+            //   // stampa il pacchetto del transport layer
+            //   richTextBoxTx.AppendText("-- TRANSPORT 2--\n");
+            //   richTextBoxTx.AppendText($"{string.Join(" ", networkLayer2.TransportPacket.Select(b => b.ToString("X2")))}\n");
 
-         //   // stampa i pacchetti del network layer
-         //   richTextBoxTx.AppendText("-- NETWORK 2--\n");
-         //   foreach (var item in networkLayer2.NetworkPackets)
-         //   {
-         //       // _netInfo, _recipientId, chunk
-         //       richTextBoxTx.AppendText($"NetInfo: {string.Join(" ", item.Item1.Select(b => b.ToString("X2")))} ");
-         //       richTextBoxTx.AppendText($"Id: {item.Item2.ToString("X2")} ");
-         //       richTextBoxTx.AppendText($"Chunk: {string.Join(" ", item.Item3.Select(b => b.ToString("X2")))}\n");
-         //   }
+            //   // stampa i pacchetti del network layer
+            //   richTextBoxTx.AppendText("-- NETWORK 2--\n");
+            //   foreach (var item in networkLayer2.NetworkPackets)
+            //   {
+            //       // _netInfo, _recipientId, chunk
+            //       richTextBoxTx.AppendText($"NetInfo: {string.Join(" ", item.Item1.Select(b => b.ToString("X2")))} ");
+            //       richTextBoxTx.AppendText($"Id: {item.Item2.ToString("X2")} ");
+            //       richTextBoxTx.AppendText($"Chunk: {string.Join(" ", item.Item3.Select(b => b.ToString("X2")))}\n");
+            //   }
 
 
             //// Simulazione invio di pacchetti tramite CAN
             //List<Tuple<byte[], uint, byte[]>> canPackets = networkLayer.NetworkPackets;
             //bool sentThroughCan = packetManager.SendThroughCAN(canPackets);
             ////Console.WriteLine($"Pacchetti inviati tramite CAN: {sentThroughCan}");
+        }
+
+        private void comboBoxCommand_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            SelectedCommand = (short) comboBoxCommand.SelectedIndex;
         }
     }
 }
