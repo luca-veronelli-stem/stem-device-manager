@@ -121,7 +121,7 @@ public class TransportLayer : ApplicationLayer
 {
     private byte _cryptFlag;
     private int _senderId;
-    private int _lPack;
+    private ushort _lPack;
     private byte[] _transportHeader;
     private byte[] _transportPacket;
     private byte[] _crc;
@@ -132,7 +132,7 @@ public class TransportLayer : ApplicationLayer
     {
         _cryptFlag = cryptFlag;
         _senderId = senderId;
-        _lPack = data.Length;
+        _lPack = (ushort)data.Length;
         if (pack)
         {
             BuildTransportHeader();
@@ -187,9 +187,17 @@ public class TransportLayer : ApplicationLayer
 
     private void BuildTransportHeader()
     {
+        // Swap bytes per _senderId (32 bit)
+        byte[] senderIdBytes = BitConverter.GetBytes(_senderId);
+        Array.Reverse(senderIdBytes);
+
+        // Swap bytes per _lPack (16 bit)
+        byte[] lPackBytes = BitConverter.GetBytes(_lPack);
+        Array.Reverse(lPackBytes);
+
         _transportHeader = new[] { _cryptFlag }
-            .Concat(BitConverter.GetBytes(_senderId))
-            .Concat(BitConverter.GetBytes(_lPack))
+            .Concat(senderIdBytes)
+            .Concat(lPackBytes)
             .ToArray();
     }
 
@@ -197,6 +205,7 @@ public class TransportLayer : ApplicationLayer
     {
         var packet = _transportHeader.Concat(ApplicationPacket).ToArray();
         SetCrc(packet);
+        Array.Reverse(_crc);
         _transportPacket = packet.Concat(_crc).ToArray();
     }
 

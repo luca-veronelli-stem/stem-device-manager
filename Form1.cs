@@ -239,6 +239,9 @@ namespace StemPC
             //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             //      SPEDIZIONE PACCHETTO DA APPLICATION LAYER
             //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            // Parametri del pacchetto
+
+            //AL
 
             // Creazione del pacchetto a livello applicativo
             byte cmdInit = (byte)(SelectedCommand >> 8);//comando byte alto
@@ -267,34 +270,37 @@ namespace StemPC
                     }
                 }
             }
-
             byte[] payload = byteList.ToArray();
 
-            //  byte[] payload = { 0x10, 0x20, 0x30 }; // Buffer dati
-            // Crea il pacchetto a livello applicativo
-            var appLayer = new ApplicationLayer(cmdInit, cmdOpt, payload);
+            //TL
+            byte cryptFlag = 0x00;         // Nessuna crittografia
+            int senderId = 8;               // ID del mittente
+            
+            //NL
+            string interfaceType = "can";   // Interfaccia CAN
+            int version = 1;               // Versione del protocollo
+            uint recipientId = RecipientId; // ID del destinatario
+
+
+            // Crea direttamente il pacchetto di livello Network
+            var networkLayer = new NetworkLayer(
+                interfaceType,
+                version,
+                recipientId,
+                new byte[] { cryptFlag, 0, 0 ,0 ,0, 0, 0, cmdInit, cmdOpt }.Concat(payload).ToArray(),
+                true
+            );
 
             // stampa il pacchetto dell'application layer
-            richTextBoxTx.AppendText("-- APPLICATION 1 --\n");
-            richTextBoxTx.AppendText($"{string.Join(" ", appLayer.ApplicationPacket.Select(b => b.ToString("X2")))}\n");
-
-            // Aggiungi il livello di trasporto
-            byte cryptFlag = 0x00;  // Nessuna crittografia
-            int senderId = 8;       // ID del mittente
-            var transportLayer = new TransportLayer(cryptFlag, senderId, appLayer.ApplicationPacket);
+            richTextBoxTx.AppendText("-- APPLICATION --\n");
+            richTextBoxTx.AppendText($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}\n");
 
             // stampa il pacchetto del transport layer
-            richTextBoxTx.AppendText("-- TRANSPORT 1 --\n");
-            richTextBoxTx.AppendText($"{string.Join(" ", transportLayer.TransportPacket.Select(b => b.ToString("X2")))}\n");
-
-            // Aggiungi il livello di rete
-            string interfaceType = "can";
-            int version = 1; // Versione del protocollo
-            uint recipientId = RecipientId; // ID del destinatario
-            var networkLayer = new NetworkLayer(interfaceType, version, recipientId, transportLayer.TransportPacket);
+            richTextBoxTx.AppendText("-- TRANSPORT --\n");
+            richTextBoxTx.AppendText($"{string.Join(" ", networkLayer.TransportPacket.Select(b => b.ToString("X2")))}\n");
 
             // stampa i pacchetti del network layer
-            richTextBoxTx.AppendText("-- NETWORK 1 --\n");
+            richTextBoxTx.AppendText("-- NETWORK --\n");
             foreach (var item in networkLayer.NetworkPackets)
             {
                 // _netInfo, _recipientId, chunk
@@ -305,41 +311,13 @@ namespace StemPC
 
             // Ottieni i pacchetti suddivisi per il CAN
             var networkPackets = networkLayer.NetworkPackets;
+
             // Invia i pacchetti tramite CAN
             var packetManager = new PacketManager(recipientId);
 
             bool result = packetManager.SendThroughCAN(networkPackets);
 
-            //   // Esempio di utilizzo del PacketManager per inviare pacchetti tramite CAN e Bluetooth
-            ////   uint senderId = 8; // ID del mittente
-            ////   uint recipientId = RecipientId; // ID del destinatario
-            //   byte[] data = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0xFF, 0xFF, 0x01, 0x02, 0x10, 0x20, 030 }; // Dati del pacchetto da inviare
-
-            //   //// Creazione di un pacchetto di livello di rete con dati
-            //   NetworkLayer networkLayer2 = new NetworkLayer("can", 1, recipientId, data, true);
-
-            //   // Configurazione del PacketManager
-            ////   PacketManager packetManager2 = new PacketManager(senderId);
-
-            //   // stampa il pacchetto dell'application layer
-            //   richTextBoxTx.AppendText("-- APPLICATION 2--\n");
-            //   richTextBoxTx.AppendText($"{string.Join(" ", networkLayer2.ApplicationPacket.Select(b => b.ToString("X2")))}\n");
-
-            //   // stampa il pacchetto del transport layer
-            //   richTextBoxTx.AppendText("-- TRANSPORT 2--\n");
-            //   richTextBoxTx.AppendText($"{string.Join(" ", networkLayer2.TransportPacket.Select(b => b.ToString("X2")))}\n");
-
-            //   // stampa i pacchetti del network layer
-            //   richTextBoxTx.AppendText("-- NETWORK 2--\n");
-            //   foreach (var item in networkLayer2.NetworkPackets)
-            //   {
-            //       // _netInfo, _recipientId, chunk
-            //       richTextBoxTx.AppendText($"NetInfo: {string.Join(" ", item.Item1.Select(b => b.ToString("X2")))} ");
-            //       richTextBoxTx.AppendText($"Id: {item.Item2.ToString("X2")} ");
-            //       richTextBoxTx.AppendText($"Chunk: {string.Join(" ", item.Item3.Select(b => b.ToString("X2")))}\n");
-            //   }
-
-
+ 
             //// Simulazione invio di pacchetti tramite CAN
             //List<Tuple<byte[], uint, byte[]>> canPackets = networkLayer.NetworkPackets;
             //bool sentThroughCan = packetManager.SendThroughCAN(canPackets);
