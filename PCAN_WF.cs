@@ -249,15 +249,15 @@ public partial class CanTabPage : TabPage
                 string hexString = string.Join(" ", canMessage.DATA.Select(b => b.ToString("X2")));
 
 
-                Form1.FormRef.UpdateTerminal($"{timestamp} - TX: ID=0x{canMessage.ID:X} Dati={hexString}");
+                // Form1.FormRef.UpdateTerminal($"{timestamp} - TX: ID=0x{canMessage.ID:X} Dati={hexString}");
 
-                //// Aggiungi il messaggio al ListView con colore verde
-                //var listViewItem = new ListViewItem($"{timestamp} - TX: ID=0x{canMessage.ID:X} Dati={hexString}")
-                //{
-                //    ForeColor = Color.Green
-                //};
-                //receivedMessagesView.Items.Add(listViewItem);
-                //receivedMessagesView.EnsureVisible(receivedMessagesView.Items.Count - 1); // Scrolla all'ultimo messaggio
+                // Aggiungi il messaggio al ListView con colore verde
+                var listViewItem = new ListViewItem($"{timestamp} - TX: ID=0x{canMessage.ID:X} Dati={hexString}")
+                {
+                    ForeColor = Color.Green
+                };
+                receivedMessagesView.Items.Add(listViewItem);
+                receivedMessagesView.EnsureVisible(receivedMessagesView.Items.Count - 1); // Scrolla all'ultimo messaggio
             }
             else
             {
