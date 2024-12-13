@@ -287,7 +287,7 @@ namespace StemPC
                 interfaceType,
                 version,
                 recipientId,
-                new byte[] { cryptFlag, 0, 0 ,0 ,0, 0, 0, cmdInit, cmdOpt }.Concat(payload).ToArray(),
+                new byte[] { cryptFlag, (byte)senderId, (byte)(senderId>>8), (byte)(senderId >> 16), (byte)(senderId >> 24), 0, 0, cmdInit, cmdOpt }.Concat(payload).ToArray(),
                 true
             );
 
