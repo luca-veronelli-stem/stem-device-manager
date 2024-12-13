@@ -54,11 +54,12 @@ namespace StemPC
         List<ExcelHandler.CommandData> Comandi;
         ExcelHandler hExcel;
 
-        //**************************
-        //  STEM Protocol variables
-        //**************************
+        //**********************************
+        //  STEM Protocol variables/classes
+        //**********************************
         public uint RecipientId;
         public short SelectedCommand;
+        public RollingCodeGenerator RollingCodeGen;
 
         //**************************
         //  public Elements instances
@@ -103,6 +104,7 @@ namespace StemPC
 
             RecipientId = 0;
             SelectedCommand = 0;
+            RollingCodeGen = new RollingCodeGenerator();
 
             _terminal.WriteLog("--------------------------------------------------------------------");
             // Stampa i risultati (per verifica)

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using StemPC;
+
 public class Layer
 {
     protected byte[] _data;
@@ -367,8 +369,7 @@ public class NetworkLayer : TransportLayer
         _networkPackets = new List<Tuple<byte[], uint, byte[]>>();
         int remainingChunks = chunks.Count - 1;
         //rolling code del packid
-        if (packetId < 7) packetId++;
-        else packetId = 0;
+        packetId=Form1.FormRef.RollingCodeGen.GetIndex();
         //indicatore primo chunck
         int setLength = 1;
 
