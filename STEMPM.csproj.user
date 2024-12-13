@@ -4,6 +4,9 @@
     <_LastSelectedProfileId>C:\Users\Michele\OneDrive\Dati\Lavoro\VSProjects\StemProtocolCompanion\Properties\PublishProfiles\FolderProfile.pubxml</_LastSelectedProfileId>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Update="CAN_WF_Tab.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Update="Form1.cs">
       <SubType>Form</SubType>
     </Compile>

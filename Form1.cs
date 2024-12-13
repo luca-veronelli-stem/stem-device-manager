@@ -67,7 +67,7 @@ namespace StemPC
         //**************************
         //  public Elements instances
         //**************************
-        public CanTabPage CanTabPageRef { get; private set; }
+        public CANInterfaceTab CanTabPageRef { get; private set; }
         public static Form1 FormRef { get; private set; }
 
         public Form1()
@@ -82,7 +82,7 @@ namespace StemPC
             RollingCodeGen = new RollingCodeGenerator();
 
 
-            CanTabPageRef = new CanTabPage();
+            CanTabPageRef = new CANInterfaceTab();
             //aggiungi tabcan
             tabControl.TabPages.Add(CanTabPageRef);
 
