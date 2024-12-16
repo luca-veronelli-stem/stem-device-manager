@@ -2,6 +2,7 @@ using Microsoft.VisualBasic.Logging;
 using System.Windows.Forms;
 using System.IO.Ports; // used for serial port
 using PS_PacketManager;
+using static NetworkLayer;
 
 namespace StemPC
 {
@@ -81,8 +82,8 @@ namespace StemPC
             senderId = 8;
             RollingCodeGen = new RollingCodeGenerator();
 
-
             CanTabPageRef = new CANInterfaceTab();
+            
             //aggiungi tabcan
             tabControl.TabPages.Add(CanTabPageRef);
 
@@ -339,11 +340,17 @@ namespace StemPC
             SelectedCommand = (short) comboBoxCommand.SelectedIndex;
         }
 
-        public void DecodeCommandSP(byte[] payload)
+        // Metodo per gestire l'evento
+        public void DecodeCommandSP(object sender, PacketReadyEventArgs e)
         {
+            // Accesso all'array di byte ricevuto
+            byte[] payload = e.Packet;
+            //  public void DecodeCommandSP(byte[] payload)
+            //byte[] payload = { 1, 2, 3, 4 };
+
             if (payload[1] < Comandi.Count)
             {
-                richTextBoxTx.AppendText($"Risposta a comando {Comandi[payload[1]].Name} ricevuta1!");
+                richTextBoxTx.AppendText($"Comando '{Comandi[payload[1]].Name} ' ricevuto!\r\n");
                 
             }
         }

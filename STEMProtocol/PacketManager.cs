@@ -153,7 +153,7 @@ namespace PS_PacketManager
 
         public void ProcessCANPacket(CANMessage msg)
         {
-            if (msg.ArbitrationId == _id)
+            if ((msg.ArbitrationId == _id)|| (_id == 0xFFFFFFFF))
             {
                 if (msg.IsErrorFrame)
                 {
@@ -205,6 +205,10 @@ namespace PS_PacketManager
                 var unifiedPacket = packetQueues[packetId].SelectMany(chunk => chunk).ToArray();
                 packetQueues[packetId].Clear();
                 _networkPacket = new NetworkLayer(interfaceType, version, _id, unifiedPacket, true);
+
+                // Sottoscrizione all'evento
+                _networkPacket.SP_PacketReadyEvent += Form1.FormRef.DecodeCommandSP;
+
                 //Packet is ready, decode it
                 _networkPacket.SP_PacketReady();
             }

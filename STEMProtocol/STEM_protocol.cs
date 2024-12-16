@@ -243,6 +243,11 @@ public class TransportLayer : ApplicationLayer
 
 public class NetworkLayer : TransportLayer
 {
+    // Delegate per definire il tipo dell'evento con array di byte
+    public delegate void PacketReadyEventHandler(object sender, PacketReadyEventArgs e);
+    // Evento che altre classi possono sottoscrivere
+    public event PacketReadyEventHandler SP_PacketReadyEvent;
+
     private string _interface;
     private int _version;
     private uint _recipientId;
@@ -400,11 +405,28 @@ public class NetworkLayer : TransportLayer
 
     public void SP_PacketReady()
     {
-        //Se il transport layer è a posto
+        // Logica per verificare che il transport layer sia a posto
+        // ...
 
-        Form1.FormRef.DecodeCommandSP(ApplicationPacket);
-        //decodifica l'app layer e mettilo nel RichTextBoxTx
+        // Emettere l'evento con il pacchetto ricevuto
+        OnSP_PacketReady(ApplicationPacket);
+    }
 
+    // Metodo protetto per emettere l'evento
+    protected virtual void OnSP_PacketReady(byte[] receivedPacket)
+    {
+        SP_PacketReadyEvent?.Invoke(this, new PacketReadyEventArgs(receivedPacket));
+    }
+
+    // Classe per passare dati personalizzati con l'evento
+    public class PacketReadyEventArgs : EventArgs
+    {
+        public byte[] Packet { get; }
+
+        public PacketReadyEventArgs(byte[] packet)
+        {
+            Packet = packet;
+        }
     }
 }
 

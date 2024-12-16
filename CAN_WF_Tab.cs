@@ -29,12 +29,13 @@ public partial class CANInterfaceTab : TabPage
 
   //  private ObservableCollection<CanMessagePCAN> messages = new ObservableCollection<CanMessagePCAN>();
 
-   private PacketManager RXpacketManager;
+    public PacketManager RXpacketManager;
 
     public CANInterfaceTab()
     {
         InitializeComponents();
-        RXpacketManager = new PacketManager(Form1.FormRef.senderId);
+     //   RXpacketManager = new PacketManager(Form1.FormRef.senderId);
+        RXpacketManager = new PacketManager(0xFFFFFFFF); 
         InitializePCANManager();
     }
 
@@ -131,9 +132,28 @@ public partial class CANInterfaceTab : TabPage
         _receivedMessagesView.Items.Add(listViewItem);
         _receivedMessagesView.EnsureVisible(_receivedMessagesView.Items.Count - 1);
 
-        //decodifica protocollo
+        //aggiungi i messaggi alla coda del network layer
         CANMessage RxMessage = new CANMessage(e.ArbitrationId, e.Data, false);
         RXpacketManager.ProcessCANPacket(RxMessage);
+        
+
+        //// stampa il pacchetto dell'application layer
+        //richTextBoxTx.AppendText("-- APPLICATION --\n");
+        //richTextBoxTx.AppendText($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}\n");
+
+        //// stampa il pacchetto del transport layer
+        //richTextBoxTx.AppendText("-- TRANSPORT --\n");
+        //richTextBoxTx.AppendText($"{string.Join(" ", networkLayer.TransportPacket.Select(b => b.ToString("X2")))}\n");
+
+        //// stampa i pacchetti del network layer
+        //richTextBoxTx.AppendText("-- NETWORK --\n");
+        //foreach (var item in networkLayer.NetworkPackets)
+        //{
+        //    // _netInfo, _recipientId, chunk
+        //    richTextBoxTx.AppendText($"NetInfo: {string.Join(" ", item.Item1.Select(b => b.ToString("X2")))} ");
+        //    richTextBoxTx.AppendText($"Id: {item.Item2.ToString("X2")} ");
+        //    richTextBoxTx.AppendText($"Chunk: {string.Join(" ", item.Item3.Select(b => b.ToString("X2")))}\n");
+        //}
 
     }
 
