@@ -345,13 +345,33 @@ namespace StemPC
         {
             // Accesso all'array di byte ricevuto
             byte[] payload = e.Packet;
-            //  public void DecodeCommandSP(byte[] payload)
-            //byte[] payload = { 1, 2, 3, 4 };
+            uint sourceAddress = e.SourceAddress;
+            uint destinationAddress = e.DestinationAddress;
+
+            //ricerca il nome della macchina 
+            string MachineName = new string("None");
+            string MachineNameRecipient = new string("None");
+
+            foreach (ExcelHandler.RowData Item in IndirizziProtocollo)
+            {
+                if(Item.Indirizzo == "0x" + sourceAddress.ToString("X8"))
+                {
+                    MachineName = Item.Macchina + "->" + Item.Scheda;
+                }
+            }
+
+            foreach (ExcelHandler.RowData Item in IndirizziProtocollo)
+            {
+                if (Item.Indirizzo == "0x" + destinationAddress.ToString("X8"))
+                {
+                    MachineNameRecipient = Item.Macchina + "->" + Item.Scheda;
+                }
+            }
 
             if (payload[1] < Comandi.Count)
             {
-                richTextBoxTx.AppendText($"Comando '{Comandi[payload[1]].Name} ' ricevuto!\r\n");
-                
+                //      richTextBoxTx.AppendText($"Comando '{Comandi[payload[1]].Name} ' ricevuto da {sourceAddress.ToString("X8")} per {destinationAddress.ToString("X8")} \r\n");
+                richTextBoxTx.AppendText($"Comando '{Comandi[payload[1]].Name} ' ricevuto da {MachineName} per {MachineNameRecipient} \r\n");
             }
         }
     }

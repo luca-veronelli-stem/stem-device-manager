@@ -8,6 +8,7 @@ using System.Collections.Concurrent;
 using System.Windows.Forms;
 
 using StemPC;
+using static NetworkLayer;
 
 
 namespace PS_PacketManager
@@ -15,14 +16,18 @@ namespace PS_PacketManager
     public class PacketManager
     {
         private uint _id;
+        private uint _sniffer_id;
         private bool _canRunning = false;
         private bool _bluetoothRunning = false;
         private Dictionary<int, List<byte[]>> packetQueues = new Dictionary<int, List<byte[]>>();
         private NetworkLayer _networkPacket;
 
+        public List<PacketReadyEventHandler> PacketReadyEventList;
+
         public PacketManager(uint id)
         {
             _id = id;
+            PacketReadyEventList=new List<PacketReadyEventHandler>();
         }
 
         public uint Id
@@ -47,6 +52,11 @@ namespace PS_PacketManager
         {
             get { return _networkPacket; }
             set { _networkPacket = value; }
+        }
+
+        public void RegisterPacketReadyEvent(PacketReadyEventHandler Handler)
+        {
+            PacketReadyEventList.Add(Handler);
         }
 
         public bool SendThroughCAN(List<Tuple<byte[], uint, byte[]>> networkPackets)
@@ -155,12 +165,16 @@ namespace PS_PacketManager
         {
             if ((msg.ArbitrationId == _id)|| (_id == 0xFFFFFFFF))
             {
+                _sniffer_id = _id;
+                if (_id == 0xFFFFFFFF) _sniffer_id = msg.ArbitrationId;
+                
                 if (msg.IsErrorFrame)
                 {
                   //  Console.WriteLine("Error Frame");
                 }
                 else
                 {
+                    
                     ProcessPacket("can", msg.Data);
                 }
             }
@@ -169,15 +183,22 @@ namespace PS_PacketManager
         public void ProcessBLEPacket(byte[] packet)
         {
             Console.WriteLine($"Message received: {BitConverter.ToString(packet)}");
-            var recipientId = BitConverter.ToInt32(packet, 2);
+            var recipientId = BitConverter.ToUInt32(packet, 2);
             if (recipientId == _id)
             {
+                _sniffer_id = _id;
                 var data = packet.Take(2).Concat(packet.Skip(6)).ToArray();
                 ProcessPacket("ble", data);
             }
-            else
+            else if (recipientId == 0xFFFFFFFF) 
             {
-                Console.WriteLine($"Recipient ID mismatch: {recipientId} != {_id}");
+                 _sniffer_id = recipientId;
+                 var data = packet.Take(2).Concat(packet.Skip(6)).ToArray();
+                 ProcessPacket("ble", data);
+            }
+            else 
+            {
+                 Console.WriteLine($"Recipient ID mismatch: {recipientId} != {_id}");
             }
         }
 
@@ -204,10 +225,13 @@ namespace PS_PacketManager
             {
                 var unifiedPacket = packetQueues[packetId].SelectMany(chunk => chunk).ToArray();
                 packetQueues[packetId].Clear();
-                _networkPacket = new NetworkLayer(interfaceType, version, _id, unifiedPacket, true);
+                _networkPacket = new NetworkLayer(interfaceType, version, _sniffer_id, unifiedPacket, true);
 
-                // Sottoscrizione all'evento
-                _networkPacket.SP_PacketReadyEvent += Form1.FormRef.DecodeCommandSP;
+                // Sottoscrizione degli eventi
+                foreach (PacketReadyEventHandler Handler in PacketReadyEventList)
+                {
+                    _networkPacket.SP_PacketReadyEvent += Handler;
+                }
 
                 //Packet is ready, decode it
                 _networkPacket.SP_PacketReady();

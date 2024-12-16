@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
 using StemPC;
 
 public class Layer
@@ -406,26 +405,30 @@ public class NetworkLayer : TransportLayer
     public void SP_PacketReady()
     {
         // Logica per verificare che il transport layer sia a posto
-        // ...
+        uint Source_Address = (((uint)TransportPacket[4]) << 24) | (((uint)TransportPacket[3]) << 16) | (((uint)TransportPacket[2]) << 8) | (((uint)TransportPacket[1]));
 
         // Emettere l'evento con il pacchetto ricevuto
-        OnSP_PacketReady(ApplicationPacket);
+        OnSP_PacketReady(ApplicationPacket, Source_Address, _recipientId);
     }
 
     // Metodo protetto per emettere l'evento
-    protected virtual void OnSP_PacketReady(byte[] receivedPacket)
+    protected virtual void OnSP_PacketReady(byte[] receivedPacket, uint sourceAddress, uint destinationAddress)
     {
-        SP_PacketReadyEvent?.Invoke(this, new PacketReadyEventArgs(receivedPacket));
+        SP_PacketReadyEvent?.Invoke(this, new PacketReadyEventArgs(receivedPacket, sourceAddress, destinationAddress));
     }
 
     // Classe per passare dati personalizzati con l'evento
     public class PacketReadyEventArgs : EventArgs
     {
         public byte[] Packet { get; }
+        public uint SourceAddress { get; }
+        public uint DestinationAddress { get; }
 
-        public PacketReadyEventArgs(byte[] packet)
+        public PacketReadyEventArgs(byte[] packet, uint sourceAddress, uint destinationAddress)
         {
             Packet = packet;
+            SourceAddress = sourceAddress;
+            DestinationAddress = destinationAddress;
         }
     }
 }
