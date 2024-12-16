@@ -22,35 +22,44 @@ namespace PS_BootManager
         // Dimensione blocco firmware
         private const int FIRMWARE_BLOCK_SIZE = 1024;
 
-        public BootManager()
-        {
+        //Path del firmware
+        private string _firmwareName;
+        private uint _recipientId;
+        public int currentOffset;
+        public int totalLength;
 
+        public BootManager(uint RecipientId, string FirmwareName)
+        {
+            _recipientId=RecipientId;
+            _firmwareName=FirmwareName;
         }
 
-        public async void btnSelectFirmware_Click(object sender, EventArgs e)
-        {
-            using (OpenFileDialog openFileDialog = new OpenFileDialog())
-            {
-                openFileDialog.Filter = "Binary Files (*.bin)|*.bin|All files (*.*)|*.*";
+        //public async void btnSelectFirmware_Click(object sender, EventArgs e)
+        //{
+        //    using (OpenFileDialog openFileDialog = new OpenFileDialog())
+        //    {
+        //        openFileDialog.Filter = "Binary Files (*.bin)|*.bin|All files (*.*)|*.*";
 
-                if (openFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    try
-                    {
-                        await UploadFirmware(openFileDialog.FileName);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Errore durante l'upload: {ex.Message}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
-            }
-        }
+        //        if (openFileDialog.ShowDialog() == DialogResult.OK)
+        //        {
+        //            try
+        //            {
+        //                await UploadFirmware(openFileDialog.FileName);
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                MessageBox.Show($"Errore durante l'upload: {ex.Message}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        //            }
+        //        }
+        //    }
+        //}
 
         private async Task UploadFirmware(string firmwarePath)
         {
             // Legge il firmware
             byte[] firmwareData = File.ReadAllBytes(firmwarePath);
+            totalLength = firmwareData.Length;
+            currentOffset = 0;
 
             // 1. Avvio procedura
             await SendCanCommand(CMD_START_PROCEDURE);
@@ -64,8 +73,10 @@ namespace PS_BootManager
                 // Invia il blocco
                 await SendFirmwareBlock(currentBlock, offset);
 
-                // Aggiorna progress bar
-                UpdateProgressBar(offset, firmwareData.Length);
+                currentOffset=offset;
+
+                //// Aggiorna progress bar
+                //UpdateProgressBar(offset, firmwareData.Length);
             }
 
             // 3. Comando di fine procedura
@@ -85,7 +96,15 @@ namespace PS_BootManager
 
         private async Task SendCanCommand(ushort command)
         {
-
+            try
+            {
+                // Implementazione invio comando CAN
+              //  await _canCommunication.SendCommand(command);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Errore durante l'invio del comando {command:X4}: {ex.Message}");
+            }
         }
 
         private async Task SendFirmwareBlock(byte[] block, int offset)
@@ -93,7 +112,7 @@ namespace PS_BootManager
             try
             {
                 // Invia blocco firmware al dispositivo CAN
-                await _canCommunication.SendFirmwareBlock(block, offset);
+              //  await _canCommunication.SendFirmwareBlock(block, offset);
             }
             catch (Exception ex)
             {
@@ -101,33 +120,33 @@ namespace PS_BootManager
             }
         }
 
-        private void UpdateProgressBar(int currentOffset, int totalLength)
-        {
-            // Aggiorna la progress bar in modo thread-safe
-            if (progressBarFirmware.InvokeRequired)
-            {
-                progressBarFirmware.Invoke(new Action(() =>
-                    progressBarFirmware.Value = (int)((double)currentOffset / totalLength * 100)));
-            }
-            else
-            {
-                progressBarFirmware.Value = (int)((double)currentOffset / totalLength * 100);
-            }
-        }
+        //private void UpdateProgressBar(int currentOffset, int totalLength)
+        //{
+        //    // Aggiorna la progress bar in modo thread-safe
+        //    if (progressBarFirmware.InvokeRequired)
+        //    {
+        //        progressBarFirmware.Invoke(new Action(() =>
+        //            progressBarFirmware.Value = (int)((double)currentOffset / totalLength * 100)));
+        //    }
+        //    else
+        //    {
+        //        progressBarFirmware.Value = (int)((double)currentOffset / totalLength * 100);
+        //    }
+        //}
 
-        public async Task SendFirmwareBlock(byte[] block, int offset)
-        {
-            // TODO: Implementare invio blocco firmware tramite CAN
-            // Includere logica di indirizzamento e sequenziamento
-            await Task.CompletedTask;
-        }
+        //public async Task SendFirmwareBlock(byte[] block, int offset)
+        //{
+        //    // TODO: Implementare invio blocco firmware tramite CAN
+        //    // Includere logica di indirizzamento e sequenziamento
+        //    await Task.CompletedTask;
+        //}
 
-        public async Task SendCommand(ushort command)
-        {
-            // TODO: Implementare logica di invio comando specifico per protocollo CAN
-            // Potrebbe utilizzare una libreria come PEAK-System, Vector, ecc.
-            await Task.CompletedTask;
-        }
+        //public async Task SendCommand(ushort command)
+        //{
+        //    // TODO: Implementare logica di invio comando specifico per protocollo CAN
+        //    // Potrebbe utilizzare una libreria come PEAK-System, Vector, ecc.
+        //    await Task.CompletedTask;
+        //}
     }
 }
 
