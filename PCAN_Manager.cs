@@ -144,8 +144,14 @@ public class PCANManager
 
     private async Task ReadCANMessagesAsync()
     {
-        while (_isConnected)
+        while (true)
         {
+            if (!_isConnected)
+            {
+                await Task.Delay(500); // Attendi finché non viene ristabilita la connessione
+                continue;
+            }
+
             try
             {
                 TPCANMsg canMessage;
@@ -168,14 +174,14 @@ public class PCANManager
                     // Gestione errori
                     StringBuilder errorTextB = new StringBuilder(256);
                     PCANBasic.GetErrorText(result, 0, errorTextB);
+                    ErrorOccurred?.Invoke(this, errorTextB.ToString());
                 }
 
                 await Task.Delay(50); // Riduzione carico CPU
             }
             catch (Exception ex)
             {
-                // Log dell'eccezione
-                Console.WriteLine($"Errore durante la lettura: {ex.Message}");
+                ErrorOccurred?.Invoke(this, $"Errore durante la lettura: {ex.Message}");
             }
         }
     }

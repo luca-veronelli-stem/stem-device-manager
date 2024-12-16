@@ -47,8 +47,10 @@ public partial class CANInterfaceTab : TabPage
         _pcanManager.ErrorOccurred += OnErrorOccurred;
 
         UpdateConnectionStatus(_pcanManager.IsConnected); //primo update asincrono della label, poi si avvia il pcan
-        
-        _pcanManager.StartReading();
+        if (_pcanManager.IsConnected)
+        {
+            _pcanManager.StartReading();
+        }
     }
 
     private void UpdateConnectionStatus(bool isConnected)
