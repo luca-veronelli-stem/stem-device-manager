@@ -93,18 +93,19 @@ public class PCANManager
                         var reconnectResult = PCANBasic.Initialize(Channel, _currentBaudRate);
                         IsConnected = reconnectResult == TPCANStatus.PCAN_ERROR_OK;
 
-                        if (!IsConnected)
+                        if (IsConnected)
                         {
-                            await Task.Delay(1000); // Attesa prima del prossimo tentativo
+                            // Riavvia il ciclo di lettura
+                            StartReading();
+                            ConnectionStatusChanged?.Invoke(this, true);
                         }
                     }
-                    else
+                    else if (!IsConnected)
                     {
-                        // Assicura che lo stato sia correttamente impostato se la connessione è attiva
-                        if (!IsConnected)
-                        {
-                            IsConnected = true;
-                        }
+                        // Riconnessione automatica
+                        IsConnected = true;
+                        StartReading();
+                        ConnectionStatusChanged?.Invoke(this, true);
                     }
                 }
                 catch (Exception ex)
