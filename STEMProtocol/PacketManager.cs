@@ -193,8 +193,11 @@ namespace PS_PacketManager
             var version = netInfo & 0x03;
 
             if (!packetQueues.ContainsKey(packetId))
+            {
+                //Azzera la lista pacchetti ricevuti ad ogni cambio di Id
                 packetQueues[packetId] = new List<byte[]>();
-
+            } 
+                
             packetQueues[packetId].Add(packetChunkBytes);
 
             if (remainingChunks == 0)

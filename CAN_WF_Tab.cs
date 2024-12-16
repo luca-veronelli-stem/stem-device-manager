@@ -29,11 +29,12 @@ public partial class CANInterfaceTab : TabPage
 
   //  private ObservableCollection<CanMessagePCAN> messages = new ObservableCollection<CanMessagePCAN>();
 
-   // private PacketManager RXpacketManager;
+   private PacketManager RXpacketManager;
 
     public CANInterfaceTab()
     {
         InitializeComponents();
+        RXpacketManager = new PacketManager(Form1.FormRef.senderId);
         InitializePCANManager();
     }
 
@@ -129,6 +130,11 @@ public partial class CANInterfaceTab : TabPage
 
         _receivedMessagesView.Items.Add(listViewItem);
         _receivedMessagesView.EnsureVisible(_receivedMessagesView.Items.Count - 1);
+
+        //decodifica protocollo
+        CANMessage RxMessage = new CANMessage(e.ArbitrationId, e.Data, false);
+        RXpacketManager.ProcessCANPacket(RxMessage);
+
     }
 
     private void InitializeComponents()

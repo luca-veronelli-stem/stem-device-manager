@@ -288,7 +288,7 @@ namespace StemPC
             
             //NL
             string interfaceType = "can";   // Interfaccia CAN
-            int version = 1;               // Versione del protocollo
+            int version = 1;                // Versione del protocollo
             uint recipientId = RecipientId; // ID del destinatario
 
 
@@ -323,7 +323,7 @@ namespace StemPC
             var networkPackets = networkLayer.NetworkPackets;
 
             // Invia i pacchetti tramite CAN
-            var packetManager = new PacketManager(recipientId);
+            var packetManager = new PacketManager(senderId);
 
             bool result = packetManager.SendThroughCAN(networkPackets);
 
