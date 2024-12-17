@@ -349,8 +349,8 @@ namespace StemPC
             uint destinationAddress = e.DestinationAddress;
 
             //ricerca il nome della macchina 
-            string MachineName = new string("None");
-            string MachineNameRecipient = new string("None");
+            string MachineName = new string("Non in tabella");
+            string MachineNameRecipient = new string("Non in tabella");
 
             foreach (ExcelHandler.RowData Item in IndirizziProtocollo)
             {
@@ -368,17 +368,40 @@ namespace StemPC
                 }
             }
 
-            if (payload[1] < Comandi.Count)
+            //find command and decode application layer
+            ExcelHandler.CommandData CurrentCommand= new ExcelHandler.CommandData("None","0","0");
+
+            foreach (ExcelHandler.CommandData Item in Comandi)
             {
-                //      richTextBoxTx.AppendText($"Comando '{Comandi[payload[1]].Name} ' ricevuto da {sourceAddress.ToString("X8")} per {destinationAddress.ToString("X8")} \r\n");
-                richTextBoxTx.AppendText($"Comando '{Comandi[payload[1]].Name} ' ricevuto da {MachineName} per {MachineNameRecipient}: ");
-                richTextBoxTx.AppendText("( ");
-                for (int i = 0; i < payload.Count(); i++)
+                byte CmdL = Convert.FromHexString(Item.CmdL.PadLeft(2, '0'))[0];
+                byte CmdH = Convert.FromHexString(Item.CmdH.PadLeft(2, '0'))[0];
+                if ((payload[0]== CmdH) && (payload[1] == CmdL))
                 {
-                    richTextBoxTx.AppendText(payload[i].ToString("X2") + " ");
+                    CurrentCommand = Item;
+                    break;
                 }
-                richTextBoxTx.AppendText(" )\r\n");
             }
+
+           if (CurrentCommand.Name != "None")
+            {
+                //comando riconosciuto
+                richTextBoxTx.AppendText($"Comando '{CurrentCommand.Name} ' ricevuto da {MachineName} per {MachineNameRecipient}: ");
+            }
+            else
+            {
+                //comando non riconosciuto
+                richTextBoxTx.AppendText("Comando non presente in dizionario: ");
+            }
+
+           //RAW application layer data
+            richTextBoxTx.AppendText("( ");
+            for (int i = 0; i < payload.Count(); i++)
+            {
+                richTextBoxTx.AppendText(payload[i].ToString("X2") + " ");
+            }
+            richTextBoxTx.AppendText(" )\r\n");
         }
+
+       
     }
 }
