@@ -60,7 +60,7 @@ public class Boot_Interface_Tab : TabPage
         // Pulsante per avviare la procedura
         btnStartProcedure = new System.Windows.Forms.Button
         {
-            Text = "Download",
+            Text = "Upload Firmware",
             Width = 120
         };
         btnStartProcedure.Click += BtnStartProcedure_Click;
@@ -164,8 +164,14 @@ public class Boot_Interface_Tab : TabPage
         else
         {
             btnStartProcedure.Enabled = false;
+
+            //crea la classe di upload
             BootManager BootHldr = new BootManager(Form1.FormRef.RecipientId, filePath);
             BootHldr.ProgressChanged += UpdateProgressBar;
+
+            //esegui l'upload
+            BootHldr.UploadFirmware();  
+
             btnStartProcedure.Enabled = true;
         }
     }

@@ -64,7 +64,7 @@ namespace Stem_Protocol.BootManager
         //    }
         //}
 
-        public async Task UploadFirmware(string firmwarePath)
+        public async Task UploadFirmware()
         {
             // 1. Avvio procedura
             await SendCanCommand(CMD_START_PROCEDURE);
@@ -80,8 +80,8 @@ namespace Stem_Protocol.BootManager
 
                 currentOffset=offset;
 
-                //// Aggiorna progress bar
-                //UpdateProgressBar(offset, firmwareData.Length);
+                // Aggiorna progress bar
+                OnProgressChanged(currentOffset, totalLength);
             }
 
             // 3. Comando di fine procedura
@@ -117,7 +117,10 @@ namespace Stem_Protocol.BootManager
             try
             {
                 // Invia blocco firmware al dispositivo CAN
-              //  await _canCommunication.SendFirmwareBlock(block, offset);
+                //  await _canCommunication.SendFirmwareBlock(block, offset);
+
+                // Simulazione di un lavoro lungo
+                Thread.Sleep(100);
             }
             catch (Exception ex)
             {
