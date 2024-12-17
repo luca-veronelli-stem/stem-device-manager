@@ -6,12 +6,13 @@ using System.Linq;
 using System.Threading;
 using System.Collections.Concurrent;
 using System.Windows.Forms;
+using Stem_Protocol;
 
+//using static NetworkLayer;
 using StemPC;
-using static NetworkLayer;
 
 
-namespace PS_PacketManager
+namespace Stem_Protocol.PacketManager
 {
     public class PacketManager
     {
@@ -22,12 +23,12 @@ namespace PS_PacketManager
         private Dictionary<int, List<byte[]>> packetQueues = new Dictionary<int, List<byte[]>>();
         private NetworkLayer _networkPacket;
 
-        public List<PacketReadyEventHandler> PacketReadyEventList;
+        public List<NetworkLayer.PacketReadyEventHandler> PacketReadyEventList;
 
         public PacketManager(uint id)
         {
             _id = id;
-            PacketReadyEventList=new List<PacketReadyEventHandler>();
+            PacketReadyEventList=new List<NetworkLayer.PacketReadyEventHandler>();
         }
 
         public uint Id
@@ -54,7 +55,7 @@ namespace PS_PacketManager
             set { _networkPacket = value; }
         }
 
-        public void RegisterPacketReadyEvent(PacketReadyEventHandler Handler)
+        public void RegisterPacketReadyEvent(NetworkLayer.PacketReadyEventHandler Handler)
         {
             PacketReadyEventList.Add(Handler);
         }
@@ -228,7 +229,7 @@ namespace PS_PacketManager
                 _networkPacket = new NetworkLayer(interfaceType, version, _sniffer_id, unifiedPacket, true);
 
                 // Sottoscrizione degli eventi
-                foreach (PacketReadyEventHandler Handler in PacketReadyEventList)
+                foreach (NetworkLayer.PacketReadyEventHandler Handler in PacketReadyEventList)
                 {
                     _networkPacket.SP_PacketReadyEvent += Handler;
                 }

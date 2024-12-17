@@ -8,9 +8,9 @@ using System.Windows.Forms;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Peak.Can.Basic;
 using Peak.Can.Basic.BackwardCompatibility;
-using StemPC;
+//using StemPC;
 using TPCANHandle = System.Byte;
-using PS_PacketManager;
+//using PS_PacketManager;
 
 // Classe per la gestione degli eventi di ricezione pacchetti
 public class CANPacketEventArgs : EventArgs

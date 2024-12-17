@@ -1,20 +1,23 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
+using System.Threading;
 
-public class RollingCodeGenerator
+namespace Stem_Protocol;
+
+public static class RollingCodeGenerator
 {
-    private byte RollingIndex;
+    private static int RollingIndex = 0; // Usa int
 
-    public RollingCodeGenerator()
+    public static byte GetIndex()
     {
-        RollingIndex = 0;
-    }
-
-    public byte GetIndex()
-    {
-        //rolling code del packid
-        if (RollingIndex < 7) RollingIndex++;
-        else RollingIndex = 0;
-        return RollingIndex;
+        int currentIndex;
+        do
+        {
+            currentIndex = RollingIndex;
+            int nextIndex = currentIndex < 7 ? currentIndex + 1 : 0;
+            if (Interlocked.CompareExchange(ref RollingIndex, nextIndex, currentIndex) == currentIndex)
+            {
+                return (byte)nextIndex; // Cast a byte
+            }
+        } while (true);
     }
 }

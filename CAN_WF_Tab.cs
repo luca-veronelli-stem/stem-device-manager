@@ -10,7 +10,8 @@ using Peak.Can.Basic;
 using Peak.Can.Basic.BackwardCompatibility;
 using StemPC;
 using TPCANHandle = System.Byte;
-using PS_PacketManager;
+using Stem_Protocol;
+using Stem_Protocol.PacketManager;
 
 
 // Classe per l'interfaccia grafica

@@ -6,11 +6,9 @@ using System.Linq;
 using System.Threading;
 using System.Collections.Concurrent;
 using System.Windows.Forms;
+using Stem_Protocol;
 
-using StemPC;
-using static NetworkLayer;
-
-namespace PS_BootManager
+namespace Stem_Protocol.BootManager
 {
     public class BootManager
     {

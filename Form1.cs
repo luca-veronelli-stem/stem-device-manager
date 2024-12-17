@@ -1,13 +1,18 @@
 using Microsoft.VisualBasic.Logging;
 using System.Windows.Forms;
 using System.IO.Ports; // used for serial port
-using PS_PacketManager;
-using static NetworkLayer;
+using Stem_Protocol;
+using Stem_Protocol.PacketManager;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+
+//using static NetworkLayer;
 
 namespace StemPC
 {
     public partial class Form1 : Form
     {
+        private const string Software_Version = "1.0";
+
         private UInt16 Prescaler1s = 0;
 
         //**************************
@@ -59,10 +64,9 @@ namespace StemPC
         //**********************************
         //  STEM Protocol variables/classes
         //**********************************
-        public uint RecipientId;
+        public uint  RecipientId;
         public short SelectedCommand;
-        public RollingCodeGenerator RollingCodeGen;
-        public uint senderId;              // ID del mittente
+        public uint  senderId;              // ID del mittente
 
 
         //**************************
@@ -75,12 +79,13 @@ namespace StemPC
         {
             InitializeComponent();
 
+            this.Text += Software_Version;
+
             FormRef = this;
 
             RecipientId = 0;
             SelectedCommand = 0;
             senderId = 8;
-            RollingCodeGen = new RollingCodeGenerator();
 
             CanTabPageRef = new CANInterfaceTab();
             
@@ -90,7 +95,7 @@ namespace StemPC
             _terminal = new Terminal(); // Inizializza l'istanza di Terminal
 
             _serialPortManager = new SerialPortManager("COM3", 19200); ;// Inizializza l'istanza di SerialManager
-            UpdateTerminal(DateTime.Now + ": Stem Protocol Manager v0.1");
+            UpdateTerminal(DateTime.Now + ": Stem Protocol Manager " + Software_Version);
             timerBaseTime.Enabled = true;
 
             // Ottieni tutte le porte seriali disponibili
@@ -319,6 +324,10 @@ namespace StemPC
                 richTextBoxTx.AppendText($"Id: {item.Item2.ToString("X2")} ");
                 richTextBoxTx.AppendText($"Chunk: {string.Join(" ", item.Item3.Select(b => b.ToString("X2")))}\n");
             }
+            // Imposta la posizione del cursore alla fine del testo.
+            richTextBoxTx.SelectionStart = richTextBoxTx.Text.Length;
+            // Esegue lo scroll fino alla posizione del cursore.
+            richTextBoxTx.ScrollToCaret();
 
             // Ottieni i pacchetti suddivisi per il CAN
             var networkPackets = networkLayer.NetworkPackets;
@@ -341,7 +350,7 @@ namespace StemPC
         }
 
         // Metodo per gestire l'evento
-        public void DecodeCommandSP(object sender, PacketReadyEventArgs e)
+        public void DecodeCommandSP(object sender, NetworkLayer.PacketReadyEventArgs e)
         {
             // Accesso all'array di byte ricevuto
             byte[] payload = e.Packet;
@@ -395,11 +404,15 @@ namespace StemPC
 
            //RAW application layer data
             richTextBoxTx.AppendText("( ");
-            for (int i = 0; i < payload.Count(); i++)
+            for (int i = 0; i < payload.Count()-2; i++)
             {
                 richTextBoxTx.AppendText(payload[i].ToString("X2") + " ");
             }
             richTextBoxTx.AppendText(" )\r\n");
+            // Imposta la posizione del cursore alla fine del testo.
+            richTextBoxTx.SelectionStart = richTextBoxTx.Text.Length;
+            // Esegue lo scroll fino alla posizione del cursore.
+            richTextBoxTx.ScrollToCaret();
         }
 
        

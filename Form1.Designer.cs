@@ -33,9 +33,6 @@
             timerBaseTime = new System.Windows.Forms.Timer(components);
             tableLayoutPanel1 = new TableLayoutPanel();
             tabControl = new TabControl();
-            tabPageCodeGen = new TabPage();
-            tableLayoutPanel2 = new TableLayoutPanel();
-            button1 = new Button();
             tabPageProtocol = new TabPage();
             tableLayoutPanelProtocol = new TableLayoutPanel();
             richTextBoxTx = new RichTextBox();
@@ -61,16 +58,19 @@
             label3 = new Label();
             buttonSendPS = new Button();
             label12 = new Label();
+            tabPageCodeGen = new TabPage();
+            tableLayoutPanel2 = new TableLayoutPanel();
+            button1 = new Button();
             tabPageUART = new TabPage();
             label1 = new Label();
             listBoxSerialPorts = new ListBox();
             terminalOut = new RichTextBox();
             tableLayoutPanel1.SuspendLayout();
             tabControl.SuspendLayout();
-            tabPageCodeGen.SuspendLayout();
-            tableLayoutPanel2.SuspendLayout();
             tabPageProtocol.SuspendLayout();
             tableLayoutPanelProtocol.SuspendLayout();
+            tabPageCodeGen.SuspendLayout();
+            tableLayoutPanel2.SuspendLayout();
             tabPageUART.SuspendLayout();
             SuspendLayout();
             // 
@@ -96,58 +96,14 @@
             // tabControl
             // 
             tabControl.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            tabControl.Controls.Add(tabPageCodeGen);
             tabControl.Controls.Add(tabPageProtocol);
+            tabControl.Controls.Add(tabPageCodeGen);
             tabControl.Controls.Add(tabPageUART);
             tabControl.Location = new Point(3, 3);
             tabControl.Name = "tabControl";
             tabControl.SelectedIndex = 0;
             tabControl.Size = new Size(794, 354);
             tabControl.TabIndex = 5;
-            // 
-            // tabPageCodeGen
-            // 
-            tabPageCodeGen.Controls.Add(tableLayoutPanel2);
-            tabPageCodeGen.Location = new Point(4, 24);
-            tabPageCodeGen.Name = "tabPageCodeGen";
-            tabPageCodeGen.Padding = new Padding(3);
-            tabPageCodeGen.Size = new Size(786, 326);
-            tabPageCodeGen.TabIndex = 1;
-            tabPageCodeGen.Text = "Code Gen";
-            tabPageCodeGen.UseVisualStyleBackColor = true;
-            // 
-            // tableLayoutPanel2
-            // 
-            tableLayoutPanel2.ColumnCount = 4;
-            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 27F));
-            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 27F));
-            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 27F));
-            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 19F));
-            tableLayoutPanel2.Controls.Add(button1, 3, 3);
-            tableLayoutPanel2.Dock = DockStyle.Fill;
-            tableLayoutPanel2.Location = new Point(3, 3);
-            tableLayoutPanel2.Name = "tableLayoutPanel2";
-            tableLayoutPanel2.RowCount = 4;
-            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
-            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
-            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
-            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
-            tableLayoutPanel2.Size = new Size(780, 320);
-            tableLayoutPanel2.TabIndex = 0;
-            // 
-            // button1
-            // 
-            button1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            button1.Image = (Image)resources.GetObject("button1.Image");
-            button1.ImageAlign = ContentAlignment.MiddleLeft;
-            button1.Location = new Point(633, 243);
-            button1.Name = "button1";
-            button1.Size = new Size(144, 74);
-            button1.TabIndex = 0;
-            button1.Text = "Generate code";
-            button1.TextImageRelation = TextImageRelation.ImageBeforeText;
-            button1.UseVisualStyleBackColor = true;
-            button1.Click += button1_Click;
             // 
             // tabPageProtocol
             // 
@@ -496,6 +452,50 @@
             label12.Text = "Indirizzo";
             label12.TextAlign = ContentAlignment.MiddleCenter;
             // 
+            // tabPageCodeGen
+            // 
+            tabPageCodeGen.Controls.Add(tableLayoutPanel2);
+            tabPageCodeGen.Location = new Point(4, 24);
+            tabPageCodeGen.Name = "tabPageCodeGen";
+            tabPageCodeGen.Padding = new Padding(3);
+            tabPageCodeGen.Size = new Size(786, 326);
+            tabPageCodeGen.TabIndex = 1;
+            tabPageCodeGen.Text = "Code Gen";
+            tabPageCodeGen.UseVisualStyleBackColor = true;
+            // 
+            // tableLayoutPanel2
+            // 
+            tableLayoutPanel2.ColumnCount = 4;
+            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 27F));
+            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 27F));
+            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 27F));
+            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 19F));
+            tableLayoutPanel2.Controls.Add(button1, 3, 3);
+            tableLayoutPanel2.Dock = DockStyle.Fill;
+            tableLayoutPanel2.Location = new Point(3, 3);
+            tableLayoutPanel2.Name = "tableLayoutPanel2";
+            tableLayoutPanel2.RowCount = 4;
+            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            tableLayoutPanel2.Size = new Size(780, 320);
+            tableLayoutPanel2.TabIndex = 0;
+            // 
+            // button1
+            // 
+            button1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            button1.Image = (Image)resources.GetObject("button1.Image");
+            button1.ImageAlign = ContentAlignment.MiddleLeft;
+            button1.Location = new Point(633, 243);
+            button1.Name = "button1";
+            button1.Size = new Size(144, 74);
+            button1.TabIndex = 0;
+            button1.Text = "Generate code";
+            button1.TextImageRelation = TextImageRelation.ImageBeforeText;
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += button1_Click;
+            // 
             // tabPageUART
             // 
             tabPageUART.Controls.Add(label1);
@@ -546,15 +546,15 @@
             Controls.Add(tableLayoutPanel1);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "Form1";
-            Text = "STEM Protocol Manager";
+            Text = "STEM Protocol Manager ";
             WindowState = FormWindowState.Maximized;
             tableLayoutPanel1.ResumeLayout(false);
             tabControl.ResumeLayout(false);
-            tabPageCodeGen.ResumeLayout(false);
-            tableLayoutPanel2.ResumeLayout(false);
             tabPageProtocol.ResumeLayout(false);
             tableLayoutPanelProtocol.ResumeLayout(false);
             tableLayoutPanelProtocol.PerformLayout();
+            tabPageCodeGen.ResumeLayout(false);
+            tableLayoutPanel2.ResumeLayout(false);
             tabPageUART.ResumeLayout(false);
             tabPageUART.PerformLayout();
             ResumeLayout(false);
