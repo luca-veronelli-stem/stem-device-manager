@@ -9,6 +9,7 @@ using StemPC;
 using Stem_Protocol;
 using Stem_Protocol.PacketManager;
 using Stem_Protocol.BootManager;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
 
 
 // Classe per l'interfaccia grafica del bootloader
@@ -170,12 +171,23 @@ public class Boot_Interface_Tab : TabPage
             //crea la classe di upload
             BootManager BootHldr = new BootManager(Form1.FormRef.RecipientId, filePath);
             BootHldr.ProgressChanged += UpdateProgressBar;
+            // Iscrizione all'evento SendCanCommand
+            BootHldr.SendCanCommandRequest += OnSendCanCommand;
 
             //esegui l'upload
             BootHldr.UploadFirmware();  
 
             btnStartProcedure.Enabled = true;
         }
+    }
+
+    // Gestore dell'evento send can command
+    private static void OnSendCanCommand(object sender, SendCanCommandEventArgs e)
+    {
+        byte[] AppData = { (byte)(e.Command >> 8), (byte)(e.Command) };
+
+        Form1.FormRef.CanTabPageRef.SendCANMessage(Form1.FormRef.RecipientId, AppData);
+        Console.WriteLine($"Command: {e.Command}, WaitAnswer: {e.WaitAnswer}");
     }
 
     private void DisplayFileContent(string filePath)

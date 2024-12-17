@@ -122,7 +122,7 @@ namespace Stem_Protocol.BootManager
                 //  await _canCommunication.SendFirmwareBlock(block, offset);
 
                 // Simulazione di un lavoro lungo
-                Thread.Sleep(100);
+             //   Thread.Sleep(100);
             }
             catch (Exception ex)
             {
