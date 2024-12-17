@@ -18,7 +18,8 @@ public class Boot_Interface_Tab : TabPage
     private System.Windows.Forms.Button btnSelectFile;
     private System.Windows.Forms.Button btnStartProcedure;
     private DataGridView dgvHexView;
-    private System.Windows.Forms.ProgressBar progressBar;
+    private CustomProgressBar progressBar;
+    //private System.Windows.Forms.ProgressBar progressBar;
     private OpenFileDialog openFileDialog;
     private TableLayoutPanel mainLayout;
     private string filePath= "";
@@ -115,11 +116,12 @@ public class Boot_Interface_Tab : TabPage
         dgvHexView.Columns.Add(asciiColumn);
 
         // Barra di progresso
-        progressBar = new System.Windows.Forms.ProgressBar
+        progressBar = new CustomProgressBar
         {
             Dock = DockStyle.Fill
         };
 
+          
         // OpenFileDialog per selezionare i file
         openFileDialog = new OpenFileDialog
         {
@@ -210,6 +212,44 @@ public class Boot_Interface_Tab : TabPage
     void UpdateProgressBar(object sender, ProgressEventArgs e)
     {
         progressBar.Value = (int)((double)e.CurrentOffset / e.TotalLength * 100);
+        if (progressBar.Value == 99) progressBar.Value = 100;
+    }
+
+
+}
+
+// c# progress bar with percentage
+public class CustomProgressBar : System.Windows.Forms.ProgressBar
+{
+    public CustomProgressBar()
+    {
+      //  InitializeComponent();
+        // Set default style to owner draw
+        this.SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint, true);
+    }
+
+    // Override the OnPaint method to custom render the progress bar with percentage text
+    protected override void OnPaint(PaintEventArgs pe)
+    {
+        //Draw percentage
+        Rectangle rect = this.ClientRectangle;
+        // Create graphics object for drawing custom content
+        Graphics g = pe.Graphics;
+        ProgressBarRenderer.DrawHorizontalBar(g, rect);
+        if (this.Value > 0)
+        {
+            Rectangle clip = new Rectangle(rect.X, rect.Y, (int)Math.Round(((float)this.Value / this.Maximum) * rect.Width), rect.Height);
+            ProgressBarRenderer.DrawHorizontalChunks(g, clip);
+        }
+        using (var font = new Font(FontFamily.GenericMonospace, 10, FontStyle.Bold))
+        {
+            // Calculate the percentage text to display
+            SizeF size = g.MeasureString(string.Format("{0} %", this.Value), font);
+            var location = new Point((int)((rect.Width / 2) - (size.Width / 2)), (int)((rect.Height / 2) - (size.Height / 2) + 2));
+            // Draw the percentage text on the progress bar
+            g.DrawString(string.Format("{0} %", this.Value), font, Brushes.Black, location);
+        }
     }
 }
+
 

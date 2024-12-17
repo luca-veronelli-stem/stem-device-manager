@@ -2,22 +2,6 @@
   "version": 3,
   "targets": {
     "net8.0-windows7.0": {
-      "CircularProgressBar/2.8.0.16": {
-        "type": "package",
-        "dependencies": {
-          "WinFormAnimation": "1.6.0.4"
-        },
-        "compile": {
-          "lib/net40/CircularProgressBar.dll": {
-            "related": ".xml"
-          }
-        },
-        "runtime": {
-          "lib/net40/CircularProgressBar.dll": {
-            "related": ".xml"
-          }
-        }
-      },
       "ClosedXML/0.104.2": {
         "type": "package",
         "dependencies": {
@@ -2587,34 +2571,10 @@
         "runtime": {
           "lib/netstandard1.3/System.Xml.XDocument.dll": {}
         }
-      },
-      "WinFormAnimation/1.6.0.4": {
-        "type": "package",
-        "compile": {
-          "lib/net40/WinFormAnimation.dll": {}
-        },
-        "runtime": {
-          "lib/net40/WinFormAnimation.dll": {}
-        }
       }
     }
   },
   "libraries": {
-    "CircularProgressBar/2.8.0.16": {
-      "sha512": "P31wJxwTcQ2mA7wB4X+tnc9QlfSNyPzEOyt3qjf2/6cLLi8mERAfEwNcgt3Qv38/Xiyreo/nVYDe2zIVEv4SQw==",
-      "type": "package",
-      "path": "circularprogressbar/2.8.0.16",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "Icon.png",
-        "circularprogressbar.2.8.0.16.nupkg.sha512",
-        "circularprogressbar.nuspec",
-        "lib/net40/CircularProgressBar.dll",
-        "lib/net40/CircularProgressBar.xml",
-        "readme.txt"
-      ]
-    },
     "ClosedXML/0.104.2": {
       "sha512": "gOkSjQ152MhpKmw70cBkJV+FnaZAWzDwM36luRf/7FlWYnNeH++9XYdGTd0Y4KQlVPkKVxy948M5MMsnsGC4GQ==",
       "type": "package",
@@ -6589,25 +6549,10 @@
         "system.xml.xdocument.4.3.0.nupkg.sha512",
         "system.xml.xdocument.nuspec"
       ]
-    },
-    "WinFormAnimation/1.6.0.4": {
-      "sha512": "YSic50luSCgFq+JejHBq5DKwxpNP1VH7uOyBXC+8v6dd+CuUYGlKSOL4EbwT1WeWJQvFBoDMqHnq7HsF95kxrw==",
-      "type": "package",
-      "path": "winformanimation/1.6.0.4",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "Icon.png",
-        "lib/net40/WinFormAnimation.dll",
-        "readme.txt",
-        "winformanimation.1.6.0.4.nupkg.sha512",
-        "winformanimation.nuspec"
-      ]
     }
   },
   "projectFileDependencyGroups": {
     "net8.0-windows7.0": [
-      "CircularProgressBar >= 2.8.0.16",
       "ClosedXML >= 0.104.2",
       "DocumentFormat.OpenXml >= 3.1.1",
       "Peak.PCANBasic.NET >= 4.9.0.942",
@@ -6667,10 +6612,6 @@
       "net8.0-windows7.0": {
         "targetAlias": "net8.0-windows",
         "dependencies": {
-          "CircularProgressBar": {
-            "target": "Package",
-            "version": "[2.8.0.16, )"
-          },
           "ClosedXML": {
             "target": "Package",
             "version": "[0.104.2, )"
@@ -6718,27 +6659,5 @@
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.100/PortableRuntimeIdentifierGraph.json"
       }
     }
-  },
-  "logs": [
-    {
-      "code": "NU1701",
-      "level": "Warning",
-      "warningLevel": 1,
-      "message": "Il pacchetto 'CircularProgressBar 2.8.0.16' è stato ripristinato mediante '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' e non mediante il framework di destinazione del progetto 'net8.0-windows7.0'. Questo pacchetto potrebbe non essere completamente compatibile con il progetto.",
-      "libraryId": "CircularProgressBar",
-      "targetGraphs": [
-        "net8.0-windows7.0"
-      ]
-    },
-    {
-      "code": "NU1701",
-      "level": "Warning",
-      "warningLevel": 1,
-      "message": "Il pacchetto 'WinFormAnimation 1.6.0.4' è stato ripristinato mediante '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' e non mediante il framework di destinazione del progetto 'net8.0-windows7.0'. Questo pacchetto potrebbe non essere completamente compatibile con il progetto.",
-      "libraryId": "WinFormAnimation",
-      "targetGraphs": [
-        "net8.0-windows7.0"
-      ]
-    }
-  ]
+  }
 }
