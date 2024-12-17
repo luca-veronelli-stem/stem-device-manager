@@ -241,7 +241,7 @@ public class CustomProgressBar : System.Windows.Forms.ProgressBar
             Rectangle clip = new Rectangle(rect.X, rect.Y, (int)Math.Round(((float)this.Value / this.Maximum) * rect.Width), rect.Height);
             ProgressBarRenderer.DrawHorizontalChunks(g, clip);
         }
-        using (var font = new Font(FontFamily.GenericMonospace, 10, FontStyle.Bold))
+        using (var font = new Font(FontFamily.GenericMonospace, 14, FontStyle.Bold))
         {
             // Calculate the percentage text to display
             SizeF size = g.MeasureString(string.Format("{0} %", this.Value), font);

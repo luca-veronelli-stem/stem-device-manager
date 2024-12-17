@@ -14,6 +14,8 @@ namespace Stem_Protocol.BootManager
     {
         //Eventi della classe
         public event EventHandler<ProgressEventArgs> ProgressChanged;
+        public event EventHandler<SendCanCommandEventArgs> SendCanCommandRequest;
+
 
         // Comandi CAN proprietari per il bootloader
         private const ushort CMD_START_PROCEDURE = 0x0005;
@@ -67,7 +69,7 @@ namespace Stem_Protocol.BootManager
         public async Task UploadFirmware()
         {
             // 1. Avvio procedura
-            await SendCanCommand(CMD_START_PROCEDURE);
+            SendCanCommand(CMD_START_PROCEDURE, false);
 
             // 2. Ciclo di programmazione blocchi
             for (int offset = 0; offset < firmwareData.Length; offset += FIRMWARE_BLOCK_SIZE)
@@ -85,7 +87,7 @@ namespace Stem_Protocol.BootManager
             }
 
             // 3. Comando di fine procedura
-            await SendCanCommand(CMD_END_PROCEDURE);
+            SendCanCommand(CMD_END_PROCEDURE, false);
 
             MessageBox.Show("Aggiornamento firmware completato!", "Successo", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
@@ -99,18 +101,18 @@ namespace Stem_Protocol.BootManager
             return block;
         }
 
-        private async Task SendCanCommand(ushort command)
-        {
-            try
-            {
-                // Implementazione invio comando CAN
-              //  await _canCommunication.SendCommand(command);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Errore durante l'invio del comando {command:X4}: {ex.Message}");
-            }
-        }
+        //private async Task SendCanCommand(ushort command)
+        //{
+        //    try
+        //    {
+        //        // Implementazione invio comando CAN
+        //      //  await _canCommunication.SendCommand(command);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw new Exception($"Errore durante l'invio del comando {command:X4}: {ex.Message}");
+        //    }
+        //}
 
         private async Task SendFirmwareBlock(byte[] block, int offset)
         {
@@ -131,6 +133,13 @@ namespace Stem_Protocol.BootManager
         protected virtual void OnProgressChanged(int currentOffset, int totalLength)
         {
             ProgressChanged?.Invoke(this, new ProgressEventArgs(currentOffset, totalLength));
+        }
+
+        // Metodo per attivare l'evento SendCanCommand
+        public void SendCanCommand(ushort command, bool waitAnswer)
+        {
+            // Controlla se ci sono iscritti all'evento prima di invocarlo
+            SendCanCommandRequest?.Invoke(this, new SendCanCommandEventArgs(command, waitAnswer));
         }
 
         //private void UpdateProgressBar(int currentOffset, int totalLength)
@@ -162,6 +171,7 @@ namespace Stem_Protocol.BootManager
         //}
     }
 
+    // Classe per incapsulare i parametri dell'evento progresschanged
     public class ProgressEventArgs : EventArgs
     {
         public int CurrentOffset { get; }
@@ -171,6 +181,19 @@ namespace Stem_Protocol.BootManager
         {
             CurrentOffset = currentOffset;
             TotalLength = totalLength;
+        }
+    }
+
+    // Classe per incapsulare i parametri dell'evento sendcommand
+    public class SendCanCommandEventArgs : EventArgs
+    {
+        public ushort Command { get; }
+        public bool WaitAnswer { get; }
+
+        public SendCanCommandEventArgs(ushort command, bool waitAnswer)
+        {
+            Command = command;
+            WaitAnswer = waitAnswer;
         }
     }
 }
