@@ -2,26 +2,31 @@
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 using StemPC;
 using Stem_Protocol;
 using Stem_Protocol.PacketManager;
-using System.Runtime.InteropServices;
+using Stem_Protocol.BootManager;
+
 
 // Classe per l'interfaccia grafica del bootloader
 public class Boot_Interface_Tab : TabPage
 {
-    private TextBox txtFilePath;
-    private Button btnSelectFile;
-    private Button btnStartProcedure;
+    private System.Windows.Forms.TextBox txtFilePath;
+    private System.Windows.Forms.Button btnSelectFile;
+    private System.Windows.Forms.Button btnStartProcedure;
     private DataGridView dgvHexView;
-    private ProgressBar progressBar;
+    private System.Windows.Forms.ProgressBar progressBar;
     private OpenFileDialog openFileDialog;
     private TableLayoutPanel mainLayout;
+    private string filePath= "";
 
     public Boot_Interface_Tab()
     {
-        this.Text = "Boot Interface";
+        Name = "tabPageBoot";
+        Text = "Boot Interface";
 
         // Layout principale
         mainLayout = new TableLayoutPanel
@@ -37,7 +42,7 @@ public class Boot_Interface_Tab : TabPage
         mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30)); // ProgressBar
 
         // TextBox per mostrare il percorso del file selezionato
-        txtFilePath = new TextBox
+        txtFilePath = new System.Windows.Forms.TextBox
         {
             Dock = DockStyle.Fill,
             ReadOnly = true,
@@ -45,7 +50,7 @@ public class Boot_Interface_Tab : TabPage
         };
 
         // Pulsante per selezionare il file
-        btnSelectFile = new Button
+        btnSelectFile = new System.Windows.Forms.Button
         {
             Text = "Select .bin File",
             Width = 100
@@ -53,7 +58,7 @@ public class Boot_Interface_Tab : TabPage
         btnSelectFile.Click += BtnSelectFile_Click;
 
         // Pulsante per avviare la procedura
-        btnStartProcedure = new Button
+        btnStartProcedure = new System.Windows.Forms.Button
         {
             Text = "Download",
             Width = 120
@@ -110,7 +115,7 @@ public class Boot_Interface_Tab : TabPage
         dgvHexView.Columns.Add(asciiColumn);
 
         // Barra di progresso
-        progressBar = new ProgressBar
+        progressBar = new System.Windows.Forms.ProgressBar
         {
             Dock = DockStyle.Fill
         };
@@ -136,7 +141,7 @@ public class Boot_Interface_Tab : TabPage
     {
         if (openFileDialog.ShowDialog() == DialogResult.OK)
         {
-            string filePath = openFileDialog.FileName;
+            filePath = openFileDialog.FileName;
             txtFilePath.Text = filePath; // Mostra il percorso nel TextBox
             DisplayFileContent(filePath);
         }
@@ -144,7 +149,25 @@ public class Boot_Interface_Tab : TabPage
 
     private void BtnStartProcedure_Click(object sender, EventArgs e)
     {
-        MessageBox.Show("Start Procedure button clicked. Implement your procedure here.");
+        //Test
+        filePath = "C:\\Users\\Michele\\OneDrive\\Dati\\Lavoro\\STEM\\TopLift-A\\Firmware\\Debug_BOOT\\TopLift-A_BOOT_00_01M.bin";
+        Form1.FormRef.RecipientId = 0x00030141;
+
+        if (filePath == "")
+        {
+            MessageBox.Show("Select Firmware file .bin!");
+        }
+        else if (Form1.FormRef.RecipientId == 0)
+        {
+            MessageBox.Show("Select destination address!");
+        }
+        else
+        {
+            btnStartProcedure.Enabled = false;
+            BootManager BootHldr = new BootManager(Form1.FormRef.RecipientId, filePath);
+            BootHldr.ProgressChanged += UpdateProgressBar;
+            btnStartProcedure.Enabled = true;
+        }
     }
 
     private void DisplayFileContent(string filePath)
@@ -175,6 +198,12 @@ public class Boot_Interface_Tab : TabPage
         {
             MessageBox.Show($"Error reading file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+    }
+
+    // Funzione privata per aggiornare la ProgressBar
+    void UpdateProgressBar(object sender, ProgressEventArgs e)
+    {
+        progressBar.Value = (int)((double)e.CurrentOffset / e.TotalLength * 100);
     }
 }
 

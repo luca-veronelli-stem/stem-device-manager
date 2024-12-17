@@ -12,6 +12,9 @@ namespace Stem_Protocol.BootManager
 {
     public class BootManager
     {
+        //Eventi della classe
+        public event EventHandler<ProgressEventArgs> ProgressChanged;
+
         // Comandi CAN proprietari per il bootloader
         private const ushort CMD_START_PROCEDURE = 0x0005;
         private const ushort CMD_PROGRAM_BLOCK = 0x0004;
@@ -25,11 +28,20 @@ namespace Stem_Protocol.BootManager
         private uint _recipientId;
         public int currentOffset;
         public int totalLength;
+        private byte[] firmwareData;
 
-        public BootManager(uint RecipientId, string FirmwareName)
+        public BootManager(uint RecipientId, string FirmwarePath)
         {
             _recipientId=RecipientId;
-            _firmwareName=FirmwareName;
+            _firmwareName=FirmwarePath;
+
+            // Legge il firmware
+            firmwareData = File.ReadAllBytes(_firmwareName);
+            totalLength = firmwareData.Length;
+            currentOffset = 0;
+            // Aggiorna il progresso
+            OnProgressChanged(currentOffset, totalLength);
+
         }
 
         //public async void btnSelectFirmware_Click(object sender, EventArgs e)
@@ -52,13 +64,8 @@ namespace Stem_Protocol.BootManager
         //    }
         //}
 
-        private async Task UploadFirmware(string firmwarePath)
+        public async Task UploadFirmware(string firmwarePath)
         {
-            // Legge il firmware
-            byte[] firmwareData = File.ReadAllBytes(firmwarePath);
-            totalLength = firmwareData.Length;
-            currentOffset = 0;
-
             // 1. Avvio procedura
             await SendCanCommand(CMD_START_PROCEDURE);
 
@@ -118,6 +125,11 @@ namespace Stem_Protocol.BootManager
             }
         }
 
+        protected virtual void OnProgressChanged(int currentOffset, int totalLength)
+        {
+            ProgressChanged?.Invoke(this, new ProgressEventArgs(currentOffset, totalLength));
+        }
+
         //private void UpdateProgressBar(int currentOffset, int totalLength)
         //{
         //    // Aggiorna la progress bar in modo thread-safe
@@ -145,6 +157,18 @@ namespace Stem_Protocol.BootManager
         //    // Potrebbe utilizzare una libreria come PEAK-System, Vector, ecc.
         //    await Task.CompletedTask;
         //}
+    }
+
+    public class ProgressEventArgs : EventArgs
+    {
+        public int CurrentOffset { get; }
+        public int TotalLength { get; }
+
+        public ProgressEventArgs(int currentOffset, int totalLength)
+        {
+            CurrentOffset = currentOffset;
+            TotalLength = totalLength;
+        }
     }
 }
 

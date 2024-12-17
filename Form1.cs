@@ -109,13 +109,16 @@ namespace StemPC
             configGenerator = new SP_Code_Generator();
             codeFilePath = "SP_Config.h";
 
-
             //crea e aggiungi il bootloader manager
             BootTabRef = new Boot_Interface_Tab();
             tabControl.TabPages.Add(BootTabRef);
 
+
+            tabControl.TabPages.Remove(tabPageCodeGen);
+            tabControl.TabPages.Remove(tabPageUART);
+
             //Seleziona il tab del protocollo
-            tabControl.SelectedTab = tabPageProtocol; // Seleziona la TabPage con nome 'tabPagePrototocol'
+            tabControl.SelectedTab = BootTabRef; 
 
             //Estrai i dati dal dizionario stem
             hExcel = new ExcelHandler();
