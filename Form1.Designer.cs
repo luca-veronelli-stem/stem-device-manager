@@ -38,6 +38,7 @@
             button1 = new Button();
             tabPageProtocol = new TabPage();
             tableLayoutPanelProtocol = new TableLayoutPanel();
+            richTextBoxTx = new RichTextBox();
             textBox7 = new TextBox();
             textBox6 = new TextBox();
             textBox5 = new TextBox();
@@ -57,11 +58,9 @@
             comboBoxMachine = new ComboBox();
             comboBoxCommand = new ComboBox();
             textBox1 = new TextBox();
-            label12 = new Label();
             label3 = new Label();
             buttonSendPS = new Button();
-            label13 = new Label();
-            richTextBoxTx = new RichTextBox();
+            label12 = new Label();
             tabPageUART = new TabPage();
             label1 = new Label();
             listBoxSerialPorts = new ListBox();
@@ -173,6 +172,7 @@
             tableLayoutPanelProtocol.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10F));
             tableLayoutPanelProtocol.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10F));
             tableLayoutPanelProtocol.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10F));
+            tableLayoutPanelProtocol.Controls.Add(richTextBoxTx, 0, 2);
             tableLayoutPanelProtocol.Controls.Add(textBox7, 9, 1);
             tableLayoutPanelProtocol.Controls.Add(textBox6, 8, 1);
             tableLayoutPanelProtocol.Controls.Add(textBox5, 7, 1);
@@ -192,11 +192,9 @@
             tableLayoutPanelProtocol.Controls.Add(comboBoxMachine, 0, 1);
             tableLayoutPanelProtocol.Controls.Add(comboBoxCommand, 2, 1);
             tableLayoutPanelProtocol.Controls.Add(textBox1, 3, 1);
-            tableLayoutPanelProtocol.Controls.Add(label12, 0, 2);
             tableLayoutPanelProtocol.Controls.Add(label3, 0, 0);
             tableLayoutPanelProtocol.Controls.Add(buttonSendPS, 9, 3);
-            tableLayoutPanelProtocol.Controls.Add(label13, 1, 2);
-            tableLayoutPanelProtocol.Controls.Add(richTextBoxTx, 2, 2);
+            tableLayoutPanelProtocol.Controls.Add(label12, 9, 2);
             tableLayoutPanelProtocol.Dock = DockStyle.Fill;
             tableLayoutPanelProtocol.Location = new Point(0, 0);
             tableLayoutPanelProtocol.Name = "tableLayoutPanelProtocol";
@@ -205,8 +203,22 @@
             tableLayoutPanelProtocol.RowStyles.Add(new RowStyle(SizeType.Percent, 10F));
             tableLayoutPanelProtocol.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
             tableLayoutPanelProtocol.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+            tableLayoutPanelProtocol.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
             tableLayoutPanelProtocol.Size = new Size(786, 326);
             tableLayoutPanelProtocol.TabIndex = 2;
+            // 
+            // richTextBoxTx
+            // 
+            richTextBoxTx.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            richTextBoxTx.BackColor = SystemColors.Window;
+            tableLayoutPanelProtocol.SetColumnSpan(richTextBoxTx, 9);
+            richTextBoxTx.ForeColor = SystemColors.WindowText;
+            richTextBoxTx.Location = new Point(3, 100);
+            richTextBoxTx.Name = "richTextBoxTx";
+            tableLayoutPanelProtocol.SetRowSpan(richTextBoxTx, 2);
+            richTextBoxTx.Size = new Size(696, 223);
+            richTextBoxTx.TabIndex = 28;
+            richTextBoxTx.Text = "";
             // 
             // textBox7
             // 
@@ -443,21 +455,6 @@
             textBox1.TabIndex = 16;
             textBox1.KeyPress += MaskedTextBox_KeyPress;
             // 
-            // label12
-            // 
-            label12.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            label12.AutoSize = true;
-            label12.BackColor = Color.RoyalBlue;
-            label12.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            label12.ForeColor = SystemColors.ControlLightLight;
-            label12.Location = new Point(5, 102);
-            label12.Margin = new Padding(5);
-            label12.Name = "label12";
-            label12.Size = new Size(68, 153);
-            label12.TabIndex = 23;
-            label12.Text = "Indirizzo";
-            label12.TextAlign = ContentAlignment.MiddleCenter;
-            // 
             // label3
             // 
             label3.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
@@ -484,32 +481,20 @@
             buttonSendPS.UseVisualStyleBackColor = true;
             buttonSendPS.Click += buttonSendPS_Click;
             // 
-            // label13
+            // label12
             // 
-            label13.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            label13.AutoSize = true;
-            label13.BackColor = Color.RoyalBlue;
-            label13.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            label13.ForeColor = SystemColors.ControlLightLight;
-            label13.Location = new Point(83, 102);
-            label13.Margin = new Padding(5);
-            label13.Name = "label13";
-            label13.Size = new Size(68, 153);
-            label13.TabIndex = 25;
-            label13.Text = "Pacchetto";
-            label13.TextAlign = ContentAlignment.MiddleCenter;
-            // 
-            // richTextBoxTx
-            // 
-            richTextBoxTx.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            richTextBoxTx.BackColor = SystemColors.Window;
-            tableLayoutPanelProtocol.SetColumnSpan(richTextBoxTx, 8);
-            richTextBoxTx.ForeColor = SystemColors.WindowText;
-            richTextBoxTx.Location = new Point(159, 100);
-            richTextBoxTx.Name = "richTextBoxTx";
-            richTextBoxTx.Size = new Size(624, 157);
-            richTextBoxTx.TabIndex = 26;
-            richTextBoxTx.Text = "";
+            label12.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            label12.AutoSize = true;
+            label12.BackColor = Color.RoyalBlue;
+            label12.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label12.ForeColor = SystemColors.ControlLightLight;
+            label12.Location = new Point(707, 102);
+            label12.Margin = new Padding(5);
+            label12.Name = "label12";
+            label12.Size = new Size(74, 153);
+            label12.TabIndex = 23;
+            label12.Text = "Indirizzo";
+            label12.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // tabPageUART
             // 
@@ -609,8 +594,7 @@
         private TextBox textBox3;
         private TextBox textBox2;
         private Label label12;
-        private Label label13;
-        private RichTextBox richTextBoxTx;
         private Button buttonSendPS;
+        private RichTextBox richTextBoxTx;
     }
 }

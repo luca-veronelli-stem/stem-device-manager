@@ -371,7 +371,13 @@ namespace StemPC
             if (payload[1] < Comandi.Count)
             {
                 //      richTextBoxTx.AppendText($"Comando '{Comandi[payload[1]].Name} ' ricevuto da {sourceAddress.ToString("X8")} per {destinationAddress.ToString("X8")} \r\n");
-                richTextBoxTx.AppendText($"Comando '{Comandi[payload[1]].Name} ' ricevuto da {MachineName} per {MachineNameRecipient} \r\n");
+                richTextBoxTx.AppendText($"Comando '{Comandi[payload[1]].Name} ' ricevuto da {MachineName} per {MachineNameRecipient}: ");
+                richTextBoxTx.AppendText("( ");
+                for (int i = 0; i < payload.Count(); i++)
+                {
+                    richTextBoxTx.AppendText(payload[i].ToString("X2") + " ");
+                }
+                richTextBoxTx.AppendText(" )\r\n");
             }
         }
     }
