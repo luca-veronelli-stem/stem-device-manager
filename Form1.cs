@@ -1,9 +1,9 @@
 using Microsoft.VisualBasic.Logging;
 using System.Windows.Forms;
 using System.IO.Ports; // used for serial port
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Stem_Protocol;
 using Stem_Protocol.PacketManager;
-using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 
 //using static NetworkLayer;
 
@@ -73,6 +73,7 @@ namespace StemPC
         //  public Elements instances
         //**************************
         public CANInterfaceTab CanTabPageRef { get; private set; }
+        public Boot_Interface_Tab BootTabRef { get; private set; }
         public static Form1 FormRef { get; private set; }
 
         public Form1()
@@ -87,17 +88,17 @@ namespace StemPC
             SelectedCommand = 0;
             senderId = 8;
 
+            //crea e aggiungi tabcan
             CanTabPageRef = new CANInterfaceTab();
-            
-            //aggiungi tabcan
             tabControl.TabPages.Add(CanTabPageRef);
 
+            //attiva il terminale
             _terminal = new Terminal(); // Inizializza l'istanza di Terminal
 
+            //attiva la seriale
             _serialPortManager = new SerialPortManager("COM3", 19200); ;// Inizializza l'istanza di SerialManager
             UpdateTerminal(DateTime.Now + ": Stem Protocol Manager " + Software_Version);
             timerBaseTime.Enabled = true;
-
             // Ottieni tutte le porte seriali disponibili
             // e aggiungi le porte alla ListBox
             listBoxSerialPorts.Items.Clear();
@@ -108,16 +109,19 @@ namespace StemPC
             configGenerator = new SP_Code_Generator();
             codeFilePath = "SP_Config.h";
 
+
+            //crea e aggiungi il bootloader manager
+            BootTabRef = new Boot_Interface_Tab();
+            tabControl.TabPages.Add(BootTabRef);
+
             //Seleziona il tab del protocollo
             tabControl.SelectedTab = tabPageProtocol; // Seleziona la TabPage con nome 'tabPagePrototocol'
 
-            //test excel
+            //Estrai i dati dal dizionario stem
             hExcel = new ExcelHandler();
             IndirizziProtocollo = new List<ExcelHandler.RowData>();
             Comandi = new List<ExcelHandler.CommandData>();
             hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, ExcelfilePath);
-
-
 
             _terminal.WriteLog("--------------------------------------------------------------------");
             // Stampa i risultati (per verifica)
