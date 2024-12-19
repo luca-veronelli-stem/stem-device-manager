@@ -198,7 +198,7 @@ public class Boot_Interface_Tab : TabPage
         // Creazione del pacchetto a livello applicativo
         byte cmdInit = AppData[0];//comando byte alto
         byte cmdOpt = AppData[1];//comando byte basso 
-        byte[] payload = {0x00};
+        byte[] payload = e.Payload;
 
         //TL
         byte cryptFlag = 0x00;         // Nessuna crittografia

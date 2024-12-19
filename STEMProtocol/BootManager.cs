@@ -32,6 +32,10 @@ namespace Stem_Protocol.BootManager
         public int totalLength;
         private byte[] firmwareData;
 
+
+        //variabili varie
+        uint pageNum;
+
         public BootManager(uint RecipientId, string FirmwarePath)
         {
             _recipientId=RecipientId;
@@ -69,25 +73,30 @@ namespace Stem_Protocol.BootManager
         public async Task UploadFirmware()
         {
             // 1. Avvio procedura
-            SendCanCommand(CMD_START_PROCEDURE, false);
+            SendCanCommand(CMD_START_PROCEDURE, Array.Empty<byte>(), false);
+            await Task.Delay(2000); // attesa
 
             // 2. Ciclo di programmazione blocchi
+            pageNum = 0;
+
             for (int offset = 0; offset < firmwareData.Length; offset += FIRMWARE_BLOCK_SIZE)
             {
                 // Prepara il blocco corrente
                 byte[] currentBlock = GetCurrentBlock(firmwareData, offset);
 
                 // Invia il blocco
-                await SendFirmwareBlock(currentBlock, offset);
+                await SendFirmwareBlock(pageNum, currentBlock, (uint) FIRMWARE_BLOCK_SIZE);
 
                 currentOffset=offset;
+                pageNum++;
 
                 // Aggiorna progress bar
                 OnProgressChanged(currentOffset, totalLength);
             }
 
             // 3. Comando di fine procedura
-            SendCanCommand(CMD_END_PROCEDURE, false);
+            SendCanCommand(CMD_END_PROCEDURE, Array.Empty<byte>(), false);
+            await Task.Delay(2000); // attesa
 
             MessageBox.Show("Aggiornamento firmware completato!", "Successo", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
@@ -114,7 +123,7 @@ namespace Stem_Protocol.BootManager
         //    }
         //}
 
-        private async Task SendFirmwareBlock(byte[] block, int offset)
+        private async Task SendFirmwareBlock(uint pageNumber,byte[] block, uint pageSize)
         {
             try
             {
@@ -126,7 +135,7 @@ namespace Stem_Protocol.BootManager
             }
             catch (Exception ex)
             {
-                throw new Exception($"Errore durante l'invio del blocco a offset {offset}: {ex.Message}");
+                throw new Exception($"Errore durante l'invio della pagina {pageNumber}: {ex.Message}");
             }
         }
 
@@ -136,10 +145,10 @@ namespace Stem_Protocol.BootManager
         }
 
         // Metodo per attivare l'evento SendCanCommand
-        public void SendCanCommand(ushort command, bool waitAnswer)
+        public void SendCanCommand(ushort command, byte[] payload, bool waitAnswer)
         {
             // Controlla se ci sono iscritti all'evento prima di invocarlo
-            SendCanCommandRequest?.Invoke(this, new SendCanCommandEventArgs(command, waitAnswer));
+            SendCanCommandRequest?.Invoke(this, new SendCanCommandEventArgs(command, payload, waitAnswer));
         }
 
         //private void UpdateProgressBar(int currentOffset, int totalLength)
@@ -184,16 +193,18 @@ namespace Stem_Protocol.BootManager
         }
     }
 
-    // Classe per incapsulare i parametri dell'evento sendcommand
+    // Classe per incapsulare i parametri dell'evento sendcommand del protocollo stem
     public class SendCanCommandEventArgs : EventArgs
     {
         public ushort Command { get; }
+        public byte[] Payload { get; }
         public bool WaitAnswer { get; }
 
-        public SendCanCommandEventArgs(ushort command, bool waitAnswer)
+        public SendCanCommandEventArgs(ushort command, byte[] payload, bool waitAnswer)
         {
             Command = command;
             WaitAnswer = waitAnswer;
+            Payload = payload;
         }
     }
 }
