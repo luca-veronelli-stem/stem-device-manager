@@ -144,47 +144,46 @@ public class PCANManager
 
     private async Task ReadCANMessagesAsync()
     {
-        await Task.Delay(50); // Riduzione carico CPU
-        //while (true)
-        //{
-        //    if (!_isConnected)
-        //    {
-        //        await Task.Delay(500); // Attendi finché non viene ristabilita la connessione
-        //        continue;
-        //    }
+        while (true)
+        {
+            if (!_isConnected)
+            {
+                await Task.Delay(500); // Attendi finché non viene ristabilita la connessione
+                continue;
+            }
 
-        //    try
-        //    {
-        //        TPCANMsg canMessage;
-        //        TPCANTimestamp canTimestamp;
-        //        var result = PCANBasic.Read(Channel, out canMessage, out canTimestamp);
+            try
+            {
+                TPCANMsg canMessage;
+                TPCANTimestamp canTimestamp;
+                var result = PCANBasic.Read(Channel, out canMessage, out canTimestamp);
 
-        //        if (result == TPCANStatus.PCAN_ERROR_OK)
-        //        {
-        //            var receivedData = canMessage.DATA.Take(canMessage.LEN).ToArray();
-        //            var packetEvent = new CANPacketEventArgs(
-        //                canMessage.ID,
-        //                receivedData,
-        //                DateTime.Now
-        //            );
+                if (result == TPCANStatus.PCAN_ERROR_OK)
+                {
+                    var receivedData = canMessage.DATA.Take(canMessage.LEN).ToArray();
+                    var packetEvent = new CANPacketEventArgs(
+                        canMessage.ID,
+                        receivedData,
+                        DateTime.Now
+                    );
 
-        //            PacketReceived?.Invoke(this, packetEvent);
-        //        }
-        //        else if (result != TPCANStatus.PCAN_ERROR_QRCVEMPTY)
-        //        {
-        //            // Gestione errori
-        //            StringBuilder errorTextB = new StringBuilder(256);
-        //            PCANBasic.GetErrorText(result, 0, errorTextB);
-        //            ErrorOccurred?.Invoke(this, errorTextB.ToString());
-        //        }
+                    PacketReceived?.Invoke(this, packetEvent);
+                }
+                else if (result != TPCANStatus.PCAN_ERROR_QRCVEMPTY)
+                {
+                    // Gestione errori
+                    StringBuilder errorTextB = new StringBuilder(256);
+                    PCANBasic.GetErrorText(result, 0, errorTextB);
+                    ErrorOccurred?.Invoke(this, errorTextB.ToString());
+                }
 
-        //        await Task.Delay(50); // Riduzione carico CPU
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        ErrorOccurred?.Invoke(this, $"Errore durante la lettura: {ex.Message}");
-        //    }
-        //}
+                await Task.Delay(50); // Riduzione carico CPU
+            }
+            catch (Exception ex)
+            {
+                ErrorOccurred?.Invoke(this, $"Errore durante la lettura: {ex.Message}");
+            }
+        }
     }
 
     public void Disconnect()

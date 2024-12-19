@@ -97,14 +97,14 @@ namespace Stem_Protocol.BootManager
 
                 // Invia il blocco
                 await SendFirmwareBlock(pageNum, currentBlock, (uint)FIRMWARE_BLOCK_SIZE);
-                await Task.Delay(50); // attesa
+                await Task.Delay(800); // attesa
+                Form1.FormRef.UpdateTerminal($"{DateTime.Now:HH:mm:ss.fff} - Page={pageNum:X}");
 
                 currentOffset = offset;
                 pageNum++;
 
                 // Aggiorna progress bar
                 OnProgressChanged(currentOffset, totalLength);
-                Form1.FormRef.UpdateTerminal($"{DateTime.Now:HH:mm:ss.fff} - Page={pageNum:X}");
             }
 
             // 3. Comando di fine procedura
