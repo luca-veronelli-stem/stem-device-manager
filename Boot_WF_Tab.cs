@@ -154,7 +154,7 @@ public class Boot_Interface_Tab : TabPage
     private async void BtnStartProcedure_Click(object sender, EventArgs e)
     {
         //Test
-        filePath = "C:\\Users\\Michele\\OneDrive\\Dati\\Lavoro\\STEM\\TopLift-A\\Firmware\\Debug_BOOT\\TopLift-A_BOOT_00_01M.bin";
+        //filePath = "C:\\Users\\Michele\\OneDrive\\Dati\\Lavoro\\STEM\\TopLift-A\\Firmware\\Debug_BOOT\\TopLift-A_BOOT_00_01M.bin";
         Form1.FormRef.RecipientId = 0x00030141;
 
         if (filePath == "")
@@ -221,7 +221,7 @@ public class Boot_Interface_Tab : TabPage
         // stampa il pacchetto dell'application layer
         Form1.FormRef.UpdateTerminal("Comando Boot manager:");
        // Form1.FormRef.UpdateTerminal("-- APPLICATION --");
-        Form1.FormRef.UpdateTerminal($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}");
+       // Form1.FormRef.UpdateTerminal($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}");
 
         //// stampa il pacchetto del transport layer
         //Form1.FormRef.UpdateTerminal("-- TRANSPORT --");

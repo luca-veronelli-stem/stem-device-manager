@@ -124,39 +124,20 @@ public partial class CANInterfaceTab : TabPage
 
     private void UpdateMessageList(CANPacketEventArgs e)
     {
-        string dataString = string.Join(" ", e.Data.Select(b => b.ToString("X2")));
-        var listViewItem = new ListViewItem(
-            $"{e.Timestamp:yyyy-MM-dd HH:mm:ss.fff} - RX: ID=0x{e.ArbitrationId:X} Dati={dataString}")
-        {
-            ForeColor = System.Drawing.Color.Blue
-        };
+        ////debug dei dati sulla finestra in uscita
+        //string dataString = string.Join(" ", e.Data.Select(b => b.ToString("X2")));
+        //var listViewItem = new ListViewItem(
+        //    $"{e.Timestamp:yyyy-MM-dd HH:mm:ss.fff} - RX: ID=0x{e.ArbitrationId:X} Dati={dataString}")
+        //{
+        //    ForeColor = System.Drawing.Color.Blue
+        //};
 
-        _receivedMessagesView.Items.Add(listViewItem);
-        _receivedMessagesView.EnsureVisible(_receivedMessagesView.Items.Count - 1);
+        //_receivedMessagesView.Items.Add(listViewItem);
+        //_receivedMessagesView.EnsureVisible(_receivedMessagesView.Items.Count - 1);
 
         //aggiungi i messaggi alla coda del network layer
         CANMessage RxMessage = new CANMessage(e.ArbitrationId, e.Data, false);
         RXpacketManager.ProcessCANPacket(RxMessage);
-        
-
-        //// stampa il pacchetto dell'application layer
-        //richTextBoxTx.AppendText("-- APPLICATION --\n");
-        //richTextBoxTx.AppendText($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}\n");
-
-        //// stampa il pacchetto del transport layer
-        //richTextBoxTx.AppendText("-- TRANSPORT --\n");
-        //richTextBoxTx.AppendText($"{string.Join(" ", networkLayer.TransportPacket.Select(b => b.ToString("X2")))}\n");
-
-        //// stampa i pacchetti del network layer
-        //richTextBoxTx.AppendText("-- NETWORK --\n");
-        //foreach (var item in networkLayer.NetworkPackets)
-        //{
-        //    // _netInfo, _recipientId, chunk
-        //    richTextBoxTx.AppendText($"NetInfo: {string.Join(" ", item.Item1.Select(b => b.ToString("X2")))} ");
-        //    richTextBoxTx.AppendText($"Id: {item.Item2.ToString("X2")} ");
-        //    richTextBoxTx.AppendText($"Chunk: {string.Join(" ", item.Item3.Select(b => b.ToString("X2")))}\n");
-        //}
-
     }
 
     private void InitializeComponents()
@@ -314,16 +295,6 @@ public partial class CANInterfaceTab : TabPage
 
         try
         {
-            //// Leggi il CAN ID e i dati
-            //string canIdText = canIdEntry.Text.Trim();
-            //string dataText = dataEntry.Text.Trim();
-
-            //if (string.IsNullOrEmpty(canIdText) || string.IsNullOrEmpty(dataText))
-            //{
-            //    MessageBox.Show("Inserire un CAN ID e i dati!", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            //    return;
-            //}
-
             // Crea un messaggio CAN
             TPCANMsg canMessage = new TPCANMsg
             {
@@ -352,13 +323,13 @@ public partial class CANInterfaceTab : TabPage
 
                 // Form1.FormRef.UpdateTerminal($"{timestamp} - TX: ID=0x{canMessage.ID:X} Dati={hexString}");
 
-                // Aggiungi il messaggio al ListView con colore verde
-                var listViewItem = new ListViewItem($"{timestamp} - TX: ID=0x{canMessage.ID:X} Dati={hexString}")
-                {
-                    ForeColor = System.Drawing.Color.Green
-                };
-                _receivedMessagesView.Items.Add(listViewItem);
-                _receivedMessagesView.EnsureVisible(_receivedMessagesView.Items.Count - 1); // Scrolla all'ultimo messaggio
+                //// Aggiungi il messaggio al ListView con colore verde
+                //var listViewItem = new ListViewItem($"{timestamp} - TX: ID=0x{canMessage.ID:X} Dati={hexString}")
+                //{
+                //    ForeColor = System.Drawing.Color.Green
+                //};
+                //_receivedMessagesView.Items.Add(listViewItem);
+                //_receivedMessagesView.EnsureVisible(_receivedMessagesView.Items.Count - 1); // Scrolla all'ultimo messaggio
             }
             else
             {

@@ -13,14 +13,15 @@ namespace Stem_Protocol.BootManager
     public class BootManager
     {
         //Eventi della classe
-        public event EventHandler<ProgressEventArgs> ProgressChanged;
-        public event EventHandler<SendCanCommandEventArgs> SendCanCommandRequest;
+        public event EventHandler<ProgressEventArgs>? ProgressChanged;
+        public event EventHandler<SendCanCommandEventArgs>? SendCanCommandRequest;
 
 
         // Comandi CAN proprietari per il bootloader
         private const ushort CMD_START_PROCEDURE = 0x0005;
-        private const ushort CMD_PROGRAM_BLOCK = 0x0004;
+        private const ushort CMD_PROGRAM_BLOCK = 0x0007;
         private const ushort CMD_END_PROCEDURE = 0x0006;
+        private const ushort CMD_RESTART_MACHINE = 0x000A;
 
         // Dimensione blocco firmware
         private const int FIRMWARE_BLOCK_SIZE = 1024;
@@ -32,9 +33,9 @@ namespace Stem_Protocol.BootManager
         public int totalLength;
         private byte[] firmwareData;
 
-
         //variabili varie
         uint pageNum;
+        ushort fwType = 5;
 
         public BootManager(uint RecipientId, string FirmwarePath)
         {
@@ -81,13 +82,23 @@ namespace Stem_Protocol.BootManager
 
             for (int offset = 0; offset < firmwareData.Length; offset += FIRMWARE_BLOCK_SIZE)
             {
+
                 // Prepara il blocco corrente
-                byte[] currentBlock = GetCurrentBlock(firmwareData, offset);
+                byte[] currentBlock = new byte[FIRMWARE_BLOCK_SIZE];
+
+                // Riempimento iniziale di currentBlock con 0xFF
+                Array.Fill(currentBlock, (byte) 0xFF);
+
+                byte[] currentBlockShrinked = GetCurrentBlock(firmwareData, offset);
+
+                // Copia dei dati di currentBlockShrinked in currentBlock
+                Array.Copy(currentBlockShrinked, currentBlock, currentBlockShrinked.Length);
 
                 // Invia il blocco
-                await SendFirmwareBlock(pageNum, currentBlock, (uint) FIRMWARE_BLOCK_SIZE);
+                await SendFirmwareBlock(pageNum, currentBlock, (uint)FIRMWARE_BLOCK_SIZE);
+                await Task.Delay(50); // attesa
 
-                currentOffset=offset;
+                currentOffset = offset;
                 pageNum++;
 
                 // Aggiorna progress bar
@@ -96,7 +107,10 @@ namespace Stem_Protocol.BootManager
 
             // 3. Comando di fine procedura
             SendCanCommand(CMD_END_PROCEDURE, Array.Empty<byte>(), false);
-            await Task.Delay(2000); // attesa
+            await Task.Delay(1000); // attesa
+
+            // 4. Comando di reset
+            SendCanCommand(CMD_RESTART_MACHINE, Array.Empty<byte>(), false);
 
             MessageBox.Show("Aggiornamento firmware completato!", "Successo", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
@@ -110,28 +124,22 @@ namespace Stem_Protocol.BootManager
             return block;
         }
 
-        //private async Task SendCanCommand(ushort command)
-        //{
-        //    try
-        //    {
-        //        // Implementazione invio comando CAN
-        //      //  await _canCommunication.SendCommand(command);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw new Exception($"Errore durante l'invio del comando {command:X4}: {ex.Message}");
-        //    }
-        //}
-
-        private async Task SendFirmwareBlock(uint pageNumber,byte[] block, uint pageSize)
+    
+        private async Task SendFirmwareBlock(uint pageNumber, byte[] block, uint pageSize)
         {
             try
             {
-                // Invia blocco firmware al dispositivo CAN
-                //  await _canCommunication.SendFirmwareBlock(block, offset);
+                //Crea il comando invia pagina 
+                byte[] Data= new byte[]{ 
+                    (byte)(fwType >> 8), (byte)fwType, 
+                    (byte)(pageNumber >> 24), (byte)(pageNumber >> 16), (byte)(pageNumber >> 8), (byte)(pageNumber),
+                    (byte)(pageSize>> 24), (byte)(pageSize >> 16), (byte)(pageSize >> 8), (byte)(pageSize),
+                    0x00, 0x00, 0x00, 0x00
+                }.Concat(block).ToArray();
 
-                // Simulazione di un lavoro lungo
-             //   Thread.Sleep(100);
+                // Invia blocco firmware al dispositivo CAN
+                SendCanCommand(CMD_PROGRAM_BLOCK, Data, false);
+
             }
             catch (Exception ex)
             {
