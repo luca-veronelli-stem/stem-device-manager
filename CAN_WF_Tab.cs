@@ -320,9 +320,6 @@ public partial class CANInterfaceTab : TabPage
                 string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
                 string hexString = string.Join(" ", canMessage.DATA.Select(b => b.ToString("X2")));
 
-
-                // Form1.FormRef.UpdateTerminal($"{timestamp} - TX: ID=0x{canMessage.ID:X} Dati={hexString}");
-
                 //// Aggiungi il messaggio al ListView con colore verde
                 //var listViewItem = new ListViewItem($"{timestamp} - TX: ID=0x{canMessage.ID:X} Dati={hexString}")
                 //{

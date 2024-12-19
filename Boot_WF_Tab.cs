@@ -220,6 +220,7 @@ public class Boot_Interface_Tab : TabPage
 
         // stampa il pacchetto dell'application layer
         Form1.FormRef.UpdateTerminal("Comando Boot manager:");
+
        // Form1.FormRef.UpdateTerminal("-- APPLICATION --");
        // Form1.FormRef.UpdateTerminal($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}");
 
@@ -241,7 +242,7 @@ public class Boot_Interface_Tab : TabPage
         var networkPackets = networkLayer.NetworkPackets;
         var packetManager = new PacketManager(Form1.FormRef.senderId);
 
-        // Invia i pacchetti tramite CAN
+        //// Invia i pacchetti tramite CAN
         bool result = packetManager.SendThroughCAN(networkPackets);
     }
 

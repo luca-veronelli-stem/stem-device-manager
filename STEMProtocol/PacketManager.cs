@@ -81,14 +81,15 @@ namespace Stem_Protocol.PacketManager
                         try
                         {
                             bus.Send(message);
-                            Console.WriteLine($"Message sent on {bus.ChannelInfo}: {BitConverter.ToString(message.Data)}");
+                      //      Console.WriteLine($"Message sent on {bus.ChannelInfo}: {BitConverter.ToString(message.Data)}");
                         }
                         catch (Exception)
                         {
-                            Console.WriteLine("Message not sent.");
+                        //    Console.WriteLine("Message not sent.");
                         }
                     }
-                    Thread.Sleep(2000);
+                    Thread.Sleep(10); // Simula un'attesa per 10 millisecondi
+                    //     await Task.Delay(10);
                 }
                 return true;
             }

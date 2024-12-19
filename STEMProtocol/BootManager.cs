@@ -7,6 +7,7 @@ using System.Threading;
 using System.Collections.Concurrent;
 using System.Windows.Forms;
 using Stem_Protocol;
+using StemPC;
 
 namespace Stem_Protocol.BootManager
 {
@@ -103,6 +104,7 @@ namespace Stem_Protocol.BootManager
 
                 // Aggiorna progress bar
                 OnProgressChanged(currentOffset, totalLength);
+                Form1.FormRef.UpdateTerminal($"{DateTime.Now:HH:mm:ss.fff} - Page={pageNum:X}");
             }
 
             // 3. Comando di fine procedura
