@@ -151,7 +151,7 @@ public class Boot_Interface_Tab : TabPage
         }
     }
 
-    private void BtnStartProcedure_Click(object sender, EventArgs e)
+    private async void BtnStartProcedure_Click(object sender, EventArgs e)
     {
         //Test
         filePath = "C:\\Users\\Michele\\OneDrive\\Dati\\Lavoro\\STEM\\TopLift-A\\Firmware\\Debug_BOOT\\TopLift-A_BOOT_00_01M.bin";
@@ -176,7 +176,7 @@ public class Boot_Interface_Tab : TabPage
             BootHldr.SendCanCommandRequest += OnSendCanCommand;
 
             //esegui l'upload
-            BootHldr.UploadFirmware();  
+            await BootHldr.UploadFirmware();  
 
             btnStartProcedure.Enabled = true;
         }
@@ -220,22 +220,22 @@ public class Boot_Interface_Tab : TabPage
 
         // stampa il pacchetto dell'application layer
         Form1.FormRef.UpdateTerminal("Comando Boot manager:");
-        Form1.FormRef.UpdateTerminal("-- APPLICATION --");
+       // Form1.FormRef.UpdateTerminal("-- APPLICATION --");
         Form1.FormRef.UpdateTerminal($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}");
 
-        // stampa il pacchetto del transport layer
-        Form1.FormRef.UpdateTerminal("-- TRANSPORT --");
-        Form1.FormRef.UpdateTerminal($"{string.Join(" ", networkLayer.TransportPacket.Select(b => b.ToString("X2")))}");
+        //// stampa il pacchetto del transport layer
+        //Form1.FormRef.UpdateTerminal("-- TRANSPORT --");
+        //Form1.FormRef.UpdateTerminal($"{string.Join(" ", networkLayer.TransportPacket.Select(b => b.ToString("X2")))}");
 
-        // stampa i pacchetti del network layer
-        Form1.FormRef.UpdateTerminal("-- NETWORK --");
-        foreach (var item in networkLayer.NetworkPackets)
-        {
-            // _netInfo, _recipientId, chunk
-            Form1.FormRef.UpdateTerminal($"NetInfo: {string.Join(" ", item.Item1.Select(b => b.ToString("X2")))} ");
-            Form1.FormRef.UpdateTerminal($"Id: {item.Item2.ToString("X2")} ");
-            Form1.FormRef.UpdateTerminal($"Chunk: {string.Join(" ", item.Item3.Select(b => b.ToString("X2")))}");
-        }
+        //// stampa i pacchetti del network layer
+        //Form1.FormRef.UpdateTerminal("-- NETWORK --");
+        //foreach (var item in networkLayer.NetworkPackets)
+        //{
+        //    // _netInfo, _recipientId, chunk
+        //    Form1.FormRef.UpdateTerminal($"NetInfo: {string.Join(" ", item.Item1.Select(b => b.ToString("X2")))} ");
+        //    Form1.FormRef.UpdateTerminal($"Id: {item.Item2.ToString("X2")} ");
+        //    Form1.FormRef.UpdateTerminal($"Chunk: {string.Join(" ", item.Item3.Select(b => b.ToString("X2")))}");
+        //}
 
         // Ottieni i chunck da spedire 
         var networkPackets = networkLayer.NetworkPackets;

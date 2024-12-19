@@ -226,16 +226,18 @@ namespace Stem_Protocol.PacketManager
             {
                 var unifiedPacket = packetQueues[packetId].SelectMany(chunk => chunk).ToArray();
                 packetQueues[packetId].Clear();
-                _networkPacket = new NetworkLayer(interfaceType, version, _sniffer_id, unifiedPacket, true);
+                if (unifiedPacket.Length > 7) { 
+                    _networkPacket = new NetworkLayer(interfaceType, version, _sniffer_id, unifiedPacket, true);
 
-                // Sottoscrizione degli eventi
-                foreach (NetworkLayer.PacketReadyEventHandler Handler in PacketReadyEventList)
-                {
-                    _networkPacket.SP_PacketReadyEvent += Handler;
+                    // Sottoscrizione degli eventi
+                    foreach (NetworkLayer.PacketReadyEventHandler Handler in PacketReadyEventList)
+                    {
+                        _networkPacket.SP_PacketReadyEvent += Handler;
+                    }
+
+                    //Packet is ready, decode it
+                    _networkPacket.SP_PacketReady();
                 }
-
-                //Packet is ready, decode it
-                _networkPacket.SP_PacketReady();
             }
         }
     }
