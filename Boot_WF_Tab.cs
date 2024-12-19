@@ -10,6 +10,7 @@ using Stem_Protocol;
 using Stem_Protocol.PacketManager;
 using Stem_Protocol.BootManager;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
+using DocumentFormat.OpenXml.Wordprocessing;
 
 
 // Classe per l'interfaccia grafica del bootloader
@@ -184,10 +185,64 @@ public class Boot_Interface_Tab : TabPage
     // Gestore dell'evento send can command
     private static void OnSendCanCommand(object sender, SendCanCommandEventArgs e)
     {
+        //crea il pacchetto per l'appplicationLayer
         byte[] AppData = { (byte)(e.Command >> 8), (byte)(e.Command) };
 
-        Form1.FormRef.CanTabPageRef.SendCANMessage(Form1.FormRef.RecipientId, AppData);
-        Console.WriteLine($"Command: {e.Command}, WaitAnswer: {e.WaitAnswer}");
+        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        //      SPEDIZIONE PACCHETTO DA APPLICATION LAYER
+        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        // Parametri del pacchetto
+
+        //AL
+
+        // Creazione del pacchetto a livello applicativo
+        byte cmdInit = AppData[0];//comando byte alto
+        byte cmdOpt = AppData[1];//comando byte basso 
+        byte[] payload = {0x00};
+
+        //TL
+        byte cryptFlag = 0x00;         // Nessuna crittografia
+
+        //NL
+        string interfaceType = "can";                   // Interfaccia CAN
+        int version = 1;                                // Versione del protocollo
+        uint recipientId = Form1.FormRef.RecipientId;    // ID del destinatario
+
+
+        // Crea direttamente il pacchetto di livello Network
+        var networkLayer = new NetworkLayer(
+            interfaceType,
+            version,
+            recipientId,
+            new byte[] { cryptFlag, (byte)Form1.FormRef.senderId, (byte)(Form1.FormRef.senderId >> 8), (byte)(Form1.FormRef.senderId >> 16), (byte)(Form1.FormRef.senderId >> 24), 0, 0, cmdInit, cmdOpt }.Concat(payload).ToArray(),
+            true
+        );
+
+        // stampa il pacchetto dell'application layer
+        Form1.FormRef.UpdateTerminal("Comando Boot manager:");
+        Form1.FormRef.UpdateTerminal("-- APPLICATION --");
+        Form1.FormRef.UpdateTerminal($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}");
+
+        // stampa il pacchetto del transport layer
+        Form1.FormRef.UpdateTerminal("-- TRANSPORT --");
+        Form1.FormRef.UpdateTerminal($"{string.Join(" ", networkLayer.TransportPacket.Select(b => b.ToString("X2")))}");
+
+        // stampa i pacchetti del network layer
+        Form1.FormRef.UpdateTerminal("-- NETWORK --");
+        foreach (var item in networkLayer.NetworkPackets)
+        {
+            // _netInfo, _recipientId, chunk
+            Form1.FormRef.UpdateTerminal($"NetInfo: {string.Join(" ", item.Item1.Select(b => b.ToString("X2")))} ");
+            Form1.FormRef.UpdateTerminal($"Id: {item.Item2.ToString("X2")} ");
+            Form1.FormRef.UpdateTerminal($"Chunk: {string.Join(" ", item.Item3.Select(b => b.ToString("X2")))}");
+        }
+
+        // Ottieni i chunck da spedire 
+        var networkPackets = networkLayer.NetworkPackets;
+        var packetManager = new PacketManager(Form1.FormRef.senderId);
+
+        // Invia i pacchetti tramite CAN
+        bool result = packetManager.SendThroughCAN(networkPackets);
     }
 
     private void DisplayFileContent(string filePath)
@@ -253,7 +308,7 @@ public class CustomProgressBar : System.Windows.Forms.ProgressBar
             Rectangle clip = new Rectangle(rect.X, rect.Y, (int)Math.Round(((float)this.Value / this.Maximum) * rect.Width), rect.Height);
             ProgressBarRenderer.DrawHorizontalChunks(g, clip);
         }
-        using (var font = new Font(FontFamily.GenericMonospace, 14, FontStyle.Bold))
+        using (var font = new System.Drawing.Font(System.Drawing.FontFamily.GenericMonospace, 14, FontStyle.Bold))
         {
             // Calculate the percentage text to display
             SizeF size = g.MeasureString(string.Format("{0} %", this.Value), font);
