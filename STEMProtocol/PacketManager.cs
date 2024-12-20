@@ -6,11 +6,13 @@ using System.Linq;
 using System.Threading;
 using System.Collections.Concurrent;
 using System.Windows.Forms;
+
 using Stem_Protocol;
+
+using PCAN_Handler;
 
 //using static NetworkLayer;
 using StemPC;
-
 
 namespace Stem_Protocol.PacketManager
 {
@@ -299,15 +301,15 @@ namespace Stem_Protocol.PacketManager
                 //PACKET READY
                 var unifiedPacket = packetQueues[packetId].SelectMany(chunk => chunk).ToArray();
                 packetQueues[packetId].Clear();
-                if (unifiedPacket.Length > 7) { 
-                    _networkPacket = new NetworkLayer(interfaceType, version, _sniffer_id, unifiedPacket, true);
 
+                if (unifiedPacket.Length > 7) { 
+
+                    _networkPacket = new NetworkLayer(interfaceType, version, _sniffer_id, unifiedPacket, true);
                     // Sottoscrizione degli eventi
                     foreach (NetworkLayer.PacketReadyEventHandler Handler in PacketReadyEventList)
                     {
                         _networkPacket.SP_PacketReadyEvent += Handler;
                     }
-
                     //Packet is ready, decode it
                     _networkPacket.SP_PacketReady();
                 }
@@ -357,7 +359,7 @@ namespace Stem_Protocol.PacketManager
             //}
 
             // Implementation to send message through CAN
-            Form1.FormRef.CanTabPageRef.SendCANMessage(message.ArbitrationId, message.Data);
+            Form1.CanTabPageRef.thisRef.SendCANMessage(message.ArbitrationId, message.Data);
         }
 
         public void Dispose()

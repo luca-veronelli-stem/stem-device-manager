@@ -12,6 +12,8 @@ using StemPC;
 using TPCANHandle = System.Byte;
 using Stem_Protocol;
 using Stem_Protocol.PacketManager;
+using PCAN_Handler;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
 
 
 // Classe per l'interfaccia grafica
@@ -28,12 +30,15 @@ public partial class CANInterfaceTab : TabPage
     private const TPCANHandle Channel = 0x51; // PCAN_USB
     private TPCANBaudrate BaudRate;
 
-  //  private ObservableCollection<CanMessagePCAN> messages = new ObservableCollection<CanMessagePCAN>();
+    public static CANInterfaceTab thisRef { get; private set; }
+
+    //private ObservableCollection<CanMessagePCAN> messages = new ObservableCollection<CanMessagePCAN>();
 
     public PacketManager PS_CAN_PacketManager;
 
     public CANInterfaceTab()
     {
+        thisRef = this;
         InitializeComponents();
         //   RXpacketManager = new PacketManager(Form1.FormRef.senderId);
         PS_CAN_PacketManager = new PacketManager(0xFFFFFFFF);
@@ -124,16 +129,16 @@ public partial class CANInterfaceTab : TabPage
 
     private void UpdateMessageList(CANPacketEventArgs e)
     {
-        ////debug dei dati sulla finestra in uscita
-        //string dataString = string.Join(" ", e.Data.Select(b => b.ToString("X2")));
-        //var listViewItem = new ListViewItem(
-        //    $"{e.Timestamp:yyyy-MM-dd HH:mm:ss.fff} - RX: ID=0x{e.ArbitrationId:X} Dati={dataString}")
-        //{
-        //    ForeColor = System.Drawing.Color.Blue
-        //};
+        //debug dei dati ricevuti sulla finestra in uscita (blu)
+        string dataString = string.Join(" ", e.Data.Select(b => b.ToString("X2")));
+        var listViewItem = new ListViewItem(
+            $"{e.Timestamp:yyyy-MM-dd HH:mm:ss.fff} - RX: ID=0x{e.ArbitrationId:X} Dati={dataString}")
+        {
+            ForeColor = System.Drawing.Color.Blue
+        };
 
-        //_receivedMessagesView.Items.Add(listViewItem);
-        //_receivedMessagesView.EnsureVisible(_receivedMessagesView.Items.Count - 1);
+        _receivedMessagesView.Items.Add(listViewItem);
+        _receivedMessagesView.EnsureVisible(_receivedMessagesView.Items.Count - 1);
 
         //aggiungi i messaggi alla coda del network layer
         CANMessage RxMessage = new CANMessage(e.ArbitrationId, e.Data, false);
@@ -298,38 +303,21 @@ public partial class CANInterfaceTab : TabPage
 
         try
         {
-            // Crea un messaggio CAN
-            TPCANMsg canMessage = new TPCANMsg
-            {
-                ID = CANID,
-                LEN = (byte)data.Length,
-                MSGTYPE = TPCANMessageType.PCAN_MESSAGE_EXTENDED,
-                DATA = new byte[8]
-            };
-
-            // Popola i dati nel messaggio
-            //  var dataBytes = dataText.Split(' ').Select(byte.Parse).ToArray();
-            for (int i = 0; i < canMessage.LEN && i < 8; i++)
-            {
-                canMessage.DATA[i] = data[i];
-            }
-
-            // Invia il messaggio
-            var result = PCANBasic.Write(Channel, ref canMessage);
+            var result = _pcanManager.SendMessage(CANID, data, true);
 
             if (result == TPCANStatus.PCAN_ERROR_OK)
             {
                 // Ottieni il timestamp
                 string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                string hexString = string.Join(" ", canMessage.DATA.Select(b => b.ToString("X2")));
+                string hexString = string.Join(" ", data.Select(b => b.ToString("X2")));
 
-                //// Aggiungi il messaggio al ListView con colore verde
-                //var listViewItem = new ListViewItem($"{timestamp} - TX: ID=0x{canMessage.ID:X} Dati={hexString}")
-                //{
-                //    ForeColor = System.Drawing.Color.Green
-                //};
-                //_receivedMessagesView.Items.Add(listViewItem);
-                //_receivedMessagesView.EnsureVisible(_receivedMessagesView.Items.Count - 1); // Scrolla all'ultimo messaggio
+                // Aggiungi il messaggio al ListView con colore verde
+                var listViewItem = new ListViewItem($"{timestamp} - TX: ID=0x{CANID:X} Dati={hexString}")
+                {
+                    ForeColor = System.Drawing.Color.Green
+                };
+                thisRef._receivedMessagesView.Items.Add(listViewItem);
+                thisRef._receivedMessagesView.EnsureVisible(thisRef._receivedMessagesView.Items.Count - 1); // Scrolla all'ultimo messaggio
             }
             else
             {

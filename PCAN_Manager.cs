@@ -6,11 +6,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DocumentFormat.OpenXml.Wordprocessing;
+
 using Peak.Can.Basic;
 using Peak.Can.Basic.BackwardCompatibility;
-//using StemPC;
 using TPCANHandle = System.Byte;
-//using PS_PacketManager;
+
+namespace PCAN_Handler;
 
 // Classe per la gestione degli eventi di ricezione pacchetti
 public class CANPacketEventArgs : EventArgs
@@ -118,10 +119,9 @@ public class PCANManager
         });
     }
 
-    public bool SendMessage(uint canId, byte[] data, bool isExtended = false)
+    public TPCANStatus SendMessage(uint canId, byte[] data, bool isExtended = false)
     {
-        if (!_isConnected)
-            return false;
+        if (!_isConnected) return TPCANStatus.PCAN_ERROR_BUSOFF;
 
         var canMessage = new TPCANMsg
         {
@@ -134,7 +134,7 @@ public class PCANManager
         Array.Copy(data, canMessage.DATA, canMessage.LEN);
 
         var result = PCANBasic.Write(Channel, ref canMessage);
-        return result == TPCANStatus.PCAN_ERROR_OK;
+        return result;
     }
 
     public void StartReading()

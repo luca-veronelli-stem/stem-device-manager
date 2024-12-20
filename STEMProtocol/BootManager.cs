@@ -100,14 +100,14 @@ namespace Stem_Protocol.BootManager
                 // Invia il blocco
                 await SendFirmwareBlock(pageNum, currentBlock, (uint)FIRMWARE_BLOCK_SIZE);
    
-                await Task.Delay(800); // attesa
+                await Task.Delay(600); // attesa
                 
                 Form1.FormRef.UpdateTerminal($"{DateTime.Now:HH:mm:ss.fff} - Page={pageNum:X}");
 
                 // Invia il blocco
                 await SendFirmwareBlock(pageNum, currentBlock, (uint)FIRMWARE_BLOCK_SIZE);
 
-                await Task.Delay(800); // attesa
+                await Task.Delay(600); // attesa
 
                 Form1.FormRef.UpdateTerminal($"{DateTime.Now:HH:mm:ss.fff} - Page={pageNum:X}");
 
