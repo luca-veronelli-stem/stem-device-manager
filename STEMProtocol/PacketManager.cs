@@ -63,7 +63,7 @@ namespace Stem_Protocol.PacketManager
     public async Task<bool> SendAndWaitForResponseAsync(
         List<Tuple<byte[], uint, byte[]>> networkPackets,
         Func<byte[], bool> responseValidator, // Funzione di validazione risposta
-        int timeoutMs = 500 // Timeout in millisecondi
+        int timeoutMs = 300 // Timeout in millisecondi
     )
         {
             try
