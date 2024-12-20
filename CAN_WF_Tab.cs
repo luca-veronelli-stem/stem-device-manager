@@ -36,7 +36,7 @@ public partial class CANInterfaceTab : TabPage
     {
         InitializeComponents();
      //   RXpacketManager = new PacketManager(Form1.FormRef.senderId);
-        RXpacketManager = new PacketManager(0xFFFFFFFF);
+        RXpacketManager = new PacketManager(0xFFFFFFFF); //packet manager generale: fa da sniffer per tutto
         RXpacketManager.RegisterPacketReadyEvent(Form1.FormRef.DecodeCommandSP);
         InitializePCANManager();
     }

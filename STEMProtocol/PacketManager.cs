@@ -63,7 +63,7 @@ namespace Stem_Protocol.PacketManager
     public async Task<bool> SendAndWaitForResponseAsync(
         List<Tuple<byte[], uint, byte[]>> networkPackets,
         Func<byte[], bool> responseValidator, // Funzione di validazione risposta
-        int timeoutMs = 300 // Timeout in millisecondi
+        int timeoutMs = 1000 // Timeout in millisecondi
     )
         {
             try
@@ -89,7 +89,7 @@ namespace Stem_Protocol.PacketManager
                 //}
 
                 // Sottoscrizione all'evento (ipotizzando che esista un gestore eventi CAN globale)
-    //            CANBus.MessageReceived += OnCanMessageReceived;
+                //            CANBus.MessageReceived += OnCanMessageReceived;
 
                 using (var bus = new CANBus(channel, canInterface, bitrate))
                 {
@@ -248,7 +248,6 @@ namespace Stem_Protocol.PacketManager
                 }
                 else
                 {
-                    
                     ProcessPacket("can", msg.Data);
                 }
             }
