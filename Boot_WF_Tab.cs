@@ -183,67 +183,140 @@ public class Boot_Interface_Tab : TabPage
     }
 
     // Gestore dell'evento send can command
-    private static void OnSendCanCommand(object sender, SendCanCommandEventArgs e)
+    private static async void OnSendCanCommand(object sender, SendCanCommandEventArgs e)
     {
-        //crea il pacchetto per l'appplicationLayer
-        byte[] AppData = { (byte)(e.Command >> 8), (byte)(e.Command) };
+        await HandleSendCanCommandAsync(sender, e);
+    }
 
-        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        //      SPEDIZIONE PACCHETTO DA APPLICATION LAYER
-        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        // Parametri del pacchetto
+    //// Gestore dell'evento send can command asincrono
+    //private static void OnSendCanCommand(object sender, SendCanCommandEventArgs e)
+    //{
+    //    //crea il pacchetto per l'appplicationLayer
+    //    byte[] AppData = { (byte)(e.Command >> 8), (byte)(e.Command) };
 
-        //AL
+    //    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    //    //      SPEDIZIONE PACCHETTO DA APPLICATION LAYER
+    //    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    //    // Parametri del pacchetto
 
-        // Creazione del pacchetto a livello applicativo
-        byte cmdInit = AppData[0];//comando byte alto
-        byte cmdOpt = AppData[1];//comando byte basso 
-        byte[] payload = e.Payload;
+    //    //AL
 
-        //TL
-        byte cryptFlag = 0x00;         // Nessuna crittografia
+    //    // Creazione del pacchetto a livello applicativo
+    //    byte cmdInit = AppData[0];//comando byte alto
+    //    byte cmdOpt = AppData[1];//comando byte basso 
+    //    byte[] payload = e.Payload;
 
-        //NL
-        string interfaceType = "can";                   // Interfaccia CAN
-        int version = 1;                                // Versione del protocollo
-        uint recipientId = Form1.FormRef.RecipientId;    // ID del destinatario
+    //    //TL
+    //    byte cryptFlag = 0x00;         // Nessuna crittografia
+
+    //    //NL
+    //    string interfaceType = "can";                   // Interfaccia CAN
+    //    int version = 1;                                // Versione del protocollo
+    //    uint recipientId = Form1.FormRef.RecipientId;    // ID del destinatario
 
 
-        // Crea direttamente il pacchetto di livello Network
-        var networkLayer = new NetworkLayer(
-            interfaceType,
-            version,
-            recipientId,
-            new byte[] { cryptFlag, (byte)Form1.FormRef.senderId, (byte)(Form1.FormRef.senderId >> 8), (byte)(Form1.FormRef.senderId >> 16), (byte)(Form1.FormRef.senderId >> 24), 0, 0, cmdInit, cmdOpt }.Concat(payload).ToArray(),
-            true
-        );
+    //    // Crea direttamente il pacchetto di livello Network
+    //    var networkLayer = new NetworkLayer(
+    //        interfaceType,
+    //        version,
+    //        recipientId,
+    //        new byte[] { cryptFlag, (byte)Form1.FormRef.senderId, (byte)(Form1.FormRef.senderId >> 8), (byte)(Form1.FormRef.senderId >> 16), (byte)(Form1.FormRef.senderId >> 24), 0, 0, cmdInit, cmdOpt }.Concat(payload).ToArray(),
+    //        true
+    //    );
 
-        // stampa il pacchetto dell'application layer
-        Form1.FormRef.UpdateTerminal("Comando Boot manager:");
+    //    // stampa il pacchetto dell'application layer
+    //    Form1.FormRef.UpdateTerminal("Comando Boot manager:");
 
-       // Form1.FormRef.UpdateTerminal("-- APPLICATION --");
-       // Form1.FormRef.UpdateTerminal($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}");
+    //   // Form1.FormRef.UpdateTerminal("-- APPLICATION --");
+    //    Form1.FormRef.UpdateTerminal($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}");
 
-        //// stampa il pacchetto del transport layer
-        //Form1.FormRef.UpdateTerminal("-- TRANSPORT --");
-        //Form1.FormRef.UpdateTerminal($"{string.Join(" ", networkLayer.TransportPacket.Select(b => b.ToString("X2")))}");
+    //    //// stampa il pacchetto del transport layer
+    //    //Form1.FormRef.UpdateTerminal("-- TRANSPORT --");
+    //    //Form1.FormRef.UpdateTerminal($"{string.Join(" ", networkLayer.TransportPacket.Select(b => b.ToString("X2")))}");
 
-        //// stampa i pacchetti del network layer
-        //Form1.FormRef.UpdateTerminal("-- NETWORK --");
-        //foreach (var item in networkLayer.NetworkPackets)
-        //{
-        //    // _netInfo, _recipientId, chunk
-        //    Form1.FormRef.UpdateTerminal($"NetInfo: {string.Join(" ", item.Item1.Select(b => b.ToString("X2")))} ");
-        //    Form1.FormRef.UpdateTerminal($"Id: {item.Item2.ToString("X2")} ");
-        //    Form1.FormRef.UpdateTerminal($"Chunk: {string.Join(" ", item.Item3.Select(b => b.ToString("X2")))}");
-        //}
+    //    //// stampa i pacchetti del network layer
+    //    //Form1.FormRef.UpdateTerminal("-- NETWORK --");
+    //    //foreach (var item in networkLayer.NetworkPackets)
+    //    //{
+    //    //    // _netInfo, _recipientId, chunk
+    //    //    Form1.FormRef.UpdateTerminal($"NetInfo: {string.Join(" ", item.Item1.Select(b => b.ToString("X2")))} ");
+    //    //    Form1.FormRef.UpdateTerminal($"Id: {item.Item2.ToString("X2")} ");
+    //    //    Form1.FormRef.UpdateTerminal($"Chunk: {string.Join(" ", item.Item3.Select(b => b.ToString("X2")))}");
+    //    //}
 
-        // Ottieni i chunck da spedire 
-        var networkPackets = networkLayer.NetworkPackets;
-        var packetManager = new PacketManager(Form1.FormRef.senderId);
+    //    // Ottieni i chunck da spedire 
+    //    var networkPackets = networkLayer.NetworkPackets;
+    //    var packetManager = new PacketManager(Form1.FormRef.senderId);
 
-        //// Invia i pacchetti tramite CAN
-        bool result = packetManager.SendThroughCAN(networkPackets);
+    //    //// Invia i pacchetti tramite CAN
+    //    bool result = packetManager.SendThroughCANAsync(networkPackets).Result;
+
+    //  //  if (e.WaitAnswer) 
+    //}
+
+    private static async Task HandleSendCanCommandAsync(object sender, SendCanCommandEventArgs e)
+    {
+        try
+        {
+            // Crea il pacchetto per l'applicationLayer
+            byte[] AppData = { (byte)(e.Command >> 8), (byte)(e.Command) };
+
+            // AL
+            byte cmdInit = AppData[0]; // comando byte alto
+            byte cmdOpt = AppData[1]; // comando byte basso
+            byte[] payload = e.Payload;
+
+            // TL
+            byte cryptFlag = 0x00; // Nessuna crittografia
+
+            // NL
+            string interfaceType = "can";
+            int version = 1;
+            uint recipientId = Form1.FormRef.RecipientId;
+
+            // Crea il pacchetto di livello Network
+            var networkLayer = new NetworkLayer(
+                interfaceType,
+                version,
+                recipientId,
+                new byte[] { cryptFlag, (byte)Form1.FormRef.senderId, (byte)(Form1.FormRef.senderId >> 8), (byte)(Form1.FormRef.senderId >> 16), (byte)(Form1.FormRef.senderId >> 24), 0, 0, cmdInit, cmdOpt }.Concat(payload).ToArray(),
+                true
+            );
+
+            // Stampa i dettagli
+            Form1.FormRef.UpdateTerminal("Comando Boot manager:");
+            Form1.FormRef.UpdateTerminal($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}");
+
+            // Ottieni i chunk da spedire
+            var networkPackets = networkLayer.NetworkPackets;
+            var packetManager = new PacketManager(Form1.FormRef.senderId);
+
+            // Invia i pacchetti tramite CAN in modo asincrono
+            bool result = false;
+
+            if (e.WaitAnswer)
+            {
+                // Funzione di validazione della risposta
+                Func<byte[], bool> responseValidator = (data) =>
+                {
+                    // Esempio: Verifica che il primo byte della risposta sia 0xAA
+                    return data.Length > 0 && data[0] == 0xAA;
+                };
+                result = await packetManager.SendAndWaitForResponseAsync(networkPackets, responseValidator);
+            }
+            else
+            {
+                result = await packetManager.SendThroughCANAsync(networkPackets);
+            }
+            
+            // Usa il risultato
+            Form1.FormRef.UpdateTerminal(result ? "Pacchetto inviato con successo!" : "Errore durante l'invio del pacchetto.");
+        }
+        catch (Exception ex)
+        {
+            // Gestione dell'eccezione
+            Form1.FormRef.UpdateTerminal($"Errore durante l'invio del comando CAN: {ex.Message}");
+        }
     }
 
     private void DisplayFileContent(string filePath)

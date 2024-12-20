@@ -8,6 +8,7 @@ using System.Collections.Concurrent;
 using System.Windows.Forms;
 using Stem_Protocol;
 using StemPC;
+using DocumentFormat.OpenXml.Drawing;
 
 namespace Stem_Protocol.BootManager
 {
@@ -75,12 +76,13 @@ namespace Stem_Protocol.BootManager
         public async Task UploadFirmware()
         {
             // 1. Avvio procedura
-            SendCanCommand(CMD_START_PROCEDURE, Array.Empty<byte>(), false);
+            SendCanCommand(CMD_START_PROCEDURE, Array.Empty<byte>(), true);
             await Task.Delay(2000); // attesa
 
             // 2. Ciclo di programmazione blocchi
             pageNum = 0;
 
+          //  int offset = 0;
             for (int offset = 0; offset < firmwareData.Length; offset += FIRMWARE_BLOCK_SIZE)
             {
 
@@ -97,8 +99,9 @@ namespace Stem_Protocol.BootManager
 
                 // Invia il blocco
                 await SendFirmwareBlock(pageNum, currentBlock, (uint)FIRMWARE_BLOCK_SIZE);
-                await Task.Delay(800); // attesa
+                await Task.Delay(300); // attesa
                 Form1.FormRef.UpdateTerminal($"{DateTime.Now:HH:mm:ss.fff} - Page={pageNum:X}");
+                
 
                 currentOffset = offset;
                 pageNum++;
@@ -108,11 +111,11 @@ namespace Stem_Protocol.BootManager
             }
 
             // 3. Comando di fine procedura
-            SendCanCommand(CMD_END_PROCEDURE, Array.Empty<byte>(), false);
-            await Task.Delay(1000); // attesa
+            SendCanCommand(CMD_END_PROCEDURE, Array.Empty<byte>(), true);
+            //await Task.Delay(1000); // attesa
 
-            // 4. Comando di reset
-            SendCanCommand(CMD_RESTART_MACHINE, Array.Empty<byte>(), false);
+ //           // 4. Comando di reset
+ //           SendCanCommand(CMD_RESTART_MACHINE, Array.Empty<byte>(), false);
 
             MessageBox.Show("Aggiornamento firmware completato!", "Successo", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
@@ -140,7 +143,7 @@ namespace Stem_Protocol.BootManager
                 }.Concat(block).ToArray();
 
                 // Invia blocco firmware al dispositivo CAN
-                SendCanCommand(CMD_PROGRAM_BLOCK, Data, false);
+                SendCanCommand(CMD_PROGRAM_BLOCK, Data, true);
 
             }
             catch (Exception ex)

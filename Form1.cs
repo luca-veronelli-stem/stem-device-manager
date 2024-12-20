@@ -64,9 +64,9 @@ namespace StemPC
         //**********************************
         //  STEM Protocol variables/classes
         //**********************************
-        public uint  RecipientId;
+        public uint RecipientId;
         public short SelectedCommand;
-        public uint  senderId;              // ID del mittente
+        public uint senderId;              // ID del mittente
 
 
         //**************************
@@ -118,7 +118,7 @@ namespace StemPC
             tabControl.TabPages.Remove(tabPageUART);
 
             //Seleziona il tab del protocollo
-            tabControl.SelectedTab = BootTabRef; 
+            tabControl.SelectedTab = BootTabRef;
 
             //Estrai i dati dal dizionario stem
             hExcel = new ExcelHandler();
@@ -256,8 +256,18 @@ namespace StemPC
             }
         }
 
- 
-        private void buttonSendPS_Click(object sender, EventArgs e)
+
+        private async void buttonSendPS_Click(object sender, EventArgs e)
+        {
+            await SendPS_Async(sender, e);
+        }
+
+        //private void buttonSendPS_Click(object sender, EventArgs e)
+        //{
+
+        //}
+
+        private static async Task SendPS_Async(object sender, EventArgs e)
         {
             //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             //      SPEDIZIONE PACCHETTO DA APPLICATION LAYER
@@ -267,11 +277,11 @@ namespace StemPC
             //AL
 
             // Creazione del pacchetto a livello applicativo
-            byte cmdInit = (byte)(SelectedCommand >> 8);//comando byte alto
-            byte cmdOpt = (byte)(SelectedCommand);//comando byte basso 
+            byte cmdInit = (byte)(Form1.FormRef.SelectedCommand >> 8);//comando byte alto
+            byte cmdOpt = (byte)(Form1.FormRef.SelectedCommand);//comando byte basso 
 
             // Array di TextBox: sostituisci con i tuoi effettivi TextBox
-            TextBox[] textBoxes = { textBox1, textBox2, textBox3, textBox4, textBox5, textBox6, textBox7 };
+            TextBox[] textBoxes = { Form1.FormRef.textBox1, Form1.FormRef.textBox2, Form1.FormRef.textBox3, Form1.FormRef.textBox4, Form1.FormRef.textBox5, Form1.FormRef.textBox6, Form1.FormRef.textBox7 };
 
             // Lista per raccogliere i valori validi
             List<byte> byteList = new List<byte>();
@@ -297,12 +307,12 @@ namespace StemPC
 
             //TL
             byte cryptFlag = 0x00;         // Nessuna crittografia
-            
-            
+
+
             //NL
             string interfaceType = "can";   // Interfaccia CAN
             int version = 1;                // Versione del protocollo
-            uint recipientId = RecipientId; // ID del destinatario
+            uint recipientId = Form1.FormRef.RecipientId; // ID del destinatario
 
 
             // Crea direttamente il pacchetto di livello Network
@@ -310,50 +320,44 @@ namespace StemPC
                 interfaceType,
                 version,
                 recipientId,
-                new byte[] { cryptFlag, (byte)senderId, (byte)(senderId>>8), (byte)(senderId >> 16), (byte)(senderId >> 24), 0, 0, cmdInit, cmdOpt }.Concat(payload).ToArray(),
+                new byte[] { cryptFlag, (byte)Form1.FormRef.senderId, (byte)(Form1.FormRef.senderId >> 8), (byte)(Form1.FormRef.senderId >> 16), (byte)(Form1.FormRef.senderId >> 24), 0, 0, cmdInit, cmdOpt }.Concat(payload).ToArray(),
                 true
             );
 
             // stampa il pacchetto dell'application layer
-            richTextBoxTx.AppendText("-- APPLICATION --\n");
-            richTextBoxTx.AppendText($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}\n");
+            Form1.FormRef.richTextBoxTx.AppendText("-- APPLICATION --\n");
+            Form1.FormRef.richTextBoxTx.AppendText($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}\n");
 
             // stampa il pacchetto del transport layer
-            richTextBoxTx.AppendText("-- TRANSPORT --\n");
-            richTextBoxTx.AppendText($"{string.Join(" ", networkLayer.TransportPacket.Select(b => b.ToString("X2")))}\n");
+            Form1.FormRef.richTextBoxTx.AppendText("-- TRANSPORT --\n");
+            Form1.FormRef.richTextBoxTx.AppendText($"{string.Join(" ", networkLayer.TransportPacket.Select(b => b.ToString("X2")))}\n");
 
             // stampa i pacchetti del network layer
-            richTextBoxTx.AppendText("-- NETWORK --\n");
+            Form1.FormRef.richTextBoxTx.AppendText("-- NETWORK --\n");
             foreach (var item in networkLayer.NetworkPackets)
             {
                 // _netInfo, _recipientId, chunk
-                richTextBoxTx.AppendText($"NetInfo: {string.Join(" ", item.Item1.Select(b => b.ToString("X2")))} ");
-                richTextBoxTx.AppendText($"Id: {item.Item2.ToString("X2")} ");
-                richTextBoxTx.AppendText($"Chunk: {string.Join(" ", item.Item3.Select(b => b.ToString("X2")))}\n");
+                Form1.FormRef.richTextBoxTx.AppendText($"NetInfo: {string.Join(" ", item.Item1.Select(b => b.ToString("X2")))} ");
+                Form1.FormRef.richTextBoxTx.AppendText($"Id: {item.Item2.ToString("X2")} ");
+                Form1.FormRef.richTextBoxTx.AppendText($"Chunk: {string.Join(" ", item.Item3.Select(b => b.ToString("X2")))}\n");
             }
             // Imposta la posizione del cursore alla fine del testo.
-            richTextBoxTx.SelectionStart = richTextBoxTx.Text.Length;
+            Form1.FormRef.richTextBoxTx.SelectionStart = Form1.FormRef.richTextBoxTx.Text.Length;
             // Esegue lo scroll fino alla posizione del cursore.
-            richTextBoxTx.ScrollToCaret();
+            Form1.FormRef.richTextBoxTx.ScrollToCaret();
 
             // Ottieni i pacchetti suddivisi per il CAN
             var networkPackets = networkLayer.NetworkPackets;
 
             // Invia i pacchetti tramite CAN
-            var packetManager = new PacketManager(senderId);
+            var packetManager = new PacketManager(Form1.FormRef.senderId);
 
-            bool result = packetManager.SendThroughCAN(networkPackets);
-
- 
-            //// Simulazione invio di pacchetti tramite CAN
-            //List<Tuple<byte[], uint, byte[]>> canPackets = networkLayer.NetworkPackets;
-            //bool sentThroughCan = packetManager.SendThroughCAN(canPackets);
-            ////Console.WriteLine($"Pacchetti inviati tramite CAN: {sentThroughCan}");
+            bool result = await packetManager.SendThroughCANAsync(networkPackets);
         }
 
         private void comboBoxCommand_SelectedIndexChanged(object sender, EventArgs e)
         {
-            SelectedCommand = (short) comboBoxCommand.SelectedIndex;
+            SelectedCommand = (short)comboBoxCommand.SelectedIndex;
         }
 
         // Metodo per gestire l'evento
@@ -370,7 +374,7 @@ namespace StemPC
 
             foreach (ExcelHandler.RowData Item in IndirizziProtocollo)
             {
-                if(Item.Indirizzo == "0x" + sourceAddress.ToString("X8"))
+                if (Item.Indirizzo == "0x" + sourceAddress.ToString("X8"))
                 {
                     MachineName = Item.Macchina + "->" + Item.Scheda;
                 }
@@ -385,20 +389,20 @@ namespace StemPC
             }
 
             //find command and decode application layer
-            ExcelHandler.CommandData CurrentCommand= new ExcelHandler.CommandData("None","0","0");
+            ExcelHandler.CommandData CurrentCommand = new ExcelHandler.CommandData("None", "0", "0");
 
             foreach (ExcelHandler.CommandData Item in Comandi)
             {
                 byte CmdL = Convert.FromHexString(Item.CmdL.PadLeft(2, '0'))[0];
                 byte CmdH = Convert.FromHexString(Item.CmdH.PadLeft(2, '0'))[0];
-                if ((payload[0]== CmdH) && (payload[1] == CmdL))
+                if ((payload[0] == CmdH) && (payload[1] == CmdL))
                 {
                     CurrentCommand = Item;
                     break;
                 }
             }
 
-           if (CurrentCommand.Name != "None")
+            if (CurrentCommand.Name != "None")
             {
                 //comando riconosciuto
                 richTextBoxTx.AppendText($"Comando '{CurrentCommand.Name} ' ricevuto da {MachineName} per {MachineNameRecipient}: ");
@@ -409,9 +413,9 @@ namespace StemPC
                 richTextBoxTx.AppendText("Comando non presente in dizionario: ");
             }
 
-           //RAW application layer data
+            //RAW application layer data
             richTextBoxTx.AppendText("( ");
-            for (int i = 0; i < payload.Count()-2; i++)
+            for (int i = 0; i < payload.Count() - 2; i++)
             {
                 richTextBoxTx.AppendText(payload[i].ToString("X2") + " ");
             }
@@ -422,6 +426,6 @@ namespace StemPC
             richTextBoxTx.ScrollToCaret();
         }
 
-       
+
     }
 }

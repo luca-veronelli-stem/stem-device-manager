@@ -60,13 +60,36 @@ namespace Stem_Protocol.PacketManager
             PacketReadyEventList.Add(Handler);
         }
 
-        public bool SendThroughCAN(List<Tuple<byte[], uint, byte[]>> networkPackets)
+    public async Task<bool> SendAndWaitForResponseAsync(
+        List<Tuple<byte[], uint, byte[]>> networkPackets,
+        Func<byte[], bool> responseValidator, // Funzione di validazione risposta
+        int timeoutMs = 500 // Timeout in millisecondi
+    )
         {
             try
             {
                 var canInterface = "pcan";
                 var channel = "PCAN_USBBUS1";
                 var bitrate = 100000;
+
+                // Creazione di un TaskCompletionSource per gestire la risposta
+                var tcs = new TaskCompletionSource<bool>();
+
+                //// Evento per ricevere le risposte CAN
+                //void OnCanMessageReceived(object sender, CANMessageEventArgs e)
+                //{
+                //    if (responseValidator(e.Message.Data))
+                //    {
+                //        tcs.TrySetResult(true); // Risposta corretta
+                //    }
+                //    else
+                //    {
+                //        tcs.TrySetResult(false); // Risposta errata
+                //    }
+                //}
+
+                // Sottoscrizione all'evento (ipotizzando che esista un gestore eventi CAN globale)
+    //            CANBus.MessageReceived += OnCanMessageReceived;
 
                 using (var bus = new CANBus(channel, canInterface, bitrate))
                 {
@@ -81,17 +104,66 @@ namespace Stem_Protocol.PacketManager
                         try
                         {
                             bus.Send(message);
-                      //      Console.WriteLine($"Message sent on {bus.ChannelInfo}: {BitConverter.ToString(message.Data)}");
                         }
-                        catch (Exception)
+                        catch (Exception ex)
                         {
-                        //    Console.WriteLine("Message not sent.");
+                            Console.WriteLine($"Errore nell'invio del messaggio: {ex.Message}");
                         }
                     }
-                    Thread.Sleep(10); // Simula un'attesa per 10 millisecondi
-                    //     await Task.Delay(10);
+
+                    // Attendi la risposta con un timeout
+                    var task = await Task.WhenAny(tcs.Task, Task.Delay(timeoutMs));
+                    bool result = task == tcs.Task && tcs.Task.Result;
+
+                    // Rimuovi l'handler per evitare memory leaks
+  //                  CANBus.MessageReceived -= OnCanMessageReceived;
+
+                    return result;
                 }
-                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Errore durante l'invio del pacchetto: {ex.Message}");
+                return false;
+            }
+        }
+
+
+        public async Task<bool> SendThroughCANAsync(List<Tuple<byte[], uint, byte[]>> networkPackets)
+        {
+            try
+            {
+                var canInterface = "pcan";
+                var channel = "PCAN_USBBUS1";
+                var bitrate = 100000;
+
+                // Usa Task.Run per eseguire il lavoro intensivo
+                return await Task.Run(() =>
+                {
+                    using (var bus = new CANBus(channel, canInterface, bitrate))
+                    {
+                        foreach (var packet in networkPackets)
+                        {
+                            var netInfo = packet.Item1;
+                            var recipientId = packet.Item2;
+                            var packetChunk = packet.Item3;
+
+                            var message = new CANMessage(recipientId, netInfo.Concat(packetChunk).ToArray(), true);
+
+                            try
+                            {
+                                bus.Send(message);
+                                // Console.WriteLine($"Message sent on {bus.ChannelInfo}: {BitConverter.ToString(message.Data)}");
+                            }
+                            catch (Exception)
+                            {
+                                // Console.WriteLine("Message not sent.");
+                            }
+                        }
+                        Thread.Sleep(10); // Non è necessario qui poiché il metodo è asincrono
+                    }
+                    return true;
+                });
             }
             catch (Exception e)
             {
