@@ -72,7 +72,7 @@ public class PCANManager
 
     private void StartConnectionMonitoring()
     {
-        Task.Run(async () =>
+        Task.Run( async () =>
         {
             while (true)
             {

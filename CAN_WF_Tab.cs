@@ -30,14 +30,13 @@ public partial class CANInterfaceTab : TabPage
 
   //  private ObservableCollection<CanMessagePCAN> messages = new ObservableCollection<CanMessagePCAN>();
 
-    public PacketManager RXpacketManager;
+    public PacketManager PS_CAN_PacketManager;
 
     public CANInterfaceTab()
     {
         InitializeComponents();
-     //   RXpacketManager = new PacketManager(Form1.FormRef.senderId);
-        RXpacketManager = new PacketManager(0xFFFFFFFF); //packet manager generale: fa da sniffer per tutto
-        RXpacketManager.RegisterPacketReadyEvent(Form1.FormRef.DecodeCommandSP);
+        //   RXpacketManager = new PacketManager(Form1.FormRef.senderId);
+        PS_CAN_PacketManager = new PacketManager(0xFFFFFFFF);
         InitializePCANManager();
     }
 
@@ -50,7 +49,10 @@ public partial class CANInterfaceTab : TabPage
         _pcanManager.ConnectionStatusChanged += OnConnectionStatusChanged;
         _pcanManager.ErrorOccurred += OnErrorOccurred;
 
-        UpdateConnectionStatus(_pcanManager.IsConnected); //primo update asincrono della label, poi si avvia il pcan
+        //primo update asincrono della label...
+        UpdateConnectionStatus(_pcanManager.IsConnected);
+
+        //...poi si avvia il pcan
         if (_pcanManager.IsConnected)
         {
             _pcanManager.StartReading();
@@ -107,8 +109,6 @@ public partial class CANInterfaceTab : TabPage
         }
     }
 
-
-
     private void OnPacketReceived(object sender, CANPacketEventArgs e)
     {
         // Metodo thread-safe per aggiornare l'interfaccia
@@ -137,8 +137,10 @@ public partial class CANInterfaceTab : TabPage
 
         //aggiungi i messaggi alla coda del network layer
         CANMessage RxMessage = new CANMessage(e.ArbitrationId, e.Data, false);
-        RXpacketManager.ProcessCANPacket(RxMessage);
+        PS_CAN_PacketManager.ProcessCANPacket(RxMessage);
     }
+
+    //WIN FORMS GRAPICHS SECTION
 
     private void InitializeComponents()
     {
@@ -207,6 +209,7 @@ public partial class CANInterfaceTab : TabPage
 
         this.Controls.Add(layout);
     }
+
 
     private void BaudRatePicker_SelectedIndexChanged(object sender, EventArgs e)
     {

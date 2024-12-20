@@ -11,7 +11,7 @@ namespace StemPC
 {
     public partial class Form1 : Form
     {
-        private const string Software_Version = "1.0";
+        private const string Software_Version = "1.1";
 
         private UInt16 Prescaler1s = 0;
 
@@ -90,6 +90,7 @@ namespace StemPC
 
             //crea e aggiungi tabcan
             CanTabPageRef = new CANInterfaceTab();
+            CanTabPageRef.PS_CAN_PacketManager.RegisterPacketReadyEvent(DecodeCommandSP);
             tabControl.TabPages.Add(CanTabPageRef);
 
             //attiva il terminale

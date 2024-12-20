@@ -296,6 +296,7 @@ namespace Stem_Protocol.PacketManager
 
             if (remainingChunks == 0)
             {
+                //PACKET READY
                 var unifiedPacket = packetQueues[packetId].SelectMany(chunk => chunk).ToArray();
                 packetQueues[packetId].Clear();
                 if (unifiedPacket.Length > 7) { 
