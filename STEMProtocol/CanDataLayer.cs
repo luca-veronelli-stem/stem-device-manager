@@ -10,6 +10,7 @@ using Stem_Protocol;
 //PCAN support
 using PCAN_Handler;
 using Peak.Can.Basic;
+using DocumentFormat.OpenXml.InkML;
 
 namespace CanDataLayer;
 
@@ -18,12 +19,14 @@ public class CANMessage
     public uint ArbitrationId { get; }
     public byte[] Data { get; }
     public bool IsErrorFrame { get; }
+    public DateTime Timestamp { get; }
 
-    public CANMessage(uint arbitrationId, byte[] data, bool isErrorFrame)
+    public CANMessage(uint arbitrationId, byte[] data, bool isErrorFrame, DateTime timestamp)
     {
         ArbitrationId = arbitrationId;
         Data = data;
         IsErrorFrame = isErrorFrame;
+        Timestamp = timestamp;
     }
 }
 
@@ -38,6 +41,7 @@ public class CANDataLayer : IDisposable
 
     // Eventi
     public event EventHandler<bool> ConnectionStatusChanged;
+    public event EventHandler<CANMessage> PacketReceived;
 
     public CANDataLayer(string channel, string canInterface, int bitrate)
     {
@@ -91,8 +95,9 @@ public class CANDataLayer : IDisposable
     private void OnPacketReceived(object sender, CANPacketEventArgs e)
     {
         //aggiungi i messaggi alla coda del network layer
-        CANMessage RxMessage = new CANMessage(e.ArbitrationId, e.Data, false);
- //       ParentPacketManager.ProcessCANPacket(RxMessage);
+        CANMessage RxMessage = new CANMessage(e.ArbitrationId, e.Data, false, e.Timestamp);
+        PacketReceived?.Invoke(this, RxMessage);
+        //       ParentPacketManager.ProcessCANPacket(RxMessage);
     }
 
     private void OnConnectionStatusChanged(object sender, bool isConnected)

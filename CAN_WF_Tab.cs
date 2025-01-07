@@ -20,7 +20,7 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
 //using Peak.Can.Basic.BackwardCompatibility;
 
 using CanDataLayer;
-using PCAN_Handler;
+//using PCAN_Handler;
 
 // Classe per l'interfaccia grafica
 public partial class CANInterfaceTab : TabPage
@@ -55,7 +55,7 @@ public partial class CANInterfaceTab : TabPage
         //        PS_CAN_PacketManager = new PacketManager(0xFFFFFFFF);
 
         // Sottoscrizione agli eventi
-        //_pcanManager.PacketReceived += OnPacketReceived;
+        _canHandler.PacketReceived += OnPacketReceived;
         _canHandler.ConnectionStatusChanged += OnConnectionStatusChanged;
         //_pcanManager.ErrorOccurred += OnErrorOccurred;
 
@@ -113,25 +113,25 @@ public partial class CANInterfaceTab : TabPage
         }
     }
 
-    private void OnPacketReceived(object sender, CANPacketEventArgs e)
+    private void OnPacketReceived(object sender, CANMessage RxPacket)
     {
         // Metodo thread-safe per aggiornare l'interfaccia
         if (_receivedMessagesView.InvokeRequired)
         {
-            _receivedMessagesView.Invoke(new Action(() => UpdateMessageList(e)));
+            _receivedMessagesView.Invoke(new Action(() => UpdateMessageList(RxPacket)));
         }
         else
         {
-            UpdateMessageList(e);
+            UpdateMessageList(RxPacket);
         }
     }
 
-    private void UpdateMessageList(CANPacketEventArgs e)
+    private void UpdateMessageList(CANMessage RxPacket)
     {
         //debug dei dati ricevuti sulla finestra in uscita (blu)
-        string dataString = string.Join(" ", e.Data.Select(b => b.ToString("X2")));
+        string dataString = string.Join(" ", RxPacket.Data.Select(b => b.ToString("X2")));
         var listViewItem = new ListViewItem(
-            $"{e.Timestamp:yyyy-MM-dd HH:mm:ss.fff} - RX: ID=0x{e.ArbitrationId:X} Dati={dataString}")
+            $"{RxPacket.Timestamp:yyyy-MM-dd HH:mm:ss.fff} - RX: ID=0x{RxPacket.ArbitrationId:X} Dati={dataString}")
         {
             ForeColor = System.Drawing.Color.Blue
         };
