@@ -2,8 +2,10 @@ using Microsoft.VisualBasic.Logging;
 using System.Windows.Forms;
 using System.IO.Ports; // used for serial port
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+
 using Stem_Protocol;
 using Stem_Protocol.PacketManager;
+using CanDataLayer;
 
 //using static NetworkLayer;
 
@@ -29,6 +31,7 @@ namespace StemPC
         //**********************************
         //   CAN port variables
         //**********************************
+        private CANDataLayer _CDL;
 
         //**************************
         //  Code gen variables
@@ -92,9 +95,16 @@ namespace StemPC
             SelectedCommand = 0;
             senderId = 8;
 
+            //crea e aggiungi pcan
+            var canInterface = "pcan";
+            var channel = "PCAN_USBBUS1";
+            var bitrate = 100000;
+
+            _CDL = new CANDataLayer(channel, canInterface, bitrate);
+
             //crea e aggiungi tabcan
-            CanTabPageRef = new CANInterfaceTab();
-            CanTabPageRef.PS_CAN_PacketManager.RegisterPacketReadyEvent(DecodeCommandSP);
+            CanTabPageRef = new CANInterfaceTab(_CDL);
+            //CanTabPageRef.PS_CAN_PacketManager.RegisterPacketReadyEvent(DecodeCommandSP);
             tabControl.TabPages.Add(CanTabPageRef);
 
             //attiva il terminale
@@ -117,13 +127,13 @@ namespace StemPC
             //crea e aggiungi il bootloader manager
             BootTabRef = new Boot_Interface_Tab();
             tabControl.TabPages.Add(BootTabRef);
-
-
             tabControl.TabPages.Remove(tabPageCodeGen);
             tabControl.TabPages.Remove(tabPageUART);
 
-            //Seleziona il tab del protocollo
-            tabControl.SelectedTab = BootTabRef;
+            //Seleziona il tab iniziale
+
+            //tabControl.SelectedTab = BootTabRef;
+            tabControl.SelectedTab = CanTabPageRef;
 
             //Estrai i dati dal dizionario stem
             hExcel = new ExcelHandler();

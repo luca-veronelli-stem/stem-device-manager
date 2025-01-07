@@ -13,6 +13,8 @@ using Peak.Can.Basic;
 
 namespace CanDataLayer;
 
+
+
 public class CANMessage
 {
     public uint ArbitrationId { get; }
@@ -32,8 +34,12 @@ public class CANDataLayer : IDisposable
     public string Channel { get; }
     public string CanInterface { get; }
     public int    Bitrate { get; }
+    public bool   IsConnected;
 
     private PCANManager _pcanManager;
+
+    // Eventi
+    public event EventHandler<bool> ConnectionStatusChanged;
 
     public CANDataLayer(string channel, string canInterface, int bitrate)
     {
@@ -43,18 +49,21 @@ public class CANDataLayer : IDisposable
 
         // Implementation to initialize CAN bus:
 
-        //PCAN
-        _pcanManager = new PCANManager();
-
-        // Sottoscrizione agli eventi
-        _pcanManager.PacketReceived += OnPacketReceived;
-        //_pcanManager.ConnectionStatusChanged += OnConnectionStatusChanged;
-        //_pcanManager.ErrorOccurred += OnErrorOccurred;
-
-        //avvia il pcan
-        if (_pcanManager.IsConnected)
+        if (canInterface == "pcan")
         {
-            _pcanManager.StartReading();
+            //PCAN
+            _pcanManager = new PCANManager();
+
+            // Sottoscrizione agli eventi
+            _pcanManager.PacketReceived += OnPacketReceived;
+            _pcanManager.ConnectionStatusChanged += OnConnectionStatusChanged;
+            //_pcanManager.ErrorOccurred += OnErrorOccurred;
+
+            //avvia il pcan
+            if (_pcanManager.IsConnected)
+            {
+                _pcanManager.StartReading();
+            }
         }
     }
 
@@ -84,6 +93,20 @@ public class CANDataLayer : IDisposable
         //aggiungi i messaggi alla coda del network layer
         CANMessage RxMessage = new CANMessage(e.ArbitrationId, e.Data, false);
  //       ParentPacketManager.ProcessCANPacket(RxMessage);
+    }
+
+    private void OnConnectionStatusChanged(object sender, bool isConnected)
+    {
+        IsConnected = isConnected;
+
+        if (isConnected)
+        {
+            ConnectionStatusChanged?.Invoke(this, true);
+        }
+        else
+        {
+            ConnectionStatusChanged?.Invoke(this, false);
+        }
     }
 
     public void Dispose()

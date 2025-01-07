@@ -31,14 +31,14 @@ public class CANPacketEventArgs : EventArgs
 // Classe per la gestione del dispositivo PCAN
 public class PCANManager
 {
-    private const TPCANHandle Channel = 0x51; // PCAN_USB
-    private TPCANBaudrate _currentBaudRate;
-    private bool _isConnected;
+    private const   TPCANHandle Channel = 0x51; // PCAN_USB
+    private         TPCANBaudrate _currentBaudRate;
+    private bool    _isConnected;
 
     // Evento per lo stato della connessione
-    public event EventHandler<bool> ConnectionStatusChanged;
-    public event EventHandler<CANPacketEventArgs> PacketReceived;
-    public event EventHandler<string> ErrorOccurred;
+    public event EventHandler<bool>                 ConnectionStatusChanged;
+    public event EventHandler<CANPacketEventArgs>   PacketReceived;
+    public event EventHandler<string>               ErrorOccurred;
 
     public bool IsConnected
     {
@@ -119,6 +119,11 @@ public class PCANManager
         });
     }
 
+    public void StartReading()
+    {
+        Task.Run(ReadCANMessagesAsync);
+    }
+
     public TPCANStatus SendMessage(uint canId, byte[] data, bool isExtended = false)
     {
         if (!_isConnected) return TPCANStatus.PCAN_ERROR_BUSOFF;
@@ -135,11 +140,6 @@ public class PCANManager
 
         var result = PCANBasic.Write(Channel, ref canMessage);
         return result;
-    }
-
-    public void StartReading()
-    {
-        Task.Run(ReadCANMessagesAsync);
     }
 
     private async Task ReadCANMessagesAsync()
