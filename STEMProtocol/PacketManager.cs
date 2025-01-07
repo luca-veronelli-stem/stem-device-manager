@@ -13,20 +13,26 @@ using PCAN_Handler;
 
 //using static NetworkLayer;
 using StemPC;
+using Peak.Can.Basic;
 
 namespace Stem_Protocol.PacketManager
 {
     public class PacketManager
     {
+        //properties
         private uint _id;
         private uint _sniffer_id;
         private bool _canRunning = false;
         private bool _bluetoothRunning = false;
         private Dictionary<int, List<byte[]>> packetQueues = new Dictionary<int, List<byte[]>>();
         private NetworkLayer _networkPacket;
-
         public List<NetworkLayer.PacketReadyEventHandler> PacketReadyEventList;
 
+
+        public List<CANBus> CANChannelsList;
+        public List<BluetoothClient> BLEChannelsList;
+
+        //methods
         public PacketManager(uint id)
         {
             _id = id;
@@ -62,7 +68,68 @@ namespace Stem_Protocol.PacketManager
             PacketReadyEventList.Add(Handler);
         }
 
-    public async Task<bool> SendAndWaitForResponseAsync(
+
+        private void ProcessPacket(string interfaceType, byte[] packet)
+        {
+            var netInfoBytes = packet.Take(2).ToArray();
+            var packetChunkBytes = packet.Skip(2).ToArray();
+            var netInfo = BitConverter.ToUInt16(netInfoBytes, 0);
+
+            var remainingChunks = (netInfo >> 6) & 0x3FF;
+            var setLength = (netInfo >> 5) & 0x01;
+            var packetId = (netInfo >> 2) & 0x07;
+            var version = netInfo & 0x03;
+
+            if (!packetQueues.ContainsKey(packetId))
+            {
+                //Azzera la lista pacchetti ricevuti ad ogni cambio di Id
+                packetQueues[packetId] = new List<byte[]>();
+            }
+
+            packetQueues[packetId].Add(packetChunkBytes);
+
+            if (remainingChunks == 0)
+            {
+                //PACKET READY
+                var unifiedPacket = packetQueues[packetId].SelectMany(chunk => chunk).ToArray();
+                packetQueues[packetId].Clear();
+
+                if (unifiedPacket.Length > 7)
+                {
+
+                    _networkPacket = new NetworkLayer(interfaceType, version, _sniffer_id, unifiedPacket, true);
+                    // Sottoscrizione degli eventi
+                    foreach (NetworkLayer.PacketReadyEventHandler Handler in PacketReadyEventList)
+                    {
+                        _networkPacket.SP_PacketReadyEvent += Handler;
+                    }
+                    //Packet is ready, decode it
+                    _networkPacket.SP_PacketReady();
+                }
+            }
+        }
+
+
+        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        //                  CAN related functions
+        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        public int Add_CAN_Channel(string channel, string canInterface, int bitrate)
+        {
+            CANChannelsList.Add(new CANBus(this, channel, canInterface, bitrate));
+            return (CANChannelsList.Count-1); //return the index of can channel list
+        }
+
+        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        //                  BLE related functions
+        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        public void Add_BLE_Channel(string channel, string canInterface, int bitrate)
+        {
+        //    new CANBus(this, channel, canInterface, bitrate);
+        }
+
+        public async Task<bool> SendAndWaitForResponseAsync(
         List<Tuple<byte[], uint, byte[]>> networkPackets,
         Func<byte[], bool> responseValidator, // Funzione di validazione risposta
         int timeoutMs = 1000 // Timeout in millisecondi
@@ -93,7 +160,7 @@ namespace Stem_Protocol.PacketManager
                 // Sottoscrizione all'evento (ipotizzando che esista un gestore eventi CAN globale)
                 //            CANBus.MessageReceived += OnCanMessageReceived;
 
-                using (var bus = new CANBus(channel, canInterface, bitrate))
+                using (var bus = new CANBus(this, channel, canInterface, bitrate))
                 {
                     foreach (var packet in networkPackets)
                     {
@@ -131,6 +198,7 @@ namespace Stem_Protocol.PacketManager
         }
 
 
+
         public async Task<bool> SendThroughCANAsync(List<Tuple<byte[], uint, byte[]>> networkPackets)
         {
             try
@@ -142,7 +210,7 @@ namespace Stem_Protocol.PacketManager
                 // Usa Task.Run per eseguire il lavoro intensivo
                 return await Task.Run(() =>
                 {
-                    using (var bus = new CANBus(channel, canInterface, bitrate))
+                    using (var bus = new CANBus(this, channel, canInterface, bitrate))
                     {
                         foreach (var packet in networkPackets)
                         {
@@ -274,45 +342,6 @@ namespace Stem_Protocol.PacketManager
             else 
             {
                  Console.WriteLine($"Recipient ID mismatch: {recipientId} != {_id}");
-            }
-        }
-
-        private void ProcessPacket(string interfaceType, byte[] packet)
-        {
-            var netInfoBytes = packet.Take(2).ToArray();
-            var packetChunkBytes = packet.Skip(2).ToArray();
-            var netInfo = BitConverter.ToUInt16(netInfoBytes, 0);
-
-            var remainingChunks = (netInfo >> 6) & 0x3FF;
-            var setLength = (netInfo >> 5) & 0x01;
-            var packetId = (netInfo >> 2) & 0x07;
-            var version = netInfo & 0x03;
-
-            if (!packetQueues.ContainsKey(packetId))
-            {
-                //Azzera la lista pacchetti ricevuti ad ogni cambio di Id
-                packetQueues[packetId] = new List<byte[]>();
-            } 
-                
-            packetQueues[packetId].Add(packetChunkBytes);
-
-            if (remainingChunks == 0)
-            {
-                //PACKET READY
-                var unifiedPacket = packetQueues[packetId].SelectMany(chunk => chunk).ToArray();
-                packetQueues[packetId].Clear();
-
-                if (unifiedPacket.Length > 7) { 
-
-                    _networkPacket = new NetworkLayer(interfaceType, version, _sniffer_id, unifiedPacket, true);
-                    // Sottoscrizione degli eventi
-                    foreach (NetworkLayer.PacketReadyEventHandler Handler in PacketReadyEventList)
-                    {
-                        _networkPacket.SP_PacketReadyEvent += Handler;
-                    }
-                    //Packet is ready, decode it
-                    _networkPacket.SP_PacketReady();
-                }
             }
         }
     }

@@ -6,14 +6,20 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DocumentFormat.OpenXml.Wordprocessing;
-using Peak.Can.Basic;
-using Peak.Can.Basic.BackwardCompatibility;
-using StemPC;
-using TPCANHandle = System.Byte;
-using Stem_Protocol;
-using Stem_Protocol.PacketManager;
-using PCAN_Handler;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
+
+//using StemPC;
+
+//using TPCANHandle = System.Byte;
+
+//using Stem_Protocol;
+//using Stem_Protocol.PacketManager;
+
+//using PCAN_Handler;
+//using Peak.Can.Basic;
+//using Peak.Can.Basic.BackwardCompatibility;
+
+
 
 
 // Classe per l'interfaccia grafica
@@ -40,14 +46,14 @@ public partial class CANInterfaceTab : TabPage
     {
         thisRef = this;
         InitializeComponents();
-        //   RXpacketManager = new PacketManager(Form1.FormRef.senderId);
-        PS_CAN_PacketManager = new PacketManager(0xFFFFFFFF);
+
+//        PS_CAN_PacketManager = new PacketManager(0xFFFFFFFF);
         InitializePCANManager();
     }
 
     private void InitializePCANManager()
     {
-        _pcanManager = new PCANManager();
+     //   _pcanManager = new PCANManager();
 
         // Sottoscrizione agli eventi
         _pcanManager.PacketReceived += OnPacketReceived;
@@ -57,11 +63,11 @@ public partial class CANInterfaceTab : TabPage
         //primo update asincrono della label...
         UpdateConnectionStatus(_pcanManager.IsConnected);
 
-        //...poi si avvia il pcan
-        if (_pcanManager.IsConnected)
-        {
-            _pcanManager.StartReading();
-        }
+        ////...poi si avvia il pcan
+        //if (_pcanManager.IsConnected)
+        //{
+        //    _pcanManager.StartReading();
+        //}
     }
 
     private void UpdateConnectionStatus(bool isConnected)

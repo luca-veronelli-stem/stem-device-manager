@@ -11,12 +11,12 @@ namespace StemPC
 {
     public partial class Form1 : Form
     {
-        private const string Software_Version = "1.1";
+        private const string Software_Version = "1.2";
 
         private UInt16 Prescaler1s = 0;
 
         //**************************
-        //  Terminal variables
+        //  Terminal variablesc
         //************************** 
         private Terminal _terminal;
 
@@ -25,6 +25,10 @@ namespace StemPC
         //**************************
         private SerialPortManager _serialPortManager;
         private SerialPortManager _serialPort;
+
+        //**********************************
+        //   CAN port variables
+        //**********************************
 
         //**************************
         //  Code gen variables
@@ -64,9 +68,9 @@ namespace StemPC
         //**********************************
         //  STEM Protocol variables/classes
         //**********************************
-        public uint RecipientId;
-        public short SelectedCommand;
-        public uint senderId;              // ID del mittente
+        public uint     RecipientId;
+        public short    SelectedCommand;
+        public uint     senderId;              // ID del mittente
 
 
         //**************************
