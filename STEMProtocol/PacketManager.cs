@@ -29,7 +29,7 @@ namespace Stem_Protocol.PacketManager
         public List<BluetoothClient> BLEChannelsList = new List<BluetoothClient>();
 
         //  public event Action<PacketReadyEventArgs> OnAppLayerPacketReceived;
-        public event PacketReadyEventHandler OnAppLayerPacketReceived;
+        public event PacketReadyEventHandler OnAppLayerPacketReceived = null;
 
         //methods
         //    public PacketManager(uint id, Action<PacketReadyEventArgs> eventHandler)
