@@ -8,7 +8,7 @@ using System.Collections.Concurrent;
 using System.Windows.Forms;
 
 using Stem_Protocol;
-
+using CanDataLayer;
 using PCAN_Handler;
 
 namespace Stem_Protocol.PacketManager
@@ -24,8 +24,8 @@ namespace Stem_Protocol.PacketManager
         private NetworkLayer _networkPacket;
         public List<NetworkLayer.PacketReadyEventHandler> PacketReadyEventList;
 
-        public List<CANBus> CANChannelsList;
-        public List<BluetoothClient> BLEChannelsList;
+        public List<CANDataLayer> CANChannelsList = new List<CANDataLayer>();
+        public List<BluetoothClient> BLEChannelsList = new List<BluetoothClient>();
 
         //methods
         public PacketManager(uint id)
@@ -98,6 +98,7 @@ namespace Stem_Protocol.PacketManager
                     {
                         _networkPacket.SP_PacketReadyEvent += Handler;
                     }
+
                     //Packet is ready, decode it
                     _networkPacket.SP_PacketReady();
                 }
@@ -109,9 +110,11 @@ namespace Stem_Protocol.PacketManager
         //                  CAN related functions
         //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        public int Add_CAN_Channel(string channel, string canInterface, int bitrate)
+        public int Add_CAN_Channel(CANDataLayer CanDataLayer)
         {
-            CANChannelsList.Add(new CANBus(this, channel, canInterface, bitrate));
+            CanDataLayer.PacketReceived += OnCANPacketReceived;
+            CANChannelsList.Add(CanDataLayer);
+            
             return (CANChannelsList.Count-1); //return the index of can channel list
         }
 
@@ -125,65 +128,66 @@ namespace Stem_Protocol.PacketManager
         }
 
         public async Task<bool> SendAndWaitForResponseAsync(
-        List<Tuple<byte[], uint, byte[]>> networkPackets,
-        Func<byte[], bool> responseValidator, // Funzione di validazione risposta
-        int timeoutMs = 1000 // Timeout in millisecondi
-    )
+            List<Tuple<byte[], uint, byte[]>> networkPackets,
+            Func<byte[], bool> responseValidator, // Funzione di validazione risposta
+            int timeoutMs = 1000 // Timeout in millisecondi
+        )
         {
             try
             {
-                var canInterface = "pcan";
-                var channel = "PCAN_USBBUS1";
-                var bitrate = 100000;
+                //              var canInterface = "pcan";
+                //              var channel = "PCAN_USBBUS1";
+                //              var bitrate = 100000;
 
-                // Creazione di un TaskCompletionSource per gestire la risposta
-                var tcs = new TaskCompletionSource<bool>();
+                //              // Creazione di un TaskCompletionSource per gestire la risposta
+                //              var tcs = new TaskCompletionSource<bool>();
 
-                //// Evento per ricevere le risposte CAN
-                //void OnCanMessageReceived(object sender, CANMessageEventArgs e)
-                //{
-                //    if (responseValidator(e.Message.Data))
-                //    {
-                //        tcs.TrySetResult(true); // Risposta corretta
-                //    }
-                //    else
-                //    {
-                //        tcs.TrySetResult(false); // Risposta errata
-                //    }
-                //}
+                //              //// Evento per ricevere le risposte CAN
+                //              //void OnCanMessageReceived(object sender, CANMessageEventArgs e)
+                //              //{
+                //              //    if (responseValidator(e.Message.Data))
+                //              //    {
+                //              //        tcs.TrySetResult(true); // Risposta corretta
+                //              //    }
+                //              //    else
+                //              //    {
+                //              //        tcs.TrySetResult(false); // Risposta errata
+                //              //    }
+                //              //}
 
-                // Sottoscrizione all'evento (ipotizzando che esista un gestore eventi CAN globale)
-                //            CANBus.MessageReceived += OnCanMessageReceived;
+                //              // Sottoscrizione all'evento (ipotizzando che esista un gestore eventi CAN globale)
+                //              //            CANBus.MessageReceived += OnCanMessageReceived;
 
-                using (var bus = new CANBus(this, channel, canInterface, bitrate))
-                {
-                    foreach (var packet in networkPackets)
-                    {
-                        var netInfo = packet.Item1;
-                        var recipientId = packet.Item2;
-                        var packetChunk = packet.Item3;
+                //              using (var bus = new CANBus(this, channel, canInterface, bitrate))
+                //              {
+                //                  foreach (var packet in networkPackets)
+                //                  {
+                //                      var netInfo = packet.Item1;
+                //                      var recipientId = packet.Item2;
+                //                      var packetChunk = packet.Item3;
 
-                        var message = new CANMessage(recipientId, netInfo.Concat(packetChunk).ToArray(), true);
+                //                      var message = new CANMessage(recipientId, netInfo.Concat(packetChunk).ToArray(), true);
 
-                        try
-                        {
-                            bus.Send(message);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Errore nell'invio del messaggio: {ex.Message}");
-                        }
-                    }
+                //                      try
+                //                      {
+                //                          bus.Send(message);
+                //                      }
+                //                      catch (Exception ex)
+                //                      {
+                //                          Console.WriteLine($"Errore nell'invio del messaggio: {ex.Message}");
+                //                      }
+                //                  }
 
-                    // Attendi la risposta con un timeout
-                    var task = await Task.WhenAny(tcs.Task, Task.Delay(timeoutMs));
-                    bool result = task == tcs.Task && tcs.Task.Result;
+                //                  // Attendi la risposta con un timeout
+                //                  var task = await Task.WhenAny(tcs.Task, Task.Delay(timeoutMs));
+                //                  bool result = task == tcs.Task && tcs.Task.Result;
 
-                    // Rimuovi l'handler per evitare memory leaks
-  //                  CANBus.MessageReceived -= OnCanMessageReceived;
+                //                  // Rimuovi l'handler per evitare memory leaks
+                ////                  CANBus.MessageReceived -= OnCanMessageReceived;
 
-                    return result;
-                }
+                //                  return result;
+                //              }
+                return true;
             }
             catch (Exception ex)
             {
@@ -192,43 +196,43 @@ namespace Stem_Protocol.PacketManager
             }
         }
 
-
-
         public async Task<bool> SendThroughCANAsync(List<Tuple<byte[], uint, byte[]>> networkPackets)
         {
             try
             {
-                var canInterface = "pcan";
-                var channel = "PCAN_USBBUS1";
-                var bitrate = 100000;
+                //var canInterface = "pcan";
+                //var channel = "PCAN_USBBUS1";
+                //var bitrate = 100000;
 
-                // Usa Task.Run per eseguire il lavoro intensivo
-                return await Task.Run(() =>
-                {
-                    using (var bus = new CANBus(this, channel, canInterface, bitrate))
-                    {
-                        foreach (var packet in networkPackets)
-                        {
-                            var netInfo = packet.Item1;
-                            var recipientId = packet.Item2;
-                            var packetChunk = packet.Item3;
+                //// Usa Task.Run per eseguire il lavoro intensivo
+                //return await Task.Run(() =>
+                //{
+                //    using (var bus = new CANBus(this, channel, canInterface, bitrate))
+                //    {
+                //        foreach (var packet in networkPackets)
+                //        {
+                //            var netInfo = packet.Item1;
+                //            var recipientId = packet.Item2;
+                //            var packetChunk = packet.Item3;
 
-                            var message = new CANMessage(recipientId, netInfo.Concat(packetChunk).ToArray(), true);
+                //            var message = new CANMessage(recipientId, netInfo.Concat(packetChunk).ToArray(), true);
 
-                            try
-                            {
-                                bus.Send(message);
-                                // Console.WriteLine($"Message sent on {bus.ChannelInfo}: {BitConverter.ToString(message.Data)}");
-                            }
-                            catch (Exception)
-                            {
-                                // Console.WriteLine("Message not sent.");
-                            }
-                        }
-                        Thread.Sleep(10); // Non è necessario qui poiché il metodo è asincrono
-                    }
-                    return true;
-                });
+                //            try
+                //            {
+                //                bus.Send(message);
+                //                // Console.WriteLine($"Message sent on {bus.ChannelInfo}: {BitConverter.ToString(message.Data)}");
+                //            }
+                //            catch (Exception)
+                //            {
+                //                // Console.WriteLine("Message not sent.");
+                //            }
+                //        }
+                //        Thread.Sleep(10); // Non è necessario qui poiché il metodo è asincrono
+                //    }
+                //    return true;
+                //});
+
+                return true;
             }
             catch (Exception e)
             {
@@ -300,9 +304,15 @@ namespace Stem_Protocol.PacketManager
             BluetoothRunning = false;
         }
 
+
+        private void OnCANPacketReceived(object sender, CANMessage RxPacket)
+        {
+            ProcessCANPacket(RxPacket);
+        }
+
         public void ProcessCANPacket(CANMessage msg)
         {
-            if ((msg.ArbitrationId == _id)|| (_id == 0xFFFFFFFF))
+            if ((msg.ArbitrationId == _id) || (_id == 0xFFFFFFFF))
             {
                 _sniffer_id = _id;
                 if (_id == 0xFFFFFFFF) _sniffer_id = msg.ArbitrationId;
@@ -341,67 +351,7 @@ namespace Stem_Protocol.PacketManager
         }
     }
 
-    public class CANMessage
-    {
-        public uint ArbitrationId { get; }
-        public byte[] Data { get; }
-        public bool IsErrorFrame { get; }
-
-        public CANMessage(uint arbitrationId, byte[] data, bool isErrorFrame)
-        {
-            ArbitrationId = arbitrationId;
-            Data = data;
-            IsErrorFrame = isErrorFrame;
-        }
-    }
-
-    public class CANBus : IDisposable
-    {
-        public string ChannelInfo { get; }
-
-        private PacketManager ParentPacketManager;
-
-        public CANBus(PacketManager Owner, string channel, string canInterface, int bitrate)
-        {
-            // Implementation to initialize CAN bus
-            ChannelInfo = channel;
-            ParentPacketManager = Owner;
-        }
-
-        public void Send(CANMessage message)
-        {
-
-            //    public class CANMessage
-            //{
-            //    public uint ArbitrationId { get; }
-            //    public byte[] Data { get; }
-            //    public bool IsErrorFrame { get; }
-
-            //    public CANMessage(uint arbitrationId, byte[] data, bool isErrorFrame)
-            //    {
-            //        ArbitrationId = arbitrationId;
-            //        Data = data;
-            //        IsErrorFrame = isErrorFrame;
-            //    }
-            //}
-
-            // Implementation to send message through CAN
-            //       Form1.CanTabPageRef.thisRef.SendCANMessage(message.ArbitrationId, message.Data);
-        }
-
-        private void OnPacketReceived(object sender, CANPacketEventArgs e)
-        {
-            //aggiungi i messaggi alla coda del network layer
-            CANMessage RxMessage = new CANMessage(e.ArbitrationId, e.Data, false);
-            ParentPacketManager.ProcessCANPacket(RxMessage);
-        }
-
-        public void Dispose()
-        {
-            // Cleanup resources
-        }
-    }
-
+ 
     public class BluetoothClient : IDisposable
     {
         public string Address { get; }

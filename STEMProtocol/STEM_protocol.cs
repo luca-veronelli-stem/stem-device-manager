@@ -246,6 +246,7 @@ namespace Stem_Protocol
     {
         // Delegate per definire il tipo dell'evento con array di byte
         public delegate void PacketReadyEventHandler(object sender, PacketReadyEventArgs e);
+
         // Evento che altre classi possono sottoscrivere
         public event PacketReadyEventHandler SP_PacketReadyEvent;
 

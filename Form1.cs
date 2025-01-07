@@ -75,6 +75,8 @@ namespace StemPC
         public short    SelectedCommand;
         public uint     senderId;              // ID del mittente
 
+        // Ricezione globale dei pacchetti stem (pe rora una sola, da far poi diventare dinamica alla ricezione di ogni pacchetto)
+        public PacketManager RXpacketManager; 
 
         //**************************
         //  public Elements instances
@@ -102,6 +104,10 @@ namespace StemPC
 
             _CDL = new CANDataLayer(channel, canInterface, bitrate);
 
+            //crea il protocollo stem di ricezione
+            RXpacketManager = new PacketManager(0xFFFFFFFF);
+            RXpacketManager.Add_CAN_Channel(_CDL);
+            
             //crea e aggiungi tabcan
             CanTabPageRef = new CANInterfaceTab(_CDL);
             //CanTabPageRef.PS_CAN_PacketManager.RegisterPacketReadyEvent(DecodeCommandSP);

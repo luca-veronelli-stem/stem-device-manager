@@ -102,7 +102,6 @@ public class CANDataLayer : IDisposable
         //aggiungi i messaggi alla coda del network layer
         CANMessage RxMessage = new CANMessage(e.ArbitrationId, e.Data, false, e.Timestamp);
         PacketReceived?.Invoke(this, RxMessage);
-        //       ParentPacketManager.ProcessCANPacket(RxMessage);
     }
 
     private void OnConnectionStatusChanged(object sender, bool isConnected)
