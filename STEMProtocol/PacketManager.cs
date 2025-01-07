@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using Stem_Protocol;
 using CanDataLayer;
 using PCAN_Handler;
+using static Stem_Protocol.NetworkLayer;
 
 namespace Stem_Protocol.PacketManager
 {
@@ -27,11 +28,19 @@ namespace Stem_Protocol.PacketManager
         public List<CANDataLayer> CANChannelsList = new List<CANDataLayer>();
         public List<BluetoothClient> BLEChannelsList = new List<BluetoothClient>();
 
+        //  public event Action<PacketReadyEventArgs> OnAppLayerPacketReceived;
+        public event PacketReadyEventHandler OnAppLayerPacketReceived;
+
         //methods
-        public PacketManager(uint id)
+        //    public PacketManager(uint id, Action<PacketReadyEventArgs> eventHandler)
+        public PacketManager(uint id, PacketReadyEventHandler eventHandler) 
         {
-            _id = id;
-            PacketReadyEventList=new List<NetworkLayer.PacketReadyEventHandler>();
+        _id = id;
+            if (eventHandler != null)
+            {
+                OnAppLayerPacketReceived = eventHandler;
+            }
+            PacketReadyEventList =new List<NetworkLayer.PacketReadyEventHandler>();
         }
 
         public uint Id
@@ -93,11 +102,18 @@ namespace Stem_Protocol.PacketManager
                 {
 
                     _networkPacket = new NetworkLayer(interfaceType, version, _sniffer_id, unifiedPacket, true);
+
                     // Sottoscrizione degli eventi
-                    foreach (NetworkLayer.PacketReadyEventHandler Handler in PacketReadyEventList)
+
+                    if (OnAppLayerPacketReceived != null)
                     {
-                        _networkPacket.SP_PacketReadyEvent += Handler;
+                        _networkPacket.SP_PacketReadyEvent += OnAppLayerPacketReceived;
                     }
+
+                    //foreach (NetworkLayer.PacketReadyEventHandler Handler in PacketReadyEventList)
+                    //{
+                    //    _networkPacket.SP_PacketReadyEvent += Handler;
+                    //}
 
                     //Packet is ready, decode it
                     _networkPacket.SP_PacketReady();

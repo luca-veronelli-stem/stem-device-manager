@@ -223,7 +223,7 @@ public class Boot_Interface_Tab : TabPage
 
             // Ottieni i chunk da spedire
             var networkPackets = networkLayer.NetworkPackets;
-            var packetManager = new PacketManager(Form1.FormRef.senderId);
+            var packetManager = new PacketManager(Form1.FormRef.senderId, null);
 
             // Invia i pacchetti tramite CAN in modo asincrono
             bool result = false;

@@ -1,3 +1,4 @@
+using PCAN_Handler;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -249,6 +250,8 @@ namespace Stem_Protocol
 
         // Evento che altre classi possono sottoscrivere
         public event PacketReadyEventHandler SP_PacketReadyEvent;
+
+     //   public event EventHandler<PacketReadyEventArgs> SP_PacketReadyEvent;
 
         private string _interface;
         private int _version;

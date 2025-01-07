@@ -105,8 +105,9 @@ namespace StemPC
             _CDL = new CANDataLayer(channel, canInterface, bitrate);
 
             //crea il protocollo stem di ricezione
-            RXpacketManager = new PacketManager(0xFFFFFFFF);
+            RXpacketManager = new PacketManager(0xFFFFFFFF, null);
             RXpacketManager.Add_CAN_Channel(_CDL);
+       
             
             //crea e aggiungi tabcan
             CanTabPageRef = new CANInterfaceTab(_CDL);
@@ -371,7 +372,7 @@ namespace StemPC
             var networkPackets = networkLayer.NetworkPackets;
 
             // Invia i pacchetti tramite CAN
-            var packetManager = new PacketManager(Form1.FormRef.senderId);
+            var packetManager = new PacketManager(Form1.FormRef.senderId, null);
 
             bool result = await packetManager.SendThroughCANAsync(networkPackets);
         }
