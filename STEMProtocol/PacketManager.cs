@@ -335,10 +335,13 @@ namespace Stem_Protocol.PacketManager
     {
         public string ChannelInfo { get; }
 
-        public CANBus(string channel, string canInterface, int bitrate)
+        private PacketManager ParentPacketManager;
+
+        public CANBus(PacketManager Owner, string channel, string canInterface, int bitrate)
         {
             // Implementation to initialize CAN bus
             ChannelInfo = channel;
+            ParentPacketManager = Owner;
         }
 
         public void Send(CANMessage message)
@@ -359,7 +362,14 @@ namespace Stem_Protocol.PacketManager
             //}
 
             // Implementation to send message through CAN
-            Form1.CanTabPageRef.thisRef.SendCANMessage(message.ArbitrationId, message.Data);
+     //       Form1.CanTabPageRef.thisRef.SendCANMessage(message.ArbitrationId, message.Data);
+        }
+
+        private void OnPacketReceived(object sender, CANPacketEventArgs e)
+        {
+            //aggiungi i messaggi alla coda del network layer
+            CANMessage RxMessage = new CANMessage(e.ArbitrationId, e.Data, false);
+            ParentPacketManager.ProcessCANPacket(RxMessage);
         }
 
         public void Dispose()
@@ -395,5 +405,7 @@ namespace Stem_Protocol.PacketManager
             // Cleanup resources
         }
     }
+
+
 }
 

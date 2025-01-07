@@ -139,10 +139,6 @@ public partial class CANInterfaceTab : TabPage
 
         _receivedMessagesView.Items.Add(listViewItem);
         _receivedMessagesView.EnsureVisible(_receivedMessagesView.Items.Count - 1);
-
-        //aggiungi i messaggi alla coda del network layer
-        CANMessage RxMessage = new CANMessage(e.ArbitrationId, e.Data, false);
-        PS_CAN_PacketManager.ProcessCANPacket(RxMessage);
     }
 
     //WIN FORMS GRAPICHS SECTION
