@@ -8,20 +8,8 @@ using System.Windows.Forms;
 using DocumentFormat.OpenXml.Wordprocessing;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
 
-//using StemPC;
-
-//using TPCANHandle = System.Byte;
-
-//using Stem_Protocol;
-//using Stem_Protocol.PacketManager;
-
-//using PCAN_Handler;
-//using Peak.Can.Basic;
-//using Peak.Can.Basic.BackwardCompatibility;
-
 using CanDataLayer;
 using Peak.Can.Basic.BackwardCompatibility;
-//using PCAN_Handler;
 
 // Classe per l'interfaccia grafica
 public partial class CANInterfaceTab : TabPage

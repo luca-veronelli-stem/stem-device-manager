@@ -11,10 +11,6 @@ using Stem_Protocol;
 
 using PCAN_Handler;
 
-//using static NetworkLayer;
-using StemPC;
-using Peak.Can.Basic;
-
 namespace Stem_Protocol.PacketManager
 {
     public class PacketManager
@@ -390,7 +386,7 @@ namespace Stem_Protocol.PacketManager
             //}
 
             // Implementation to send message through CAN
-     //       Form1.CanTabPageRef.thisRef.SendCANMessage(message.ArbitrationId, message.Data);
+            //       Form1.CanTabPageRef.thisRef.SendCANMessage(message.ArbitrationId, message.Data);
         }
 
         private void OnPacketReceived(object sender, CANPacketEventArgs e)
