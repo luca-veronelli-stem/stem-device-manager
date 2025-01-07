@@ -13,8 +13,6 @@ using Peak.Can.Basic;
 
 namespace CanDataLayer;
 
-
-
 public class CANMessage
 {
     public uint ArbitrationId { get; }
@@ -64,6 +62,8 @@ public class CANDataLayer : IDisposable
             {
                 _pcanManager.StartReading();
             }
+
+            IsConnected = _pcanManager.IsConnected;
         }
     }
 

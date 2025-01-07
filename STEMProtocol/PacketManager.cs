@@ -28,7 +28,6 @@ namespace Stem_Protocol.PacketManager
         private NetworkLayer _networkPacket;
         public List<NetworkLayer.PacketReadyEventHandler> PacketReadyEventList;
 
-
         public List<CANBus> CANChannelsList;
         public List<BluetoothClient> BLEChannelsList;
 
