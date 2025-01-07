@@ -11,6 +11,7 @@ using Stem_Protocol;
 using PCAN_Handler;
 using Peak.Can.Basic;
 using DocumentFormat.OpenXml.InkML;
+using System.Windows.Forms;
 
 namespace CanDataLayer;
 
@@ -30,6 +31,12 @@ public class CANMessage
     }
 }
 
+public class TX_CAN_Data
+{
+    public int Result;
+    public CANMessage Message;
+}
+
 public class CANDataLayer : IDisposable
 {
     public string Channel { get; }
@@ -37,11 +44,12 @@ public class CANDataLayer : IDisposable
     public int    Bitrate { get; }
     public bool   IsConnected;
 
-    private PCANManager _pcanManager;
+    private PCANManager _pcanManager=null;
 
     // Eventi
     public event EventHandler<bool> ConnectionStatusChanged;
     public event EventHandler<CANMessage> PacketReceived;
+    public event EventHandler<TX_CAN_Data> PacketSended;
 
     public CANDataLayer(string channel, string canInterface, int bitrate)
     {
@@ -73,23 +81,20 @@ public class CANDataLayer : IDisposable
 
     public void Send(CANMessage message)
     {
+        int result=0;
 
-        //    public class CANMessage
-        //{
-        //    public uint ArbitrationId { get; }
-        //    public byte[] Data { get; }
-        //    public bool IsErrorFrame { get; }
-
-        //    public CANMessage(uint arbitrationId, byte[] data, bool isErrorFrame)
-        //    {
-        //        ArbitrationId = arbitrationId;
-        //        Data = data;
-        //        IsErrorFrame = isErrorFrame;
-        //    }
-        //}
-
-        // Implementation to send message through CAN
-        //       Form1.CanTabPageRef.thisRef.SendCANMessage(message.ArbitrationId, message.Data);
+        //Implementation to send message through CAN
+        if (_pcanManager != null)
+        {
+            if (_pcanManager.IsConnected)
+            {
+                result=(int)_pcanManager.SendMessage(message.ArbitrationId, message.Data, true);
+                TX_CAN_Data TX_Can_Data = new TX_CAN_Data();
+                TX_Can_Data.Result=result;
+                TX_Can_Data.Message = message;
+                PacketSended?.Invoke(this, TX_Can_Data);
+            }
+        }
     }
 
     private void OnPacketReceived(object sender, CANPacketEventArgs e)

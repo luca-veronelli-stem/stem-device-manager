@@ -20,6 +20,7 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
 //using Peak.Can.Basic.BackwardCompatibility;
 
 using CanDataLayer;
+using Peak.Can.Basic.BackwardCompatibility;
 //using PCAN_Handler;
 
 // Classe per l'interfaccia grafica
@@ -57,6 +58,7 @@ public partial class CANInterfaceTab : TabPage
         // Sottoscrizione agli eventi
         _canHandler.PacketReceived += OnPacketReceived;
         _canHandler.ConnectionStatusChanged += OnConnectionStatusChanged;
+        _canHandler.PacketSended += OnPacketSended;
         //_pcanManager.ErrorOccurred += OnErrorOccurred;
 
         //primo update asincrono della label...
@@ -229,103 +231,76 @@ public partial class CANInterfaceTab : TabPage
 
     private void OnSendClicked(object sender, EventArgs e)
     {
-        //// Controlla se il dispositivo è connesso
-        //if (!_pcanManager.IsConnected)
-        //{
-        //    MessageBox.Show("PCAN non connesso!", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //    return;
-        //}
 
-        //try
-        //{
-        //    // Leggi il CAN ID e i dati
-        //    string canIdText = canIdEntry.Text.Trim();
-        //    string dataText = dataEntry.Text.Trim();
+        // Leggi il CAN ID e i dati
+        string canIdText = canIdEntry.Text.Trim();
+        string dataText = dataEntry.Text.Trim();
 
-        //    if (string.IsNullOrEmpty(canIdText) || string.IsNullOrEmpty(dataText))
-        //    {
-        //        MessageBox.Show("Inserire un CAN ID e i dati!", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //        return;
-        //    }
+        if (string.IsNullOrEmpty(canIdText) || string.IsNullOrEmpty(dataText))
+        {
+            MessageBox.Show("Inserire un CAN ID e i dati!", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
+        }
 
-        //    // Crea un messaggio CAN
-        //    TPCANMsg canMessage = new TPCANMsg
-        //    {
-        //        ID = Convert.ToUInt32(canIdText, 16),
-        //        LEN = (byte)dataText.Split(' ').Length,
-        //        MSGTYPE = TPCANMessageType.PCAN_MESSAGE_STANDARD,
-        //        DATA = new byte[8]
-        //    };
+        // Crea un messaggio CAN
+        TPCANMsg canMessage = new TPCANMsg
+        {
+            ID = Convert.ToUInt32(canIdText, 16),
+            LEN = (byte)dataText.Split(' ').Length,
+            MSGTYPE = TPCANMessageType.PCAN_MESSAGE_STANDARD,
+            DATA = new byte[8]
+        };
 
-        //    // Popola i dati nel messaggio
-        //    var dataBytes = dataText.Split(' ').Select(byte.Parse).ToArray();
-        //    for (int i = 0; i < canMessage.LEN && i < 8; i++)
-        //    {
-        //        canMessage.DATA[i] = dataBytes[i];
-        //    }
+        // Popola i dati nel messaggio
+        var dataBytes = dataText.Split(' ').Select(byte.Parse).ToArray();
+        for (int i = 0; i < canMessage.LEN && i < 8; i++)
+        {
+            canMessage.DATA[i] = dataBytes[i];
+        }
 
-        //    // Invia il messaggio
-        //    var result = PCANBasic.Write(Channel, ref canMessage);
-
-        //    if (result == TPCANStatus.PCAN_ERROR_OK)
-        //    {
-        //        // Ottieni il timestamp
-        //        string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-
-        //        // Aggiungi il messaggio al ListView con colore verde
-        //        var listViewItem = new ListViewItem($"{timestamp} - TX: ID=0x{canMessage.ID:X} Dati={dataText}")
-        //        {
-        //            ForeColor = System.Drawing.Color.Green
-        //        };
-        //        _receivedMessagesView.Items.Add(listViewItem);
-        //        _receivedMessagesView.EnsureVisible(_receivedMessagesView.Items.Count - 1); // Scrolla all'ultimo messaggio
-        //    }
-        //    else
-        //    {
-        //        MessageBox.Show($"Errore durante l'invio: {result}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //    }
-        //}
-        //catch (Exception ex)
-        //{
-        //    MessageBox.Show($"Errore nel formato dei dati: {ex.Message}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //}
+        SendCANMessage(canMessage.ID, canMessage.DATA);
     }
 
     public void SendCANMessage(uint CANID, byte[] data)
     {
-        //// Controlla se il dispositivo è connesso
-        //if (!_pcanManager.IsConnected)
-        //{
-        //    MessageBox.Show("PCAN non connesso!", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //    return;
-        //}
+        // Controlla se il dispositivo è connesso
+        if (!_canHandler.IsConnected)
+        {
+            MessageBox.Show("PCAN non connesso!", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
+        }
 
-        //try
-        //{
-        //    var result = _pcanManager.SendMessage(CANID, data, true);
+        try
+        {
+            CANMessage TxMessage = new CANMessage(CANID, data, false, DateTime.Now);          
+            _canHandler.Send(TxMessage);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Errore nel formato dei dati: {ex.Message}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
 
-        //    if (result == TPCANStatus.PCAN_ERROR_OK)
-        //    {
-        //        // Ottieni il timestamp
-        //        string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-        //        string hexString = string.Join(" ", data.Select(b => b.ToString("X2")));
+    private void OnPacketSended(object sender, TX_CAN_Data TX_Can_Data)
+    {
+        TPCANStatus res = (TPCANStatus)TX_Can_Data.Result;
+        if (res == TPCANStatus.PCAN_ERROR_OK)
+        {
+            // Ottieni il timestamp
+            string timestamp = TX_Can_Data.Message.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            string hexString = string.Join(" ", TX_Can_Data.Message.Data.Select(b => b.ToString("X2")));
 
-        //        // Aggiungi il messaggio al ListView con colore verde
-        //        var listViewItem = new ListViewItem($"{timestamp} - TX: ID=0x{CANID:X} Dati={hexString}")
-        //        {
-        //            ForeColor = System.Drawing.Color.Green
-        //        };
-        //        thisRef._receivedMessagesView.Items.Add(listViewItem);
-        //        thisRef._receivedMessagesView.EnsureVisible(thisRef._receivedMessagesView.Items.Count - 1); // Scrolla all'ultimo messaggio
-        //    }
-        //    else
-        //    {
-        //        MessageBox.Show($"Errore durante l'invio: {result}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //    }
-        //}
-        //catch (Exception ex)
-        //{
-        //    MessageBox.Show($"Errore nel formato dei dati: {ex.Message}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //}
+            // Aggiungi il messaggio al ListView con colore verde
+            var listViewItem = new ListViewItem($"{timestamp} - TX: ID=0x{TX_Can_Data.Message.ArbitrationId:X} Dati={hexString}")
+            {
+                ForeColor = System.Drawing.Color.Green
+            };
+            thisRef._receivedMessagesView.Items.Add(listViewItem);
+            thisRef._receivedMessagesView.EnsureVisible(thisRef._receivedMessagesView.Items.Count - 1); // Scrolla all'ultimo messaggio
+        }
+        else
+        {
+            MessageBox.Show($"Errore durante l'invio: {TX_Can_Data.Result}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 }
