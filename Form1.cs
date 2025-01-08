@@ -132,11 +132,9 @@ namespace StemPC
             //crea il protocollo stem di ricezione
             RXpacketManager = new PacketManager(0xFFFFFFFF, onAppLayerPacketReady);
             RXpacketManager.Add_CAN_Channel(_CDL);
-       
-            
+                  
             //crea e aggiungi tabcan
             CanTabPageRef = new CANInterfaceTab(_CDL);
-            //CanTabPageRef.PS_CAN_PacketManager.RegisterPacketReadyEvent(DecodeCommandSP);
             tabControl.TabPages.Add(CanTabPageRef);
 
             //attiva il terminale
@@ -471,8 +469,6 @@ namespace StemPC
 
         public void AppLayerDecoded(object sender, AppLayerDecoderEventArgs e)
         {
-            //QUESTO PEZZO DEVE ESSERE SPOSTATO IN UN EVENTO SINCRONO ALTRIMENTI CRASHA
-
             if (e.CurrentCommand.Name != "None")
             {
                 //comando riconosciuto
@@ -496,73 +492,5 @@ namespace StemPC
             // Esegue lo scroll fino alla posizione del cursore.
             richTextBoxTx.ScrollToCaret();
         }
-
-// Metodo per gestire l'evento
-public void DecodeCommandSP(object sender, PacketReadyEventArgs e)
-        {
-            // Accesso all'array di byte ricevuto
-            byte[] payload = e.Packet;
-            uint sourceAddress = e.SourceAddress;
-            uint destinationAddress = e.DestinationAddress;
-
-            //ricerca il nome della macchina 
-            string MachineName = new string("Non in tabella");
-            string MachineNameRecipient = new string("Non in tabella");
-
-            foreach (ExcelHandler.RowData Item in IndirizziProtocollo)
-            {
-                if (Item.Indirizzo == "0x" + sourceAddress.ToString("X8"))
-                {
-                    MachineName = Item.Macchina + "->" + Item.Scheda;
-                }
-            }
-
-            foreach (ExcelHandler.RowData Item in IndirizziProtocollo)
-            {
-                if (Item.Indirizzo == "0x" + destinationAddress.ToString("X8"))
-                {
-                    MachineNameRecipient = Item.Macchina + "->" + Item.Scheda;
-                }
-            }
-
-            //find command and decode application layer
-            ExcelHandler.CommandData CurrentCommand = new ExcelHandler.CommandData("None", "0", "0");
-
-            foreach (ExcelHandler.CommandData Item in Comandi)
-            {
-                byte CmdL = Convert.FromHexString(Item.CmdL.PadLeft(2, '0'))[0];
-                byte CmdH = Convert.FromHexString(Item.CmdH.PadLeft(2, '0'))[0];
-                if ((payload[0] == CmdH) && (payload[1] == CmdL))
-                {
-                    CurrentCommand = Item;
-                    break;
-                }
-            }
-
-            if (CurrentCommand.Name != "None")
-            {
-                //comando riconosciuto
-                richTextBoxTx.AppendText($"Comando '{CurrentCommand.Name} ' ricevuto da {MachineName} per {MachineNameRecipient}: ");
-            }
-            else
-            {
-                //comando non riconosciuto
-                richTextBoxTx.AppendText("Comando non presente in dizionario: ");
-            }
-
-            //RAW application layer data
-            richTextBoxTx.AppendText("( ");
-            for (int i = 0; i < payload.Count() - 2; i++)
-            {
-                richTextBoxTx.AppendText(payload[i].ToString("X2") + " ");
-            }
-            richTextBoxTx.AppendText(" )\r\n");
-            // Imposta la posizione del cursore alla fine del testo.
-            richTextBoxTx.SelectionStart = richTextBoxTx.Text.Length;
-            // Esegue lo scroll fino alla posizione del cursore.
-            richTextBoxTx.ScrollToCaret();
-        }
-
-
     }
 }
