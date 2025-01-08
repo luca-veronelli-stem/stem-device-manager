@@ -217,9 +217,10 @@ public class Boot_Interface_Tab : TabPage
                 true
             );
 
-            // Stampa i dettagli
-            Form1.FormRef.UpdateTerminal("Comando Boot manager:");
-            Form1.FormRef.UpdateTerminal($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}");
+            // Stampa i dettagli           
+            Form1.FormRef.UpdateTerminal("Invio Comando Boot Manager:");
+            //Form1.FormRef.UpdateTerminal("Comando Boot manager:");
+            //Form1.FormRef.UpdateTerminal($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}");
 
             // Ottieni i chunk da spedire
             var networkPackets = networkLayer.NetworkPackets;

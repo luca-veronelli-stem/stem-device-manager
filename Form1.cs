@@ -133,9 +133,9 @@ namespace StemPC
             RXpacketManager = new PacketManager(0xFFFFFFFF, onAppLayerPacketReady);
             RXpacketManager.Add_CAN_Channel(_CDL);
                   
-            //crea e aggiungi tabcan
-            CanTabPageRef = new CANInterfaceTab(_CDL);
-            tabControl.TabPages.Add(CanTabPageRef);
+            ////crea e aggiungi tabcan
+            //CanTabPageRef = new CANInterfaceTab(_CDL);
+            //tabControl.TabPages.Add(CanTabPageRef);
 
             //attiva il terminale
             _terminal = new Terminal(); // Inizializza l'istanza di Terminal
