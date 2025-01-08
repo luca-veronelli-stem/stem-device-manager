@@ -153,9 +153,7 @@ public class Boot_Interface_Tab : TabPage
 
     private async void BtnStartProcedure_Click(object sender, EventArgs e)
     {
-        //Test
-        //filePath = "C:\\Users\\Michele\\OneDrive\\Dati\\Lavoro\\STEM\\TopLift-A\\Firmware\\Debug_BOOT\\TopLift-A_BOOT_00_01M.bin";
-        Form1.FormRef.RecipientId = 0x00030141;
+        Form1.FormRef.RecipientId = 0x00030141; //indirizzo fisso dell'Eden (andrà estratto dal file)
 
         if (filePath == "")
         {
@@ -218,7 +216,7 @@ public class Boot_Interface_Tab : TabPage
             );
 
             // Stampa i dettagli           
-            Form1.FormRef.UpdateTerminal("Invio Comando Boot Manager:");
+            Form1.FormRef.UpdateTerminal("Invio Comando Boot Manager");
             //Form1.FormRef.UpdateTerminal("Comando Boot manager:");
             //Form1.FormRef.UpdateTerminal($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}");
 
@@ -246,8 +244,8 @@ public class Boot_Interface_Tab : TabPage
                 result = await packetManager.SendThroughCANAsync(networkPackets);
             }
             
-            // Usa il risultato
-            Form1.FormRef.UpdateTerminal(result ? "Pacchetto inviato con successo!" : "Errore durante l'invio del pacchetto.");
+            //// Usa il risultato
+            //Form1.FormRef.UpdateTerminal(result ? "Pacchetto inviato con successo!" : "Errore durante l'invio del pacchetto.");
         }
         catch (Exception ex)
         {

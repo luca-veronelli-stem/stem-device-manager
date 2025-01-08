@@ -470,8 +470,10 @@ namespace StemPC
         {
             if (e.CurrentCommand.Name != "None")
             {
+                // Ottieni il timestamp
+                string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
                 //comando riconosciuto
-                richTextBoxTx.AppendText($"RX: Comando '{e.CurrentCommand.Name} ' da {e.MachineName} per {e.MachineNameRecipient}: ");
+                richTextBoxTx.AppendText($"RX - {timestamp}: Comando '{e.CurrentCommand.Name} ' da {e.MachineName} per {e.MachineNameRecipient}: ");
             }
             else
             {
