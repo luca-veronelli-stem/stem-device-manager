@@ -28,6 +28,7 @@ namespace Stem_Protocol.PacketManager
         public List<CANDataLayer> CANChannelsList = new List<CANDataLayer>();
         public List<BluetoothClient> BLEChannelsList = new List<BluetoothClient>();
 
+        //events
         //  public event Action<PacketReadyEventArgs> OnAppLayerPacketReceived;
         public event PacketReadyEventHandler OnAppLayerPacketReceived = null;
 

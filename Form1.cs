@@ -12,6 +12,23 @@ using static Stem_Protocol.NetworkLayer;
 
 namespace StemPC
 {
+    // Classe per passare i dati di aggiornamneto textbox dopo la decodifica di un comando applayer
+    public class AppLayerDecoderEventArgs : EventArgs
+    {
+        public byte[] Payload { get; }
+        public ExcelHandler.CommandData CurrentCommand { get; }
+        public string MachineName { get; }
+        public string MachineNameRecipient { get; }
+
+        public AppLayerDecoderEventArgs(byte[] payload, ExcelHandler.CommandData currentCommand, string machineName, string machineNameRecipient)
+        {
+            Payload = payload;
+            CurrentCommand = currentCommand;
+            MachineName = machineName;
+            MachineNameRecipient = machineNameRecipient;
+        }
+     }    
+
     public partial class Form1 : Form
     {
         private const string Software_Version = "1.2";
@@ -86,6 +103,11 @@ namespace StemPC
         public Boot_Interface_Tab BootTabRef { get; private set; }
         public static Form1 FormRef { get; private set; }
 
+        //**************************
+        //  Events
+        //**************************
+        public event EventHandler<AppLayerDecoderEventArgs> AppLayerCommandDecoded;
+        
         public Form1()
         {
             InitializeComponent();
@@ -97,6 +119,9 @@ namespace StemPC
             RecipientId = 0;
             SelectedCommand = 0;
             senderId = 8;
+
+            ////installa l'evento di aggiornamento textbox applayer
+            //AppLayerCommandDecoded += onAppLayerDecoded;
 
             //crea e aggiungi pcan
             var canInterface = "pcan";
@@ -425,10 +450,21 @@ namespace StemPC
                 }
             }
 
-            if (CurrentCommand.Name != "None")
+            //Aggiorna il textbox
+            AppLayerDecoderEventArgs EventArgs = new AppLayerDecoderEventArgs(payload, CurrentCommand, MachineName, MachineNameRecipient);
+            AppLayerCommandDecoded?.Invoke(this, EventArgs);
+        }
+
+        // Evento di aggiornamento del richtextbox dell'application layer
+
+        public void onAppLayerDecoded(object sender, AppLayerDecoderEventArgs e)
+        {
+            //QUESTO PEZZO DEVE ESSERE SPOSTATO IN UN EVENTO SINCRONO ALTRIMENTI CRASHA
+
+            if (e.CurrentCommand.Name != "None")
             {
                 //comando riconosciuto
-                richTextBoxTx.AppendText($"Comando '{CurrentCommand.Name} ' ricevuto da {MachineName} per {MachineNameRecipient}: ");
+                richTextBoxTx.AppendText($"Comando '{e.CurrentCommand.Name} ' ricevuto da {e.MachineName} per {e.MachineNameRecipient}: ");
             }
             else
             {
@@ -438,9 +474,9 @@ namespace StemPC
 
             //RAW application layer data
             richTextBoxTx.AppendText("( ");
-            for (int i = 0; i < payload.Count() - 2; i++)
+            for (int i = 0; i < e.Payload.Count() - 2; i++)
             {
-                richTextBoxTx.AppendText(payload[i].ToString("X2") + " ");
+                richTextBoxTx.AppendText(e.Payload[i].ToString("X2") + " ");
             }
             richTextBoxTx.AppendText(" )\r\n");
             // Imposta la posizione del cursore alla fine del testo.
@@ -449,9 +485,8 @@ namespace StemPC
             richTextBoxTx.ScrollToCaret();
         }
 
-
-        // Metodo per gestire l'evento
-        public void DecodeCommandSP(object sender, PacketReadyEventArgs e)
+// Metodo per gestire l'evento
+public void DecodeCommandSP(object sender, PacketReadyEventArgs e)
         {
             // Accesso all'array di byte ricevuto
             byte[] payload = e.Packet;
