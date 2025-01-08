@@ -152,59 +152,53 @@ namespace Stem_Protocol.PacketManager
         {
             try
             {
-                //              var canInterface = "pcan";
-                //              var channel = "PCAN_USBBUS1";
-                //              var bitrate = 100000;
+                // Creazione di un TaskCompletionSource per gestire la risposta
+                var tcs = new TaskCompletionSource<bool>();
 
-                //              // Creazione di un TaskCompletionSource per gestire la risposta
-                //              var tcs = new TaskCompletionSource<bool>();
+                //// Evento per ricevere le risposte CAN
+                //void OnCanMessageReceived(object sender, CANMessageEventArgs e)
+                //{
+                //    if (responseValidator(e.Message.Data))
+                //    {
+                //        tcs.TrySetResult(true); // Risposta corretta
+                //    }
+                //    else
+                //    {
+                //        tcs.TrySetResult(false); // Risposta errata
+                //    }
+                //}
 
-                //              //// Evento per ricevere le risposte CAN
-                //              //void OnCanMessageReceived(object sender, CANMessageEventArgs e)
-                //              //{
-                //              //    if (responseValidator(e.Message.Data))
-                //              //    {
-                //              //        tcs.TrySetResult(true); // Risposta corretta
-                //              //    }
-                //              //    else
-                //              //    {
-                //              //        tcs.TrySetResult(false); // Risposta errata
-                //              //    }
-                //              //}
+                // Sottoscrizione all'evento (ipotizzando che esista un gestore eventi CAN globale)
+                //            CANBus.MessageReceived += OnCanMessageReceived;
 
-                //              // Sottoscrizione all'evento (ipotizzando che esista un gestore eventi CAN globale)
-                //              //            CANBus.MessageReceived += OnCanMessageReceived;
+                    foreach (var packet in networkPackets)
+                    {
+                        var netInfo = packet.Item1;
+                        var recipientId = packet.Item2;
+                        var packetChunk = packet.Item3;
 
-                //              using (var bus = new CANBus(this, channel, canInterface, bitrate))
-                //              {
-                //                  foreach (var packet in networkPackets)
-                //                  {
-                //                      var netInfo = packet.Item1;
-                //                      var recipientId = packet.Item2;
-                //                      var packetChunk = packet.Item3;
+                        var message = new CANMessage(recipientId, netInfo.Concat(packetChunk).ToArray(), true, DateTime.Now);
 
-                //                      var message = new CANMessage(recipientId, netInfo.Concat(packetChunk).ToArray(), true);
+                        if (CANChannelsList.Count > 0)
+                        {
+                            try
+                            {
+                                CANChannelsList.ElementAt(0).Send(message);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"Errore nell'invio del messaggio: {ex.Message}");
+                            }
+                        }
+                    }
 
-                //                      try
-                //                      {
-                //                          bus.Send(message);
-                //                      }
-                //                      catch (Exception ex)
-                //                      {
-                //                          Console.WriteLine($"Errore nell'invio del messaggio: {ex.Message}");
-                //                      }
-                //                  }
+                    // Attendi la risposta con un timeout
+                    var task = await Task.WhenAny(tcs.Task, Task.Delay(timeoutMs));
+                    bool result = task == tcs.Task && tcs.Task.Result;
 
-                //                  // Attendi la risposta con un timeout
-                //                  var task = await Task.WhenAny(tcs.Task, Task.Delay(timeoutMs));
-                //                  bool result = task == tcs.Task && tcs.Task.Result;
-
-                //                  // Rimuovi l'handler per evitare memory leaks
-                ////                  CANBus.MessageReceived -= OnCanMessageReceived;
-
-                //                  return result;
-                //              }
-                return true;
+                    // Rimuovi l'handler per evitare memory leaks
+                    //                  CANBus.MessageReceived -= OnCanMessageReceived;
+                    return result;
             }
             catch (Exception ex)
             {

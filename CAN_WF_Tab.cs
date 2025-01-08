@@ -41,8 +41,6 @@ public partial class CANInterfaceTab : TabPage
 
         InitializeComponents();
 
-        //        PS_CAN_PacketManager = new PacketManager(0xFFFFFFFF);
-
         // Sottoscrizione agli eventi
         _canHandler.PacketReceived += OnPacketReceived;
         _canHandler.ConnectionStatusChanged += OnConnectionStatusChanged;

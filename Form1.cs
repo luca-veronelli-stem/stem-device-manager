@@ -32,7 +32,7 @@ namespace StemPC
         //**********************************
         //   CAN port variables
         //**********************************
-        private CANDataLayer _CDL;
+        public CANDataLayer _CDL;
 
         //**************************
         //  Code gen variables
