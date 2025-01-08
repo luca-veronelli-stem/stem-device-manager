@@ -12,23 +12,6 @@ using static Stem_Protocol.NetworkLayer;
 
 namespace StemPC
 {
-    // Classe per passare i dati di aggiornamneto textbox dopo la decodifica di un comando applayer
-    public class AppLayerDecoderEventArgs : EventArgs
-    {
-        public byte[] Payload { get; }
-        public ExcelHandler.CommandData CurrentCommand { get; }
-        public string MachineName { get; }
-        public string MachineNameRecipient { get; }
-
-        public AppLayerDecoderEventArgs(byte[] payload, ExcelHandler.CommandData currentCommand, string machineName, string machineNameRecipient)
-        {
-            Payload = payload;
-            CurrentCommand = currentCommand;
-            MachineName = machineName;
-            MachineNameRecipient = machineNameRecipient;
-        }
-     }    
-
     public partial class Form1 : Form
     {
         private const string Software_Version = "1.2";
@@ -106,6 +89,22 @@ namespace StemPC
         //**************************
         //  Events
         //**************************
+        // Classe per passare i dati di aggiornamneto textbox dopo la decodifica di un comando applayer
+        public class AppLayerDecoderEventArgs : EventArgs
+        {
+            public byte[] Payload { get; }
+            public ExcelHandler.CommandData CurrentCommand { get; }
+            public string MachineName { get; }
+            public string MachineNameRecipient { get; }
+
+            public AppLayerDecoderEventArgs(byte[] payload, ExcelHandler.CommandData currentCommand, string machineName, string machineNameRecipient)
+            {
+                Payload = payload;
+                CurrentCommand = currentCommand;
+                MachineName = machineName;
+                MachineNameRecipient = machineNameRecipient;
+            }
+        }
         public event EventHandler<AppLayerDecoderEventArgs> AppLayerCommandDecoded;
         
         public Form1()
@@ -120,8 +119,8 @@ namespace StemPC
             SelectedCommand = 0;
             senderId = 8;
 
-            ////installa l'evento di aggiornamento textbox applayer
-            //AppLayerCommandDecoded += onAppLayerDecoded;
+            //installa l'evento di aggiornamento textbox applayer
+            AppLayerCommandDecoded += onAppLayerDecoded;
 
             //crea e aggiungi pcan
             var canInterface = "pcan";
@@ -458,6 +457,19 @@ namespace StemPC
         // Evento di aggiornamento del richtextbox dell'application layer
 
         public void onAppLayerDecoded(object sender, AppLayerDecoderEventArgs e)
+        {
+            // Metodo thread-safe per aggiornare lo stato della connessione
+            if (richTextBoxTx.InvokeRequired)
+            {
+                richTextBoxTx.Invoke(new Action(() => AppLayerDecoded(this, e)));
+            }
+            else
+            {
+                AppLayerDecoded(this, e);
+            }
+        }
+
+        public void AppLayerDecoded(object sender, AppLayerDecoderEventArgs e)
         {
             //QUESTO PEZZO DEVE ESSERE SPOSTATO IN UN EVENTO SINCRONO ALTRIMENTI CRASHA
 
