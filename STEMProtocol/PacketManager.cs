@@ -217,38 +217,32 @@ namespace Stem_Protocol.PacketManager
         {
             try
             {
-                //var canInterface = "pcan";
-                //var channel = "PCAN_USBBUS1";
-                //var bitrate = 100000;
-
                 //// Usa Task.Run per eseguire il lavoro intensivo
                 //return await Task.Run(() =>
                 //{
-                //    using (var bus = new CANBus(this, channel, canInterface, bitrate))
-                //    {
-                //        foreach (var packet in networkPackets)
-                //        {
-                //            var netInfo = packet.Item1;
-                //            var recipientId = packet.Item2;
-                //            var packetChunk = packet.Item3;
+                    foreach (var packet in networkPackets)
+                    {
+                        var netInfo = packet.Item1;
+                        var recipientId = packet.Item2;
+                        var packetChunk = packet.Item3;
 
-                //            var message = new CANMessage(recipientId, netInfo.Concat(packetChunk).ToArray(), true);
+                        var message = new CANMessage(recipientId, netInfo.Concat(packetChunk).ToArray(), true, DateTime.Now);
 
-                //            try
-                //            {
-                //                bus.Send(message);
-                //                // Console.WriteLine($"Message sent on {bus.ChannelInfo}: {BitConverter.ToString(message.Data)}");
-                //            }
-                //            catch (Exception)
-                //            {
-                //                // Console.WriteLine("Message not sent.");
-                //            }
-                //        }
-                //        Thread.Sleep(10); // Non è necessario qui poiché il metodo è asincrono
-                //    }
-                //    return true;
-                //});
-
+                        if (CANChannelsList.Count > 0) 
+                        {
+                            try
+                            {
+                                CANChannelsList.ElementAt(0).Send(message);
+                                // Console.WriteLine($"Message sent on {bus.ChannelInfo}: {BitConverter.ToString(message.Data)}");
+                            }
+                            catch (Exception)
+                            {
+                                // Console.WriteLine("Message not sent.");
+                            }
+                        }
+                    await Task.Delay(5); //ritardo tra un chunck e il successivo
+                    }
+                //            });
                 return true;
             }
             catch (Exception e)

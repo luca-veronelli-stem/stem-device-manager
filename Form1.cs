@@ -307,11 +307,6 @@ namespace StemPC
             await SendPS_Async(sender, e);
         }
 
-        //private void buttonSendPS_Click(object sender, EventArgs e)
-        //{
-
-        //}
-
         private static async Task SendPS_Async(object sender, EventArgs e)
         {
             //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -396,6 +391,7 @@ namespace StemPC
 
             // Invia i pacchetti tramite CAN
             var packetManager = new PacketManager(Form1.FormRef.senderId, null);
+            packetManager.Add_CAN_Channel(Form1.FormRef._CDL);
 
             bool result = await packetManager.SendThroughCANAsync(networkPackets);
         }
@@ -432,6 +428,9 @@ namespace StemPC
                     MachineNameRecipient = Item.Macchina + "->" + Item.Scheda;
                 }
             }
+
+            if (MachineName == "Non in tabella") MachineName = "0x" + sourceAddress.ToString("X8");
+            if (MachineNameRecipient == "Non in tabella") MachineNameRecipient = "0x" + destinationAddress.ToString("X8");
 
             //find command and decode application layer
             ExcelHandler.CommandData CurrentCommand = new ExcelHandler.CommandData("None", "0", "0");
@@ -472,7 +471,7 @@ namespace StemPC
             if (e.CurrentCommand.Name != "None")
             {
                 //comando riconosciuto
-                richTextBoxTx.AppendText($"Comando '{e.CurrentCommand.Name} ' ricevuto da {e.MachineName} per {e.MachineNameRecipient}: ");
+                richTextBoxTx.AppendText($"RX: Comando '{e.CurrentCommand.Name} ' da {e.MachineName} per {e.MachineNameRecipient}: ");
             }
             else
             {
