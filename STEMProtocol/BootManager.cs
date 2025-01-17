@@ -105,7 +105,7 @@ namespace Stem_Protocol.BootManager
                     // Invia il blocco
                     await SendFirmwareBlock(pageNum, currentBlock, (uint)FIRMWARE_BLOCK_SIZE);
 
-                    await Task.Delay(550); // attesa tra un comando e il successivo
+                    await Task.Delay(650); // attesa tra un comando e il successivo
 
                     Form1.FormRef.UpdateTerminal($"{DateTime.Now:HH:mm:ss.fff} - Page={pageNum:X}");
                 }
@@ -117,11 +117,13 @@ namespace Stem_Protocol.BootManager
                 OnProgressChanged(currentOffset, totalLength);
             }
 
+            await Task.Delay(2000); // attesa tra un comando e il successivo
+
             // 3. Comando di fine procedura
             for (int i = 0; i < 2; i++)
             {
                 SendCanCommand(CMD_END_PROCEDURE, Array.Empty<byte>(), true);
-                await Task.Delay(200); // attesa tra un comando e il successivo
+                await Task.Delay(2000); // attesa tra un comando e il successivo
             }
             //await Task.Delay(1000); // attesa
 
@@ -129,7 +131,7 @@ namespace Stem_Protocol.BootManager
             for (int i = 0; i < 3; i++)
             {
                 SendCanCommand(CMD_RESTART_MACHINE, Array.Empty<byte>(), false);
-                await Task.Delay(200); // attesa tra un comando e il successivo
+                await Task.Delay(2000); // attesa tra un comando e il successivo
             }
 
             MessageBox.Show("Aggiornamento firmware completato!", "Successo", MessageBoxButtons.OK, MessageBoxIcon.Information);

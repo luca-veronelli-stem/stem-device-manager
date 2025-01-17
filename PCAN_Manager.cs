@@ -5,6 +5,7 @@ using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using DocumentFormat.OpenXml.Bibliography;
 using DocumentFormat.OpenXml.Wordprocessing;
 
 using Peak.Can.Basic;
@@ -124,7 +125,8 @@ public class PCANManager
         Task.Run(ReadCANMessagesAsync);
     }
 
-    public TPCANStatus SendMessage(uint canId, byte[] data, bool isExtended = false)
+
+    public async Task<TPCANStatus> SendMessageAsync(uint canId, byte[] data, bool isExtended = false)
     {
         if (!_isConnected) return TPCANStatus.PCAN_ERROR_BUSOFF;
 
@@ -137,10 +139,38 @@ public class PCANManager
         };
 
         Array.Copy(data, canMessage.DATA, canMessage.LEN);
+        TPCANStatus result;
+        try
+        {
+            result = PCANBasic.Write(Channel, ref canMessage);
 
-        var result = PCANBasic.Write(Channel, ref canMessage);
+            // Aggiungi un ritardo di 1 ms
+            await Task.Delay(1);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Errore durante l'invio del pacchetto {canMessage.DATA}: {ex.Message}");
+        }
         return result;
     }
+
+    //public TPCANStatus SendMessage(uint canId, byte[] data, bool isExtended = false)
+    //{
+    //    if (!_isConnected) return TPCANStatus.PCAN_ERROR_BUSOFF;
+
+    //    var canMessage = new TPCANMsg
+    //    {
+    //        ID = canId,
+    //        LEN = (byte)Math.Min(data.Length, 8),
+    //        MSGTYPE = isExtended ? TPCANMessageType.PCAN_MESSAGE_EXTENDED : TPCANMessageType.PCAN_MESSAGE_STANDARD,
+    //        DATA = new byte[8]
+    //    };
+
+    //    Array.Copy(data, canMessage.DATA, canMessage.LEN);
+
+    //    var result = PCANBasic.Write(Channel, ref canMessage);
+    //    return result;
+    //}
 
     private async Task ReadCANMessagesAsync()
     {

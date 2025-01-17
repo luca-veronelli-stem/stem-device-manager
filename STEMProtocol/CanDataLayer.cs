@@ -79,7 +79,7 @@ public class CANDataLayer : IDisposable
         }
     }
 
-    public void Send(CANMessage message)
+    public async void Send(CANMessage message)
     {
         int result=0;
 
@@ -88,7 +88,7 @@ public class CANDataLayer : IDisposable
         {
             if (_pcanManager.IsConnected)
             {
-                result=(int)_pcanManager.SendMessage(message.ArbitrationId, message.Data, true);
+                result=(int) await _pcanManager.SendMessageAsync(message.ArbitrationId, message.Data, true);
                 TX_CAN_Data TX_Can_Data = new TX_CAN_Data();
                 TX_Can_Data.Result=result;
                 TX_Can_Data.Message = message;

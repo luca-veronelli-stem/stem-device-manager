@@ -153,7 +153,7 @@ public class Boot_Interface_Tab : TabPage
 
     private async void BtnStartProcedure_Click(object sender, EventArgs e)
     {
-        Form1.FormRef.RecipientId = 0x00030141; //indirizzo fisso dell'Eden (andrà estratto dal file)
+      //  Form1.FormRef.RecipientId = 0x00030141; //indirizzo fisso dell'Eden (andrà estratto dal file)
 
         if (filePath == "")
         {
