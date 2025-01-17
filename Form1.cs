@@ -132,7 +132,11 @@ namespace StemPC
             //crea il protocollo stem di ricezione
             RXpacketManager = new PacketManager(0xFFFFFFFF, onAppLayerPacketReady);
             RXpacketManager.Add_CAN_Channel(_CDL);
-                  
+
+            //crea e aggiungi il bootloader manager
+            BootTabRef = new Boot_Interface_Tab();
+            tabControl.TabPages.Add(BootTabRef);
+
             //crea e aggiungi tabcan
             CanTabPageRef = new CANInterfaceTab(_CDL);
             tabControl.TabPages.Add(CanTabPageRef);
@@ -154,16 +158,16 @@ namespace StemPC
             configGenerator = new SP_Code_Generator();
             codeFilePath = "SP_Config.h";
 
-            //crea e aggiungi il bootloader manager
-            BootTabRef = new Boot_Interface_Tab();
-            tabControl.TabPages.Add(BootTabRef);
+
+
+
             tabControl.TabPages.Remove(tabPageCodeGen);
             tabControl.TabPages.Remove(tabPageUART);
 
             //Seleziona il tab iniziale
 
-            //tabControl.SelectedTab = BootTabRef;
-            tabControl.SelectedTab = CanTabPageRef;
+            tabControl.SelectedTab = BootTabRef;
+            //tabControl.SelectedTab = CanTabPageRef;
 
             //Estrai i dati dal dizionario stem
             hExcel = new ExcelHandler();

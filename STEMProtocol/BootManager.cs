@@ -100,12 +100,12 @@ namespace Stem_Protocol.BootManager
                 // Copia dei dati di currentBlockShrinked in currentBlock
                 Array.Copy(currentBlockShrinked, currentBlock, currentBlockShrinked.Length);
 
-                for (int i = 0; i < 2; i++)
+                for (int i = 0; i < 3; i++)
                 {
                     // Invia il blocco
                     await SendFirmwareBlock(pageNum, currentBlock, (uint)FIRMWARE_BLOCK_SIZE);
 
-                    await Task.Delay(350); // attesa tra un comando e il successivo
+                    await Task.Delay(450); // attesa tra un comando e il successivo
 
                     Form1.FormRef.UpdateTerminal($"{DateTime.Now:HH:mm:ss.fff} - Page={pageNum:X}");
                 }
