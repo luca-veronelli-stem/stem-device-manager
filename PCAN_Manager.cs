@@ -145,7 +145,7 @@ public class PCANManager
             result = PCANBasic.Write(Channel, ref canMessage);
 
             // Aggiungi un ritardo di 1 ms
-            await Task.Delay(1);
+            await Task.Delay(5);
         }
         catch (Exception ex)
         {
