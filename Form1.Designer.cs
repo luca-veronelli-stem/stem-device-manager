@@ -546,7 +546,7 @@
             Controls.Add(tableLayoutPanel1);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "Form1";
-            Text = "STEM Protocol Manager ";
+            Text = "STEM Device Manager ";
             WindowState = FormWindowState.Maximized;
             tableLayoutPanel1.ResumeLayout(false);
             tabControl.ResumeLayout(false);

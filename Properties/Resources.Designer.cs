@@ -69,5 +69,15 @@ namespace STEMPM.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+        
+        /// <summary>
+        ///   Cerca una risorsa localizzata di tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap logo_stem_2022_300x81 {
+            get {
+                object obj = ResourceManager.GetObject("logo-stem-2022-300x81", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
     }
 }

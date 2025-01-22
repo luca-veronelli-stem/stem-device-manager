@@ -53,34 +53,24 @@ namespace Stem_Protocol.BootManager
 
         }
 
-        //public async void btnSelectFirmware_Click(object sender, EventArgs e)
-        //{
-        //    using (OpenFileDialog openFileDialog = new OpenFileDialog())
-        //    {
-        //        openFileDialog.Filter = "Binary Files (*.bin)|*.bin|All files (*.*)|*.*";
-
-        //        if (openFileDialog.ShowDialog() == DialogResult.OK)
-        //        {
-        //            try
-        //            {
-        //                await UploadFirmware(openFileDialog.FileName);
-        //            }
-        //            catch (Exception ex)
-        //            {
-        //                MessageBox.Show($"Errore durante l'upload: {ex.Message}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //            }
-        //        }
-        //    }
-        //}
-
-        public async Task UploadFirmware()
+        public async Task StartBoot()
         {
             // 1. Avvio procedura
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < 3; i++)
             {
                 SendCanCommand(CMD_START_PROCEDURE, Array.Empty<byte>(), true);
                 await Task.Delay(100); // attesa
             }
+        }
+
+        public async Task UploadFirmware()
+        {
+            //// 1. Avvio procedura
+            //for (int i = 0; i < 2; i++)
+            //{
+            //    SendCanCommand(CMD_START_PROCEDURE, Array.Empty<byte>(), true);
+            //    await Task.Delay(100); // attesa
+            //}
      
             // 2. Ciclo di programmazione blocchi
             pageNum = 0;
@@ -102,7 +92,7 @@ namespace Stem_Protocol.BootManager
 
                 if (pageNum == 0)
                 {
-                    for (int i = 0; i < 6; i++)
+                    for (int i = 0; i < 8; i++)
                     {
                         // Invia il blocco
                         await SendFirmwareBlock(pageNum, currentBlock, (uint)FIRMWARE_BLOCK_SIZE);
@@ -114,12 +104,12 @@ namespace Stem_Protocol.BootManager
                 }
                 else
                 {
-                    for (int i = 0; i < 3; i++)
+                    for (int i = 0; i < 2; i++)
                     {
                         // Invia il blocco
                         await SendFirmwareBlock(pageNum, currentBlock, (uint)FIRMWARE_BLOCK_SIZE);
 
-                        await Task.Delay(400); // attesa tra un comando e il successivo
+                        await Task.Delay(380); // attesa tra un comando e il successivo
 
                         Form1.FormRef.UpdateTerminal($"{DateTime.Now:HH:mm:ss.fff} - Page={pageNum:X}");
                     }

@@ -1,0 +1,24 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+using StemPC;
+
+namespace STEMPM
+{
+    public partial class SplashScreen : Form
+    {
+        public SplashScreen()
+        {
+            InitializeComponent();
+            labelVersion.Text = "Version: " + Form1.Software_Version;
+
+        }
+    }
+}

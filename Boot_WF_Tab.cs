@@ -173,6 +173,21 @@ public class Boot_Interface_Tab : TabPage
             // Iscrizione all'evento SendCanCommand
             BootHldr.SendCanCommandRequest += OnSendCanCommand;
 
+            //manda tutte le schede in boot
+            uint BackupAddress = Form1.FormRef.RecipientId;
+
+            //tastiera1
+            Form1.FormRef.RecipientId = 0x000803C1; //indirizzo fisso tastiera 1 (andrà estratto dal file)
+            await BootHldr.StartBoot();
+
+            Form1.FormRef.RecipientId = 0x000803C2; //indirizzo fisso tastiera 2 (andrà estratto dal file)
+            await BootHldr.StartBoot();
+
+            Form1.FormRef.RecipientId = 0x00080381; //indirizzo fisso scheda madre (andrà estratto dal file)
+            await BootHldr.StartBoot();
+
+            Form1.FormRef.RecipientId = BackupAddress;
+
             //esegui l'upload
             await BootHldr.UploadFirmware();  
 

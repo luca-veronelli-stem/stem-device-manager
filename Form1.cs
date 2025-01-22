@@ -14,7 +14,7 @@ namespace StemPC
 {
     public partial class Form1 : Form
     {
-        private const string Software_Version = "1.4";
+        public const string Software_Version = "1.5";
 
         private UInt16 Prescaler1s = 0;
 
