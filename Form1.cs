@@ -381,6 +381,7 @@ namespace StemPC
             //    Form1.FormRef.richTextBoxTx.AppendText($"Id: {item.Item2.ToString("X2")} ");
             //    Form1.FormRef.richTextBoxTx.AppendText($"Chunk: {string.Join(" ", item.Item3.Select(b => b.ToString("X2")))}\n");
             //}
+
             //// Imposta la posizione del cursore alla fine del testo.
             //Form1.FormRef.richTextBoxTx.SelectionStart = Form1.FormRef.richTextBoxTx.Text.Length;
             //// Esegue lo scroll fino alla posizione del cursore.

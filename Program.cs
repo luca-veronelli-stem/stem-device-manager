@@ -15,20 +15,11 @@ namespace StemPC
             ApplicationConfiguration.Initialize();
 
             // Mostra la schermata di avvio
-            //using (SplashScreen splash = new SplashScreen())
-            //{
-            //    splash.Show();
-            //    Application.DoEvents(); // Aggiorna la UI della splash screen
-
-            //    // Simula il caricamento
-            //    System.Threading.Thread.Sleep(2000); // Tempo in millisecondi
-            //}
-
-
             SplashScreen splash = new SplashScreen();
             splash.Show();
             Application.DoEvents();
 
+            // Crea il main form
             Form1 mainForm = new Form1();
             mainForm.Load += (sender, e) => splash.Close(); // Chiude la splash screen all'avvio del MainForm
 

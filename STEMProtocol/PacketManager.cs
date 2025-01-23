@@ -11,6 +11,8 @@ using Stem_Protocol;
 using CanDataLayer;
 using PCAN_Handler;
 using static Stem_Protocol.NetworkLayer;
+using static StemPC.Form1;
+using StemPC;
 
 namespace Stem_Protocol.PacketManager
 {
@@ -147,7 +149,7 @@ namespace Stem_Protocol.PacketManager
         public async Task<bool> SendAndWaitForResponseAsync(
             List<Tuple<byte[], uint, byte[]>> networkPackets,
             Func<byte[], bool> responseValidator, // Funzione di validazione risposta
-            int timeoutMs = 20 // Timeout in millisecondi
+            int timeoutMs = 600 // Timeout in millisecondi
         )
         {
             try
@@ -156,9 +158,9 @@ namespace Stem_Protocol.PacketManager
                 var tcs = new TaskCompletionSource<bool>();
 
                 // Evento per ricevere le risposte CAN
-                void OnCanMessageReceived(object sender, PacketReadyEventArgs e)
+                void OnCanMessageReceived(object sender, AppLayerDecoderEventArgs e)
                 {
-                    if (responseValidator(e.Packet))
+                    if (responseValidator(e.Payload))
                     {
                         tcs.TrySetResult(true); // Risposta corretta
                     }
@@ -169,8 +171,8 @@ namespace Stem_Protocol.PacketManager
                 }
 
                 // Sottoscrizione all'evento di ricezione pacchetto
-                _networkPacket.SP_PacketReadyEvent += OnCanMessageReceived;
-
+                Form1.FormRef.AppLayerCommandDecoded += OnCanMessageReceived;
+          
                     foreach (var packet in networkPackets)
                     {
                         var netInfo = packet.Item1;
@@ -196,8 +198,8 @@ namespace Stem_Protocol.PacketManager
                     var task = await Task.WhenAny(tcs.Task, Task.Delay(timeoutMs));
                     bool result = task == tcs.Task && tcs.Task.Result;
 
-                    // Rimuovi l'handler per evitare memory leaks
-                    _networkPacket.SP_PacketReadyEvent -= OnCanMessageReceived;
+                // Rimuovi l'handler per evitare memory leaks
+                Form1.FormRef.AppLayerCommandDecoded -= OnCanMessageReceived;
                  
                 return result;
             }
