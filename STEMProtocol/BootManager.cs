@@ -57,16 +57,22 @@ namespace Stem_Protocol.BootManager
 
         public async Task StartBoot()
         {
+            bool Answer=false;
+
             // 1. Avvio procedura
             for (int i = 0; i < 3; i++)
             {
-                SendCanCommand(CMD_START_PROCEDURE, Array.Empty<byte>(), true);
-                await Task.Delay(100); // attesa
+                Answer = false;
+                Answer = await SendCanCommand(CMD_START_PROCEDURE, Array.Empty<byte>(), true);
+                if (Answer == true) break;
+               // await Task.Delay(100); // attesa
             }
         }
 
         public async Task UploadFirmware()
         {
+            return;
+
             //// 1. Avvio procedura
             //for (int i = 0; i < 2; i++)
             //{
@@ -181,19 +187,39 @@ namespace Stem_Protocol.BootManager
         }
 
         // Metodo per attivare l'evento SendCanCommand
-        public void SendCanCommand(ushort command, byte[] payload, bool waitAnswer)
+        public async Task<bool> SendCanCommand(ushort command, byte[] payload, bool waitAnswer)
         {
             Answer_Received = false;
-            // Controlla se ci sono iscritti all'evento prima di invocarlo
-            SendCanCommandRequest?.Invoke(this, new SendCanCommandEventArgs(command, payload, waitAnswer));
-            if (waitAnswer == false)
-            {
-                Answer_Received = true;
-            }
 
+
+            if (SendCanCommandRequest?.GetInvocationList().Length == 0)
+            {
+                // Nessun evento iscritto, esegui codice alternativo
+                Answer_Received = true;
+                Answer_Result = true;
+                return Answer_Result;
+            }
+            else
+            {
+                // Invoca l'evento normalmente
+                // Controlla se ci sono iscritti all'evento prima di invocarlo
+                SendCanCommandRequest?.Invoke(this, new SendCanCommandEventArgs(command, payload, waitAnswer));
+
+                if (waitAnswer == false)
+                {
+                    Answer_Received = true;
+                }
+
+                // Attende la risposta
+                while (Answer_Received)
+                {
+                    await Task.Delay(10); // Attende 10ms prima di ricontrollare
+                }
+                return Answer_Result;
+            }         
         }
 
-        public void AnswerReceived(bool result)
+        public void AnswerReceived(object sender, bool result)
         {
             Answer_Received = true;
             Answer_Result= result;

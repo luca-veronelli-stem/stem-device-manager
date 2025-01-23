@@ -144,9 +144,10 @@ public class Boot_Interface_Tab : TabPage
 
 
         //crea la classe di upload
-        BootManager BootHndlr = new BootManager();
+        BootHndlr = new BootManager();
         BootHndlr.ProgressChanged += UpdateProgressBar;
         BootHndlr.SendCanCommandRequest += OnSendCanCommand;
+        AnswerReceivedFlag += BootHndlr.AnswerReceived;
     }
 
     private void BtnSelectFile_Click(object sender, EventArgs e)
@@ -179,20 +180,22 @@ public class Boot_Interface_Tab : TabPage
             //setta il perscorso del file di boot
             BootHndlr.SetFirmwarePath(filePath);
 
-            //manda tutte le schede in boot
-            uint BackupAddress = Form1.FormRef.RecipientId;
+            ////manda tutte le schede in boot
+            //uint BackupAddress = Form1.FormRef.RecipientId;
 
-            //tastiera1
-            Form1.FormRef.RecipientId = 0x000803C1; //indirizzo fisso tastiera 1 (andrà estratto dal file)
+            ////tastiera1
+            //Form1.FormRef.RecipientId = 0x000803C1; //indirizzo fisso tastiera 1 (andrà estratto dal file)
+            //await BootHndlr.StartBoot();
+
+            //Form1.FormRef.RecipientId = 0x000803C2; //indirizzo fisso tastiera 2 (andrà estratto dal file)
+            //await BootHndlr.StartBoot();
+
+            //Form1.FormRef.RecipientId = 0x00080381; //indirizzo fisso scheda madre (andrà estratto dal file)
+            //await BootHndlr.StartBoot();
+
+            //Form1.FormRef.RecipientId = BackupAddress;
+
             await BootHndlr.StartBoot();
-
-            Form1.FormRef.RecipientId = 0x000803C2; //indirizzo fisso tastiera 2 (andrà estratto dal file)
-            await BootHndlr.StartBoot();
-
-            Form1.FormRef.RecipientId = 0x00080381; //indirizzo fisso scheda madre (andrà estratto dal file)
-            await BootHndlr.StartBoot();
-
-            Form1.FormRef.RecipientId = BackupAddress;
 
             //esegui l'upload
             await BootHndlr.UploadFirmware();  
