@@ -146,67 +146,155 @@ namespace Stem_Protocol.PacketManager
         //    new CANBus(this, channel, canInterface, bitrate);
         }
 
-        public async Task<bool> SendAndWaitForResponseAsync(
-            List<Tuple<byte[], uint, byte[]>> networkPackets,
-            Func<byte[], bool> responseValidator, // Funzione di validazione risposta
-            int timeoutMs = 600 // Timeout in millisecondi
-        )
+        //public async Task<bool> SendAndWaitForResponseAsync(
+        //    List<Tuple<byte[], uint, byte[]>> networkPackets,
+        //    Func<byte[], bool> responseValidator, // Funzione di validazione risposta
+        //    int timeoutMs = 600 // Timeout in millisecondi
+        //)
+        //{
+        //    try
+        //    {
+        //        // Creazione di un TaskCompletionSource per gestire la risposta
+        //        var tcs = new TaskCompletionSource<bool>();
+
+        //        // Evento per ricevere le risposte CAN
+        //        void OnCanMessageReceived(object sender, AppLayerDecoderEventArgs e)
+        //        {
+        //            if (responseValidator(e.Payload))
+        //            {
+        //                tcs.TrySetResult(true); // Risposta corretta
+        //            }
+        //            else
+        //            {
+        //                tcs.TrySetResult(false); // Risposta errata
+        //            }
+        //        }
+
+        //        // Sottoscrizione all'evento di ricezione pacchetto
+        //        Form1.FormRef.AppLayerCommandDecoded += OnCanMessageReceived;
+
+        //            foreach (var packet in networkPackets)
+        //            {
+        //                var netInfo = packet.Item1;
+        //                var recipientId = packet.Item2;
+        //                var packetChunk = packet.Item3;
+
+        //                var message = new CANMessage(recipientId, netInfo.Concat(packetChunk).ToArray(), true, DateTime.Now);
+
+        //                if (CANChannelsList.Count > 0)
+        //                {
+        //                    try
+        //                    {
+        //                        CANChannelsList.ElementAt(0).Send(message);
+        //                    }
+        //                    catch (Exception ex)
+        //                    {
+        //                        Console.WriteLine($"Errore nell'invio del messaggio: {ex.Message}");
+        //                    }
+        //                }
+        //            }
+
+        //            // Attendi la risposta con un timeout
+        //            var task = await Task.WhenAny(tcs.Task, Task.Delay(timeoutMs));
+        //            bool result;
+        //            if (task == tcs.Task)
+        //            {
+        //                // Response received within timeout
+        //                result = tcs.Task.Result;
+        //            }
+        //            else
+        //            {
+        //                // Timeout occurred, no response received
+        //                result = false;
+        //      //          Console.WriteLine("Timeout waiting for response");
+        //            }
+        //       // bool result = task == tcs.Task && tcs.Task.Result;
+
+        //        // Rimuovi l'handler per evitare memory leaks
+        //        Form1.FormRef.AppLayerCommandDecoded -= OnCanMessageReceived;
+
+        //        return result;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"Errore durante l'invio del pacchetto: {ex.Message}");
+        //        return false;
+        //    }
+        //}
+
+    public async Task<bool> SendAndWaitForResponseAsync(
+    List<Tuple<byte[], uint, byte[]>> networkPackets,
+    Func<byte[], bool> responseValidator, // Funzione di validazione risposta
+    int timeoutMs = 600 // Timeout in millisecondi
+)
         {
+            var tcs = new TaskCompletionSource<bool>();
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            void OnCanMessageReceived(object sender, AppLayerDecoderEventArgs e)
+            {
+                if (responseValidator(e.Payload))
+                {
+                    // Completa il TaskCompletionSource con successo
+                    tcs.TrySetResult(true);
+                }
+            }
+
             try
             {
-                // Creazione di un TaskCompletionSource per gestire la risposta
-                var tcs = new TaskCompletionSource<bool>();
+                // Sottoscrivi all'evento per ricevere i pacchetti
+                Form1.FormRef.AppLayerCommandDecoded += OnCanMessageReceived;
 
-                // Evento per ricevere le risposte CAN
-                void OnCanMessageReceived(object sender, AppLayerDecoderEventArgs e)
+                foreach (var packet in networkPackets)
                 {
-                    if (responseValidator(e.Payload))
+                    var netInfo = packet.Item1;
+                    var recipientId = packet.Item2;
+                    var packetChunk = packet.Item3;
+
+                    var message = new CANMessage(recipientId, netInfo.Concat(packetChunk).ToArray(), true, DateTime.Now);
+
+                    if (CANChannelsList.Count > 0)
                     {
-                        tcs.TrySetResult(true); // Risposta corretta
-                    }
-                    else
-                    {
-                        tcs.TrySetResult(false); // Risposta errata
+                        try
+                        {
+                            CANChannelsList.ElementAt(0).Send(message);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Errore nell'invio del messaggio: {ex.Message}");
+                        }
                     }
                 }
 
-                // Sottoscrizione all'evento di ricezione pacchetto
-                Form1.FormRef.AppLayerCommandDecoded += OnCanMessageReceived;
-          
-                    foreach (var packet in networkPackets)
-                    {
-                        var netInfo = packet.Item1;
-                        var recipientId = packet.Item2;
-                        var packetChunk = packet.Item3;
+                // Timeout usando il CancellationTokenSource
+               //var timeoutTask = Task.Delay(timeoutMs, cancellationTokenSource.Token);
+                var timeoutTask = Task.Delay(1000);
+                var completedTask = await Task.WhenAny(tcs.Task, timeoutTask);
 
-                        var message = new CANMessage(recipientId, netInfo.Concat(packetChunk).ToArray(), true, DateTime.Now);
-
-                        if (CANChannelsList.Count > 0)
-                        {
-                            try
-                            {
-                                CANChannelsList.ElementAt(0).Send(message);
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"Errore nell'invio del messaggio: {ex.Message}");
-                            }
-                        }
-                    }
-
-                    // Attendi la risposta con un timeout
-                    var task = await Task.WhenAny(tcs.Task, Task.Delay(timeoutMs));
-                    bool result = task == tcs.Task && tcs.Task.Result;
-
-                // Rimuovi l'handler per evitare memory leaks
-                Form1.FormRef.AppLayerCommandDecoded -= OnCanMessageReceived;
-                 
-                return result;
+                if (completedTask == tcs.Task)
+                {
+                    // Risposta ricevuta prima del timeout
+                    cancellationTokenSource.Cancel(); // Cancella il timeout
+                    return tcs.Task.Result;
+                }
+                else
+                {
+                    // Timeout raggiunto
+                    return false;
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Errore durante l'invio del pacchetto: {ex.Message}");
                 return false;
+            }
+            finally
+            {
+                // Rimuovi l'evento per evitare memory leaks
+                Form1.FormRef.AppLayerCommandDecoded -= OnCanMessageReceived;
+
+                // Rilascia il CancellationTokenSource
+                cancellationTokenSource.Dispose();
             }
         }
 

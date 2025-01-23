@@ -258,8 +258,8 @@ public class Boot_Interface_Tab : TabPage
                 Func<byte[], bool> responseValidator = (data) =>
                 {
                     //// Esempio: Verifica che il primo byte della risposta sia 0xAA
-                    //return data.Length > 0 && data[0] == 0xAA;
-                    return data.Length > 0;
+                    return ((data.Length > 0) && (data[0] == (0x80| AppData[0])) && (data[1] == (AppData[1])));
+                    //return data.Length > 0;
                 };
                 result = await packetManager.SendAndWaitForResponseAsync(networkPackets, responseValidator);
             }

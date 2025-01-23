@@ -65,13 +65,13 @@ namespace Stem_Protocol.BootManager
                 Answer = false;
                 Answer = await SendCanCommand(CMD_START_PROCEDURE, Array.Empty<byte>(), true);
                 if (Answer == true) break;
-               // await Task.Delay(100); // attesa
+                await Task.Delay(100); // attesa
             }
         }
 
         public async Task UploadFirmware()
         {
-            return;
+         //   return;
 
             //// 1. Avvio procedura
             //for (int i = 0; i < 2; i++)
@@ -98,30 +98,30 @@ namespace Stem_Protocol.BootManager
                 // Copia dei dati di currentBlockShrinked in currentBlock
                 Array.Copy(currentBlockShrinked, currentBlock, currentBlockShrinked.Length);
 
-                if (pageNum == 0)
-                {
-                    for (int i = 0; i < 8; i++)
-                    {
+                //if (pageNum == 0)
+                //{
+                //    for (int i = 0; i < 8; i++)
+                //    {
+                //        // Invia il blocco
+                //        await SendFirmwareBlock(pageNum, currentBlock, (uint)FIRMWARE_BLOCK_SIZE);
+
+                //        await Task.Delay(400); // attesa tra un comando e il successivo
+
+                //        Form1.FormRef.UpdateTerminal($"{DateTime.Now:HH:mm:ss.fff} - Page={pageNum:X}");
+                //    }
+                //}
+                //else
+                //{
+                //    for (int i = 0; i < 2; i++)
+                //    {
                         // Invia il blocco
                         await SendFirmwareBlock(pageNum, currentBlock, (uint)FIRMWARE_BLOCK_SIZE);
 
-                        await Task.Delay(400); // attesa tra un comando e il successivo
+                        await Task.Delay(100); // attesa tra un comando e il successivo
 
                         Form1.FormRef.UpdateTerminal($"{DateTime.Now:HH:mm:ss.fff} - Page={pageNum:X}");
-                    }
-                }
-                else
-                {
-                    for (int i = 0; i < 2; i++)
-                    {
-                        // Invia il blocco
-                        await SendFirmwareBlock(pageNum, currentBlock, (uint)FIRMWARE_BLOCK_SIZE);
-
-                        await Task.Delay(380); // attesa tra un comando e il successivo
-
-                        Form1.FormRef.UpdateTerminal($"{DateTime.Now:HH:mm:ss.fff} - Page={pageNum:X}");
-                    }
-                }
+             //       }
+         //       }
 
                 currentOffset = offset;
                 pageNum++;
@@ -164,21 +164,31 @@ namespace Stem_Protocol.BootManager
             try
             {
                 //Crea il comando invia pagina 
-                byte[] Data= new byte[]{ 
-                    (byte)(fwType >> 8), (byte)fwType, 
+                byte[] Data = new byte[]{
+                    (byte)(fwType >> 8), (byte)fwType,
                     (byte)(pageNumber >> 24), (byte)(pageNumber >> 16), (byte)(pageNumber >> 8), (byte)(pageNumber),
                     (byte)(pageSize>> 24), (byte)(pageSize >> 16), (byte)(pageSize >> 8), (byte)(pageSize),
                     0x00, 0x00, 0x00, 0x00
                 }.Concat(block).ToArray();
 
-                // Invia blocco firmware al dispositivo CAN
-                SendCanCommand(CMD_PROGRAM_BLOCK, Data, true);
+                bool Answer = false;
 
+                // Invia blocco firmware al dispositivo CAN
+                for (int i = 0; i < 10; i++)
+                {
+                    Answer = false;
+                    Answer = await SendCanCommand(CMD_PROGRAM_BLOCK, Data, true);
+                    if (Answer == true) break;
+                }         
             }
             catch (Exception ex)
             {
                 throw new Exception($"Errore durante l'invio della pagina {pageNumber}: {ex.Message}");
             }
+           
+
+
+
         }
 
         protected virtual void OnProgressChanged(int currentOffset, int totalLength)
