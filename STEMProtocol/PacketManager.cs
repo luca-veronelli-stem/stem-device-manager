@@ -34,13 +34,13 @@ namespace Stem_Protocol.PacketManager
 
         //methods
         //    public PacketManager(uint id, Action<PacketReadyEventArgs> eventHandler)
-        public PacketManager(uint id, PacketReadyEventHandler eventHandler) 
+        public PacketManager(uint id) 
         {
         _id = id;
-            if (eventHandler != null)
-            {
-                OnAppLayerPacketReceived = eventHandler;
-            }
+            //if (eventHandler != null)
+            //{
+            //    OnAppLayerPacketReceived = eventHandler;
+            //}
             PacketReadyEventList =new List<NetworkLayer.PacketReadyEventHandler>();
         }
 

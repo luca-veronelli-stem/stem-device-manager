@@ -14,7 +14,7 @@ namespace StemPC
 {
     public partial class Form1 : Form
     {
-        public const string Software_Version = "1.5";
+        public const string Software_Version = "1.6";
 
         private UInt16 Prescaler1s = 0;
 
@@ -126,11 +126,11 @@ namespace StemPC
             var canInterface = "pcan";
             var channel = "PCAN_USBBUS1";
             var bitrate = 100000;
-
             _CDL = new CANDataLayer(channel, canInterface, bitrate);
 
             //crea il protocollo stem di ricezione
-            RXpacketManager = new PacketManager(0xFFFFFFFF, onAppLayerPacketReady);
+            RXpacketManager = new PacketManager(0xFFFFFFFF);
+            RXpacketManager.OnAppLayerPacketReceived += onAppLayerPacketReady;
             RXpacketManager.Add_CAN_Channel(_CDL);
 
             //crea e aggiungi il bootloader manager
@@ -394,7 +394,7 @@ namespace StemPC
             var networkPackets = networkLayer.NetworkPackets;
 
             // Invia i pacchetti tramite CAN
-            var packetManager = new PacketManager(Form1.FormRef.senderId, null);
+            var packetManager = new PacketManager(Form1.FormRef.senderId);
             packetManager.Add_CAN_Channel(Form1.FormRef._CDL);
 
             bool result = await packetManager.SendThroughCANAsync(networkPackets);
