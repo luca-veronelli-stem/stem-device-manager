@@ -296,15 +296,11 @@ namespace StemPC
                             label12.Text = ($"Indirizzo\n {item.Indirizzo.ToString()}");
                             RecipientId = Convert.ToUInt32(item.Indirizzo.Substring(2), 16);
                         }
-
                     }
-
                     comboBoxCommand.SelectedIndex = 0;
                 }
-
             }
         }
-
 
         private async void buttonSendPS_Click(object sender, EventArgs e)
         {
@@ -452,6 +448,7 @@ namespace StemPC
 
             //Aggiorna il textbox
             AppLayerDecoderEventArgs EventArgs = new AppLayerDecoderEventArgs(payload, CurrentCommand, MachineName, MachineNameRecipient);
+
             AppLayerCommandDecoded?.Invoke(this, EventArgs);
         }
 

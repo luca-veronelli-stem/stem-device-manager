@@ -18,7 +18,6 @@ namespace Stem_Protocol.BootManager
         public event EventHandler<ProgressEventArgs>? ProgressChanged;
         public event EventHandler<SendCanCommandEventArgs>? SendCanCommandRequest;
 
-
         // Comandi CAN proprietari per il bootloader
         private const ushort CMD_START_PROCEDURE = 0x0005;
         private const ushort CMD_PROGRAM_BLOCK = 0x0007;
@@ -29,8 +28,7 @@ namespace Stem_Protocol.BootManager
         private const int FIRMWARE_BLOCK_SIZE = 1024;
 
         //Path del firmware
-        private string _firmwareName;
-        private uint _recipientId;
+        private string firmwareName="";
         public int currentOffset;
         public int totalLength;
         private byte[] firmwareData;
@@ -39,18 +37,19 @@ namespace Stem_Protocol.BootManager
         uint pageNum;
         ushort fwType = 5;
 
-        public BootManager(uint RecipientId, string FirmwarePath)
+        public BootManager()
         {
-            _recipientId=RecipientId;
-            _firmwareName=FirmwarePath;
 
+        }
+
+        public void SetFirmwarePath(string FirmwareName)
+        {
             // Legge il firmware
-            firmwareData = File.ReadAllBytes(_firmwareName);
+            firmwareData = File.ReadAllBytes(FirmwareName);
             totalLength = firmwareData.Length;
             currentOffset = 0;
             // Aggiorna il progresso
             OnProgressChanged(currentOffset, totalLength);
-
         }
 
         public async Task StartBoot()
@@ -183,6 +182,11 @@ namespace Stem_Protocol.BootManager
         {
             // Controlla se ci sono iscritti all'evento prima di invocarlo
             SendCanCommandRequest?.Invoke(this, new SendCanCommandEventArgs(command, payload, waitAnswer));
+        }
+
+        public void AnswerReceived(bool result)
+        {
+
         }
 
         //private void UpdateProgressBar(int currentOffset, int totalLength)

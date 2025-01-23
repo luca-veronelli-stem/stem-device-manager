@@ -25,6 +25,9 @@ public class Boot_Interface_Tab : TabPage
     private OpenFileDialog openFileDialog;
     private TableLayoutPanel mainLayout;
     private string filePath= "";
+    private BootManager BootHndlr;
+
+    public event EventHandler<bool>? AnswerReceivedFlag;
 
     public Boot_Interface_Tab()
     {
@@ -122,8 +125,7 @@ public class Boot_Interface_Tab : TabPage
         {
             Dock = DockStyle.Fill
         };
-
-          
+   
         // OpenFileDialog per selezionare i file
         openFileDialog = new OpenFileDialog
         {
@@ -139,6 +141,12 @@ public class Boot_Interface_Tab : TabPage
 
         // Aggiunta del layout alla TabPage
         this.Controls.Add(mainLayout);
+
+
+        //crea la classe di upload
+        BootManager BootHndlr = new BootManager();
+        BootHndlr.ProgressChanged += UpdateProgressBar;
+        BootHndlr.SendCanCommandRequest += OnSendCanCommand;
     }
 
     private void BtnSelectFile_Click(object sender, EventArgs e)
@@ -167,41 +175,39 @@ public class Boot_Interface_Tab : TabPage
         {
             btnStartProcedure.Enabled = false;
 
-            //crea la classe di upload
-            BootManager BootHldr = new BootManager(Form1.FormRef.RecipientId, filePath);
-            BootHldr.ProgressChanged += UpdateProgressBar;
-            // Iscrizione all'evento SendCanCommand
-            BootHldr.SendCanCommandRequest += OnSendCanCommand;
+
+            //setta il perscorso del file di boot
+            BootHndlr.SetFirmwarePath(filePath);
 
             //manda tutte le schede in boot
             uint BackupAddress = Form1.FormRef.RecipientId;
 
             //tastiera1
             Form1.FormRef.RecipientId = 0x000803C1; //indirizzo fisso tastiera 1 (andrà estratto dal file)
-            await BootHldr.StartBoot();
+            await BootHndlr.StartBoot();
 
             Form1.FormRef.RecipientId = 0x000803C2; //indirizzo fisso tastiera 2 (andrà estratto dal file)
-            await BootHldr.StartBoot();
+            await BootHndlr.StartBoot();
 
             Form1.FormRef.RecipientId = 0x00080381; //indirizzo fisso scheda madre (andrà estratto dal file)
-            await BootHldr.StartBoot();
+            await BootHndlr.StartBoot();
 
             Form1.FormRef.RecipientId = BackupAddress;
 
             //esegui l'upload
-            await BootHldr.UploadFirmware();  
+            await BootHndlr.UploadFirmware();  
 
             btnStartProcedure.Enabled = true;
         }
     }
 
     // Gestore dell'evento send can command
-    private static async void OnSendCanCommand(object sender, SendCanCommandEventArgs e)
+    private async void OnSendCanCommand(object sender, SendCanCommandEventArgs e)
     {
         await HandleSendCanCommandAsync(sender, e);
     }
 
-    private static async Task HandleSendCanCommandAsync(object sender, SendCanCommandEventArgs e)
+    private async Task HandleSendCanCommandAsync(object sender, SendCanCommandEventArgs e)
     {
         try
         {
@@ -258,8 +264,14 @@ public class Boot_Interface_Tab : TabPage
             {
                 result = await packetManager.SendThroughCANAsync(networkPackets);
             }
+
+            // Usa il risultato
+
+            // Invoca l'evento sul thread della UI
+            AnswerReceivedFlag?.Invoke(this, result);
             
-            //// Usa il risultato
+            //BootHndlr.AnswerReceived(result);
+            
             //Form1.FormRef.UpdateTerminal(result ? "Pacchetto inviato con successo!" : "Errore durante l'invio del pacchetto.");
         }
         catch (Exception ex)

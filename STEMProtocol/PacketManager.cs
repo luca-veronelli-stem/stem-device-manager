@@ -155,21 +155,21 @@ namespace Stem_Protocol.PacketManager
                 // Creazione di un TaskCompletionSource per gestire la risposta
                 var tcs = new TaskCompletionSource<bool>();
 
-                //// Evento per ricevere le risposte CAN
-                //void OnCanMessageReceived(object sender, CANMessageEventArgs e)
-                //{
-                //    if (responseValidator(e.Message.Data))
-                //    {
-                //        tcs.TrySetResult(true); // Risposta corretta
-                //    }
-                //    else
-                //    {
-                //        tcs.TrySetResult(false); // Risposta errata
-                //    }
-                //}
+                // Evento per ricevere le risposte CAN
+                void OnCanMessageReceived(object sender, PacketReadyEventArgs e)
+                {
+                    if (responseValidator(e.Packet))
+                    {
+                        tcs.TrySetResult(true); // Risposta corretta
+                    }
+                    else
+                    {
+                        tcs.TrySetResult(false); // Risposta errata
+                    }
+                }
 
-                // Sottoscrizione all'evento (ipotizzando che esista un gestore eventi CAN globale)
-                //            CANBus.MessageReceived += OnCanMessageReceived;
+                // Sottoscrizione all'evento di ricezione pacchetto
+                _networkPacket.SP_PacketReadyEvent += OnCanMessageReceived;
 
                     foreach (var packet in networkPackets)
                     {
@@ -197,8 +197,9 @@ namespace Stem_Protocol.PacketManager
                     bool result = task == tcs.Task && tcs.Task.Result;
 
                     // Rimuovi l'handler per evitare memory leaks
-                    //                  CANBus.MessageReceived -= OnCanMessageReceived;
-                    return result;
+                    _networkPacket.SP_PacketReadyEvent -= OnCanMessageReceived;
+                 
+                return result;
             }
             catch (Exception ex)
             {
