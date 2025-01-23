@@ -37,6 +37,9 @@ namespace Stem_Protocol.BootManager
         uint pageNum;
         ushort fwType = 5;
 
+        bool Answer_Received;
+        bool Answer_Result;
+
         public BootManager()
         {
 
@@ -180,13 +183,20 @@ namespace Stem_Protocol.BootManager
         // Metodo per attivare l'evento SendCanCommand
         public void SendCanCommand(ushort command, byte[] payload, bool waitAnswer)
         {
+            Answer_Received = false;
             // Controlla se ci sono iscritti all'evento prima di invocarlo
             SendCanCommandRequest?.Invoke(this, new SendCanCommandEventArgs(command, payload, waitAnswer));
+            if (waitAnswer == false)
+            {
+                Answer_Received = true;
+            }
+
         }
 
         public void AnswerReceived(bool result)
         {
-
+            Answer_Received = true;
+            Answer_Result= result;
         }
 
         //private void UpdateProgressBar(int currentOffset, int totalLength)
