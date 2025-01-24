@@ -90,8 +90,7 @@ namespace Stem_Protocol.PacketManager
             if (!packetQueues.ContainsKey(packetId))
             {
                 //Azzera la lista pacchetti ricevuti ad ogni cambio di Id
-                packetQueues[packetId] = new List<byte[]>();
-                //TOPX: qui crasha
+                packetQueues.Add(packetId, new List<byte[]>());
             }
 
             packetQueues[packetId].Add(packetChunkBytes);
@@ -100,7 +99,7 @@ namespace Stem_Protocol.PacketManager
             {
                 //PACKET READY
                 var unifiedPacket = packetQueues[packetId].SelectMany(chunk => chunk).ToArray();
-                packetQueues[packetId].Clear();
+                packetQueues.Remove(packetId);
 
                 if (unifiedPacket.Length > 7)
                 {
