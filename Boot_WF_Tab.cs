@@ -258,7 +258,7 @@ public class Boot_Interface_Tab : TabPage
                 Func<byte[], bool> responseValidator = (data) =>
                 {
                     //il validatore di risposta nel caso della pagina firmware deve verificare anche che il numero di pagina sia corretto
-                    if ((AppData[0] == 0)&&(AppData[7] == 0))
+                    if ((AppData[0] == 0) && (AppData[1] == 7))
                     {
                         return (
                         (data.Length > 0) 

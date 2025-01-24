@@ -60,7 +60,7 @@ namespace Stem_Protocol.BootManager
             bool Answer=false;
 
             // 1. Avvio procedura
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 10; i++)
             {
                 Answer = false;
                 Answer = await SendCanCommand(CMD_START_PROCEDURE, Array.Empty<byte>(), true);
@@ -117,7 +117,7 @@ namespace Stem_Protocol.BootManager
                         // Invia il blocco
                         await SendFirmwareBlock(pageNum, currentBlock, (uint)FIRMWARE_BLOCK_SIZE);
 
-                        await Task.Delay(100); // attesa tra un comando e il successivo
+                   //     await Task.Delay(50); // attesa tra un comando e il successivo
 
                         Form1.FormRef.UpdateTerminal($"{DateTime.Now:HH:mm:ss.fff} - Page={pageNum:X}");
              //       }
@@ -132,18 +132,24 @@ namespace Stem_Protocol.BootManager
             }
 
             // 3. Comando di fine procedura
-            for (int i = 0; i < 2; i++)
+            bool Answer = false;
+
+            // Aggiorna progress bar
+            OnProgressChanged(totalLength, totalLength); //100%
+
+            for (int i = 0; i < 5; i++)
             {
-                SendCanCommand(CMD_END_PROCEDURE, Array.Empty<byte>(), true);
-                await Task.Delay(1000); // attesa tra un comando e il successivo
+                Answer = false;
+                Answer = await SendCanCommand(CMD_END_PROCEDURE, Array.Empty<byte>(), true);
+                if (Answer == true) break;
+                await Task.Delay(100); // attesa
             }
-            //await Task.Delay(1000); // attesa
 
             // 4. Comando di reset
             for (int i = 0; i < 2; i++)
             {
                 SendCanCommand(CMD_RESTART_MACHINE, Array.Empty<byte>(), false);
-                await Task.Delay(3000); // attesa tra un comando e il successivo
+                await Task.Delay(1000); // attesa tra un comando e il successivo
             }
 
             MessageBox.Show("Aggiornamento firmware completato!", "Successo", MessageBoxButtons.OK, MessageBoxIcon.Information);
