@@ -111,7 +111,7 @@ namespace StemPC
         public class AppLayerSendEventArgs : EventArgs
         {
             public NetworkLayer NetLayer { get; }
-        
+
             public AppLayerSendEventArgs(NetworkLayer netLayer)
             {
                 NetLayer = netLayer;
@@ -137,6 +137,7 @@ namespace StemPC
             var channel = "PCAN_USBBUS1";
             var bitrate = 100000;
             _CDL = new CANDataLayer(channel, canInterface, bitrate);
+            _CDL.ConnectionStatusChanged += OnPCANConnectionStatusChanged;
 
             //crea il protocollo stem di ricezione
             RXpacketManager = new PacketManager(0xFFFFFFFF);
@@ -174,6 +175,9 @@ namespace StemPC
 
             tabControl.TabPages.Remove(tabPageCodeGen);
             tabControl.TabPages.Remove(tabPageUART);
+
+            //primo giro di update connessione can
+            OnPCANConnectionStatusChanged(this, _CDL.IsConnected);
 
             //Seleziona il tab iniziale
 
@@ -449,9 +453,9 @@ namespace StemPC
         public void onAppLayerDecoded(object sender, AppLayerDecoderEventArgs e)
         {
             // Metodo thread-safe per aggiornare lo stato della connessione
-            if (Form1.FormRef.richTextBoxTx.InvokeRequired)
+            if (richTextBoxTx.InvokeRequired)
             {
-                Form1.FormRef.richTextBoxTx.Invoke(new Action(() => AppLayerDecoded(this, e)));
+                richTextBoxTx.Invoke(new Action(() => AppLayerDecoded(this, e)));
             }
             else
             {
@@ -466,25 +470,25 @@ namespace StemPC
                 // Ottieni il timestamp
                 string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
                 //comando riconosciuto
-                Form1.FormRef.richTextBoxTx.AppendText($"RX - {timestamp}: Comando '{e.CurrentCommand.Name} ' da {e.MachineName} per {e.MachineNameRecipient}: ");
+                richTextBoxTx.AppendText($"RX - {timestamp}: Comando '{e.CurrentCommand.Name} ' da {e.MachineName} per {e.MachineNameRecipient}: ");
             }
             else
             {
                 //comando non riconosciuto
-                Form1.FormRef.richTextBoxTx.AppendText("Comando non presente in dizionario: ");
+                richTextBoxTx.AppendText("Comando non presente in dizionario: ");
             }
 
             //RAW application layer data
-            Form1.FormRef.richTextBoxTx.AppendText("( ");
+            richTextBoxTx.AppendText("( ");
             for (int i = 0; i < e.Payload.Count() - 2; i++)
             {
-                Form1.FormRef.richTextBoxTx.AppendText(e.Payload[i].ToString("X2") + " ");
+                richTextBoxTx.AppendText(e.Payload[i].ToString("X2") + " ");
             }
-            Form1.FormRef.richTextBoxTx.AppendText(" )\r\n");
+            richTextBoxTx.AppendText(" )\r\n");
             // Imposta la posizione del cursore alla fine del testo.
-            Form1.FormRef.richTextBoxTx.SelectionStart = richTextBoxTx.Text.Length;
+            richTextBoxTx.SelectionStart = richTextBoxTx.Text.Length;
             // Esegue lo scroll fino alla posizione del cursore.
-            Form1.FormRef.richTextBoxTx.ScrollToCaret();
+            richTextBoxTx.ScrollToCaret();
         }
 
         public void onAppLayerSended(object sender, AppLayerSendEventArgs e)
@@ -526,6 +530,33 @@ namespace StemPC
             Form1.FormRef.richTextBoxTx.SelectionStart = Form1.FormRef.richTextBoxTx.Text.Length;
             // Esegue lo scroll fino alla posizione del cursore.
             Form1.FormRef.richTextBoxTx.ScrollToCaret();
+        }
+
+        private void OnPCANConnectionStatusChanged(object sender, bool isConnected)
+        {
+            // Metodo thread-safe per aggiornare lo stato della connessione
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new Action(() => UpdateConnectionStatus(isConnected)));
+            }
+            else
+            {
+                UpdateConnectionStatus(isConnected);
+            }
+        }
+
+        private void UpdateConnectionStatus(bool isConnected)
+        {
+            if (isConnected)
+            {
+                PCanLabel.Text = "PCAN: Connesso";
+                PCanLabel.BackColor = System.Drawing.Color.GreenYellow;
+            }
+            else
+            {
+                PCanLabel.Text = "PCAN: Non connesso";
+                PCanLabel.BackColor = System.Drawing.Color.Salmon;
+            }
         }
     }
 }

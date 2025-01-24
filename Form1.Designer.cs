@@ -65,6 +65,8 @@
             label1 = new Label();
             listBoxSerialPorts = new ListBox();
             terminalOut = new RichTextBox();
+            statusStrip1 = new StatusStrip();
+            PCanLabel = new ToolStripStatusLabel();
             tableLayoutPanel1.SuspendLayout();
             tabControl.SuspendLayout();
             tabPageProtocol.SuspendLayout();
@@ -72,6 +74,7 @@
             tabPageCodeGen.SuspendLayout();
             tableLayoutPanel2.SuspendLayout();
             tabPageUART.SuspendLayout();
+            statusStrip1.SuspendLayout();
             SuspendLayout();
             // 
             // timerBaseTime
@@ -538,11 +541,28 @@
             terminalOut.TabIndex = 4;
             terminalOut.Text = "";
             // 
+            // statusStrip1
+            // 
+            statusStrip1.Items.AddRange(new ToolStripItem[] { PCanLabel });
+            statusStrip1.Location = new Point(0, 428);
+            statusStrip1.Name = "statusStrip1";
+            statusStrip1.Size = new Size(800, 22);
+            statusStrip1.TabIndex = 3;
+            statusStrip1.Text = "statusStrip1";
+            // 
+            // PCanLabel
+            // 
+            PCanLabel.BackColor = Color.Salmon;
+            PCanLabel.Name = "PCanLabel";
+            PCanLabel.Size = new Size(126, 17);
+            PCanLabel.Text = "PCAN: Not Connected";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(statusStrip1);
             Controls.Add(tableLayoutPanel1);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "Form1";
@@ -557,7 +577,10 @@
             tableLayoutPanel2.ResumeLayout(false);
             tabPageUART.ResumeLayout(false);
             tabPageUART.PerformLayout();
+            statusStrip1.ResumeLayout(false);
+            statusStrip1.PerformLayout();
             ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
@@ -596,5 +619,7 @@
         private Label label12;
         private Button buttonSendPS;
         private RichTextBox richTextBoxTx;
+        private StatusStrip statusStrip1;
+        private ToolStripStatusLabel PCanLabel;
     }
 }
