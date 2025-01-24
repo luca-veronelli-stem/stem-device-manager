@@ -14,7 +14,7 @@ namespace StemPC
 {
     public partial class Form1 : Form
     {
-        public const string Software_Version = "1.7";
+        public const string Software_Version = "1.8";
 
         private UInt16 Prescaler1s = 0;
 
@@ -72,12 +72,12 @@ namespace StemPC
         //**********************************
         //  STEM Protocol variables/classes
         //**********************************
-        public uint     RecipientId;
-        public short    SelectedCommand;
-        public uint     senderId;              // ID del mittente
+        public uint RecipientId;
+        public short SelectedCommand;
+        public uint senderId;              // ID del mittente
 
         // Ricezione globale dei pacchetti stem (pe rora una sola, da far poi diventare dinamica alla ricezione di ogni pacchetto)
-        public PacketManager RXpacketManager; 
+        public PacketManager RXpacketManager;
 
         //**************************
         //  public Elements instances
@@ -106,7 +106,20 @@ namespace StemPC
             }
         }
         public event EventHandler<AppLayerDecoderEventArgs> AppLayerCommandDecoded;
+
+        // Classe per passare i dati di aggiornamneto textbox dopo la decodifica di un comando applayer
+        public class AppLayerSendEventArgs : EventArgs
+        {
+            public NetworkLayer NetLayer { get; }
         
+            public AppLayerSendEventArgs(NetworkLayer netLayer)
+            {
+                NetLayer = netLayer;
+            }
+        }
+
+        public event EventHandler<AppLayerSendEventArgs> AppLayerCommandSended;
+
         public Form1()
         {
             InitializeComponent();
@@ -118,9 +131,6 @@ namespace StemPC
             RecipientId = 0;
             SelectedCommand = 0;
             senderId = 8;
-
-            //installa l'evento di aggiornamento textbox applayer
-            AppLayerCommandDecoded += onAppLayerDecoded;
 
             //crea e aggiungi pcan
             var canInterface = "pcan";
@@ -158,8 +168,9 @@ namespace StemPC
             configGenerator = new SP_Code_Generator();
             codeFilePath = "SP_Config.h";
 
-
-
+            //installa l'evento di aggiornamento textbox applayer
+            AppLayerCommandDecoded += onAppLayerDecoded;
+            AppLayerCommandSended += onAppLayerSended;
 
             tabControl.TabPages.Remove(tabPageCodeGen);
             tabControl.TabPages.Remove(tabPageUART);
@@ -307,7 +318,7 @@ namespace StemPC
             await SendPS_Async(sender, e);
         }
 
-        private static async Task SendPS_Async(object sender, EventArgs e)
+        private async Task SendPS_Async(object sender, EventArgs e)
         {
             //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             //      SPEDIZIONE PACCHETTO DA APPLICATION LAYER
@@ -364,28 +375,9 @@ namespace StemPC
                 true
             );
 
-            //// stampa il pacchetto dell'application layer
-            //Form1.FormRef.richTextBoxTx.AppendText("-- APPLICATION --\n");
-            //Form1.FormRef.richTextBoxTx.AppendText($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}\n");
-
-            //// stampa il pacchetto del transport layer
-            //Form1.FormRef.richTextBoxTx.AppendText("-- TRANSPORT --\n");
-            //Form1.FormRef.richTextBoxTx.AppendText($"{string.Join(" ", networkLayer.TransportPacket.Select(b => b.ToString("X2")))}\n");
-
-            //// stampa i pacchetti del network layer
-            //Form1.FormRef.richTextBoxTx.AppendText("-- NETWORK --\n");
-            //foreach (var item in networkLayer.NetworkPackets)
-            //{
-            //    // _netInfo, _recipientId, chunk
-            //    Form1.FormRef.richTextBoxTx.AppendText($"NetInfo: {string.Join(" ", item.Item1.Select(b => b.ToString("X2")))} ");
-            //    Form1.FormRef.richTextBoxTx.AppendText($"Id: {item.Item2.ToString("X2")} ");
-            //    Form1.FormRef.richTextBoxTx.AppendText($"Chunk: {string.Join(" ", item.Item3.Select(b => b.ToString("X2")))}\n");
-            //}
-
-            //// Imposta la posizione del cursore alla fine del testo.
-            //Form1.FormRef.richTextBoxTx.SelectionStart = Form1.FormRef.richTextBoxTx.Text.Length;
-            //// Esegue lo scroll fino alla posizione del cursore.
-            //Form1.FormRef.richTextBoxTx.ScrollToCaret();
+            //stampa cosa stai spedendo
+            AppLayerSendEventArgs EventArgs = new AppLayerSendEventArgs(networkLayer);
+            AppLayerCommandSended?.Invoke(this, EventArgs);
 
             // Ottieni i pacchetti suddivisi per il CAN
             var networkPackets = networkLayer.NetworkPackets;
@@ -449,7 +441,6 @@ namespace StemPC
 
             //Aggiorna il textbox
             AppLayerDecoderEventArgs EventArgs = new AppLayerDecoderEventArgs(payload, CurrentCommand, MachineName, MachineNameRecipient);
-
             AppLayerCommandDecoded?.Invoke(this, EventArgs);
         }
 
@@ -458,9 +449,9 @@ namespace StemPC
         public void onAppLayerDecoded(object sender, AppLayerDecoderEventArgs e)
         {
             // Metodo thread-safe per aggiornare lo stato della connessione
-            if (richTextBoxTx.InvokeRequired)
+            if (Form1.FormRef.richTextBoxTx.InvokeRequired)
             {
-                richTextBoxTx.Invoke(new Action(() => AppLayerDecoded(this, e)));
+                Form1.FormRef.richTextBoxTx.Invoke(new Action(() => AppLayerDecoded(this, e)));
             }
             else
             {
@@ -475,25 +466,66 @@ namespace StemPC
                 // Ottieni il timestamp
                 string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
                 //comando riconosciuto
-                richTextBoxTx.AppendText($"RX - {timestamp}: Comando '{e.CurrentCommand.Name} ' da {e.MachineName} per {e.MachineNameRecipient}: ");
+                Form1.FormRef.richTextBoxTx.AppendText($"RX - {timestamp}: Comando '{e.CurrentCommand.Name} ' da {e.MachineName} per {e.MachineNameRecipient}: ");
             }
             else
             {
                 //comando non riconosciuto
-                richTextBoxTx.AppendText("Comando non presente in dizionario: ");
+                Form1.FormRef.richTextBoxTx.AppendText("Comando non presente in dizionario: ");
             }
 
             //RAW application layer data
-            richTextBoxTx.AppendText("( ");
+            Form1.FormRef.richTextBoxTx.AppendText("( ");
             for (int i = 0; i < e.Payload.Count() - 2; i++)
             {
-                richTextBoxTx.AppendText(e.Payload[i].ToString("X2") + " ");
+                Form1.FormRef.richTextBoxTx.AppendText(e.Payload[i].ToString("X2") + " ");
             }
-            richTextBoxTx.AppendText(" )\r\n");
+            Form1.FormRef.richTextBoxTx.AppendText(" )\r\n");
             // Imposta la posizione del cursore alla fine del testo.
-            richTextBoxTx.SelectionStart = richTextBoxTx.Text.Length;
+            Form1.FormRef.richTextBoxTx.SelectionStart = richTextBoxTx.Text.Length;
             // Esegue lo scroll fino alla posizione del cursore.
-            richTextBoxTx.ScrollToCaret();
+            Form1.FormRef.richTextBoxTx.ScrollToCaret();
+        }
+
+        public void onAppLayerSended(object sender, AppLayerSendEventArgs e)
+        {
+            // Metodo thread-safe per aggiornare lo stato della connessione
+            if (Form1.FormRef.richTextBoxTx.InvokeRequired)
+            {
+                Form1.FormRef.richTextBoxTx.Invoke(new Action(() => AppLayerSended(this, e)));
+            }
+            else
+            {
+                AppLayerSended(this, e);
+            }
+        }
+
+        public void AppLayerSended(object sender, AppLayerSendEventArgs e)
+        {
+            // stampa il pacchetto dell'application layer
+            //Form1.FormRef.richTextBoxTx.AppendText("-- APPLICATION --\n");
+            // Ottieni il timestamp
+            string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            Form1.FormRef.richTextBoxTx.AppendText($"TX - {timestamp}: {string.Join(" ", e.NetLayer.ApplicationPacket.Select(b => b.ToString("X2")))}\n");
+
+            //// stampa il pacchetto del transport layer
+            //Form1.FormRef.richTextBoxTx.AppendText("-- TRANSPORT --\n");
+            //Form1.FormRef.richTextBoxTx.AppendText($"{string.Join(" ", networkLayer.TransportPacket.Select(b => b.ToString("X2")))}\n");
+
+            //// stampa i pacchetti del network layer
+            //Form1.FormRef.richTextBoxTx.AppendText("-- NETWORK --\n");
+            //foreach (var item in networkLayer.NetworkPackets)
+            //{
+            //    // _netInfo, _recipientId, chunk
+            //    Form1.FormRef.richTextBoxTx.AppendText($"NetInfo: {string.Join(" ", item.Item1.Select(b => b.ToString("X2")))} ");
+            //    Form1.FormRef.richTextBoxTx.AppendText($"Id: {item.Item2.ToString("X2")} ");
+            //    Form1.FormRef.richTextBoxTx.AppendText($"Chunk: {string.Join(" ", item.Item3.Select(b => b.ToString("X2")))}\n");
+            //}
+
+            // Imposta la posizione del cursore alla fine del testo.
+            Form1.FormRef.richTextBoxTx.SelectionStart = Form1.FormRef.richTextBoxTx.Text.Length;
+            // Esegue lo scroll fino alla posizione del cursore.
+            Form1.FormRef.richTextBoxTx.ScrollToCaret();
         }
     }
 }
