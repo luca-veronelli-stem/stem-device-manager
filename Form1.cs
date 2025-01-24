@@ -184,6 +184,16 @@ namespace StemPC
             tabControl.SelectedTab = BootTabRef;
             //tabControl.SelectedTab = CanTabPageRef;
 
+            // Nascondi la colonna delle variabili
+            tableLayoutPanelProtocol.ColumnStyles[3].SizeType = SizeType.Absolute;
+            tableLayoutPanelProtocol.ColumnStyles[3].Width = 0;
+
+            //// Nascondi le colonne dei byte 1 e 2
+            //tableLayoutPanelProtocol.ColumnStyles[4].SizeType = SizeType.Absolute;
+            //tableLayoutPanelProtocol.ColumnStyles[4].Width = 0;
+            //tableLayoutPanelProtocol.ColumnStyles[5].SizeType = SizeType.Absolute;
+            //tableLayoutPanelProtocol.ColumnStyles[5].Width = 0;
+
             //Estrai i dati dal dizionario stem
             hExcel = new ExcelHandler();
             IndirizziProtocollo = new List<ExcelHandler.RowData>();
