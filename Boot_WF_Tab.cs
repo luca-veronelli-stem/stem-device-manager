@@ -257,9 +257,26 @@ public class Boot_Interface_Tab : TabPage
                 // Funzione di validazione della risposta
                 Func<byte[], bool> responseValidator = (data) =>
                 {
-                    //// Esempio: Verifica che il primo byte della risposta sia 0xAA
-                    return ((data.Length > 0) && (data[0] == (0x80| AppData[0])) && (data[1] == (AppData[1])));
-                    //return data.Length > 0;
+                    //il validatore di risposta nel caso della pagina firmware deve verificare anche che il numero di pagina sia corretto
+                    if ((AppData[0] == 0)&&(AppData[7] == 0))
+                    {
+                        return (
+                        (data.Length > 0) 
+                        && (data[0] == (0x80 | AppData[0])) 
+                        && (data[1] == (AppData[1]))
+                        && (data[2] == (payload[0]))
+                        && (data[3] == (payload[1]))
+                        && (data[4] == (payload[2]))
+                        && (data[5] == (payload[3]))
+                        && (data[6] == (payload[4]))
+                        && (data[7] == (payload[5]))
+                        );
+                    }
+                    else return (
+                        (data.Length > 0) 
+                        && (data[0] == (0x80| AppData[0])) 
+                        && (data[1] == (AppData[1]))
+                        );
                 };
                 result = await packetManager.SendAndWaitForResponseAsync(networkPackets, responseValidator);
             }

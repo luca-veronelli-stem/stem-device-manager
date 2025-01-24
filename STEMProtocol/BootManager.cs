@@ -185,10 +185,6 @@ namespace Stem_Protocol.BootManager
             {
                 throw new Exception($"Errore durante l'invio della pagina {pageNumber}: {ex.Message}");
             }
-           
-
-
-
         }
 
         protected virtual void OnProgressChanged(int currentOffset, int totalLength)
