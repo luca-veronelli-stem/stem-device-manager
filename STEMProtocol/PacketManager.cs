@@ -91,6 +91,7 @@ namespace Stem_Protocol.PacketManager
             {
                 //Azzera la lista pacchetti ricevuti ad ogni cambio di Id
                 packetQueues[packetId] = new List<byte[]>();
+                //TOPX: qui crasha
             }
 
             packetQueues[packetId].Add(packetChunkBytes);

@@ -221,7 +221,7 @@ namespace Stem_Protocol.BootManager
                 }
 
                 // Attende la risposta
-                while (Answer_Received)
+                while (Answer_Received==false)
                 {
                     await Task.Delay(10); // Attende 10ms prima di ricontrollare
                 }
