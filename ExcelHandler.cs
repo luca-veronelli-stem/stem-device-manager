@@ -46,6 +46,25 @@ public class ExcelHandler
         }
     }
 
+    public class VariableData
+    {
+        public string Name { get; set; }
+        public string CmdH { get; set; }
+        public string CmdL { get; set; }
+
+        public VariableData(string name, string cmdH, string cmdL)
+        {
+            Name = name;
+            CmdH = cmdH;
+            CmdL = cmdL;
+        }
+
+        public string ToTerminal()
+        {
+            return $"Variabile logica: {Name}, addrH: {CmdH}, addrL: {CmdL}";
+        }
+    }
+
     public void EstraiDatiProtocollo(List<RowData> IndirizziProtocollo, List<CommandData> Comandi, string filePath)
     {
         IndirizziProtocollo.Clear();
