@@ -10,6 +10,7 @@ using static Stem_Protocol.NetworkLayer;
 using static ExcelHandler;
 using System.Collections.Generic;
 using DocumentFormat.OpenXml.Drawing.Diagrams;
+using System.Globalization;
 
 //using static NetworkLayer;
 
@@ -187,7 +188,7 @@ namespace StemPC
 
             //Seleziona il tab iniziale
 
-            tabControl.SelectedTab = BootTabRef;
+            //tabControl.SelectedTab = BootTabRef;
             //tabControl.SelectedTab = CanTabPageRef;
 
             // Nascondi la colonna delle variabili
@@ -354,11 +355,10 @@ namespace StemPC
             byte cmdOpt = (byte)(Form1.FormRef.SelectedCommand);//comando byte basso 
 
             // Array di TextBox: sostituisci con i tuoi effettivi TextBox
-            TextBox[] textBoxes = { Form1.FormRef.textBox1, Form1.FormRef.textBox2, Form1.FormRef.textBox3 };
+            TextBox[] textBoxes = { Form1.FormRef.textBox1, Form1.FormRef.textBox2};
 
             // Lista per raccogliere i valori validi
             List<byte> byteList = new List<byte>();
-
 
             //Se sei in leggi/scrivi variabili i primi due byte te li da il dizionario
             if (
@@ -404,13 +404,25 @@ namespace StemPC
                 }
             }
 
+            //Estrai i dati aggiuntivi dall'ultimo textbox
 
+            // Legge il testo dal TextBox
+            string input = textBox3.Text;
+
+            // Suddivide la stringa in base allo spazio
+            string[] hexValues = input.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string hex in hexValues)
+            {
+                // Converte la stringa esadecimale in byte
+                byte value = byte.Parse(hex, NumberStyles.HexNumber);
+                byteList.Add(value);
+            }
 
             byte[] payload = byteList.ToArray();
 
             //TL
             byte cryptFlag = 0x00;         // Nessuna crittografia
-
 
             //NL
             string interfaceType = "can";   // Interfaccia CAN
