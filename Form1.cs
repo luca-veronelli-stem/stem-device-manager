@@ -128,6 +128,8 @@ namespace StemPC
         {
             InitializeComponent();
 
+            labelBytes.Text = "Altri Bytes \r\n (HEX) separati da spazio";
+
             this.Text += Software_Version;
 
             FormRef = this;
@@ -273,8 +275,8 @@ namespace StemPC
 
         private void MaskedTextBox_KeyPress(object sender, KeyPressEventArgs e)
         {
-            // Permetti solo caratteri esadecimali (0-9, A-F, a-f) e Backspace
-            if (!Uri.IsHexDigit(e.KeyChar) && e.KeyChar != (char)Keys.Back)
+            // Permetti solo caratteri esadecimali (0-9, A-F, a-f) , Backspace e spazio
+            if (!Uri.IsHexDigit(e.KeyChar) && e.KeyChar != (char)Keys.Back && e.KeyChar != (char)Keys.Space)
             {
                 e.Handled = true; // Blocca il carattere non valido
             }
@@ -352,7 +354,7 @@ namespace StemPC
             byte cmdOpt = (byte)(Form1.FormRef.SelectedCommand);//comando byte basso 
 
             // Array di TextBox: sostituisci con i tuoi effettivi TextBox
-            TextBox[] textBoxes = { Form1.FormRef.textBox1, Form1.FormRef.textBox2, Form1.FormRef.textBox3, Form1.FormRef.textBox4, Form1.FormRef.textBox5, Form1.FormRef.textBox6, Form1.FormRef.textBox7 };
+            TextBox[] textBoxes = { Form1.FormRef.textBox1, Form1.FormRef.textBox2, Form1.FormRef.textBox3 };
 
             // Lista per raccogliere i valori validi
             List<byte> byteList = new List<byte>();
