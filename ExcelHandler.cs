@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Spreadsheet;
 using static ExcelHandler;
 
@@ -148,7 +149,8 @@ public class ExcelHandler
                         int CellValue;
                         string CellValueString = cell.GetString();
 
-                        if (CellValueString.Length > 2) { 
+                        if (CellValueString.Length > 2){ 
+
                             int.TryParse(CellValueString.Substring(2), System.Globalization.NumberStyles.HexNumber, null, out CellValue);
 
                             if (CellValue == RecipientId)
@@ -159,18 +161,28 @@ public class ExcelHandler
                                 // Scorri le righe del foglio, iniziando da 5 (esclude tutte le intestazioni)
                                 foreach (var rowtemp in worksheet.RowsUsed().Skip(4))
                                 {
-                                    // Leggi i dati delle colonne A, B e C
-                                    var name = rowtemp.Cell("A").GetValue<string>();
-                                    var addrH = rowtemp.Cell("B").GetValue<string>();
-                                    var addrL = rowtemp.Cell("C").GetValue<string>();
-
-                                    // Aggiungi alla lista solo se tutti i campi hanno un valore
-                                    if (!string.IsNullOrWhiteSpace(name) &&
-                                        !string.IsNullOrWhiteSpace(addrH) &&
-                                        !string.IsNullOrWhiteSpace(addrL))
+                                    // Ottieni il colore di sfondo della cella
+                                    XLColor fillColor = rowtemp.Cell("A").Style.Fill.BackgroundColor;
+                                    if (fillColor.ColorType!= XLColorType.Theme)
                                     {
-                                        // Aggiungi un oggetto RowData alla lista
-                                        Variabili.Add(new VariableData(name, addrH, addrL));
+                                        var rgb = fillColor.Color.ToArgb();
+                                        //if (rgb == System.Drawing.Color.LightGreen.ToArgb())
+                                        if (rgb == -7155632)
+                                        {
+                                            // Leggi i dati delle colonne A, B e C
+                                            var name = rowtemp.Cell("A").GetValue<string>();
+                                            var addrH = rowtemp.Cell("B").GetValue<string>();
+                                            var addrL = rowtemp.Cell("C").GetValue<string>();
+
+                                            // Aggiungi alla lista solo se tutti i campi hanno un valore
+                                            if (!string.IsNullOrWhiteSpace(name) &&
+                                                !string.IsNullOrWhiteSpace(addrH) &&
+                                                !string.IsNullOrWhiteSpace(addrL))
+                                            {
+                                                // Aggiungi un oggetto RowData alla lista
+                                                Variabili.Add(new VariableData(name, addrH, addrL));
+                                            }
+                                        }
                                     }
                                 }
                             //    MessageBox.Show($"Indirizzo trovato nel foglio: {worksheet.Name}, cella: {cell.Address}", "", MessageBoxButtons.OK);
@@ -188,8 +200,8 @@ public class ExcelHandler
         {
             MessageBox.Show($"Errore nell'apertura file excel: {ex.Message}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
-            Application.Exit(); // Chiude l'applicazione
-            Environment.Exit(0); // Termina il processo
+            //Application.Exit(); // Chiude l'applicazione
+            //Environment.Exit(0); // Termina il processo
         }
 
 
