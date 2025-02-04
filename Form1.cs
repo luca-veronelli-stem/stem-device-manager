@@ -325,6 +325,7 @@ namespace StemPC
                         {
                             label12.Text = ($"Indirizzo\n {item.Indirizzo.ToString()}");
                             RecipientId = Convert.ToUInt32(item.Indirizzo.Substring(2), 16);
+                            hExcel.EstraiDizionario(RecipientId, Dizionario, ExcelfilePath);
                         }
                     }
                     comboBoxCommand.SelectedIndex = 0;
@@ -443,8 +444,6 @@ namespace StemPC
             SelectedCommand = (short)comboBoxCommand.SelectedIndex;
 
             if ((SelectedCommand == 1) || (SelectedCommand == 2)) { 
-                hExcel.EstraiDizionario(RecipientId, Dizionario, ExcelfilePath);
-
                 comboBoxVariables.Items.Clear();
 
                 _terminal.WriteLog("--------------------------------------------------------------------");
