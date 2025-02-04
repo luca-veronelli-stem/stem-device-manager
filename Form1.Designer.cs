@@ -183,8 +183,8 @@
             // 
             labelDictionary.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             labelDictionary.AutoSize = true;
-            labelDictionary.BackColor = Color.RoyalBlue;
-            labelDictionary.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            labelDictionary.BackColor = Color.FromArgb(8, 72, 133);
+            labelDictionary.Font = new Font("Poppins", 12F, FontStyle.Bold);
             labelDictionary.ForeColor = SystemColors.ControlLightLight;
             labelDictionary.Location = new Point(215, 5);
             labelDictionary.Margin = new Padding(5);
@@ -281,8 +281,8 @@
             // 
             label1Byte7.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label1Byte7.AutoSize = true;
-            label1Byte7.BackColor = Color.RoyalBlue;
-            label1Byte7.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label1Byte7.BackColor = Color.FromArgb(8, 72, 133);
+            label1Byte7.Font = new Font("Poppins", 12F, FontStyle.Bold);
             label1Byte7.ForeColor = SystemColors.ControlLightLight;
             label1Byte7.Location = new Point(712, 5);
             label1Byte7.Margin = new Padding(5);
@@ -296,8 +296,8 @@
             // 
             labelByte6.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             labelByte6.AutoSize = true;
-            labelByte6.BackColor = Color.RoyalBlue;
-            labelByte6.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            labelByte6.BackColor = Color.FromArgb(8, 72, 133);
+            labelByte6.Font = new Font("Poppins", 12F, FontStyle.Bold);
             labelByte6.ForeColor = SystemColors.ControlLightLight;
             labelByte6.Location = new Point(642, 5);
             labelByte6.Margin = new Padding(5);
@@ -311,8 +311,8 @@
             // 
             labelByte5.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             labelByte5.AutoSize = true;
-            labelByte5.BackColor = Color.RoyalBlue;
-            labelByte5.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            labelByte5.BackColor = Color.FromArgb(8, 72, 133);
+            labelByte5.Font = new Font("Poppins", 12F, FontStyle.Bold);
             labelByte5.ForeColor = SystemColors.ControlLightLight;
             labelByte5.Location = new Point(572, 5);
             labelByte5.Margin = new Padding(5);
@@ -326,8 +326,8 @@
             // 
             labelByte4.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             labelByte4.AutoSize = true;
-            labelByte4.BackColor = Color.RoyalBlue;
-            labelByte4.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            labelByte4.BackColor = Color.FromArgb(8, 72, 133);
+            labelByte4.Font = new Font("Poppins", 12F, FontStyle.Bold);
             labelByte4.ForeColor = SystemColors.ControlLightLight;
             labelByte4.Location = new Point(502, 5);
             labelByte4.Margin = new Padding(5);
@@ -341,8 +341,8 @@
             // 
             labelByte3.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             labelByte3.AutoSize = true;
-            labelByte3.BackColor = Color.RoyalBlue;
-            labelByte3.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            labelByte3.BackColor = Color.FromArgb(8, 72, 133);
+            labelByte3.Font = new Font("Poppins", 12F, FontStyle.Bold);
             labelByte3.ForeColor = SystemColors.ControlLightLight;
             labelByte3.Location = new Point(432, 5);
             labelByte3.Margin = new Padding(5);
@@ -356,8 +356,8 @@
             // 
             labelByte2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             labelByte2.AutoSize = true;
-            labelByte2.BackColor = Color.RoyalBlue;
-            labelByte2.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            labelByte2.BackColor = Color.FromArgb(8, 72, 133);
+            labelByte2.Font = new Font("Poppins", 12F, FontStyle.Bold);
             labelByte2.ForeColor = SystemColors.ControlLightLight;
             labelByte2.Location = new Point(362, 5);
             labelByte2.Margin = new Padding(5);
@@ -371,8 +371,8 @@
             // 
             labelByte1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             labelByte1.AutoSize = true;
-            labelByte1.BackColor = Color.RoyalBlue;
-            labelByte1.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            labelByte1.BackColor = Color.FromArgb(8, 72, 133);
+            labelByte1.Font = new Font("Poppins", 12F, FontStyle.Bold);
             labelByte1.ForeColor = SystemColors.ControlLightLight;
             labelByte1.Location = new Point(292, 5);
             labelByte1.Margin = new Padding(5);
@@ -386,8 +386,8 @@
             // 
             label4.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label4.AutoSize = true;
-            label4.BackColor = Color.RoyalBlue;
-            label4.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label4.BackColor = Color.FromArgb(8, 72, 133);
+            label4.Font = new Font("Poppins", 12F, FontStyle.Bold);
             label4.ForeColor = SystemColors.ControlLightLight;
             label4.Location = new Point(145, 5);
             label4.Margin = new Padding(5);
@@ -401,8 +401,8 @@
             // 
             label2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label2.AutoSize = true;
-            label2.BackColor = Color.RoyalBlue;
-            label2.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label2.BackColor = Color.FromArgb(8, 72, 133);
+            label2.Font = new Font("Poppins", 12F, FontStyle.Bold);
             label2.ForeColor = SystemColors.ControlLightLight;
             label2.Location = new Point(75, 5);
             label2.Margin = new Padding(5);
@@ -446,8 +446,8 @@
             // 
             label3.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label3.AutoSize = true;
-            label3.BackColor = Color.RoyalBlue;
-            label3.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label3.BackColor = Color.FromArgb(8, 72, 133);
+            label3.Font = new Font("Poppins", 12F, FontStyle.Bold);
             label3.ForeColor = SystemColors.ControlLightLight;
             label3.Location = new Point(5, 5);
             label3.Margin = new Padding(5);
@@ -460,6 +460,7 @@
             // buttonSendPS
             // 
             buttonSendPS.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            buttonSendPS.Font = new Font("Poppins", 12F, FontStyle.Bold);
             buttonSendPS.Location = new Point(710, 263);
             buttonSendPS.Name = "buttonSendPS";
             buttonSendPS.Size = new Size(73, 60);
@@ -472,8 +473,8 @@
             // 
             label12.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label12.AutoSize = true;
-            label12.BackColor = Color.RoyalBlue;
-            label12.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label12.BackColor = Color.FromArgb(8, 72, 133);
+            label12.Font = new Font("Poppins", 12F, FontStyle.Bold);
             label12.ForeColor = SystemColors.ControlLightLight;
             label12.Location = new Point(712, 102);
             label12.Margin = new Padding(5);
