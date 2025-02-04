@@ -8,6 +8,8 @@ using Stem_Protocol.PacketManager;
 using CanDataLayer;
 using static Stem_Protocol.NetworkLayer;
 using static ExcelHandler;
+using System.Collections.Generic;
+using DocumentFormat.OpenXml.Drawing.Diagrams;
 
 //using static NetworkLayer;
 
@@ -201,7 +203,7 @@ namespace StemPC
             IndirizziProtocollo = new List<ExcelHandler.RowData>();
             Comandi = new List<ExcelHandler.CommandData>();
             Dizionario = new List<ExcelHandler.VariableData>();
-            hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, Dizionario, ExcelfilePath);
+            hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, ExcelfilePath);
 
             _terminal.WriteLog("--------------------------------------------------------------------");
             // Stampa i risultati (per verifica)
@@ -409,7 +411,45 @@ namespace StemPC
         private void comboBoxCommand_SelectedIndexChanged(object sender, EventArgs e)
         {
             SelectedCommand = (short)comboBoxCommand.SelectedIndex;
-        }
+
+            if ((SelectedCommand == 1) || (SelectedCommand == 2)) { 
+                hExcel.EstraiDizionario(RecipientId, Dizionario, ExcelfilePath);
+
+                comboBoxVariables.Items.Clear();
+
+                _terminal.WriteLog("--------------------------------------------------------------------");
+                // Stampa i risultati (per verifica)
+                foreach (ExcelHandler.VariableData itemtemp in Dizionario)
+                {
+                    UpdateTerminal(itemtemp.ToTerminal());
+
+                    //popola il combo variabili
+                    if ((!comboBoxVariables.Items.Contains(itemtemp.Name))) comboBoxVariables.Items.Add(itemtemp.Name);
+                }
+
+                //visualizza la colonna delle variabili
+                tableLayoutPanelProtocol.ColumnStyles[3].SizeType = SizeType.Percent;
+                tableLayoutPanelProtocol.ColumnStyles[3].Width = (float)9.01;
+
+                // Nascondi le colonne dei byte 1 e 2
+                tableLayoutPanelProtocol.ColumnStyles[4].SizeType = SizeType.Absolute;
+                tableLayoutPanelProtocol.ColumnStyles[4].Width = 0;
+                tableLayoutPanelProtocol.ColumnStyles[5].SizeType = SizeType.Absolute;
+                tableLayoutPanelProtocol.ColumnStyles[5].Width = 0;
+            }
+            else{
+                    // Nascondi la colonna delle variabili
+                    tableLayoutPanelProtocol.ColumnStyles[3].SizeType = SizeType.Absolute;
+                    tableLayoutPanelProtocol.ColumnStyles[3].Width = 0;
+
+                    // visualizza le colonne dei byte 1 e 2
+                    tableLayoutPanelProtocol.ColumnStyles[4].SizeType = SizeType.Percent;
+                    tableLayoutPanelProtocol.ColumnStyles[4].Width = (float)9.01;
+                    tableLayoutPanelProtocol.ColumnStyles[5].SizeType = SizeType.Percent;
+                    tableLayoutPanelProtocol.ColumnStyles[5].Width = (float)9.01;
+            }
+    //   comboBoxVariables.SelectedIndex = 0;
+}
 
 
         public void onAppLayerPacketReady(object sender, PacketReadyEventArgs e)

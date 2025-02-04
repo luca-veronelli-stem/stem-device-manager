@@ -64,7 +64,7 @@ public class ExcelHandler
         }
     }
 
-    public void EstraiDatiProtocollo(List<RowData> IndirizziProtocollo, List<CommandData> Comandi, List<VariableData> Variabili, string filePath)
+    public void EstraiDatiProtocollo(List<RowData> IndirizziProtocollo, List<CommandData> Comandi, string filePath)
     {
         IndirizziProtocollo.Clear();
         Comandi.Clear();
@@ -72,6 +72,9 @@ public class ExcelHandler
         {
             using (var workbook = new XLWorkbook(filePath))
             {
+                //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                // Estrazione indirizzi protocollo
+                //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 var worksheet = workbook.Worksheet("indirizzo protocollo stem");
 
                 // Scorri le righe del foglio, iniziando da 2 (se la prima riga contiene intestazioni)
@@ -92,6 +95,9 @@ public class ExcelHandler
                     }
                 }
 
+                //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                // Estrazione comandi protocollo
+                //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 worksheet = workbook.Worksheet("COMANDI");
 
                 // Scorri le righe del foglio, iniziando da 2 (se la prima riga contiene intestazioni)
@@ -121,4 +127,73 @@ public class ExcelHandler
             Environment.Exit(0); // Termina il processo
         }   
     }
+
+    public void EstraiDizionario(uint RecipientId, List<VariableData> Variabili, string filePath)
+    {
+        Variabili.Clear();
+
+        try
+        {
+            using (var workbook = new XLWorkbook(filePath))
+            {
+                //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                // Estrazione dizionario macchine
+                //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                foreach (var worksheet in workbook.Worksheets)
+                {
+                    var row = worksheet.Row(2); // Cerca nella seconda riga se trovi un indirizzo corrispondente a RecipientId
+
+                    foreach (var cell in row.CellsUsed())
+                    {
+                        int CellValue;
+                        string CellValueString = cell.GetString();
+
+                        if (CellValueString.Length > 2) { 
+                            int.TryParse(CellValueString.Substring(2), System.Globalization.NumberStyles.HexNumber, null, out CellValue);
+
+                            if (CellValue == RecipientId)
+                            {
+                                //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                                // Estrazione dizionario
+                                //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                                // Scorri le righe del foglio, iniziando da 5 (esclude tutte le intestazioni)
+                                foreach (var rowtemp in worksheet.RowsUsed().Skip(4))
+                                {
+                                    // Leggi i dati delle colonne A, B e C
+                                    var name = rowtemp.Cell("A").GetValue<string>();
+                                    var addrH = rowtemp.Cell("B").GetValue<string>();
+                                    var addrL = rowtemp.Cell("C").GetValue<string>();
+
+                                    // Aggiungi alla lista solo se tutti i campi hanno un valore
+                                    if (!string.IsNullOrWhiteSpace(name) &&
+                                        !string.IsNullOrWhiteSpace(addrH) &&
+                                        !string.IsNullOrWhiteSpace(addrL))
+                                    {
+                                        // Aggiungi un oggetto RowData alla lista
+                                        Variabili.Add(new VariableData(name, addrH, addrL));
+                                    }
+                                }
+                            //    MessageBox.Show($"Indirizzo trovato nel foglio: {worksheet.Name}, cella: {cell.Address}", "", MessageBoxButtons.OK);
+                            }
+                            else
+                            {
+                                //MessageBox.Show("Indirizzo non trovato", "", MessageBoxButtons.OK);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Errore nell'apertura file excel: {ex.Message}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+            Application.Exit(); // Chiude l'applicazione
+            Environment.Exit(0); // Termina il processo
+        }
+
+
+    }
 }
+
+
