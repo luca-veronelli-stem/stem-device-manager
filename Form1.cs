@@ -356,6 +356,33 @@ namespace StemPC
             // Lista per raccogliere i valori validi
             List<byte> byteList = new List<byte>();
 
+
+            //Se sei in leggi/scrivi variabili i primi due byte te li da il dizionario
+            if (
+                (tableLayoutPanelProtocol.ColumnStyles[3].Width != 0)
+                && (comboBoxVariables.Items.Count != 0)
+                && (comboBoxVariables.SelectedIndex >= 0)
+                )
+            {
+                Form1.FormRef.textBox1.Text = "";
+                Form1.FormRef.textBox2.Text = "";
+
+                byte AddrL = Convert.FromHexString(Dizionario.ElementAt(comboBoxVariables.SelectedIndex).AddrL.PadLeft(2, '0'))[0];
+                byte AddrH = Convert.FromHexString(Dizionario.ElementAt(comboBoxVariables.SelectedIndex).AddrH.PadLeft(2, '0'))[0];
+                if (byteList.Count() < 1)
+                {
+                    byteList.Add(AddrH);
+                }
+                else byteList[0] = AddrH;
+
+
+                if (byteList.Count() < 2)
+                {
+                    byteList.Add(AddrL);
+                }
+                else byteList[1] = AddrL;
+            }
+
             // Itera su ogni TextBox
             foreach (var textBox in textBoxes)
             {
@@ -373,6 +400,9 @@ namespace StemPC
                     }
                 }
             }
+
+
+
             byte[] payload = byteList.ToArray();
 
             //TL
@@ -424,7 +454,11 @@ namespace StemPC
                     UpdateTerminal(itemtemp.ToTerminal());
 
                     //popola il combo variabili
-                    if ((!comboBoxVariables.Items.Contains(itemtemp.Name))) comboBoxVariables.Items.Add(itemtemp.Name);
+                    if ((!comboBoxVariables.Items.Contains(itemtemp.Name)))
+                    {
+                        comboBoxVariables.Items.Add(itemtemp.Name);
+                        comboBoxVariables.SelectedIndex = 0;
+                    }
                 }
 
                 //visualizza la colonna delle variabili
