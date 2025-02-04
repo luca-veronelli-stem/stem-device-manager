@@ -7,6 +7,7 @@ using Stem_Protocol;
 using Stem_Protocol.PacketManager;
 using CanDataLayer;
 using static Stem_Protocol.NetworkLayer;
+using static ExcelHandler;
 
 //using static NetworkLayer;
 
@@ -67,6 +68,7 @@ namespace StemPC
         // Lista per contenere le righe lette
         List<ExcelHandler.RowData> IndirizziProtocollo;
         List<ExcelHandler.CommandData> Comandi;
+        List<ExcelHandler.VariableData> Dizionario;
         ExcelHandler hExcel;
 
         //**********************************
@@ -198,7 +200,8 @@ namespace StemPC
             hExcel = new ExcelHandler();
             IndirizziProtocollo = new List<ExcelHandler.RowData>();
             Comandi = new List<ExcelHandler.CommandData>();
-            hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, ExcelfilePath);
+            Dizionario = new List<ExcelHandler.VariableData>();
+            hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, Dizionario, ExcelfilePath);
 
             _terminal.WriteLog("--------------------------------------------------------------------");
             // Stampa i risultati (per verifica)

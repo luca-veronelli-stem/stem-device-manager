@@ -6,7 +6,6 @@ using static ExcelHandler;
 
 public class ExcelHandler
 {
-
     // Definizione del tipo di dato personalizzato
     public class RowData
     {
@@ -49,23 +48,23 @@ public class ExcelHandler
     public class VariableData
     {
         public string Name { get; set; }
-        public string CmdH { get; set; }
-        public string CmdL { get; set; }
+        public string AddrH { get; set; }
+        public string AddrL { get; set; }
 
-        public VariableData(string name, string cmdH, string cmdL)
+        public VariableData(string name, string addrH, string addrL)
         {
             Name = name;
-            CmdH = cmdH;
-            CmdL = cmdL;
+            AddrH = addrH;
+            AddrL = addrL;
         }
 
         public string ToTerminal()
         {
-            return $"Variabile logica: {Name}, addrH: {CmdH}, addrL: {CmdL}";
+            return $"Variabile logica: {Name}, addrH: {AddrH}, addrL: {AddrL}";
         }
     }
 
-    public void EstraiDatiProtocollo(List<RowData> IndirizziProtocollo, List<CommandData> Comandi, string filePath)
+    public void EstraiDatiProtocollo(List<RowData> IndirizziProtocollo, List<CommandData> Comandi, List<VariableData> Variabili, string filePath)
     {
         IndirizziProtocollo.Clear();
         Comandi.Clear();
