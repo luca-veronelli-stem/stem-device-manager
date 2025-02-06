@@ -33,12 +33,16 @@ namespace Stem_Protocol.BootManager
         private byte[] firmwareData;
 
         //variabili varie
-        uint pageNum;
-        ushort fwType = 5;
+        private uint pageNum;
+        private ushort fwType = 5;
+
+        private ProtocolManager protocolManager;
 
         public BootManager()
         {
-
+            protocolManager = new ProtocolManager();
+            BootHndlr.SendCanCommandRequest += OnSendCanCommand;
+            AnswerReceivedFlag += BootHndlr.AnswerReceived;
         }
 
         public void SetFirmwarePath(string FirmwareName)

@@ -1,10 +1,11 @@
 using PCAN_Handler;
 using Stem_Protocol.BootManager;
+using StemPC;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-//using StemPC;
+using Stem_Protocol.PacketManager;
 
 namespace Stem_Protocol
 { 
@@ -443,6 +444,7 @@ namespace Stem_Protocol
     public class ProtocolManager
     {
         public event EventHandler<SendCanCommandEventArgs>? SendCanCommandRequest;
+        public event EventHandler<bool>? AnswerReceivedFlag;
 
         bool Answer_Received;
         bool Answer_Result;
@@ -473,7 +475,7 @@ namespace Stem_Protocol
                 // Attende la risposta
                 while (Answer_Received == false)
                 {
-                    await Task.Delay(10); // Attende 10ms prima di ricontrollare
+                    await Task.Delay(10); // Attende 10 ms prima di ricontrollare
                 }
                 return Answer_Result;
             }
@@ -485,5 +487,102 @@ namespace Stem_Protocol
             Answer_Result = result;
         }
     }
-}
+
+    // Gestore dell'evento send can command
+    private async void OnSendCanCommand(object sender, SendCanCommandEventArgs e)
+        {
+            await HandleSendCanCommandAsync(sender, e);
+        }
+
+        private async Task HandleSendCanCommandAsync(object sender, SendCanCommandEventArgs e)
+        {
+            try
+            {
+                // Crea il pacchetto per l'applicationLayer
+                byte[] AppData = { (byte)(e.Command >> 8), (byte)(e.Command) };
+
+                // AL
+                byte cmdInit = AppData[0]; // comando byte alto
+                byte cmdOpt = AppData[1]; // comando byte basso
+                byte[] payload = e.Payload;
+
+                // TL
+                byte cryptFlag = 0x00; // Nessuna crittografia
+
+                // NL
+                string interfaceType = "can";
+                int version = 1;
+                uint recipientId = Form1.FormRef.RecipientId;
+
+                // Crea il pacchetto di livello Network
+                var networkLayer = new NetworkLayer(
+                    interfaceType,
+                    version,
+                    recipientId,
+                    new byte[] { cryptFlag, (byte)Form1.FormRef.senderId, (byte)(Form1.FormRef.senderId >> 8), (byte)(Form1.FormRef.senderId >> 16), (byte)(Form1.FormRef.senderId >> 24), 0, 0, cmdInit, cmdOpt }.Concat(payload).ToArray(),
+                    true
+                );
+
+                // Stampa i dettagli           
+                Form1.FormRef.UpdateTerminal("Invio Comando Boot Manager");
+                //Form1.FormRef.UpdateTerminal("Comando Boot manager:");
+                //Form1.FormRef.UpdateTerminal($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}");
+
+                // Ottieni i chunk da spedire
+                var networkPackets = networkLayer.NetworkPackets;
+                var packetManager = new PacketManager(Form1.FormRef.senderId);
+                packetManager.Add_CAN_Channel(Form1.FormRef._CDL);
+
+                // Invia i pacchetti tramite CAN in modo asincrono
+                bool result = false;
+
+                if (e.WaitAnswer)
+                {
+                    // Funzione di validazione della risposta
+                    Func<byte[], bool> responseValidator = (data) =>
+                    {
+                        //il validatore di risposta nel caso della pagina firmware deve verificare anche che il numero di pagina sia corretto
+                        if ((AppData[0] == 0) && (AppData[1] == 7))
+                        {
+                            return (
+                            (data.Length > 0)
+                            && (data[0] == (0x80 | AppData[0]))
+                            && (data[1] == (AppData[1]))
+                            && (data[2] == (payload[0]))
+                            && (data[3] == (payload[1]))
+                            && (data[4] == (payload[2]))
+                            && (data[5] == (payload[3]))
+                            && (data[6] == (payload[4]))
+                            && (data[7] == (payload[5]))
+                            );
+                        }
+                        else return (
+                            (data.Length > 0)
+                            && (data[0] == (0x80 | AppData[0]))
+                            && (data[1] == (AppData[1]))
+                            );
+                    };
+                    result = await packetManager.SendAndWaitForResponseAsync(networkPackets, responseValidator);
+                }
+                else
+                {
+                    result = await packetManager.SendThroughCANAsync(networkPackets);
+                }
+
+                // Usa il risultato
+
+                // Invoca l'evento sul thread della UI
+                AnswerReceivedFlag?.Invoke(this, result);
+
+                //BootHndlr.AnswerReceived(result);
+
+                //Form1.FormRef.UpdateTerminal(result ? "Pacchetto inviato con successo!" : "Errore durante l'invio del pacchetto.");
+            }
+            catch (Exception ex)
+            {
+                // Gestione dell'eccezione
+                Form1.FormRef.UpdateTerminal($"Errore durante l'invio del comando CAN: {ex.Message}");
+            }
+        }
+    }
 
