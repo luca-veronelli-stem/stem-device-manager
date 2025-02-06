@@ -1,4 +1,5 @@
 using PCAN_Handler;
+using Stem_Protocol.BootManager;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -436,6 +437,52 @@ namespace Stem_Protocol
                 SourceAddress = sourceAddress;
                 DestinationAddress = destinationAddress;
             }
+        }
+    }
+
+    public class ProtocolManager
+    {
+        public event EventHandler<SendCanCommandEventArgs>? SendCanCommandRequest;
+
+        bool Answer_Received;
+        bool Answer_Result;
+
+        public async Task<bool> SendCanCommand(ushort command, byte[] payload, bool waitAnswer)
+        {
+            Answer_Received = false;
+
+
+            if (SendCanCommandRequest?.GetInvocationList().Length == 0)
+            {
+                // Nessun evento iscritto, esegui codice alternativo
+                Answer_Received = true;
+                Answer_Result = true;
+                return Answer_Result;
+            }
+            else
+            {
+                // Invoca l'evento normalmente
+                // Controlla se ci sono iscritti all'evento prima di invocarlo
+                SendCanCommandRequest?.Invoke(this, new SendCanCommandEventArgs(command, payload, waitAnswer));
+
+                if (waitAnswer == false)
+                {
+                    Answer_Received = true;
+                }
+
+                // Attende la risposta
+                while (Answer_Received == false)
+                {
+                    await Task.Delay(10); // Attende 10ms prima di ricontrollare
+                }
+                return Answer_Result;
+            }
+        }
+
+        public void AnswerReceived(object sender, bool result)
+        {
+            Answer_Received = true;
+            Answer_Result = result;
         }
     }
 }

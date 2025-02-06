@@ -16,7 +16,6 @@ namespace Stem_Protocol.BootManager
     {
         //Eventi della classe
         public event EventHandler<ProgressEventArgs>? ProgressChanged;
-        public event EventHandler<SendCanCommandEventArgs>? SendCanCommandRequest;
 
         // Comandi CAN proprietari per il bootloader
         private const ushort CMD_START_PROCEDURE = 0x0005;
@@ -36,9 +35,6 @@ namespace Stem_Protocol.BootManager
         //variabili varie
         uint pageNum;
         ushort fwType = 5;
-
-        bool Answer_Received;
-        bool Answer_Result;
 
         public BootManager()
         {
@@ -199,43 +195,7 @@ namespace Stem_Protocol.BootManager
         }
 
         // Metodo per attivare l'evento SendCanCommand
-        public async Task<bool> SendCanCommand(ushort command, byte[] payload, bool waitAnswer)
-        {
-            Answer_Received = false;
-
-
-            if (SendCanCommandRequest?.GetInvocationList().Length == 0)
-            {
-                // Nessun evento iscritto, esegui codice alternativo
-                Answer_Received = true;
-                Answer_Result = true;
-                return Answer_Result;
-            }
-            else
-            {
-                // Invoca l'evento normalmente
-                // Controlla se ci sono iscritti all'evento prima di invocarlo
-                SendCanCommandRequest?.Invoke(this, new SendCanCommandEventArgs(command, payload, waitAnswer));
-
-                if (waitAnswer == false)
-                {
-                    Answer_Received = true;
-                }
-
-                // Attende la risposta
-                while (Answer_Received==false)
-                {
-                    await Task.Delay(10); // Attende 10ms prima di ricontrollare
-                }
-                return Answer_Result;
-            }         
-        }
-
-        public void AnswerReceived(object sender, bool result)
-        {
-            Answer_Received = true;
-            Answer_Result= result;
-        }
+ 
 
         //private void UpdateProgressBar(int currentOffset, int totalLength)
         //{
