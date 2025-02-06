@@ -7,8 +7,8 @@ using System.Threading;
 using System.Collections.Concurrent;
 using System.Windows.Forms;
 using Stem_Protocol;
-using StemPC;
 using DocumentFormat.OpenXml.Drawing;
+using static Stem_Protocol.NetworkLayer;
 
 namespace Stem_Protocol.TelemetryManager
 {
@@ -17,11 +17,72 @@ namespace Stem_Protocol.TelemetryManager
         // Gestore del protocollo
         private ProtocolManager protocolManager;
 
-        public TelemetryManager()
+        //Lista variabili da richiedere
+        private List<ExcelHandler.VariableData> Dizionario;
+
+        //global rx packet manager
+        private PacketManager.PacketManager rXPacketManager;
+
+        //source address to ask variables
+        uint sourceAddress;
+
+        //my own address
+        uint myAddress;
+
+        //Eventi della classe
+        public event EventHandler<uint>? DataReady;
+
+        public TelemetryManager(PacketManager.PacketManager packetManager)
         {
             protocolManager = new ProtocolManager();
             protocolManager.SendCanCommandRequest += protocolManager.OnSendCanCommand; //per il momento forzo il can poi dovrò gestirlo coi canali attivi
+            rXPacketManager = packetManager;
+            rXPacketManager.OnAppLayerPacketReceived += onAppLayerPacketReady;
         }
+
+        public void UpdateDictionary(List<ExcelHandler.VariableData> Dictionary)
+        {
+            Dizionario=Dictionary;
+        }
+
+        public void UpdateMyAddress(uint address)
+        {
+            myAddress = address;
+        }
+
+        public void UpdateSourceAddress(uint address)
+        {
+            sourceAddress = address;
+        }
+
+        public void onAppLayerPacketReady(object sender, PacketReadyEventArgs e)
+        {
+            // Accesso all'array di byte ricevuto
+            byte[] payload = e.Packet;
+            uint sourceAddressPackt = e.SourceAddress;
+            uint destinationAddressPackt = e.DestinationAddress;
+            uint Value = 0;
+
+            //prosegui solo se ricevi una risposta a lettura dalla sorgente per me
+            if ((payload[0] == 0x80) && (payload[1] == 0x01)&&(payload.Length > 4))
+            { 
+                    if (payload.Length == 5)
+                    {
+                        Value = payload[4]; //dato a byte
+                    }
+                    else if (payload.Length == 6)
+                    {
+                        Value = (((uint)payload[4] << 8) | ((uint)payload[5])); //dato a word
+                    }
+                    else if (payload.Length == 8)
+                    {
+                        Value = (((uint)payload[4] << 24) | ((uint)payload[5] << 16) | ((uint)payload[6] << 8) | ((uint)payload[7])); //dato a dword
+                    }
+                    //Aggiorna la label opportuna
+                    DataReady?.Invoke(this, Value);
+            }
+        }
+       
 
         //public async Task StartBoot()
         //{
@@ -47,7 +108,7 @@ namespace Stem_Protocol.TelemetryManager
         //    //    SendCanCommand(CMD_START_PROCEDURE, Array.Empty<byte>(), true);
         //    //    await Task.Delay(100); // attesa
         //    //}
-     
+
         //    // 2. Ciclo di programmazione blocchi
         //    pageNum = 0;
 
@@ -132,7 +193,7 @@ namespace Stem_Protocol.TelemetryManager
         //    return block;
         //}
 
-    
+
         //private async Task SendFirmwareBlock(uint pageNumber, byte[] block, uint pageSize)
         //{
         //    try
