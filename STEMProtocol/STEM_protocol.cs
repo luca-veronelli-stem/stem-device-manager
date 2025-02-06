@@ -444,8 +444,7 @@ namespace Stem_Protocol
     public class ProtocolManager
     {
         public event EventHandler<SendCanCommandEventArgs>? SendCanCommandRequest;
-   //     public event EventHandler<bool>? AnswerReceivedFlag;
-
+ 
         bool Answer_Received;
         bool Answer_Result;
 
@@ -480,12 +479,6 @@ namespace Stem_Protocol
                 return Answer_Result;
             }
         }
-
-        //public void AnswerReceived(object sender, bool result)
-        //{
-        //    Answer_Received = true;
-        //    Answer_Result = result;
-        //}
 
         // Gestore dell'evento send command da instradare tramite can
         public async void OnSendCanCommand(object sender, SendCanCommandEventArgs e)
@@ -568,17 +561,9 @@ namespace Stem_Protocol
                     result = await packetManager.SendThroughCANAsync(networkPackets);
                 }
 
-                // Usa il risultato
-
-                //// Invoca l'evento sul thread della UI
-                //AnswerReceivedFlag?.Invoke(this, result);
-
+                // Usa il risultato aggiornando il semaforo
                 Answer_Received = true;
                 Answer_Result = result;
-
-                //BootHndlr.AnswerReceived(result);
-
-                //Form1.FormRef.UpdateTerminal(result ? "Pacchetto inviato con successo!" : "Errore durante l'invio del pacchetto.");
             }
             catch (Exception ex)
             {

@@ -1,9 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using Stem_Protocol.PacketManager;
+using Stem_Protocol.TelemetryManager;
 
 public class Telemetry_Tab : TabPage
 {
+    // Classe per il backend
+    public TelemetryManager telemetryManager;
+
     // Campi per accedere dal gestore degli eventi
     private TableLayoutPanel tableLayout;
     private ComboBox comboBox;
@@ -16,7 +21,7 @@ public class Telemetry_Tab : TabPage
     private int currentColumn = 0;
     private int currentRow = 2;
 
-    public Telemetry_Tab()
+    public Telemetry_Tab(PacketManager packetManagerRX)
     {
         Name = "tabPageTelemetry";
         Text = "Telemetry";
@@ -99,7 +104,19 @@ public class Telemetry_Tab : TabPage
         tableLayout.Controls.Add(buttonStop, 3, 1);
 
         // 7. Aggiunta del TableLayoutPanel alla TabPage
-        this.Controls.Add(tableLayout);
+        Controls.Add(tableLayout);
+
+        // 8. Creazione del gestore per la telemetria
+        telemetryManager = new TelemetryManager(packetManagerRX);
+
+        // Aggiunta del gestore per l'evento DataReady
+        telemetryManager.DataReady += onDataReady;
+    }
+
+    private void onDataReady(object sender, DataReadyEventArgs e)
+    {
+
+
     }
 
     private void Button_Click(object sender, EventArgs e)
@@ -173,12 +190,12 @@ public class Telemetry_Tab : TabPage
 
     private void ButtonStart_Click(object sender, EventArgs e)
     {
-
+        telemetryManager.TelemetryStart();
     }
 
     private void ButtonStop_Click(object sender, EventArgs e)
     {
-
+        telemetryManager.TelemetryStop();
     }
 
     /// <summary>
