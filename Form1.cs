@@ -90,6 +90,7 @@ namespace StemPC
         public CANInterfaceTab CanTabPageRef { get; private set; }
         public Boot_Interface_Tab BootTabRef { get; private set; }
         public static Form1 FormRef { get; private set; }
+        public Telemetry_Tab TelemetryTabRef { get; private set; }
 
         //**************************
         //  Events
@@ -185,6 +186,11 @@ namespace StemPC
 
             //primo giro di update connessione can
             OnPCANConnectionStatusChanged(this, _CDL.IsConnected);
+
+
+            //crea e aggiungi il telemetry manager
+            TelemetryTabRef = new Telemetry_Tab();
+            tabControl.TabPages.Add(TelemetryTabRef);
 
             //Seleziona il tab iniziale
 

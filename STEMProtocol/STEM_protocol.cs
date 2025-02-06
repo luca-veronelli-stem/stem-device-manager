@@ -587,5 +587,20 @@ namespace Stem_Protocol
             }
         }
     }
+
+    // Classe per incapsulare i parametri dell'evento sendcommand del protocollo stem
+    public class SendCanCommandEventArgs : EventArgs
+    {
+        public ushort Command { get; }
+        public byte[] Payload { get; }
+        public bool WaitAnswer { get; }
+
+        public SendCanCommandEventArgs(ushort command, byte[] payload, bool waitAnswer)
+        {
+            Command = command;
+            WaitAnswer = waitAnswer;
+            Payload = payload;
+        }
+    }
 }
 
