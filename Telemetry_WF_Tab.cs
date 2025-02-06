@@ -61,7 +61,7 @@ public class Telemetry_Tab : TabPage
         };
 
         // Lista di stringhe da inserire nella ComboBox
-        List<string> items = new List<string> { "Elemento 1", "Elemento 2", "Elemento 3" };
+        List<string> items = new List<string> { "Variabile 1", "Variabile 2", "Variabile 3" };
         comboBox.Items.AddRange(items.ToArray());
         if (comboBox.Items.Count > 0)
         {
@@ -78,7 +78,27 @@ public class Telemetry_Tab : TabPage
         button.Click += Button_Click;
         tableLayout.Controls.Add(button, 1, 1);
 
-        // 5. Aggiunta del TableLayoutPanel alla TabPage
+        // 5. Aggiunta del Button in cella (2,1)
+        Button buttonStart = new Button
+        {
+            Text = "Start",
+            Anchor = AnchorStyles.Left
+        };
+        buttonStart.Font = new Font(buttonStart.Font, FontStyle.Bold);
+        buttonStart.Click += ButtonStart_Click;
+        tableLayout.Controls.Add(buttonStart, 2, 1);
+
+        // 6. Aggiunta del Button in cella (3,1)
+        Button buttonStop = new Button
+        {
+            Text = "Stop",
+            Anchor = AnchorStyles.Left
+        };
+        buttonStop.Font = new Font(buttonStop.Font, FontStyle.Bold);
+        buttonStop.Click += ButtonStop_Click;
+        tableLayout.Controls.Add(buttonStop, 3, 1);
+
+        // 7. Aggiunta del TableLayoutPanel alla TabPage
         this.Controls.Add(tableLayout);
     }
 
@@ -106,7 +126,7 @@ public class Telemetry_Tab : TabPage
             // Creazione del pulsante "rimuovi"
             Button removeButton = new Button
             {
-                Text = "remove",
+                Text = "Remove",
                 AutoSize = true
             };
 
@@ -149,6 +169,16 @@ public class Telemetry_Tab : TabPage
             MessageBox.Show("Seleziona un elemento dal ComboBox prima di aggiungere.",
                             "Informazione", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
+    }
+
+    private void ButtonStart_Click(object sender, EventArgs e)
+    {
+
+    }
+
+    private void ButtonStop_Click(object sender, EventArgs e)
+    {
+
     }
 
     /// <summary>
