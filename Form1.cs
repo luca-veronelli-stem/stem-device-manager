@@ -157,7 +157,7 @@ namespace StemPC
 
             //crea e aggiungi tabcan
             CanTabPageRef = new CANInterfaceTab(_CDL);
-            tabControl.TabPages.Add(CanTabPageRef);
+          //  tabControl.TabPages.Add(CanTabPageRef);
 
             //attiva il terminale
             _terminal = new Terminal(); // Inizializza l'istanza di Terminal

@@ -444,7 +444,7 @@ namespace Stem_Protocol
     public class ProtocolManager
     {
         public event EventHandler<SendCanCommandEventArgs>? SendCanCommandRequest;
-        public event EventHandler<bool>? AnswerReceivedFlag;
+   //     public event EventHandler<bool>? AnswerReceivedFlag;
 
         bool Answer_Received;
         bool Answer_Result;
@@ -481,15 +481,14 @@ namespace Stem_Protocol
             }
         }
 
-        public void AnswerReceived(object sender, bool result)
-        {
-            Answer_Received = true;
-            Answer_Result = result;
-        }
-    }
+        //public void AnswerReceived(object sender, bool result)
+        //{
+        //    Answer_Received = true;
+        //    Answer_Result = result;
+        //}
 
-    // Gestore dell'evento send can command
-    private async void OnSendCanCommand(object sender, SendCanCommandEventArgs e)
+        // Gestore dell'evento send command da instradare tramite can
+        public async void OnSendCanCommand(object sender, SendCanCommandEventArgs e)
         {
             await HandleSendCanCommandAsync(sender, e);
         }
@@ -530,7 +529,7 @@ namespace Stem_Protocol
 
                 // Ottieni i chunk da spedire
                 var networkPackets = networkLayer.NetworkPackets;
-                var packetManager = new PacketManager(Form1.FormRef.senderId);
+                var packetManager = new PacketManager.PacketManager(Form1.FormRef.senderId);
                 packetManager.Add_CAN_Channel(Form1.FormRef._CDL);
 
                 // Invia i pacchetti tramite CAN in modo asincrono
@@ -571,8 +570,11 @@ namespace Stem_Protocol
 
                 // Usa il risultato
 
-                // Invoca l'evento sul thread della UI
-                AnswerReceivedFlag?.Invoke(this, result);
+                //// Invoca l'evento sul thread della UI
+                //AnswerReceivedFlag?.Invoke(this, result);
+
+                Answer_Received = true;
+                Answer_Result = result;
 
                 //BootHndlr.AnswerReceived(result);
 
@@ -585,4 +587,5 @@ namespace Stem_Protocol
             }
         }
     }
+}
 

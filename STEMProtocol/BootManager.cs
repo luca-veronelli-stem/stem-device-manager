@@ -41,8 +41,7 @@ namespace Stem_Protocol.BootManager
         public BootManager()
         {
             protocolManager = new ProtocolManager();
-            BootHndlr.SendCanCommandRequest += OnSendCanCommand;
-            AnswerReceivedFlag += BootHndlr.AnswerReceived;
+            protocolManager.SendCanCommandRequest += protocolManager.OnSendCanCommand; //per il momento forzo il can poi dovrò gestirlo coi canali attivi
         }
 
         public void SetFirmwarePath(string FirmwareName)
@@ -63,7 +62,7 @@ namespace Stem_Protocol.BootManager
             for (int i = 0; i < 10; i++)
             {
                 Answer = false;
-                Answer = await SendCanCommand(CMD_START_PROCEDURE, Array.Empty<byte>(), true);
+                Answer = await protocolManager.SendCanCommand(CMD_START_PROCEDURE, Array.Empty<byte>(), true);
                 if (Answer == true) break;
                 await Task.Delay(100); // attesa
             }
@@ -140,7 +139,7 @@ namespace Stem_Protocol.BootManager
             for (int i = 0; i < 5; i++)
             {
                 Answer = false;
-                Answer = await SendCanCommand(CMD_END_PROCEDURE, Array.Empty<byte>(), true);
+                Answer = await protocolManager.SendCanCommand(CMD_END_PROCEDURE, Array.Empty<byte>(), true);
                 if (Answer == true) break;
                 await Task.Delay(100); // attesa
             }
@@ -148,7 +147,7 @@ namespace Stem_Protocol.BootManager
             // 4. Comando di reset
             for (int i = 0; i < 2; i++)
             {
-                SendCanCommand(CMD_RESTART_MACHINE, Array.Empty<byte>(), false);
+                await protocolManager.SendCanCommand(CMD_RESTART_MACHINE, Array.Empty<byte>(), false);
                 await Task.Delay(1000); // attesa tra un comando e il successivo
             }
 
@@ -183,7 +182,7 @@ namespace Stem_Protocol.BootManager
                 for (int i = 0; i < 10; i++)
                 {
                     Answer = false;
-                    Answer = await SendCanCommand(CMD_PROGRAM_BLOCK, Data, true);
+                    Answer = await protocolManager.SendCanCommand(CMD_PROGRAM_BLOCK, Data, true);
                     if (Answer == true) break;
                 }         
             }
@@ -199,7 +198,6 @@ namespace Stem_Protocol.BootManager
         }
 
         // Metodo per attivare l'evento SendCanCommand
- 
 
         //private void UpdateProgressBar(int currentOffset, int totalLength)
         //{
