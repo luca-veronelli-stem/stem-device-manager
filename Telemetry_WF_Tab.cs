@@ -118,11 +118,13 @@ public class Telemetry_Tab : TabPage
         
         if (MachineDictionary == null) return;
 
+        comboBox.SelectedIndex = -1;
+
         foreach (var variable in MachineDictionary)
         {
             comboBox.Items.Add(variable.Name);
-        }
-        comboBox.SelectedIndex = 0;
+            comboBox.SelectedIndex = 0;
+        }     
     }
 
     private void onDataReady(object sender, DataReadyEventArgs e)
@@ -173,8 +175,16 @@ public class Telemetry_Tab : TabPage
                 {
                     tableLayout.Controls.Remove(container);
                 }
+
+                // Recupera l'indice del container nella lista activeElements
+                int index = activeElements.IndexOf(container);
+
                 // Rimuovo il contenitore dalla lista degli elementi attivi
                 activeElements.Remove(container);
+
+                // Rimuovo l'elemento dalla lista dei dispositivi da interrogare
+                telemetryManager.RemoveFromDictionary(index);
+
                 // Ricompongo gli elementi rimasti
                 ReLayoutElements();
             };
@@ -197,7 +207,6 @@ public class Telemetry_Tab : TabPage
             // Registro il contenitore nella lista degli elementi attivi
             activeElements.Add(container);
 
- 
             // Aggiorno la lista dei dispositivi da interrogare
             telemetryManager.AddToDictionary(MachineDictionary[comboBox.SelectedIndex]);
 
@@ -206,7 +215,7 @@ public class Telemetry_Tab : TabPage
         }
         else
         {
-            MessageBox.Show("Seleziona un elemento dal ComboBox prima di aggiungere.",
+            MessageBox.Show("Seleziona una macchina prima di procedere.",
                             "Informazione", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }

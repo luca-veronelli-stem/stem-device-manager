@@ -49,6 +49,11 @@ public class TelemetryManager
         TelemetryDictionary.Add(data);
     }
 
+    public void RemoveFromDictionary(int index)
+    {
+        TelemetryDictionary.RemoveAt(index);
+    }
+
     public void UpdateMyAddress(uint address)
     {
         myAddress = address;
