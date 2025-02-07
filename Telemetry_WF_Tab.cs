@@ -154,6 +154,17 @@ public class Telemetry_Tab : TabPage
         {
             string selectedText = comboBox.SelectedItem.ToString();
 
+            // Controlla se esiste già un elemento con la stessa label
+            foreach (var element in activeElements)
+            {
+                if (element.Controls[1] is Label label && label.Text == selectedText)
+                {
+                    MessageBox.Show("L'elemento esiste già nella lista.",
+                                    "Attenzione", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+            }
+
             if (!HasAvailableSpace())
             {
                 MessageBox.Show("Non ci sono più celle libere per aggiungere nuovi elementi.",
