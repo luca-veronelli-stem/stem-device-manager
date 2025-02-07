@@ -63,6 +63,16 @@ namespace STEMPM.Properties {
         /// <summary>
         ///   Cerca una risorsa localizzata di tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap delete_24x24 {
+            get {
+                object obj = ResourceManager.GetObject("delete_24x24", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una risorsa localizzata di tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap ic_fluent_document_bullet_list_24_filled {
             get {
                 object obj = ResourceManager.GetObject("ic_fluent_document_bullet_list_24_filled", resourceCulture);

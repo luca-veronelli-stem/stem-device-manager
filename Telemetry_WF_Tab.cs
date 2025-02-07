@@ -174,7 +174,7 @@ public class Telemetry_Tab : TabPage
             {
                 AutoSize = true
             };
-            //removeButton.Image = Resources.delete_24x24;
+            removeButton.Image = Resources.delete_24x24;
             removeButton.ImageAlign = ContentAlignment.MiddleCenter;
             removeButton.Size = new Size(24, 24);
 
