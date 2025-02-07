@@ -122,6 +122,7 @@ public class Telemetry_Tab : TabPage
         {
             comboBox.Items.Add(variable.Name);
         }
+        comboBox.SelectedIndex = 0;
     }
 
     private void onDataReady(object sender, DataReadyEventArgs e)
@@ -192,8 +193,13 @@ public class Telemetry_Tab : TabPage
 
             // Aggiungo il contenitore al TableLayoutPanel nella cella corrente
             tableLayout.Controls.Add(container, currentColumn, currentRow);
+
             // Registro il contenitore nella lista degli elementi attivi
             activeElements.Add(container);
+
+ 
+            // Aggiorno la lista dei dispositivi da interrogare
+            telemetryManager.AddToDictionary(MachineDictionary[comboBox.SelectedIndex]);
 
             // Aggiorno la posizione per il prossimo inserimento
             UpdateInsertionPosition();

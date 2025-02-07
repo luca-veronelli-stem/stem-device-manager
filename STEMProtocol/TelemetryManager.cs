@@ -41,11 +41,12 @@ public class TelemetryManager
         rXPacketManager = packetManager;
         rXPacketManager.OnAppLayerPacketReceived += onAppLayerPacketReady;
         TelemetryOn = false;
+        TelemetryDictionary = new List<ExcelHandler.VariableData>();
     }
 
-    public void UpdateDictionary(List<ExcelHandler.VariableData> Dictionary)
+    public void AddToDictionary(ExcelHandler.VariableData data)
     {
-        TelemetryDictionary = Dictionary;
+        TelemetryDictionary.Add(data);
     }
 
     public void UpdateMyAddress(uint address)
