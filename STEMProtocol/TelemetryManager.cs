@@ -14,6 +14,9 @@ namespace Stem_Protocol.TelemetryManager;
 
 public class TelemetryManager
 {
+    // Comando per la lettura della variabile
+    private const ushort CMD_READ_VARIABLE = 0x0001;
+
     // Gestore del protocollo
     private ProtocolManager protocolManager;
 
@@ -64,6 +67,14 @@ public class TelemetryManager
         sourceAddress = address;
     }
 
+    public string GetVariableName(int index)
+    {
+        if (index < 0 || index >= TelemetryDictionary.Count)
+            return "Index out of range";
+        else 
+            return TelemetryDictionary[index].Name;
+    }
+
     public void onAppLayerPacketReady(object sender, PacketReadyEventArgs e)
     {
         // Accesso all'array di byte ricevuto
@@ -74,22 +85,29 @@ public class TelemetryManager
 
         //prosegui solo se ricevi una risposta a lettura dalla sorgente per me
         if ((payload[0] == 0x80) && (payload[1] == 0x01)&&(payload.Length > 4))
-        { 
-                if (payload.Length == 5)
+        {
+            //Cerca nella lista TelemetryDictionary se esiste un elemento il cui corridpondente numerico della stringa addrH e addrL è uguale al payload[2] e payload[3]
+            foreach (ExcelHandler.VariableData data in TelemetryDictionary)
+            {
+                if ((data.AddrH == payload[2].ToString("X2")) && (data.AddrL == payload[3].ToString("X2")))
                 {
-                    Value = payload[4]; //dato a byte
+                    if (payload.Length == 5)
+                    {
+                        Value = payload[4]; //dato a byte
+                    }
+                    else if (payload.Length == 6)
+                    {
+                        Value = (((uint)payload[4] << 8) | ((uint)payload[5])); //dato a word
+                    }
+                    else if (payload.Length == 8)
+                    {
+                        Value = (((uint)payload[4] << 24) | ((uint)payload[5] << 16) | ((uint)payload[6] << 8) | ((uint)payload[7])); //dato a dword
+                    }
+                    //Aggiorna la label opportuna
+                    DataReadyEventArgs dataReadyEventArgs = new DataReadyEventArgs(TelemetryDictionary.IndexOf(data), Value);
+                    DataReady?.Invoke(this, dataReadyEventArgs);
                 }
-                else if (payload.Length == 6)
-                {
-                    Value = (((uint)payload[4] << 8) | ((uint)payload[5])); //dato a word
-                }
-                else if (payload.Length == 8)
-                {
-                    Value = (((uint)payload[4] << 24) | ((uint)payload[5] << 16) | ((uint)payload[6] << 8) | ((uint)payload[7])); //dato a dword
-                }
-            //Aggiorna la label opportuna
-            DataReadyEventArgs dataReadyEventArgs = new DataReadyEventArgs(0, Value);
-            DataReady?.Invoke(this, dataReadyEventArgs);
+            }
         }
     }
 
@@ -99,10 +117,26 @@ public class TelemetryManager
         await TelemetryRequestTask();
     }
 
+    private int CurrentIndex = 0;
+
     public async Task TelemetryRequestTask()
     {
         while (TelemetryOn == true)
         {
+            //richiedi una variabile alla volta in modo sequenziale del dizionario TelemetryDictionary
+            if (CurrentIndex < TelemetryDictionary.Count - 1)
+            {
+                CurrentIndex++;
+            }
+            else
+            {
+                CurrentIndex = 0;
+            }
+
+            //crea un array di byte dove nei primi 2 bytes ci sono i valori Addrh e AddrL della variabile da richiedere dal TelemetryDictionary di indice CurrentIndex
+            byte[] Data = new byte[] { Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrH, 16), Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrL, 16) };
+
+            protocolManager.SendCanCommand(CMD_READ_VARIABLE, Data, false);
             await Task.Delay(1000);
         }
     }
@@ -111,6 +145,8 @@ public class TelemetryManager
     {
         TelemetryOn = false;
     }
+
+
     //public async Task StartBoot()
     //{
     //    bool Answer=false;
@@ -258,10 +294,10 @@ public class TelemetryManager
 // Classe per incapsulare i parametri dell'evento dataready del pacchetto di lettura variabile
 public class DataReadyEventArgs : EventArgs
 {
-    public ushort ListIndex { get; }
+    public int ListIndex { get; }
     public uint Value { get; }
 
-    public DataReadyEventArgs(ushort listIndex, uint value)
+    public DataReadyEventArgs(int listIndex, uint value)
     {
         ListIndex = listIndex;
         Value = value;

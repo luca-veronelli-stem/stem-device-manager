@@ -127,10 +127,18 @@ public class Telemetry_Tab : TabPage
         }     
     }
 
-    private void onDataReady(object sender, DataReadyEventArgs e)
+    private async void onDataReady(object sender, DataReadyEventArgs e)
     {
-
-
+        var container = activeElements[e.ListIndex];
+        var control = container.Controls[1];
+        if (control is Label label)
+        {
+            await Task.Run(() => label.Invoke((MethodInvoker)(() => label.Text = telemetryManager.GetVariableName(e.ListIndex) + " " + e.Value.ToString())));
+        }
+        else
+        {
+            MessageBox.Show("Il controllo non è una Label.", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 
     public void UpdateDictionary(List<ExcelHandler.VariableData> Dictionary)

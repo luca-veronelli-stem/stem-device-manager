@@ -516,7 +516,7 @@ namespace Stem_Protocol
                 );
 
                 // Stampa i dettagli           
-                Form1.FormRef.UpdateTerminal("Invio Comando Boot Manager");
+                Form1.FormRef.UpdateTerminal("Invio Comando");
                 //Form1.FormRef.UpdateTerminal("Comando Boot manager:");
                 //Form1.FormRef.UpdateTerminal($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}");
 
