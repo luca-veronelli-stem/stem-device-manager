@@ -84,12 +84,13 @@ public class TelemetryManager
         uint Value = 0;
 
         //prosegui solo se ricevi una risposta a lettura dalla sorgente per me
-        if ((payload[0] == 0x80) && (payload[1] == 0x01)&&(payload.Length > 4))
+        if ((payload[0] == 0x80) && (payload[1] == 0x01) && (payload.Length > 4))
         {
             //Cerca nella lista TelemetryDictionary se esiste un elemento il cui corridpondente numerico della stringa addrH e addrL è uguale al payload[2] e payload[3]
             foreach (ExcelHandler.VariableData data in TelemetryDictionary)
             {
-                if ((data.AddrH == payload[2].ToString("X2")) && (data.AddrL == payload[3].ToString("X2")))
+                if ((int.Parse(data.AddrH, System.Globalization.NumberStyles.HexNumber) == payload[2]) &&
+                    (int.Parse(data.AddrL, System.Globalization.NumberStyles.HexNumber) == payload[3]))
                 {
                     if (payload.Length == 5)
                     {
