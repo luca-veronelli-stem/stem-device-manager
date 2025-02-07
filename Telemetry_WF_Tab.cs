@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using Stem_Protocol.PacketManager;
 using Stem_Protocol.TelemetryManager;
+using STEMPM.Properties;
 
 public class Telemetry_Tab : TabPage
 {
@@ -29,18 +30,18 @@ public class Telemetry_Tab : TabPage
         Name = "tabPageTelemetry";
         Text = "Telemetry";
 
-        // 1. Creazione del TableLayoutPanel con 5 colonne e 10 righe.
+        // 1. Creazione del TableLayoutPanel con 4 colonne e 10 righe.
         tableLayout = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 5,
+            ColumnCount = 4,
             RowCount = 10
         };
 
-        // Impostiamo larghezze uguali per le colonne (20% ciascuna)
-        for (int i = 0; i < 5; i++)
+        // Impostiamo larghezze uguali per le colonne (25% ciascuna)
+        for (int i = 0; i < 4; i++)
         {
-            tableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
+            tableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
         }
         // Impostiamo altezze uguali per le righe (10% ciascuna)
         for (int i = 0; i < 10; i++)
@@ -168,12 +169,14 @@ public class Telemetry_Tab : TabPage
                 WrapContents = false
             };
 
-            // Creazione del pulsante "rimuovi"
+            // Creazione del pulsante "rimuovi" con icona
             Button removeButton = new Button
             {
-                Text = "Remove",
                 AutoSize = true
             };
+            //removeButton.Image = Resources.delete_24x24;
+            removeButton.ImageAlign = ContentAlignment.MiddleCenter;
+            removeButton.Size = new Size(24, 24);
 
             // Gestore per la rimozione: rimuove il contenitore dal TableLayoutPanel e dalla lista
             removeButton.Click += (s, args) =>

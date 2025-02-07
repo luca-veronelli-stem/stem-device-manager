@@ -121,6 +121,9 @@
   <data name="ic_fluent_document_bullet_list_24_filled" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\images\ic_fluent_document_bullet_list_24_filled.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="ic_fluent_document_bullet_list_24_filled_32x32" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>images\ic_fluent_document_bullet_list_24_filled_32x32.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="logo-stem-2022-300x81" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\logo-stem-2022-300x81.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>

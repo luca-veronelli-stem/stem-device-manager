@@ -137,7 +137,7 @@ public class TelemetryManager
             byte[] Data = new byte[] { Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrH, 16), Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrL, 16) };
 
             protocolManager.SendCanCommand(CMD_READ_VARIABLE, Data, false);
-            await Task.Delay(1000);
+            await Task.Delay(210);
         }
     }
 
