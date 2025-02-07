@@ -18,7 +18,7 @@ namespace StemPC
 {
     public partial class Form1 : Form
     {
-        public const string Software_Version = "2.0";
+        public const string Software_Version = "2.1";
 
         private UInt16 Prescaler1s = 0;
 
@@ -335,6 +335,7 @@ namespace StemPC
                             label12.Text = ($"Indirizzo\n {item.Indirizzo.ToString()}");
                             RecipientId = Convert.ToUInt32(item.Indirizzo.Substring(2), 16);
                             hExcel.EstraiDizionario(RecipientId, Dizionario, ExcelfilePath);
+                            TelemetryTabRef.UpdateDictionary(Dizionario);
                         }
                     }
                     comboBoxCommand.SelectedIndex = 0;

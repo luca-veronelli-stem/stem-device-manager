@@ -6,6 +6,9 @@ using Stem_Protocol.TelemetryManager;
 
 public class Telemetry_Tab : TabPage
 {
+    //Lista variabili della macchina
+    private List<ExcelHandler.VariableData> MachineDictionary;
+
     // Classe per il backend
     public TelemetryManager telemetryManager;
 
@@ -66,12 +69,7 @@ public class Telemetry_Tab : TabPage
         };
 
         // Lista di stringhe da inserire nella ComboBox
-        List<string> items = new List<string> { "Variabile 1", "Variabile 2", "Variabile 3" };
-        comboBox.Items.AddRange(items.ToArray());
-        if (comboBox.Items.Count > 0)
-        {
-            comboBox.SelectedIndex = 0;
-        }
+        UpdateComboBox();
         tableLayout.Controls.Add(comboBox, 0, 1);
 
         // 4. Aggiunta del Button in cella (1,1)
@@ -113,10 +111,29 @@ public class Telemetry_Tab : TabPage
         telemetryManager.DataReady += onDataReady;
     }
 
+    private void UpdateComboBox()
+    {
+        // Aggiorna la ComboBox con i nomi delle variabili
+        comboBox.Items.Clear();
+        
+        if (MachineDictionary == null) return;
+
+        foreach (var variable in MachineDictionary)
+        {
+            comboBox.Items.Add(variable.Name);
+        }
+    }
+
     private void onDataReady(object sender, DataReadyEventArgs e)
     {
 
 
+    }
+
+    public void UpdateDictionary(List<ExcelHandler.VariableData> Dictionary)
+    {
+        MachineDictionary = Dictionary;
+        UpdateComboBox();
     }
 
     private void Button_Click(object sender, EventArgs e)
