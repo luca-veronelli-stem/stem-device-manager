@@ -415,6 +415,10 @@ namespace Stem_Protocol
             // Logica per verificare che il transport layer sia a posto
             uint Source_Address = (((uint)TransportPacket[4]) << 24) | (((uint)TransportPacket[3]) << 16) | (((uint)TransportPacket[2]) << 8) | (((uint)TransportPacket[1]));
 
+            //(da sistemare TOPX)
+            //togli il crc all'application layer eliminando gli ultimi 2 byte del buffer
+            ApplicationPacket = ApplicationPacket.Take(ApplicationPacket.Length - 2).ToArray();
+
             // Emettere l'evento con il pacchetto ricevuto
             OnSP_PacketReady(ApplicationPacket, Source_Address, _recipientId);
         }

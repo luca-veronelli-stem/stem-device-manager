@@ -18,7 +18,7 @@ namespace StemPC
 {
     public partial class Form1 : Form
     {
-        public const string Software_Version = "2.1";
+        public const string Software_Version = "2.2";
 
         private UInt16 Prescaler1s = 0;
 
@@ -157,8 +157,9 @@ namespace StemPC
             tabControl.TabPages.Add(BootTabRef);
 
             //crea e aggiungi tabcan
-            CanTabPageRef = new CANInterfaceTab(_CDL);
-          //  tabControl.TabPages.Add(CanTabPageRef);
+            //CanTabPageRef = new CANInterfaceTab(_CDL);
+            //CanTabPageRef.ActivateEvents();
+            //tabControl.TabPages.Add(CanTabPageRef);
 
             //attiva il terminale
             _terminal = new Terminal(); // Inizializza l'istanza di Terminal
@@ -177,16 +178,11 @@ namespace StemPC
             configGenerator = new SP_Code_Generator();
             codeFilePath = "SP_Config.h";
 
-            //installa l'evento di aggiornamento textbox applayer
-            AppLayerCommandDecoded += onAppLayerDecoded;
-            AppLayerCommandSended += onAppLayerSended;
-
             tabControl.TabPages.Remove(tabPageCodeGen);
             tabControl.TabPages.Remove(tabPageUART);
 
             //primo giro di update connessione can
             OnPCANConnectionStatusChanged(this, _CDL.IsConnected);
-
 
             //crea e aggiungi il telemetry manager
             TelemetryTabRef = new Telemetry_Tab(RXpacketManager);
@@ -232,6 +228,10 @@ namespace StemPC
                 //popola il combo macchine
                 if ((!comboBoxCommand.Items.Contains(item.Name)) && (!item.Name.Contains("risposta")) && (!item.Name.Contains("Risposta"))) comboBoxCommand.Items.Add(item.Name);
             }
+
+            //installa l'evento di aggiornamento textbox applayer
+            AppLayerCommandDecoded += onAppLayerDecoded;
+            AppLayerCommandSended += onAppLayerSended;
         }
 
         public void UpdateTerminal(string message)
@@ -508,6 +508,8 @@ namespace StemPC
 
         public void onAppLayerPacketReady(object sender, PacketReadyEventArgs e)
         {
+            if ((IndirizziProtocollo == null) || (Comandi == null)) return;
+
             // Accesso all'array di byte ricevuto
             byte[] payload = e.Packet;
             uint sourceAddress = e.SourceAddress;
@@ -587,7 +589,7 @@ namespace StemPC
 
             //RAW application layer data
             richTextBoxTx.AppendText("( ");
-            for (int i = 0; i < e.Payload.Count() - 2; i++)
+            for (int i = 0; i < e.Payload.Count(); i++)
             {
                 richTextBoxTx.AppendText(e.Payload[i].ToString("X2") + " ");
             }

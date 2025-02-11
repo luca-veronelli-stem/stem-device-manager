@@ -10,6 +10,7 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
 
 using CanDataLayer;
 using Peak.Can.Basic.BackwardCompatibility;
+using System.Runtime.CompilerServices;
 
 // Classe per l'interfaccia grafica
 public partial class CANInterfaceTab : TabPage
@@ -41,14 +42,18 @@ public partial class CANInterfaceTab : TabPage
 
         InitializeComponents();
 
-        // Sottoscrizione agli eventi
-        _canHandler.PacketReceived += OnPacketReceived;
-        _canHandler.ConnectionStatusChanged += OnConnectionStatusChanged;
-        _canHandler.PacketSended += OnPacketSended;
         //_pcanManager.ErrorOccurred += OnErrorOccurred;
 
         //primo update asincrono della label...
         UpdateConnectionStatus(_canHandler.IsConnected);
+    }
+
+    public void ActivateEvents()
+    {
+        // Sottoscrizione agli eventi
+        _canHandler.PacketReceived += OnPacketReceived;
+        _canHandler.ConnectionStatusChanged += OnConnectionStatusChanged;
+        _canHandler.PacketSended += OnPacketSended;
     }
 
     private void UpdateConnectionStatus(bool isConnected)
@@ -269,6 +274,7 @@ public partial class CANInterfaceTab : TabPage
 
     private void OnPacketSended(object sender, TX_CAN_Data TX_Can_Data)
     {
+    
         TPCANStatus res = (TPCANStatus)TX_Can_Data.Result;
         if (res == TPCANStatus.PCAN_ERROR_OK)
         {
