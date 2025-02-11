@@ -4,6 +4,9 @@
     <_LastSelectedProfileId>C:\Users\Michele\OneDrive\Dati\Lavoro\VSProjects\StemProtocolCompanion\Properties\PublishProfiles\FolderProfile.pubxml</_LastSelectedProfileId>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Update="BLE_WF_Tab.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Update="Boot_WF_Tab.cs">
       <SubType>Component</SubType>
     </Compile>

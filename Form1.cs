@@ -12,13 +12,11 @@ using System.Collections.Generic;
 using DocumentFormat.OpenXml.Drawing.Diagrams;
 using System.Globalization;
 
-//using static NetworkLayer;
-
 namespace StemPC
 {
     public partial class Form1 : Form
     {
-        public const string Software_Version = "2.2";
+        public const string Software_Version = "2.3";
 
         private UInt16 Prescaler1s = 0;
 
@@ -91,6 +89,7 @@ namespace StemPC
         public Boot_Interface_Tab BootTabRef { get; private set; }
         public static Form1 FormRef { get; private set; }
         public Telemetry_Tab TelemetryTabRef { get; private set; }
+        public BLEInterfaceTab BLETabRef { get; private set; }
 
         //**************************
         //  Events
@@ -188,10 +187,15 @@ namespace StemPC
             TelemetryTabRef = new Telemetry_Tab(RXpacketManager);
             tabControl.TabPages.Add(TelemetryTabRef);
 
+            //crea e aggiungi il ble manager
+            BLETabRef = new BLEInterfaceTab();
+            tabControl.TabPages.Add(BLETabRef);
+
             //Seleziona il tab iniziale
 
             //tabControl.SelectedTab = BootTabRef;
             //tabControl.SelectedTab = CanTabPageRef;
+            tabControl.SelectedTab = BLETabRef;
 
             // Nascondi la colonna delle variabili
             tableLayoutPanelProtocol.ColumnStyles[3].SizeType = SizeType.Absolute;
