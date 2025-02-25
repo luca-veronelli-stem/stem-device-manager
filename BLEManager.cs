@@ -5,15 +5,16 @@ using Windows.Devices.Bluetooth.Advertisement;
 
 namespace BLE_Handler;
 
-    public class BLEManager
+public class BLEManager
     {
         /// <summary>
         /// Evento che viene sollevato quando viene scoperto un nuovo dispositivo BLE.
         /// Il parametro è il nome del dispositivo.
         /// </summary>
-        public event Action<string> OnDeviceDiscovered;
+    public event Action<string> OnDeviceDiscovered;
+    public event Action OnScanCompleted;
 
-        private BluetoothLEAdvertisementWatcher watcher;
+    private BluetoothLEAdvertisementWatcher watcher;
         // Utilizzato per evitare duplicati nella lista dei dispositivi scoperti
        // private HashSet<string> discoveredDevices;
         private Dictionary<ulong, string> discoveredDevices = new Dictionary<ulong, string>();
@@ -32,7 +33,10 @@ namespace BLE_Handler;
             };
 
             watcher.Received += Watcher_Received;
-        }
+
+            watcher.Stopped += Watcher_Stopped; // Evento per il termine della scansione
+
+    }
 
 
 //    // Usa l'indirizzo Bluetooth per identificare univocamente il dispositivo
@@ -138,5 +142,10 @@ namespace BLE_Handler;
         {
             watcher.Stop();
         }
-    }
+
+        private void Watcher_Stopped(BluetoothLEAdvertisementWatcher sender, BluetoothLEAdvertisementWatcherStoppedEventArgs args)
+        {
+            OnScanCompleted?.Invoke(); // Notifica la fine della scansione
+        }
+}
 
