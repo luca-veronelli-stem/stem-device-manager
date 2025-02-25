@@ -36,12 +36,26 @@ namespace BLE_Handler;
         /// </summary>
         private void Watcher_Received(BluetoothLEAdvertisementWatcher sender, BluetoothLEAdvertisementReceivedEventArgs args)
         {
+        if (args.IsScanResponse==false)
+        {
+            // Definisci l'UUID del Nordic UART Service
+            Guid nordicUARTUuid = new Guid("6E400001-B5A3-F393-E0A9-E50E24DCCA9E");
+            // Filtra: esci se il dispositivo non pubblicizza l'UUID specificato
+            if (!args.Advertisement.ServiceUuids.Contains(nordicUARTUuid))
+            {
+                return;
+            }
+        }
+        else
+        {
             // Recupera il nome dal pacchetto pubblicitario
             var deviceName = args.Advertisement.LocalName;
 
             // Considera solo i dispositivi che hanno un nome non vuoto
             if (!string.IsNullOrEmpty(deviceName))
             {
+
+
                 // Se il nome non è già presente, lo aggiunge all'insieme e solleva l'evento
                 if (discoveredDevices.Add(deviceName))
                 {
@@ -49,6 +63,8 @@ namespace BLE_Handler;
                 }
             }
         }
+    }
+      
 
         /// <summary>
         /// Avvia la scansione dei dispositivi BLE.
