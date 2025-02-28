@@ -11,35 +11,35 @@ namespace BLE_Handler;
 
 public class BLEManager
 {
-        /// <summary>
-        /// Evento che viene sollevato quando viene scoperto un nuovo dispositivo BLE.
-        /// Il parametro è il nome del dispositivo.
-        /// </summary>
+    /// <summary>
+    /// Evento che viene sollevato quando viene scoperto un nuovo dispositivo BLE.
+    /// Il parametro è il nome del dispositivo.
+    /// </summary>
     public event Action<string> OnDeviceDiscovered;
     public event Action<BluetoothLEDevice> OnConnectionEstablished;
     public event Action OnScanCompleted;
 
     private BluetoothLEAdvertisementWatcher watcher;
-        // Utilizzato per evitare duplicati nella lista dei dispositivi scoperti
-       // private HashSet<string> discoveredDevices;
-        private Dictionary<ulong, string> discoveredDevices = new Dictionary<ulong, string>();
-
-        ulong btAddress=1;
+    //Lista dei dispositivi scoperti
+    private Dictionary<ulong, string> discoveredDevices = new Dictionary<ulong, string>();
+    ulong btAddress=1;
+    private BluetoothLEDevice connectedDevice;
+    private GattCharacteristic rxCharacteristic;
 
     public BLEManager()
+    {
+        // discoveredDevices = new HashSet<string>();
+        discoveredDevices = new Dictionary<ulong, string>();
+
+        // Inizializza il watcher per il BLE in modalità Active
+        watcher = new BluetoothLEAdvertisementWatcher
         {
-           // discoveredDevices = new HashSet<string>();
-            discoveredDevices = new Dictionary<ulong, string>();
+            ScanningMode = BluetoothLEScanningMode.Active
+        };
 
-            // Inizializza il watcher per il BLE in modalità Active
-            watcher = new BluetoothLEAdvertisementWatcher
-            {
-                ScanningMode = BluetoothLEScanningMode.Active
-            };
+        watcher.Received += Watcher_Received;
 
-            watcher.Received += Watcher_Received;
-
-            watcher.Stopped += Watcher_Stopped; // Evento per il termine della scansione
+        watcher.Stopped += Watcher_Stopped; // Evento per il termine della scansione
 
     }
 
@@ -231,18 +231,38 @@ public class BLEManager
             var rxCharacteristic = characteristicsResult.Characteristics.FirstOrDefault(c => c.Uuid == rxCharacteristicGuid);
             var txCharacteristic = characteristicsResult.Characteristics.FirstOrDefault(c => c.Uuid == txCharacteristicGuid);
 
-            if (txCharacteristic != null)
+            // Nel metodo ConnectTo, modifica la parte finale:
+            if (txCharacteristic != null && rxCharacteristic != null)
             {
                 // Abilita le notifiche per ricevere dati
                 txCharacteristic.ValueChanged += TxCharacteristic_ValueChanged;
-                var status = await txCharacteristic.WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue.Notify);
+                var status = await txCharacteristic.WriteClientCharacteristicConfigurationDescriptorAsync(
+                    GattClientCharacteristicConfigurationDescriptorValue.Notify);
+
                 if (status != GattCommunicationStatus.Success)
                 {
                     MessageBox.Show("Errore nell'abilitare le notifiche.");
                 }
+
+                // Memorizza il dispositivo e la caratteristica RX per uso futuro
+                StoreConnectedDevice(device, rxCharacteristic);
+
                 // La connessione è stabilita: genera l'evento
                 OnConnectionEstablished?.Invoke(device);
             }
+
+            //if (txCharacteristic != null)
+            //{
+            //    // Abilita le notifiche per ricevere dati
+            //    txCharacteristic.ValueChanged += TxCharacteristic_ValueChanged;
+            //    var status = await txCharacteristic.WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue.Notify);
+            //    if (status != GattCommunicationStatus.Success)
+            //    {
+            //        MessageBox.Show("Errore nell'abilitare le notifiche.");
+            //    }
+            //    // La connessione è stabilita: genera l'evento
+            //    OnConnectionEstablished?.Invoke(device);
+            //}
 
             // Ora puoi inviare dati al dispositivo utilizzando rxCharacteristic.WriteValueAsync
         }
@@ -259,6 +279,63 @@ public class BLEManager
         byte[] input = new byte[reader.UnconsumedBufferLength];
         reader.ReadBytes(input);
         // Esegui l'interpretazione dei dati ricevuti...
+    }
+
+    // Memorizza il dispositivo connesso e la caratteristica RX
+    public void StoreConnectedDevice(BluetoothLEDevice device, GattCharacteristic rx)
+    {
+        connectedDevice = device;
+        rxCharacteristic = rx;
+    }
+
+    /// <summary>
+    /// Invia un messaggio al dispositivo BLE connesso.
+    /// </summary>
+    /// <param name="data">Array di byte da inviare</param>
+    /// <returns>True se l'invio è riuscito, False altrimenti</returns>
+    
+    public async Task<bool> SendMessageAsync(byte[] data)
+    {
+        // Verifica se il dispositivo è connesso
+        if (connectedDevice == null || connectedDevice.ConnectionStatus != BluetoothConnectionStatus.Connected)
+        {
+            Debug.WriteLine("Impossibile inviare dati: dispositivo non connesso");
+            return false;
+        }
+
+        // Verifica se abbiamo una caratteristica RX valida
+        if (rxCharacteristic == null)
+        {
+            Debug.WriteLine("Impossibile inviare dati: caratteristica RX non disponibile");
+            return false;
+        }
+
+        try
+        {
+            // Crea un DataWriter per inviare i dati
+            using (DataWriter writer = new DataWriter())
+            {
+                // Scrivi i dati nel buffer
+                writer.WriteBytes(data);
+
+                // Invia i dati
+                GattCommunicationStatus status =
+                    await rxCharacteristic.WriteValueAsync(writer.DetachBuffer());
+
+                // Controlla lo stato dell'invio
+                bool success = (status == GattCommunicationStatus.Success);
+
+                // Log del risultato
+                Debug.WriteLine($"Invio dati {(success ? "riuscito" : "fallito")}: {data.Length} bytes");
+
+                return success;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Errore durante l'invio dei dati: {ex.Message}");
+            return false;
+        }
     }
 }
 
