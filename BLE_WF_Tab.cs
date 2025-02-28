@@ -53,7 +53,7 @@ public partial class BLEInterfaceTab : TabPage
     {
         listBoxDevices.Items.Clear();
         loadingSpinner.Visible = true;  // Mostra l'animazione
-        bleManager.StartScanning();
+        bleManager.StartScanningAsync(10000);
     }
 
     private void BleManager_OnDeviceDiscovered(string deviceName)
@@ -94,7 +94,8 @@ public partial class BLEInterfaceTab : TabPage
         if (listBoxDevices.SelectedItem != null)
         {
             string deviceName = listBoxDevices.SelectedItem.ToString();
-            await bleManager.ConnectTo(deviceName);
+            if (deviceName != null)
+                await bleManager.ConnectToAsync(deviceName);
         }
     }
 }
