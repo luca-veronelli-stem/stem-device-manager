@@ -302,7 +302,7 @@ namespace Stem_Protocol.PacketManager
 
                     var message = new SerialMessage(netInfo.Concat(packetChunk).ToArray(), DateTime.Now);
 
-                    if (CANChannelsList.Count > 0)
+                    if (BLEChannelsList.Count > 0)
                     {
                         try
                         {

@@ -350,7 +350,7 @@ namespace Stem_Protocol
                     _packetChunkSize = 6;
                     break;
                 case "ble":
-                    _packetChunkSize = 100;
+                    _packetChunkSize = 98;
                     break;
                 default:
                     throw new ArgumentException("Unrecognized interface");
@@ -401,10 +401,12 @@ namespace Stem_Protocol
             for (int i = 0; i < TransportPacket.Length; i += _packetChunkSize)
             {
                 var chunk = TransportPacket.Skip(i).Take(_packetChunkSize).ToArray();
-                if (chunk.Length < _packetChunkSize)
-                {
-                    Array.Resize(ref chunk, _packetChunkSize);
-                }
+
+                //if (chunk.Length < _packetChunkSize)
+                //{
+                //    Array.Resize(ref chunk, _packetChunkSize);
+                //}
+                
                 chunks.Add(chunk);
             }
             return chunks;
@@ -445,19 +447,22 @@ namespace Stem_Protocol
         }
     }
 
+    //classe che gestisce l'instradamento dei pacchetti verso il canale fisico
     public class ProtocolManager
     {
-        public event EventHandler<SendCanCommandEventArgs>? SendCanCommandRequest;
+        public event EventHandler<SendCommandEventArgs>? SendCommandRequest;
  
         bool Answer_Received;
         bool Answer_Result;
 
-        public async Task<bool> SendCanCommand(ushort command, byte[] payload, bool waitAnswer)
+        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        //         Common function for all type of channels 
+        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        public async Task<bool> SendCommand(ushort command, byte[] payload, bool waitAnswer)
         {
             Answer_Received = false;
 
-
-            if (SendCanCommandRequest?.GetInvocationList().Length == 0)
+            if (SendCommandRequest?.GetInvocationList().Length == 0)
             {
                 // Nessun evento iscritto, esegui codice alternativo
                 Answer_Received = true;
@@ -468,7 +473,7 @@ namespace Stem_Protocol
             {
                 // Invoca l'evento normalmente
                 // Controlla se ci sono iscritti all'evento prima di invocarlo
-                SendCanCommandRequest?.Invoke(this, new SendCanCommandEventArgs(command, payload, waitAnswer));
+                SendCommandRequest?.Invoke(this, new SendCommandEventArgs(command, payload, waitAnswer));
 
                 if (waitAnswer == false)
                 {
@@ -484,13 +489,18 @@ namespace Stem_Protocol
             }
         }
 
+        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        //                  CAN related functions
+        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
         // Gestore dell'evento send command da instradare tramite can
-        public async void OnSendCanCommand(object sender, SendCanCommandEventArgs e)
+        public async void OnSendCanCommand(object sender, SendCommandEventArgs e)
         {
             await HandleSendCanCommandAsync(sender, e);
         }
 
-        private async Task HandleSendCanCommandAsync(object sender, SendCanCommandEventArgs e)
+        private async Task HandleSendCanCommandAsync(object sender, SendCommandEventArgs e)
         {
             try
             {
@@ -575,21 +585,33 @@ namespace Stem_Protocol
                 Form1.FormRef.UpdateTerminal($"Errore durante l'invio del comando CAN: {ex.Message}");
             }
         }
+
+        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        //                  BLE related functions
+        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
     }
 
+
+    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    //                  classi che incapuslano i parametri dei sendcommand 
+    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     // Classe per incapsulare i parametri dell'evento sendcommand del protocollo stem
-    public class SendCanCommandEventArgs : EventArgs
+    public class SendCommandEventArgs : EventArgs
     {
         public ushort Command { get; }
         public byte[] Payload { get; }
         public bool WaitAnswer { get; }
 
-        public SendCanCommandEventArgs(ushort command, byte[] payload, bool waitAnswer)
+        public SendCommandEventArgs(ushort command, byte[] payload, bool waitAnswer)
         {
             Command = command;
             WaitAnswer = waitAnswer;
             Payload = payload;
         }
     }
+
+
 }
 

@@ -40,7 +40,7 @@ public class TelemetryManager
     public TelemetryManager(PacketManager.PacketManager packetManager)
     {
         protocolManager = new ProtocolManager();
-        protocolManager.SendCanCommandRequest += protocolManager.OnSendCanCommand; //per il momento forzo il can poi dovrò gestirlo coi canali attivi
+        protocolManager.SendCommandRequest += protocolManager.OnSendCanCommand; //per il momento forzo il can poi dovrò gestirlo coi canali attivi
         rXPacketManager = packetManager;
         rXPacketManager.OnAppLayerPacketReceived += onAppLayerPacketReady;
         TelemetryOn = false;
@@ -137,7 +137,7 @@ public class TelemetryManager
             //crea un array di byte dove nei primi 2 bytes ci sono i valori Addrh e AddrL della variabile da richiedere dal TelemetryDictionary di indice CurrentIndex
             byte[] Data = new byte[] { Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrH, 16), Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrL, 16) };
 
-            protocolManager.SendCanCommand(CMD_READ_VARIABLE, Data, false);
+            await protocolManager.SendCommand(CMD_READ_VARIABLE, Data, false);
             await Task.Delay(210);
         }
     }

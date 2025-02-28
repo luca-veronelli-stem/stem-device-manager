@@ -448,9 +448,10 @@ namespace StemPC
             byte cryptFlag = 0x00;         // Nessuna crittografia
 
             //NL
-            string interfaceType = "can";   // Interfaccia CAN
-            int version = 1;                // Versione del protocollo
-            uint recipientId = Form1.FormRef.RecipientId; // ID del destinatario
+            //string interfaceType = "can";   // Interfaccia CAN
+            string interfaceType = "ble";   // Interfaccia ble
+            int version = 1;                                // Versione del protocollo
+            uint recipientId = Form1.FormRef.RecipientId;   // ID del destinatario
 
 
             // Crea direttamente il pacchetto di livello Network
@@ -466,14 +467,18 @@ namespace StemPC
             AppLayerSendEventArgs EventArgs = new AppLayerSendEventArgs(networkLayer);
             AppLayerCommandSended?.Invoke(this, EventArgs);
 
-            // Ottieni i pacchetti suddivisi per il CAN
+            // Ottieni i pacchetti suddivisi per il basso livello 
             var networkPackets = networkLayer.NetworkPackets;
 
-            // Invia i pacchetti tramite CAN
-            var packetManager = new PacketManager(Form1.FormRef.senderId);
-            packetManager.Add_CAN_Channel(Form1.FormRef._CDL);
+            //// Invia i pacchetti tramite CAN
+            //var packetManager = new PacketManager(Form1.FormRef.senderId);
+            //packetManager.Add_CAN_Channel(Form1.FormRef._CDL);
+            //bool result = await packetManager.SendThroughCANAsync(networkPackets);
 
-            bool result = await packetManager.SendThroughCANAsync(networkPackets);
+            //Invia i pacchetti tramite BLE
+            var packetManager = new PacketManager(Form1.FormRef.senderId);
+            packetManager.Add_BLE_Channel(Form1.FormRef._BLE_SDL);
+            bool result = await packetManager.SendThroughBLEAsync(networkPackets);
         }
 
         private void comboBoxCommand_SelectedIndexChanged(object sender, EventArgs e)

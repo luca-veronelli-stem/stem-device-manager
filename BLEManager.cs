@@ -191,6 +191,7 @@ public class BLEManager
             device.ConnectionStatusChanged += (sender, args) =>
             {
                 Debug.WriteLine($"Stato connessione: {device.ConnectionStatus}");
+                if (device.ConnectionStatus != BluetoothConnectionStatus.Connected) ConnectionStatusChanged?.Invoke(this, false);
             };
 
             //// Imposta la sessione di riconnessione automatica
