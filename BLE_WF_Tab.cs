@@ -24,6 +24,7 @@ public partial class BLEInterfaceTab : TabPage
         listBoxDevices = new ListBox();
         listBoxDevices.Location = new System.Drawing.Point(10, 50);
         listBoxDevices.Size = new System.Drawing.Size(760, 450);
+        listBoxDevices.SelectedIndexChanged += listBoxDevices_SelectedIndexChanged;
 
         btnScan = new Button();
         btnScan.Text = "Scansiona";
@@ -84,6 +85,15 @@ public partial class BLEInterfaceTab : TabPage
         else
         {
             loadingSpinner.Visible = false;
+        }
+    }
+
+    private async void listBoxDevices_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        if (listBoxDevices.SelectedItem != null)
+        {
+            string deviceName = listBoxDevices.SelectedItem.ToString();
+            await bleManager.ConnectTo(deviceName);
         }
     }
 }
