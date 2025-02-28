@@ -13,6 +13,7 @@ using SerialDataLayer;
 using static Stem_Protocol.NetworkLayer;
 using static StemPC.Form1;
 using StemPC;
+using Windows.Storage.Streams;
 
 namespace Stem_Protocol.PacketManager
 {
@@ -334,6 +335,9 @@ namespace Stem_Protocol.PacketManager
 
         public void ProcessBLEPacket(SerialMessage packet)
         {
+            // Elimina l'indirizzo del sender
+            int PackToCopyLenght = packet.Data.Length - 6;
+            Array.Copy(packet.Data, 6, packet.Data, 2, PackToCopyLenght);
             ProcessPacket("ble", packet.Data);
         }
     }
