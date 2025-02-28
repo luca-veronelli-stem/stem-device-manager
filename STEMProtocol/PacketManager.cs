@@ -300,7 +300,8 @@ namespace Stem_Protocol.PacketManager
                     var recipientId = packet.Item2;
                     var packetChunk = packet.Item3;
 
-                    var message = new SerialMessage(netInfo.Concat(packetChunk).ToArray(), DateTime.Now);
+                                  
+                    var message = new SerialMessage(netInfo.Concat(BitConverter.GetBytes(recipientId)).Concat(packetChunk).ToArray(), DateTime.Now);
 
                     if (BLEChannelsList.Count > 0)
                     {

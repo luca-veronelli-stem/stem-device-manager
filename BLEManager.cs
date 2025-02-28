@@ -354,7 +354,7 @@ public class BLEManager
 
                 // Log del risultato
                 Debug.WriteLine($"Invio dati {(success ? "riuscito" : "fallito")}: {data.Length} bytes");
-
+                Debug.WriteLine("Bytes:" + BitConverter.ToString(data));
                 return success;
             }
         }
