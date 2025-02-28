@@ -42,6 +42,7 @@ public class BLEManager
     ulong btAddress=1;
     private BluetoothLEDevice connectedDevice;
     private GattCharacteristic rxCharacteristic;
+    private GattCharacteristic txCharacteristic;
 
     public BLEManager()
     {
@@ -247,11 +248,34 @@ public class BLEManager
             Guid txCharacteristicGuid = new Guid("6E400003-B5A3-F393-E0A9-E50E24DCCA9E"); // notifica
 
             var rxCharacteristic = characteristicsResult.Characteristics.FirstOrDefault(c => c.Uuid == rxCharacteristicGuid);
-            var txCharacteristic = characteristicsResult.Characteristics.FirstOrDefault(c => c.Uuid == txCharacteristicGuid);
+            var txCharacteristicLocal  = characteristicsResult.Characteristics.FirstOrDefault(c => c.Uuid == txCharacteristicGuid);
 
             // Nel metodo ConnectTo, modifica la parte finale:
-            if (txCharacteristic != null && rxCharacteristic != null)
+            if (txCharacteristicLocal != null && rxCharacteristic != null)
             {
+                // Salva la TX characteristic a livello di classe
+                txCharacteristic = txCharacteristicLocal;
+
+                // Debug: stampa informazioni sulla TX Characteristic
+                Debug.WriteLine($"TX Characteristic: UUID = {txCharacteristic.Uuid}");
+                Debug.WriteLine($"TX Characteristic Properties: {txCharacteristic.CharacteristicProperties}");
+
+                // Recupera e stampa i descrittori associati alla TX Characteristic
+                var descriptorsResult = await txCharacteristic.GetDescriptorsAsync();
+                if (descriptorsResult.Status == GattCommunicationStatus.Success)
+                {
+                    Debug.WriteLine("Descrittori trovati per TX Characteristic:");
+                    foreach (var descriptor in descriptorsResult.Descriptors)
+                    {
+                        Debug.WriteLine($" - Descriptor UUID: {descriptor.Uuid}");
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine("Impossibile recuperare i descrittori per la TX Characteristic.");
+                }
+
+
                 // Abilita le notifiche per ricevere dati
                 txCharacteristic.ValueChanged += TxCharacteristic_ValueChanged;
                 var status = await txCharacteristic.WriteClientCharacteristicConfigurationDescriptorAsync(
@@ -355,6 +379,12 @@ public class BLEManager
                 // Log del risultato
                 Debug.WriteLine($"Invio dati {(success ? "riuscito" : "fallito")}: {data.Length} bytes");
                 Debug.WriteLine("Bytes:" + BitConverter.ToString(data));
+
+                // Se l'invio ha successo, riabilita le notifiche
+                if (success)
+                {
+                    await ReEnableNotificationsAsync();
+                }
                 return success;
             }
         }
@@ -362,6 +392,36 @@ public class BLEManager
         {
             Debug.WriteLine($"Errore durante l'invio dei dati: {ex.Message}");
             return false;
+        }
+    }
+
+    // Metodo per riabilitare le notifiche
+    private async Task ReEnableNotificationsAsync()
+    {
+        if (txCharacteristic == null)
+        {
+            Debug.WriteLine("txCharacteristic è null. Non posso riabilitare le notifiche.");
+            return;
+        }
+        try
+        {
+            // Rimuove l'handler (opzionale, per evitare duplicati)
+            txCharacteristic.ValueChanged -= TxCharacteristic_ValueChanged;
+
+            // Attende brevemente per sicurezza
+            await Task.Delay(100);
+
+            // Ri-registra l'handler
+            txCharacteristic.ValueChanged += TxCharacteristic_ValueChanged;
+
+            // Riscrive il Client Characteristic Configuration Descriptor per abilitare le notifiche
+            var status = await txCharacteristic.WriteClientCharacteristicConfigurationDescriptorAsync(
+                GattClientCharacteristicConfigurationDescriptorValue.Notify);
+            Debug.WriteLine($"Riabilitate le notifiche: {status}");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Errore nella riabilitazione delle notifiche: {ex.Message}");
         }
     }
 }
