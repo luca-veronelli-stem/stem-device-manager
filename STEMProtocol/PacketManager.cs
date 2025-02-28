@@ -9,7 +9,7 @@ using System.Windows.Forms;
 
 using Stem_Protocol;
 using CanDataLayer;
-using PCAN_Handler;
+using SerialDataLayer;
 using static Stem_Protocol.NetworkLayer;
 using static StemPC.Form1;
 using StemPC;
@@ -28,7 +28,7 @@ namespace Stem_Protocol.PacketManager
         public List<NetworkLayer.PacketReadyEventHandler> PacketReadyEventList;
 
         public List<CANDataLayer> CANChannelsList = new List<CANDataLayer>();
-        public List<BluetoothClient> BLEChannelsList = new List<BluetoothClient>();
+        public List<SDL> BLEChannelsList = new List<SDL>();
 
         //events
         //  public event Action<PacketReadyEventArgs> OnAppLayerPacketReceived;
@@ -125,102 +125,17 @@ namespace Stem_Protocol.PacketManager
         }
 
 
-        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        //                  CAN related functions
-        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    //                  CAN related functions
+    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        public int Add_CAN_Channel(CANDataLayer CanDataLayer)
-        {
-            CanDataLayer.PacketReceived += OnCANPacketReceived;
-            CANChannelsList.Add(CanDataLayer);
-            
-            return (CANChannelsList.Count-1); //return the index of can channel list
-        }
-
-        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        //                  BLE related functions
-        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-        public void Add_BLE_Channel(string channel, string canInterface, int bitrate)
-        {
-        //    new CANBus(this, channel, canInterface, bitrate);
-        }
-
-        //public async Task<bool> SendAndWaitForResponseAsync(
-        //    List<Tuple<byte[], uint, byte[]>> networkPackets,
-        //    Func<byte[], bool> responseValidator, // Funzione di validazione risposta
-        //    int timeoutMs = 600 // Timeout in millisecondi
-        //)
-        //{
-        //    try
-        //    {
-        //        // Creazione di un TaskCompletionSource per gestire la risposta
-        //        var tcs = new TaskCompletionSource<bool>();
-
-        //        // Evento per ricevere le risposte CAN
-        //        void OnCanMessageReceived(object sender, AppLayerDecoderEventArgs e)
-        //        {
-        //            if (responseValidator(e.Payload))
-        //            {
-        //                tcs.TrySetResult(true); // Risposta corretta
-        //            }
-        //            else
-        //            {
-        //                tcs.TrySetResult(false); // Risposta errata
-        //            }
-        //        }
-
-        //        // Sottoscrizione all'evento di ricezione pacchetto
-        //        Form1.FormRef.AppLayerCommandDecoded += OnCanMessageReceived;
-
-        //            foreach (var packet in networkPackets)
-        //            {
-        //                var netInfo = packet.Item1;
-        //                var recipientId = packet.Item2;
-        //                var packetChunk = packet.Item3;
-
-        //                var message = new CANMessage(recipientId, netInfo.Concat(packetChunk).ToArray(), true, DateTime.Now);
-
-        //                if (CANChannelsList.Count > 0)
-        //                {
-        //                    try
-        //                    {
-        //                        CANChannelsList.ElementAt(0).Send(message);
-        //                    }
-        //                    catch (Exception ex)
-        //                    {
-        //                        Console.WriteLine($"Errore nell'invio del messaggio: {ex.Message}");
-        //                    }
-        //                }
-        //            }
-
-        //            // Attendi la risposta con un timeout
-        //            var task = await Task.WhenAny(tcs.Task, Task.Delay(timeoutMs));
-        //            bool result;
-        //            if (task == tcs.Task)
-        //            {
-        //                // Response received within timeout
-        //                result = tcs.Task.Result;
-        //            }
-        //            else
-        //            {
-        //                // Timeout occurred, no response received
-        //                result = false;
-        //      //          Console.WriteLine("Timeout waiting for response");
-        //            }
-        //       // bool result = task == tcs.Task && tcs.Task.Result;
-
-        //        // Rimuovi l'handler per evitare memory leaks
-        //        Form1.FormRef.AppLayerCommandDecoded -= OnCanMessageReceived;
-
-        //        return result;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine($"Errore durante l'invio del pacchetto: {ex.Message}");
-        //        return false;
-        //    }
-        //}
+    public int Add_CAN_Channel(CANDataLayer canDataLayer)
+    {
+         canDataLayer.PacketReceived += OnCANPacketReceived;
+         CANChannelsList.Add(canDataLayer);
+          
+         return (CANChannelsList.Count-1); //return the index of can channel list
+    }
 
     public async Task<bool> SendAndWaitForResponseAsync(
     List<Tuple<byte[], uint, byte[]>> networkPackets,
@@ -337,70 +252,6 @@ namespace Stem_Protocol.PacketManager
             }
         }
 
-        public async Task<bool> SendThroughBluetooth(BlockingCollection<bool> qSend, BlockingCollection<List<Tuple<byte[], int, byte[]>>> qMessage, string deviceAddress)
-        {
-            try
-            {
-                using (var client = new BluetoothClient(deviceAddress, HandleBLEDisconnect))
-                {
-                    if (client.IsConnected)
-                    {
-                        Console.WriteLine($"Connected to {client.Address}");
-                        BluetoothRunning = true;
-
-                        var UART_SERVICE_UUID = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E";
-                        var UART_RX_CHAR_UUID = "6E400002-B5A3-F393-E0A9-E50E24DCCA9E";
-                        var UART_TX_CHAR_UUID = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E";
-
-                        await client.StartNotify(UART_TX_CHAR_UUID, ProcessBLEPacket);
-
-                        while (true)
-                        {
-                            var send = await Task.Run(() => qSend.Take());
-                            if (send)
-                            {
-                                var networkPackets = await Task.Run(() => qMessage.Take());
-                                foreach (var packet in networkPackets)
-                                {
-                                    var netInfo = packet.Item1;
-                                    var recipientId = packet.Item2;
-                                    var packetChunk = packet.Item3;
-
-                                    var packetData = netInfo.Concat(BitConverter.GetBytes(recipientId)).Concat(packetChunk).ToArray();
-                                    Console.WriteLine($"Message sent via Bluetooth: {BitConverter.ToString(packetData)}");
-                                    await client.Write(UART_RX_CHAR_UUID, packetData, true);
-                                }
-                                qMessage.CompleteAdding();
-                                qSend.CompleteAdding();
-                            }
-                            else
-                            {
-                                Console.WriteLine("Disconnecting from Bluetooth...");
-                                return true;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Unable to connect to Bluetooth device.");
-                        return false;
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Connection error: {e.Message}");
-                return false;
-            }
-        }
-
-        private void HandleBLEDisconnect(BluetoothClient client)
-        {
-            Console.WriteLine("Disconnected from Bluetooth.");
-            BluetoothRunning = false;
-        }
-
-
         private void OnCANPacketReceived(object sender, CANMessage RxPacket)
         {
             ProcessCANPacket(RxPacket);
@@ -424,58 +275,66 @@ namespace Stem_Protocol.PacketManager
             }
         }
 
-        public void ProcessBLEPacket(byte[] packet)
+        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        //                  BLE related functions
+        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        public int Add_BLE_Channel(SDL serialDataLayer)
         {
-            Console.WriteLine($"Message received: {BitConverter.ToString(packet)}");
-            var recipientId = BitConverter.ToUInt32(packet, 2);
-            if (recipientId == _id)
+            serialDataLayer.PacketReceived += OnBLEPacketReceived;
+            BLEChannelsList.Add(serialDataLayer);
+
+            return (BLEChannelsList.Count - 1); //return the index of ble channel list
+        }
+
+        public async Task<bool> SendThroughBLEAsync(List<Tuple<byte[], uint, byte[]>> networkPackets)
+        {
+            try
             {
-                _sniffer_id = _id;
-                var data = packet.Take(2).Concat(packet.Skip(6)).ToArray();
-                ProcessPacket("ble", data);
+                //// Usa Task.Run per eseguire il lavoro intensivo
+                //return await Task.Run(() =>
+                //{
+                foreach (var packet in networkPackets)
+                {
+                    var netInfo = packet.Item1;
+                    var recipientId = packet.Item2;
+                    var packetChunk = packet.Item3;
+
+                    var message = new SerialMessage(netInfo.Concat(packetChunk).ToArray(), DateTime.Now);
+
+                    if (CANChannelsList.Count > 0)
+                    {
+                        try
+                        {
+                            BLEChannelsList.ElementAt(0).Send(message);
+                            // Console.WriteLine($"Message sent on {bus.ChannelInfo}: {BitConverter.ToString(message.Data)}");
+                        }
+                        catch (Exception)
+                        {
+                            // Console.WriteLine("Message not sent.");
+                        }
+                    }
+                    await Task.Delay(5); //ritardo tra un chunck e il successivo
+                }
+                //            });
+                return true;
             }
-            else if (recipientId == 0xFFFFFFFF) 
+            catch (Exception e)
             {
-                 _sniffer_id = recipientId;
-                 var data = packet.Take(2).Concat(packet.Skip(6)).ToArray();
-                 ProcessPacket("ble", data);
+                Console.WriteLine(e.Message);
+                return false;
             }
-            else 
-            {
-                 Console.WriteLine($"Recipient ID mismatch: {recipientId} != {_id}");
-            }
+        }
+
+        private void OnBLEPacketReceived(object sender, SerialMessage RxPacket)
+        {
+            ProcessBLEPacket(RxPacket);
+        }
+
+        public void ProcessBLEPacket(SerialMessage packet)
+        {
+            ProcessPacket("ble", packet.Data);
         }
     }
-
- 
-    public class BluetoothClient : IDisposable
-    {
-        public string Address { get; }
-        public bool IsConnected { get; }
-
-        public BluetoothClient(string address, Action<BluetoothClient> disconnectCallback)
-        {
-            Address = address;
-            IsConnected = true;
-            // Initialize connection
-        }
-
-        public async Task StartNotify(string charUuid, Action<byte[]> callback)
-        {
-            // Implementation to start notifications
-        }
-
-        public async Task Write(string charUuid, byte[] data, bool response)
-        {
-            // Implementation to write data via Bluetooth
-        }
-
-        public void Dispose()
-        {
-            // Cleanup resources
-        }
-    }
-
-
 }
 

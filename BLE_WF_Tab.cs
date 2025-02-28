@@ -8,7 +8,8 @@ public partial class BLEInterfaceTab : TabPage
     private ListBox listBoxDevices;
     private Button btnScan;
     private PictureBox loadingSpinner;
-    private BLEManager bleManager;
+
+    public BLEManager bleManager;
 
     public BLEInterfaceTab()
     {

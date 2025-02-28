@@ -61,6 +61,9 @@
             terminalOut = new RichTextBox();
             statusStrip1 = new StatusStrip();
             PCanLabel = new ToolStripStatusLabel();
+            toolStripStatusLabel2 = new ToolStripStatusLabel();
+            BLEStatusLabel = new ToolStripStatusLabel();
+            toolStripStatusLabel1 = new ToolStripStatusLabel();
             tableLayoutPanel1.SuspendLayout();
             tabControl.SuspendLayout();
             tabPageProtocol.SuspendLayout();
@@ -456,7 +459,7 @@
             // 
             // statusStrip1
             // 
-            statusStrip1.Items.AddRange(new ToolStripItem[] { PCanLabel });
+            statusStrip1.Items.AddRange(new ToolStripItem[] { PCanLabel, toolStripStatusLabel2, BLEStatusLabel, toolStripStatusLabel1 });
             statusStrip1.Location = new Point(0, 428);
             statusStrip1.Name = "statusStrip1";
             statusStrip1.Size = new Size(800, 22);
@@ -469,6 +472,25 @@
             PCanLabel.Name = "PCanLabel";
             PCanLabel.Size = new Size(126, 17);
             PCanLabel.Text = "PCAN: Not Connected";
+            // 
+            // toolStripStatusLabel2
+            // 
+            toolStripStatusLabel2.Name = "toolStripStatusLabel2";
+            toolStripStatusLabel2.Size = new Size(13, 17);
+            toolStripStatusLabel2.Text = "  ";
+            // 
+            // BLEStatusLabel
+            // 
+            BLEStatusLabel.BackColor = Color.Salmon;
+            BLEStatusLabel.Name = "BLEStatusLabel";
+            BLEStatusLabel.Size = new Size(113, 17);
+            BLEStatusLabel.Text = "BLE: Not Connected";
+            // 
+            // toolStripStatusLabel1
+            // 
+            toolStripStatusLabel1.Name = "toolStripStatusLabel1";
+            toolStripStatusLabel1.Size = new Size(10, 17);
+            toolStripStatusLabel1.Text = " ";
             // 
             // Form1
             // 
@@ -528,5 +550,9 @@
         private Label labelDictionary;
         private TextBox textBox3;
         private Label labelBytes;
+        private ToolStripStatusLabel BLEStatusLabel;
+        private ToolStripSplitButton toolStripSplitButton1;
+        private ToolStripStatusLabel toolStripStatusLabel2;
+        private ToolStripStatusLabel toolStripStatusLabel1;
     }
 }

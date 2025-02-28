@@ -34,6 +34,7 @@ public class BLEManager
     public event Action<BluetoothLEDevice> OnConnectionEstablished;
     public event Action OnScanCompleted;
     public event EventHandler<BLEPacketEventArgs> PacketReceived;
+    public event EventHandler<bool> ConnectionStatusChanged;
 
     private BluetoothLEAdvertisementWatcher watcher;
     //Lista dei dispositivi scoperti
@@ -264,8 +265,10 @@ public class BLEManager
                 StoreConnectedDevice(device, rxCharacteristic);
 
                 // La connessione è stabilita: genera l'evento
-                OnConnectionEstablished?.Invoke(device);
-            }
+                //OnConnectionEstablished?.Invoke(device);
+                //public event EventHandler<bool> ConnectionStatusChanged;
+                ConnectionStatusChanged?.Invoke(this, true);
+}
 
             //if (txCharacteristic != null)
             //{

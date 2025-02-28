@@ -6,6 +6,7 @@ using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Stem_Protocol;
 using Stem_Protocol.PacketManager;
 using CanDataLayer;
+using SerialDataLayer;
 using static Stem_Protocol.NetworkLayer;
 using static ExcelHandler;
 using System.Collections.Generic;
@@ -35,6 +36,11 @@ namespace StemPC
         //   CAN port variables
         //**********************************
         public CANDataLayer _CDL;
+
+        //**********************************
+        //   Serial/BLE port variables
+        //**********************************
+        public SDL _BLE_SDL;
 
         //**************************
         //  Code gen variables
@@ -146,10 +152,18 @@ namespace StemPC
             _CDL = new CANDataLayer(channel, canInterface, bitrate);
             _CDL.ConnectionStatusChanged += OnPCANConnectionStatusChanged;
 
+            //crea e aggiungi il ble manager
+            BLETabRef = new BLEInterfaceTab();
+            tabControl.TabPages.Add(BLETabRef);
+            //crea e aggiungi ble
+            _BLE_SDL = new SDL("BLE", "ble", 100000, BLETabRef.bleManager);
+            _BLE_SDL.ConnectionStatusChanged += OnBLEConnectionStatusChanged;
+
             //crea il protocollo stem di ricezione
             RXpacketManager = new PacketManager(0xFFFFFFFF);
             RXpacketManager.OnAppLayerPacketReceived += onAppLayerPacketReady;
             RXpacketManager.Add_CAN_Channel(_CDL);
+            RXpacketManager.Add_BLE_Channel(_BLE_SDL);
 
             //crea e aggiungi il bootloader manager
             BootTabRef = new Boot_Interface_Tab();
@@ -187,9 +201,7 @@ namespace StemPC
             TelemetryTabRef = new Telemetry_Tab(RXpacketManager);
             tabControl.TabPages.Add(TelemetryTabRef);
 
-            //crea e aggiungi il ble manager
-            BLETabRef = new BLEInterfaceTab();
-            tabControl.TabPages.Add(BLETabRef);
+
 
             //Seleziona il tab iniziale
 
@@ -650,15 +662,15 @@ namespace StemPC
             // Metodo thread-safe per aggiornare lo stato della connessione
             if (this.InvokeRequired)
             {
-                this.Invoke(new Action(() => UpdateConnectionStatus(isConnected)));
+                this.Invoke(new Action(() => UpdatePCANConnectionStatus(isConnected)));
             }
             else
             {
-                UpdateConnectionStatus(isConnected);
+                UpdatePCANConnectionStatus(isConnected);
             }
         }
 
-        private void UpdateConnectionStatus(bool isConnected)
+        private void UpdatePCANConnectionStatus(bool isConnected)
         {
             if (isConnected)
             {
@@ -669,6 +681,33 @@ namespace StemPC
             {
                 PCanLabel.Text = "PCAN: Non connesso";
                 PCanLabel.BackColor = System.Drawing.Color.Salmon;
+            }
+        }
+
+        private void OnBLEConnectionStatusChanged(object sender, bool isConnected)
+        {
+            // Metodo thread-safe per aggiornare lo stato della connessione
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new Action(() => UpdateBLEConnectionStatus(isConnected)));
+            }
+            else
+            {
+                UpdateBLEConnectionStatus(isConnected);
+            }
+        }
+
+        private void UpdateBLEConnectionStatus(bool isConnected)
+        {
+            if (isConnected)
+            {
+                BLEStatusLabel.Text = "BLE: Connesso";
+                BLEStatusLabel.BackColor = System.Drawing.Color.GreenYellow;
+            }
+            else
+            {
+                BLEStatusLabel.Text = "BLE: Non connesso";
+                BLEStatusLabel.BackColor = System.Drawing.Color.Salmon;
             }
         }
     }
