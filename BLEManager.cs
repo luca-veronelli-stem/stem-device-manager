@@ -6,8 +6,23 @@ using Windows.Devices.Bluetooth.GenericAttributeProfile;
 using Windows.Storage.Streams;
 using System.Linq;
 using System.Diagnostics;
+using PCAN_Handler;
+using CanDataLayer;
 
 namespace BLE_Handler;
+
+// Classe per la gestione degli eventi di ricezione pacchetti
+public class BLEPacketEventArgs : EventArgs
+{
+    public byte[] Data { get; }
+    public DateTime Timestamp { get; }
+
+    public BLEPacketEventArgs(byte[] data, DateTime timestamp)
+    {
+        Data = data;
+        Timestamp = timestamp;
+    }
+}
 
 public class BLEManager
 {
@@ -18,6 +33,7 @@ public class BLEManager
     public event Action<string> OnDeviceDiscovered;
     public event Action<BluetoothLEDevice> OnConnectionEstablished;
     public event Action OnScanCompleted;
+    public event EventHandler<BLEPacketEventArgs> PacketReceived;
 
     private BluetoothLEAdvertisementWatcher watcher;
     //Lista dei dispositivi scoperti
@@ -278,7 +294,14 @@ public class BLEManager
         DataReader reader = DataReader.FromBuffer(args.CharacteristicValue);
         byte[] input = new byte[reader.UnconsumedBufferLength];
         reader.ReadBytes(input);
+
         // Esegui l'interpretazione dei dati ricevuti...
+        var packetEvent = new BLEPacketEventArgs(
+            input,
+            DateTime.Now
+        );
+
+        PacketReceived?.Invoke(this, packetEvent);
     }
 
     // Memorizza il dispositivo connesso e la caratteristica RX
