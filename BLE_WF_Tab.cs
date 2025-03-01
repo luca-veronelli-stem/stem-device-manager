@@ -36,8 +36,8 @@ public partial class BLEInterfaceTab : TabPage
         loadingSpinner = new PictureBox();
         loadingSpinner.Image = Image.FromFile("loading.gif"); // Assicurati di avere un file GIF di caricamento
         loadingSpinner.SizeMode = PictureBoxSizeMode.StretchImage;
-        loadingSpinner.Size = new System.Drawing.Size(20, 20);
-        loadingSpinner.Location = new System.Drawing.Point(120, 13); // Posizione accanto al bottone
+        loadingSpinner.Size = new System.Drawing.Size(40, 40);
+        loadingSpinner.Location = new System.Drawing.Point(120, 5); // Posizione accanto al bottone
         loadingSpinner.Visible = false; // Nasconde lo spinner all'inizio
 
         Controls.Add(btnScan);

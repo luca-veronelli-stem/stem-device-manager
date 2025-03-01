@@ -130,8 +130,9 @@ namespace BLE_Handler
 
                 // Avvia la scansione con timeout
                 // await adapter.StartScanningForDevicesAsync((timeoutMilliseconds: timeoutMilliseconds);
-                // await adapter.StartScanningForDevicesAsync(options);
-                await adapter.StartScanningForDevicesAsync();
+                
+                await adapter.StartScanningForDevicesAsync(options); //scansiona solo i dispositivi con il servizio Nordic UART
+                // await adapter.StartScanningForDevicesAsync(); //scansiona tutti i dispositivi senza filtro
             }
             catch (Exception ex)
             {
