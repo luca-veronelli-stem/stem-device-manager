@@ -150,6 +150,7 @@ namespace BLE_Handler
             try
             {
                 await adapter.StopScanningForDevicesAsync();
+                OnScanCompleted?.Invoke();
             }
             catch (Exception ex)
             {
@@ -293,6 +294,9 @@ namespace BLE_Handler
 
                 // Crea l'evento per i dati ricevuti
                 var packetEvent = new BLEPacketEventArgs(data, DateTime.Now);
+
+                Debug.WriteLine($"Dati ble ricevuti: {data.Length} bytes");
+                Debug.WriteLine("Bytes: " + BitConverter.ToString(data));
 
                 // Solleva l'evento
                 PacketReceived?.Invoke(this, packetEvent);
