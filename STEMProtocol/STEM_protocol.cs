@@ -6,6 +6,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Stem_Protocol.PacketManager;
+using System.Runtime.CompilerServices;
+using DocumentFormat.OpenXml.Bibliography;
+using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace Stem_Protocol
 {
@@ -76,6 +79,11 @@ namespace Stem_Protocol
                 BuildApplicationHeader();
                 BuildApplicationPacket();
             }
+        }
+
+        public void CleanApplicationBuffer()
+        {
+            Array.Clear(_applicationPacket,0, _applicationPacket.Length);
         }
 
         public byte CmdInit
@@ -418,11 +426,17 @@ namespace Stem_Protocol
             uint Source_Address = (((uint)TransportPacket[4]) << 24) | (((uint)TransportPacket[3]) << 16) | (((uint)TransportPacket[2]) << 8) | (((uint)TransportPacket[1]));
 
             //(da sistemare TOPX)
-            //togli il crc all'application layer eliminando gli ultimi 2 byte del buffer
-            ApplicationPacket = ApplicationPacket.Take(ApplicationPacket.Length - 2).ToArray();
+            //CAN
+            //        ApplicationPacket = ApplicationPacket.Take(ApplicationPacket.Length - 2).ToArray();
+            //  OnSP_PacketReady(ApplicationPacket, Source_Address, _recipientId);
 
+            //BLE
+            //togli i primi 7 byte di intestazione e togli il crc al transport packet eliminando  gli ultimi 2 byte del buffer
+            byte[] PacketApplication=new byte[TransportPacket[6]-6];
+            Buffer.BlockCopy(TransportPacket.ToArray(), 7, PacketApplication, 0, TransportPacket[6] - 6);   
             // Emettere l'evento con il pacchetto ricevuto
-            OnSP_PacketReady(ApplicationPacket, Source_Address, _recipientId);
+            OnSP_PacketReady(PacketApplication, Source_Address, _recipientId);
+       
         }
 
         // Metodo protetto per emettere l'evento

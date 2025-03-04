@@ -45,11 +45,13 @@ namespace Stem_Protocol.BootManager
             protocolManager = new ProtocolManager();
       //      protocolManager.SendCommandRequest += protocolManager.OnSendCanCommand; //per il momento forzo il can poi dovrò gestirlo coi canali attivi
         }
-        public void SetBootHardwareChannel(string channel)
+
+        public void SetHardwareChannel(string channel)
         {
             BootHardwareChannel = channel;
             //azzera le chiamate del protocl manager
             protocolManager.SendCommandRequest -= protocolManager.OnSendCanCommand;
+            protocolManager.SendCommandRequest -= protocolManager.OnSendBleCommand;
             //aggiunge il canale di comunicazione
             if (BootHardwareChannel == "can")
             {

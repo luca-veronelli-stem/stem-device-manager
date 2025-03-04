@@ -34,17 +34,36 @@ public class TelemetryManager
 
     public bool TelemetryOn;
 
+    private string TelemetryHardwareChannel = "can";
+
     //Eventi della classe
     public event EventHandler<DataReadyEventArgs>? DataReady;
 
     public TelemetryManager(PacketManager.PacketManager packetManager)
     {
         protocolManager = new ProtocolManager();
-        protocolManager.SendCommandRequest += protocolManager.OnSendCanCommand; //per il momento forzo il can poi dovrò gestirlo coi canali attivi
+    //    protocolManager.SendCommandRequest += protocolManager.OnSendCanCommand; //per il momento forzo il can poi dovrò gestirlo coi canali attivi
         rXPacketManager = packetManager;
         rXPacketManager.OnAppLayerPacketReceived += onAppLayerPacketReady;
         TelemetryOn = false;
         TelemetryDictionary = new List<ExcelHandler.VariableData>();
+    }
+
+    public void SetHardwareChannel(string channel)
+    {
+        TelemetryHardwareChannel = channel;
+        //azzera le chiamate del protocl manager
+        protocolManager.SendCommandRequest -= protocolManager.OnSendCanCommand;
+        protocolManager.SendCommandRequest -= protocolManager.OnSendBleCommand;
+        //aggiunge il canale di comunicazione
+        if (TelemetryHardwareChannel == "can")
+        {
+            protocolManager.SendCommandRequest += protocolManager.OnSendCanCommand;
+        }
+        else if (TelemetryHardwareChannel == "ble")
+        {
+            protocolManager.SendCommandRequest += protocolManager.OnSendBleCommand;
+        }
     }
 
     public void AddToDictionary(ExcelHandler.VariableData data)

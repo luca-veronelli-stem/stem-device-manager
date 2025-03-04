@@ -239,6 +239,9 @@ namespace BLE_Handler
                 txCharacteristic.ValueUpdated += TxCharacteristic_ValueUpdated;
                 await txCharacteristic.StartUpdatesAsync();
 
+                // Abilita la scrittura della caratterisitca rx senza risposta per accelerare il flusso
+                rxCharacteristic.WriteType = CharacteristicWriteType.WithoutResponse;
+
                 // Memorizza il dispositivo per uso futuro
                 connectedDevice = device;
 
@@ -334,7 +337,7 @@ namespace BLE_Handler
                 await rxCharacteristic.WriteAsync(data);
                 
                 Debug.WriteLine($"Invio dati riuscito: {data.Length} bytes");
-                Debug.WriteLine("Bytes: " + BitConverter.ToString(data));
+            //    Debug.WriteLine("Bytes: " + BitConverter.ToString(data));
                 
                 return true;
             }

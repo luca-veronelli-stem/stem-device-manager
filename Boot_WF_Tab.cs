@@ -146,7 +146,7 @@ public class Boot_Interface_Tab : TabPage
         //crea la classe di upload
         BootHndlr = new BootManager();
         BootHndlr.ProgressChanged += UpdateProgressBar;
-        BootHndlr.SetBootHardwareChannel("ble");
+        BootHndlr.SetHardwareChannel("ble"); //per ora ble fisso TOPX
     }
 
     private void BtnSelectFile_Click(object sender, EventArgs e)

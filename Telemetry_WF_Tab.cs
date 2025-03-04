@@ -110,6 +110,8 @@ public class Telemetry_Tab : TabPage
 
         // Aggiunta del gestore per l'evento DataReady
         telemetryManager.DataReady += onDataReady;
+
+        telemetryManager.SetHardwareChannel("ble"); //per ora ble fisso TOPX
     }
 
     private void UpdateComboBox()
