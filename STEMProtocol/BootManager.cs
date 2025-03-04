@@ -36,12 +36,28 @@ namespace Stem_Protocol.BootManager
         private uint pageNum;
         private ushort fwType = 5;
 
+        private string BootHardwareChannel = "can";
+
         private ProtocolManager protocolManager;
 
         public BootManager()
         {
             protocolManager = new ProtocolManager();
-            protocolManager.SendCommandRequest += protocolManager.OnSendCanCommand; //per il momento forzo il can poi dovrò gestirlo coi canali attivi
+      //      protocolManager.SendCommandRequest += protocolManager.OnSendCanCommand; //per il momento forzo il can poi dovrò gestirlo coi canali attivi
+        }
+        public void SetBootHardwareChannel(string channel)
+        {
+            BootHardwareChannel = channel;
+            //azzera le chiamate del protocl manager
+            protocolManager.SendCommandRequest -= protocolManager.OnSendCanCommand;
+            //aggiunge il canale di comunicazione
+            if (BootHardwareChannel == "can")
+            {
+                protocolManager.SendCommandRequest += protocolManager.OnSendCanCommand;
+            }else if (BootHardwareChannel == "ble")
+            {
+                protocolManager.SendCommandRequest += protocolManager.OnSendBleCommand;
+            }
         }
 
         public void SetFirmwarePath(string FirmwareName)

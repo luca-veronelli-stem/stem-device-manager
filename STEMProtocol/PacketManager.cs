@@ -138,7 +138,7 @@ namespace Stem_Protocol.PacketManager
          return (CANChannelsList.Count-1); //return the index of can channel list
     }
 
-    public async Task<bool> SendAndWaitForResponseAsync(
+    public async Task<bool> SendCANAndWaitForResponseAsync(
     List<Tuple<byte[], uint, byte[]>> networkPackets,
     Func<byte[], bool> responseValidator, // Funzione di validazione risposta
     int timeoutMs = 600 // Timeout in millisecondi
@@ -286,6 +286,84 @@ namespace Stem_Protocol.PacketManager
             BLEChannelsList.Add(serialDataLayer);
 
             return (BLEChannelsList.Count - 1); //return the index of ble channel list
+        }
+
+    public async Task<bool> SendBLEAndWaitForResponseAsync(
+    List<Tuple<byte[], uint, byte[]>> networkPackets,
+    Func<byte[], bool> responseValidator, // Funzione di validazione risposta
+    int timeoutMs = 600 // Timeout in millisecondi
+)
+        {
+            var tcs = new TaskCompletionSource<bool>();
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            void OnBleMessageReceived(object sender, AppLayerDecoderEventArgs e)
+            {
+                if (responseValidator(e.Payload))
+                {
+                    // Completa il TaskCompletionSource con successo
+                    tcs.TrySetResult(true);
+                }
+            }
+
+            try
+            {
+                // Sottoscrivi all'evento per ricevere i pacchetti
+                Form1.FormRef.AppLayerCommandDecoded += OnBleMessageReceived;
+
+                foreach (var packet in networkPackets)
+                {
+                    var netInfo = packet.Item1;
+                    var recipientId = packet.Item2;
+                    var packetChunk = packet.Item3;
+
+                    var message = new SerialMessage(netInfo.Concat(BitConverter.GetBytes(recipientId)).Concat(packetChunk).ToArray(), DateTime.Now);
+
+                    if (BLEChannelsList.Count > 0)
+                    {
+                        try
+                        {
+                            BLEChannelsList.ElementAt(0).Send(message);
+                            // Console.WriteLine($"Message sent on {bus.ChannelInfo}: {BitConverter.ToString(message.Data)}");
+                        }
+                        catch (Exception)
+                        {
+                            // Console.WriteLine("Message not sent.");
+                        }
+                    }
+                    await Task.Delay(5); //ritardo tra un chunck e il successivo
+                }
+
+                // Timeout usando il CancellationTokenSource
+                //var timeoutTask = Task.Delay(timeoutMs, cancellationTokenSource.Token);
+                var timeoutTask = Task.Delay(1000);
+                var completedTask = await Task.WhenAny(tcs.Task, timeoutTask);
+
+                if (completedTask == tcs.Task)
+                {
+                    // Risposta ricevuta prima del timeout
+                    cancellationTokenSource.Cancel(); // Cancella il timeout
+                    return tcs.Task.Result;
+                }
+                else
+                {
+                    // Timeout raggiunto
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Errore durante l'invio del pacchetto: {ex.Message}");
+                return false;
+            }
+            finally
+            {
+                // Rimuovi l'evento per evitare memory leaks
+                Form1.FormRef.AppLayerCommandDecoded -= OnBleMessageReceived;
+
+                // Rilascia il CancellationTokenSource
+                cancellationTokenSource.Dispose();
+            }
         }
 
         public async Task<bool> SendThroughBLEAsync(List<Tuple<byte[], uint, byte[]>> networkPackets)

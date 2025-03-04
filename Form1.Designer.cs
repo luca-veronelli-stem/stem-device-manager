@@ -60,6 +60,10 @@
             listBoxSerialPorts = new ListBox();
             terminalOut = new RichTextBox();
             statusStrip1 = new StatusStrip();
+            toolStripSplitButton2 = new ToolStripSplitButton();
+            ChannelMenu = new ToolStripMenuItem();
+            cANToolStripMenuItem = new ToolStripMenuItem();
+            bluetoothLEToolStripMenuItem = new ToolStripMenuItem();
             PCanLabel = new ToolStripStatusLabel();
             toolStripStatusLabel2 = new ToolStripStatusLabel();
             BLEStatusLabel = new ToolStripStatusLabel();
@@ -95,10 +99,10 @@
             // 
             // tabControl
             // 
-            tabControl.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             tabControl.Controls.Add(tabPageProtocol);
             tabControl.Controls.Add(tabPageCodeGen);
             tabControl.Controls.Add(tabPageUART);
+            tabControl.Dock = DockStyle.Fill;
             tabControl.Location = new Point(3, 3);
             tabControl.Name = "tabControl";
             tabControl.SelectedIndex = 0;
@@ -459,12 +463,41 @@
             // 
             // statusStrip1
             // 
-            statusStrip1.Items.AddRange(new ToolStripItem[] { PCanLabel, toolStripStatusLabel2, BLEStatusLabel, toolStripStatusLabel1 });
+            statusStrip1.Items.AddRange(new ToolStripItem[] { toolStripSplitButton2, PCanLabel, toolStripStatusLabel2, BLEStatusLabel, toolStripStatusLabel1 });
             statusStrip1.Location = new Point(0, 428);
             statusStrip1.Name = "statusStrip1";
             statusStrip1.Size = new Size(800, 22);
             statusStrip1.TabIndex = 3;
             statusStrip1.Text = "statusStrip1";
+            // 
+            // toolStripSplitButton2
+            // 
+            toolStripSplitButton2.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripSplitButton2.DropDownItems.AddRange(new ToolStripItem[] { ChannelMenu });
+            toolStripSplitButton2.Image = STEMPM.Properties.Resources.ic_fluent_serial_port_24_filled;
+            toolStripSplitButton2.ImageTransparentColor = Color.Magenta;
+            toolStripSplitButton2.Name = "toolStripSplitButton2";
+            toolStripSplitButton2.Size = new Size(32, 20);
+            toolStripSplitButton2.Text = "toolStripSplitButton2";
+            // 
+            // ChannelMenu
+            // 
+            ChannelMenu.DropDownItems.AddRange(new ToolStripItem[] { cANToolStripMenuItem, bluetoothLEToolStripMenuItem });
+            ChannelMenu.Name = "ChannelMenu";
+            ChannelMenu.Size = new Size(138, 22);
+            ChannelMenu.Text = "Comm Type";
+            // 
+            // cANToolStripMenuItem
+            // 
+            cANToolStripMenuItem.Name = "cANToolStripMenuItem";
+            cANToolStripMenuItem.Size = new Size(141, 22);
+            cANToolStripMenuItem.Text = "CAN";
+            // 
+            // bluetoothLEToolStripMenuItem
+            // 
+            bluetoothLEToolStripMenuItem.Name = "bluetoothLEToolStripMenuItem";
+            bluetoothLEToolStripMenuItem.Size = new Size(141, 22);
+            bluetoothLEToolStripMenuItem.Text = "Bluetooth LE";
             // 
             // PCanLabel
             // 
@@ -554,5 +587,9 @@
         private ToolStripSplitButton toolStripSplitButton1;
         private ToolStripStatusLabel toolStripStatusLabel2;
         private ToolStripStatusLabel toolStripStatusLabel1;
+        private ToolStripSplitButton toolStripSplitButton2;
+        private ToolStripMenuItem ChannelMenu;
+        private ToolStripMenuItem cANToolStripMenuItem;
+        private ToolStripMenuItem bluetoothLEToolStripMenuItem;
     }
 }

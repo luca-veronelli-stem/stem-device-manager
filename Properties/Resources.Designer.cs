@@ -83,6 +83,16 @@ namespace STEMPM.Properties {
         /// <summary>
         ///   Cerca una risorsa localizzata di tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap ic_fluent_serial_port_24_filled {
+            get {
+                object obj = ResourceManager.GetObject("ic_fluent_serial_port_24_filled", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una risorsa localizzata di tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap logo_stem_2022_300x81 {
             get {
                 object obj = ResourceManager.GetObject("logo-stem-2022-300x81", resourceCulture);

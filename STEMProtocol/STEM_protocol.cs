@@ -8,7 +8,7 @@ using System.Text;
 using Stem_Protocol.PacketManager;
 
 namespace Stem_Protocol
-{ 
+{
     public class Layer
     {
         protected byte[] _data;
@@ -253,7 +253,7 @@ namespace Stem_Protocol
         // Evento che altre classi possono sottoscrivere
         public event PacketReadyEventHandler SP_PacketReadyEvent;
 
-     //   public event EventHandler<PacketReadyEventArgs> SP_PacketReadyEvent;
+        //   public event EventHandler<PacketReadyEventArgs> SP_PacketReadyEvent;
 
         private string _interface;
         private int _version;
@@ -406,7 +406,7 @@ namespace Stem_Protocol
                 //{
                 //    Array.Resize(ref chunk, _packetChunkSize);
                 //}
-                
+
                 chunks.Add(chunk);
             }
             return chunks;
@@ -451,7 +451,7 @@ namespace Stem_Protocol
     public class ProtocolManager
     {
         public event EventHandler<SendCommandEventArgs>? SendCommandRequest;
- 
+
         bool Answer_Received;
         bool Answer_Result;
 
@@ -530,7 +530,7 @@ namespace Stem_Protocol
                 );
 
                 // Stampa i dettagli           
-                Form1.FormRef.UpdateTerminal("Invio Comando");
+                Form1.FormRef.UpdateTerminal("Invio Comando can");
                 //Form1.FormRef.UpdateTerminal("Comando Boot manager:");
                 //Form1.FormRef.UpdateTerminal($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}");
 
@@ -568,7 +568,7 @@ namespace Stem_Protocol
                             && (data[1] == (AppData[1]))
                             );
                     };
-                    result = await packetManager.SendAndWaitForResponseAsync(networkPackets, responseValidator);
+                    result = await packetManager.SendCANAndWaitForResponseAsync(networkPackets, responseValidator);
                 }
                 else
                 {
@@ -589,9 +589,99 @@ namespace Stem_Protocol
         //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         //                  BLE related functions
         //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+        // Gestore dell'evento send command da instradare tramite ble
+        public async void OnSendBleCommand(object sender, SendCommandEventArgs e)
+        {
+            await HandleSendBleCommandAsync(sender, e);
+        }
 
+        private async Task HandleSendBleCommandAsync(object sender, SendCommandEventArgs e)
+        {
+            try
+            {
+                // Crea il pacchetto per l'applicationLayer
+                byte[] AppData = { (byte)(e.Command >> 8), (byte)(e.Command) };
 
-    
+                // AL
+                byte cmdInit = AppData[0]; // comando byte alto
+                byte cmdOpt = AppData[1]; // comando byte basso
+                byte[] payload = e.Payload;
+
+                // TL
+                byte cryptFlag = 0x00; // Nessuna crittografia
+
+                // NL
+                string interfaceType = "ble";
+                int version = 1;
+                uint recipientId = Form1.FormRef.RecipientId;
+
+                // Crea il pacchetto di livello Network
+                var networkLayer = new NetworkLayer(
+                    interfaceType,
+                    version,
+                    recipientId,
+                    new byte[] { cryptFlag, (byte)Form1.FormRef.senderId, (byte)(Form1.FormRef.senderId >> 8), (byte)(Form1.FormRef.senderId >> 16), (byte)(Form1.FormRef.senderId >> 24), 0, 0, cmdInit, cmdOpt }.Concat(payload).ToArray(),
+                    true
+                );
+
+                // Stampa i dettagli           
+                Form1.FormRef.UpdateTerminal("Invio Comando ble");
+                //Form1.FormRef.UpdateTerminal("Comando Boot manager:");
+                //Form1.FormRef.UpdateTerminal($"{string.Join(" ", networkLayer.ApplicationPacket.Select(b => b.ToString("X2")))}");
+
+                // Ottieni i chunk da spedire
+                var networkPackets = networkLayer.NetworkPackets;
+                var packetManager = new PacketManager.PacketManager(Form1.FormRef.senderId);
+                packetManager.Add_BLE_Channel(Form1.FormRef._BLE_SDL);
+
+                // Invia i pacchetti tramite BLE in modo asincrono
+                bool result = false;
+
+                if (e.WaitAnswer)
+                {
+                    // Funzione di validazione della risposta
+                    Func<byte[], bool> responseValidator = (data) =>
+                    {
+                        //il validatore di risposta nel caso della pagina firmware deve verificare anche che il numero di pagina sia corretto
+                        if ((AppData[0] == 0) && (AppData[1] == 7))
+                        {
+                            return (
+                            (data.Length > 0)
+                            && (data[0] == (0x80 | AppData[0]))
+                            && (data[1] == (AppData[1]))
+                            && (data[2] == (payload[0]))
+                            && (data[3] == (payload[1]))
+                            && (data[4] == (payload[2]))
+                            && (data[5] == (payload[3]))
+                            && (data[6] == (payload[4]))
+                            && (data[7] == (payload[5]))
+                            );
+                        }
+                        else return (
+                            (data.Length > 0)
+                            && (data[0] == (0x80 | AppData[0]))
+                            && (data[1] == (AppData[1]))
+                            );
+                    };
+                    result = await packetManager.SendBLEAndWaitForResponseAsync(networkPackets, responseValidator);
+                }
+                else
+                {
+                    result = await packetManager.SendThroughBLEAsync(networkPackets);
+                }
+
+                // Usa il risultato aggiornando il semaforo
+                Answer_Received = true;
+                Answer_Result = result;
+            }
+            catch (Exception ex)
+            {
+                // Gestione dell'eccezione
+                Form1.FormRef.UpdateTerminal($"Errore durante l'invio del comando BLE: {ex.Message}");
+            }
+        }
+
     }
 
 
@@ -613,7 +703,5 @@ namespace Stem_Protocol
             Payload = payload;
         }
     }
-
-
 }
 
