@@ -331,12 +331,12 @@ namespace Stem_Protocol.PacketManager
                             // Console.WriteLine("Message not sent.");
                         }
                     }
-                    await Task.Delay(5); //ritardo tra un chunck e il successivo
+                    await Task.Delay(15); //ritardo tra un chunck e il successivo
                 }
 
                 // Timeout usando il CancellationTokenSource
                 //var timeoutTask = Task.Delay(timeoutMs, cancellationTokenSource.Token);
-                var timeoutTask = Task.Delay(1000);
+                var timeoutTask = Task.Delay(5000);
                 var completedTask = await Task.WhenAny(tcs.Task, timeoutTask);
 
                 if (completedTask == tcs.Task)
