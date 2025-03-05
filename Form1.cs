@@ -148,6 +148,10 @@ namespace StemPC
             SelectedCommand = 0;
             senderId = 8;
 
+            //attiva il check della porta di comunicazione di default
+            cANToolStripMenuItem.Checked = false;
+            bluetoothLEToolStripMenuItem.Checked = true;
+
             //crea e aggiungi pcan
             var canInterface = "pcan";
             var channel = "PCAN_USBBUS1";
@@ -173,7 +177,7 @@ namespace StemPC
             BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
             tabControl.TabPages.Add(BootTabRef);
 
-            //crea e aggiungi tabcan
+            ////crea e aggiungi tabcan
             //CanTabPageRef = new CANInterfaceTab(_CDL);
             //CanTabPageRef.ActivateEvents();
             //tabControl.TabPages.Add(CanTabPageRef);
@@ -727,6 +731,8 @@ namespace StemPC
             CommunicationPort = "can";
             BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
             TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
+            cANToolStripMenuItem.Checked = true;
+            bluetoothLEToolStripMenuItem.Checked = false;
         }
 
         private void bluetoothLEToolStripMenuItem_Click(object sender, EventArgs e)
@@ -734,6 +740,8 @@ namespace StemPC
             CommunicationPort = "ble";
             BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
             TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
+            cANToolStripMenuItem.Checked = false;
+            bluetoothLEToolStripMenuItem.Checked = true;
         }
     }
 }
