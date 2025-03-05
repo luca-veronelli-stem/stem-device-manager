@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "mKTash/fJ1s=",
+  "dgSpecHash": "BqGDF7VYi78=",
   "success": true,
   "projectFilePath": "C:\\Users\\Michele\\OneDrive\\Dati\\Lavoro\\VSProjects\\StemProtocolCompanion\\STEMPM.csproj",
   "expectedPackageFiles": [
@@ -12,7 +12,7 @@
     "C:\\Users\\Michele\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.1\\microsoft.netcore.platforms.1.1.1.nupkg.sha512",
     "C:\\Users\\Michele\\.nuget\\packages\\microsoft.netcore.targets\\1.1.3\\microsoft.netcore.targets.1.1.3.nupkg.sha512",
     "C:\\Users\\Michele\\.nuget\\packages\\microsoft.win32.primitives\\4.3.0\\microsoft.win32.primitives.4.3.0.nupkg.sha512",
-    "C:\\Users\\Michele\\.nuget\\packages\\microsoft.windows.sdk.buildtools\\10.0.22621.2428\\microsoft.windows.sdk.buildtools.10.0.22621.2428.nupkg.sha512",
+    "C:\\Users\\Michele\\.nuget\\packages\\microsoft.windows.sdk.buildtools\\10.0.26100.1742\\microsoft.windows.sdk.buildtools.10.0.26100.1742.nupkg.sha512",
     "C:\\Users\\Michele\\.nuget\\packages\\netstandard.library\\1.6.1\\netstandard.library.1.6.1.nupkg.sha512",
     "C:\\Users\\Michele\\.nuget\\packages\\peak.pcanbasic.net\\4.10.0.964\\peak.pcanbasic.net.4.10.0.964.nupkg.sha512",
     "C:\\Users\\Michele\\.nuget\\packages\\plugin.ble\\3.1.0\\plugin.ble.3.1.0.nupkg.sha512",
