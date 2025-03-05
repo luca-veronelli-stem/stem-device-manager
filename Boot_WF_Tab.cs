@@ -25,7 +25,7 @@ public class Boot_Interface_Tab : TabPage
     private OpenFileDialog openFileDialog;
     private TableLayoutPanel mainLayout;
     private string filePath= "";
-    private BootManager BootHndlr;
+    public BootManager BootHndlr;
 
 
 
@@ -146,7 +146,6 @@ public class Boot_Interface_Tab : TabPage
         //crea la classe di upload
         BootHndlr = new BootManager();
         BootHndlr.ProgressChanged += UpdateProgressBar;
-        BootHndlr.SetHardwareChannel("ble"); //per ora ble fisso TOPX
     }
 
     private void BtnSelectFile_Click(object sender, EventArgs e)

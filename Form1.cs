@@ -12,12 +12,15 @@ using static ExcelHandler;
 using System.Collections.Generic;
 using DocumentFormat.OpenXml.Drawing.Diagrams;
 using System.Globalization;
+using Stem_Protocol.TelemetryManager;
 
 namespace StemPC
 {
     public partial class Form1 : Form
     {
         public const string Software_Version = "2.3";
+
+        public string CommunicationPort = "ble";
 
         private UInt16 Prescaler1s = 0;
 
@@ -167,6 +170,7 @@ namespace StemPC
 
             //crea e aggiungi il bootloader manager
             BootTabRef = new Boot_Interface_Tab();
+            BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
             tabControl.TabPages.Add(BootTabRef);
 
             //crea e aggiungi tabcan
@@ -199,9 +203,8 @@ namespace StemPC
 
             //crea e aggiungi il telemetry manager
             TelemetryTabRef = new Telemetry_Tab(RXpacketManager);
+            TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort); 
             tabControl.TabPages.Add(TelemetryTabRef);
-
-
 
             //Seleziona il tab iniziale
 
@@ -449,7 +452,8 @@ namespace StemPC
 
             //NL
             //string interfaceType = "can";   // Interfaccia CAN
-            string interfaceType = "ble";   // Interfaccia ble
+            //string interfaceType = "ble";   // Interfaccia ble
+            string interfaceType = CommunicationPort;
             int version = 1;                                // Versione del protocollo
             uint recipientId = Form1.FormRef.RecipientId;   // ID del destinatario
 

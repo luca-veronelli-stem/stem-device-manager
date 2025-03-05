@@ -34,7 +34,7 @@ public class TelemetryManager
 
     public bool TelemetryOn;
 
-    private string TelemetryHardwareChannel = "can";
+    private string TelemetryHardwareChannel = "ble";
 
     //Eventi della classe
     public event EventHandler<DataReadyEventArgs>? DataReady;
