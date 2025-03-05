@@ -203,7 +203,7 @@ namespace StemPC
 
             //crea e aggiungi il telemetry manager
             TelemetryTabRef = new Telemetry_Tab(RXpacketManager);
-            TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort); 
+            TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
             tabControl.TabPages.Add(TelemetryTabRef);
 
             //Seleziona il tab iniziale
@@ -381,7 +381,7 @@ namespace StemPC
             byte cmdOpt = (byte)(Form1.FormRef.SelectedCommand);//comando byte basso 
 
             // Array di TextBox: sostituisci con i tuoi effettivi TextBox
-            TextBox[] textBoxes = { Form1.FormRef.textBox1, Form1.FormRef.textBox2};
+            TextBox[] textBoxes = { Form1.FormRef.textBox1, Form1.FormRef.textBox2 };
 
             // Lista per raccogliere i valori validi
             List<byte> byteList = new List<byte>();
@@ -489,7 +489,8 @@ namespace StemPC
         {
             SelectedCommand = (short)comboBoxCommand.SelectedIndex;
 
-            if ((SelectedCommand == 1) || (SelectedCommand == 2)) { 
+            if ((SelectedCommand == 1) || (SelectedCommand == 2))
+            {
                 comboBoxVariables.Items.Clear();
 
                 _terminal.WriteLog("--------------------------------------------------------------------");
@@ -516,19 +517,20 @@ namespace StemPC
                 tableLayoutPanelProtocol.ColumnStyles[5].SizeType = SizeType.Absolute;
                 tableLayoutPanelProtocol.ColumnStyles[5].Width = 0;
             }
-            else{
-                    // Nascondi la colonna delle variabili
-                    tableLayoutPanelProtocol.ColumnStyles[3].SizeType = SizeType.Absolute;
-                    tableLayoutPanelProtocol.ColumnStyles[3].Width = 0;
+            else
+            {
+                // Nascondi la colonna delle variabili
+                tableLayoutPanelProtocol.ColumnStyles[3].SizeType = SizeType.Absolute;
+                tableLayoutPanelProtocol.ColumnStyles[3].Width = 0;
 
-                    // visualizza le colonne dei byte 1 e 2
-                    tableLayoutPanelProtocol.ColumnStyles[4].SizeType = SizeType.Percent;
-                    tableLayoutPanelProtocol.ColumnStyles[4].Width = (float)9.01;
-                    tableLayoutPanelProtocol.ColumnStyles[5].SizeType = SizeType.Percent;
-                    tableLayoutPanelProtocol.ColumnStyles[5].Width = (float)9.01;
+                // visualizza le colonne dei byte 1 e 2
+                tableLayoutPanelProtocol.ColumnStyles[4].SizeType = SizeType.Percent;
+                tableLayoutPanelProtocol.ColumnStyles[4].Width = (float)9.01;
+                tableLayoutPanelProtocol.ColumnStyles[5].SizeType = SizeType.Percent;
+                tableLayoutPanelProtocol.ColumnStyles[5].Width = (float)9.01;
             }
-    //   comboBoxVariables.SelectedIndex = 0;
-}
+            //   comboBoxVariables.SelectedIndex = 0;
+        }
 
 
         public void onAppLayerPacketReady(object sender, PacketReadyEventArgs e)
@@ -718,6 +720,20 @@ namespace StemPC
                 BLEStatusLabel.Text = "BLE: Non connesso";
                 BLEStatusLabel.BackColor = System.Drawing.Color.Salmon;
             }
+        }
+
+        private void cANToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CommunicationPort = "can";
+            BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
+            TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
+        }
+
+        private void bluetoothLEToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CommunicationPort = "ble";
+            BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
+            TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
         }
     }
 }
