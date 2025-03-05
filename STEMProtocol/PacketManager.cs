@@ -102,6 +102,8 @@ namespace Stem_Protocol.PacketManager
                 var unifiedPacket = packetQueues[packetId].SelectMany(chunk => chunk).ToArray();
                 packetQueues.Remove(packetId);
 
+                //FIX PACKET LENGHT
+
                 if (unifiedPacket.Length > 7)
                 {
 
@@ -416,6 +418,9 @@ namespace Stem_Protocol.PacketManager
             // Elimina l'indirizzo del sender
             int PackToCopyLenght = packet.Data.Length - 6;
             Array.Copy(packet.Data, 6, packet.Data, 2, PackToCopyLenght);
+            // e rimuovi gli ultimi 4 byte dal pacchetto
+            packet.Data = packet.Data.Take(packet.Data.Length - 4).ToArray();
+            //poi interpretalo
             ProcessPacket("ble", packet.Data);
         }
     }

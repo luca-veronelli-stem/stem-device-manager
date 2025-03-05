@@ -17,7 +17,7 @@ namespace SerialDataLayer;
 public class SerialMessage
 {
     public uint ArbitrationId { get; }
-    public byte[] Data { get; }
+    public byte[] Data { get; set; }
     public bool IsErrorFrame { get; }
     public DateTime Timestamp { get; }
 
