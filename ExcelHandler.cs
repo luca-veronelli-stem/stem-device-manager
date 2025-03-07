@@ -51,12 +51,14 @@ public class ExcelHandler
         public string Name { get; set; }
         public string AddrH { get; set; }
         public string AddrL { get; set; }
+        public string DataType { get; set; }
 
-        public VariableData(string name, string addrH, string addrL)
+        public VariableData(string name, string addrH, string addrL, string dataType)
         {
             Name = name;
             AddrH = addrH;
             AddrL = addrL;
+            DataType = dataType;
         }
 
         public string ToTerminal()
@@ -173,14 +175,15 @@ public class ExcelHandler
                                             var name = rowtemp.Cell("A").GetValue<string>();
                                             var addrH = rowtemp.Cell("B").GetValue<string>();
                                             var addrL = rowtemp.Cell("C").GetValue<string>();
+                                            var dataType = rowtemp.Cell("D").GetValue<string>();
 
                                             // Aggiungi alla lista solo se tutti i campi hanno un valore
                                             if (!string.IsNullOrWhiteSpace(name) &&
                                                 !string.IsNullOrWhiteSpace(addrH) &&
-                                                !string.IsNullOrWhiteSpace(addrL))
+                                                !string.IsNullOrWhiteSpace(addrL)) 
                                             {
                                                 // Aggiungi un oggetto RowData alla lista
-                                                Variabili.Add(new VariableData(name, addrH, addrL));
+                                                Variabili.Add(new VariableData(name, addrH, addrL, dataType));
                                             }
                                         }
                                     }

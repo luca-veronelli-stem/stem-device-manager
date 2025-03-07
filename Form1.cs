@@ -18,7 +18,7 @@ namespace StemPC
 {
     public partial class Form1 : Form
     {
-        public const string Software_Version = "2.3";
+        public const string Software_Version = "2.4";
 
         public string CommunicationPort = "ble";
 
