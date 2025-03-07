@@ -110,13 +110,15 @@ namespace StemPC
             public ExcelHandler.CommandData CurrentCommand { get; }
             public string MachineName { get; }
             public string MachineNameRecipient { get; }
+            public ExcelHandler.VariableData CurrentVariable { get; }
 
-            public AppLayerDecoderEventArgs(byte[] payload, ExcelHandler.CommandData currentCommand, string machineName, string machineNameRecipient)
+            public AppLayerDecoderEventArgs(byte[] payload, ExcelHandler.CommandData currentCommand, string machineName, string machineNameRecipient, VariableData currentVariable)
             {
                 Payload = payload;
                 CurrentCommand = currentCommand;
                 MachineName = machineName;
                 MachineNameRecipient = machineNameRecipient;
+                CurrentVariable = currentVariable;
             }
         }
         public event EventHandler<AppLayerDecoderEventArgs> AppLayerCommandDecoded;
@@ -569,7 +571,7 @@ namespace StemPC
             if (MachineName == "Non in tabella") MachineName = "0x" + sourceAddress.ToString("X8");
             if (MachineNameRecipient == "Non in tabella") MachineNameRecipient = "0x" + destinationAddress.ToString("X8");
 
-            //find command and decode application layer
+            //Decodifica l'application layer
             ExcelHandler.CommandData CurrentCommand = new ExcelHandler.CommandData("None", "0", "0");
 
             foreach (ExcelHandler.CommandData Item in Comandi)
@@ -583,8 +585,25 @@ namespace StemPC
                 }
             }
 
+            ExcelHandler.VariableData CurrentVariable = new ExcelHandler.VariableData("None", "0", "0", "");
+
+            //se il comando è leggi variabile logica lo mostro come è indicato nel dizionario
+            if (CurrentCommand.Name== "Leggi variabile logica risposta") {
+                // Stampa i risultati (per verifica)
+                foreach (ExcelHandler.VariableData itemtemp in Dizionario)
+                {
+                    byte AddrL = Convert.FromHexString(itemtemp.AddrL.PadLeft(2, '0'))[0];
+                    byte AddrH = Convert.FromHexString(itemtemp.AddrH.PadLeft(2, '0'))[0];
+                    if ((payload[2] == AddrH) && (payload[3] == AddrL))
+                    {
+                        CurrentVariable = itemtemp;
+                        break;
+                    }            
+                }
+            }
+
             //Aggiorna il textbox
-            AppLayerDecoderEventArgs EventArgs = new AppLayerDecoderEventArgs(payload, CurrentCommand, MachineName, MachineNameRecipient);
+            AppLayerDecoderEventArgs EventArgs = new AppLayerDecoderEventArgs(payload, CurrentCommand, MachineName, MachineNameRecipient, CurrentVariable);
             AppLayerCommandDecoded?.Invoke(this, EventArgs);
         }
 
@@ -611,6 +630,24 @@ namespace StemPC
                 string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
                 //comando riconosciuto
                 richTextBoxTx.AppendText($"RX - {timestamp}: Comando '{e.CurrentCommand.Name} ' da {e.MachineName} per {e.MachineNameRecipient}: ");
+                
+                //se il comando è leggi variabile logica lo mostro come è indicato nel dizionario
+                if (e.CurrentCommand.Name == "Leggi variabile logica risposta")
+                {
+                    richTextBoxTx.AppendText($" {e.CurrentVariable.Name}= ");
+                    if (e.CurrentVariable.DataType.Contains("uint16_t"))
+                    {
+                        //visualizza in esadecimale
+                        richTextBoxTx.AppendText("0x");
+                        for (int i = 0; i < 2; i++)
+                        {
+                            richTextBoxTx.AppendText(e.Payload[4+i].ToString("X2"));
+                        }
+                        //e in decimale
+                        int Val = ((e.Payload[4]) << 8) | (e.Payload[5]);
+                        richTextBoxTx.AppendText($" ({Val}) ");
+                    }
+                }
             }
             else
             {
@@ -619,12 +656,12 @@ namespace StemPC
             }
 
             //RAW application layer data
-            richTextBoxTx.AppendText("( ");
+            richTextBoxTx.AppendText("[RAW: ");
             for (int i = 0; i < e.Payload.Count(); i++)
             {
                 richTextBoxTx.AppendText(e.Payload[i].ToString("X2") + " ");
             }
-            richTextBoxTx.AppendText(" )\r\n");
+            richTextBoxTx.AppendText(" ]\r\n");
             // Imposta la posizione del cursore alla fine del testo.
             richTextBoxTx.SelectionStart = richTextBoxTx.Text.Length;
             // Esegue lo scroll fino alla posizione del cursore.
