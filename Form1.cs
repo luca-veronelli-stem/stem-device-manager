@@ -635,7 +635,18 @@ namespace StemPC
                 if (e.CurrentCommand.Name == "Leggi variabile logica risposta")
                 {
                     richTextBoxTx.AppendText($" {e.CurrentVariable.Name}= ");
-                    if (e.CurrentVariable.DataType.Contains("uint16_t"))
+                    if (e.CurrentVariable.DataType.Contains("uint8_t"))
+                    {
+                        //visualizza in esadecimale
+                        richTextBoxTx.AppendText("0x");
+                        for (int i = 0; i < 1; i++)
+                        {
+                            richTextBoxTx.AppendText(e.Payload[4 + i].ToString("X2"));
+                        }
+                        //e in decimale
+                        int Val = (e.Payload[4]);
+                        richTextBoxTx.AppendText($" ({Val}) ");
+                    }else if (e.CurrentVariable.DataType.Contains("uint16_t"))
                     {
                         //visualizza in esadecimale
                         richTextBoxTx.AppendText("0x");
@@ -646,6 +657,36 @@ namespace StemPC
                         //e in decimale
                         int Val = ((e.Payload[4]) << 8) | (e.Payload[5]);
                         richTextBoxTx.AppendText($" ({Val}) ");
+                    }
+                    else if (e.CurrentVariable.DataType.Contains("uint32_t"))
+                    {
+                        //visualizza in esadecimale
+                        richTextBoxTx.AppendText("0x");
+                        for (int i = 0; i < 4; i++)
+                        {
+                            richTextBoxTx.AppendText(e.Payload[4 + i].ToString("X2"));
+                        }
+                        //e in decimale
+                        int Val = ((e.Payload[4]) << 24) | ((e.Payload[5]) << 16) | ((e.Payload[6]) << 8) | (e.Payload[7]);
+                        richTextBoxTx.AppendText($" ({Val}) ");
+                    }
+                    else if (e.CurrentVariable.DataType.Contains("float"))
+                    {
+                        // Estrai i byte 4-7
+                        byte[] floatBytes = new byte[4];
+                        Array.Copy(e.Payload, 4, floatBytes, 0, 4);
+
+                        // Inverti l'ordine perché BitConverter usa il little-endian
+                        Array.Reverse(floatBytes);
+
+                        // Converte in float
+                        float Val = BitConverter.ToSingle(floatBytes, 0);
+                        richTextBoxTx.AppendText($" ({Val}) ");
+                    }
+                    else if (e.CurrentVariable.DataType.Contains("bool"))
+                    {
+                        if (e.Payload[4] == 0) richTextBoxTx.AppendText("false ");
+                        else richTextBoxTx.AppendText("true ");
                     }
                 }
             }
