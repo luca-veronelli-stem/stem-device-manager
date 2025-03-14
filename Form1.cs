@@ -18,7 +18,7 @@ namespace StemPC
 {
     public partial class Form1 : Form
     {
-        public const string Software_Version = "2.4";
+        public const string Software_Version = "2.5";
 
         public string CommunicationPort = "ble";
 
@@ -96,6 +96,7 @@ namespace StemPC
         //**************************
         public CANInterfaceTab CanTabPageRef { get; private set; }
         public Boot_Interface_Tab BootTabRef { get; private set; }
+        public Boot_Smart_Tab BootSmartTabRef { get; private set; }
         public static Form1 FormRef { get; private set; }
         public Telemetry_Tab TelemetryTabRef { get; private set; }
         public BLEInterfaceTab BLETabRef { get; private set; }
@@ -179,10 +180,27 @@ namespace StemPC
             BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
             tabControl.TabPages.Add(BootTabRef);
 
-            ////crea e aggiungi tabcan
-            //CanTabPageRef = new CANInterfaceTab(_CDL);
-            //CanTabPageRef.ActivateEvents();
-            //tabControl.TabPages.Add(CanTabPageRef);
+            //crea e aggiungi il bootloader manager smart
+            BootSmartTabRef = new Boot_Smart_Tab();
+            BootSmartTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
+            tabControl.TabPages.Add(BootSmartTabRef);
+
+
+            // Crea la lista dei dispositivi
+            List<DeviceInfo> BootSmartDevices = new List<DeviceInfo>
+                {
+                    new DeviceInfo(1, "Pippo"),
+                    new DeviceInfo(2, "Pluto"),
+                    new DeviceInfo(3, "Paperino")
+                };
+
+            // Popola la tab con la lista dei dispositivi
+            BootSmartTabRef.PopulateDevices(BootSmartDevices);
+
+            //crea e aggiungi tabcan
+            // CanTabPageRef = new CANInterfaceTab(_CDL);
+            // CanTabPageRef.ActivateEvents();
+            // tabControl.TabPages.Add(CanTabPageRef);
 
             //attiva il terminale
             _terminal = new Terminal(); // Inizializza l'istanza di Terminal
@@ -480,15 +498,26 @@ namespace StemPC
             // Ottieni i pacchetti suddivisi per il basso livello 
             var networkPackets = networkLayer.NetworkPackets;
 
+            var packetManager = new PacketManager(Form1.FormRef.senderId);
+            bool result=false;
+
+            switch (CommunicationPort)
+            {
+                case "can":
+                    // Invia i pacchetti tramite CAN                    
+                    packetManager.Add_CAN_Channel(Form1.FormRef._CDL);
+                    result = await packetManager.SendThroughCANAsync(networkPackets);
+                    break;
+                case "ble":
+                    //Invia i pacchetti tramite BLE
+                    packetManager.Add_BLE_Channel(Form1.FormRef._BLE_SDL);
+                    result = await packetManager.SendThroughBLEAsync(networkPackets);
+                    break;
+            }
             //// Invia i pacchetti tramite CAN
             //var packetManager = new PacketManager(Form1.FormRef.senderId);
             //packetManager.Add_CAN_Channel(Form1.FormRef._CDL);
             //bool result = await packetManager.SendThroughCANAsync(networkPackets);
-
-            //Invia i pacchetti tramite BLE
-            var packetManager = new PacketManager(Form1.FormRef.senderId);
-            packetManager.Add_BLE_Channel(Form1.FormRef._BLE_SDL);
-            bool result = await packetManager.SendThroughBLEAsync(networkPackets);
         }
 
         private void comboBoxCommand_SelectedIndexChanged(object sender, EventArgs e)
