@@ -183,7 +183,7 @@ namespace StemPC
             //crea e aggiungi il bootloader manager smart
             BootSmartTabRef = new Boot_Smart_Tab();
             BootSmartTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
-            tabControl.TabPages.Add(BootSmartTabRef);
+            //tabControl.TabPages.Add(BootSmartTabRef);
 
 
             // Crea la lista dei dispositivi
@@ -228,7 +228,7 @@ namespace StemPC
             //crea e aggiungi il telemetry manager
             TelemetryTabRef = new Telemetry_Tab(RXpacketManager);
             TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
-            tabControl.TabPages.Add(TelemetryTabRef);
+        //    tabControl.TabPages.Add(TelemetryTabRef);
 
             //Seleziona il tab iniziale
 
