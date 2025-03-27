@@ -116,7 +116,7 @@
             tabPageProtocol.Name = "tabPageProtocol";
             tabPageProtocol.Size = new Size(786, 326);
             tabPageProtocol.TabIndex = 3;
-            tabPageProtocol.Text = "Protocol";
+            tabPageProtocol.Text = "Application Layer";
             tabPageProtocol.UseVisualStyleBackColor = true;
             // 
             // tableLayoutPanelProtocol
