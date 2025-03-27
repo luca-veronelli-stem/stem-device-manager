@@ -415,6 +415,10 @@ namespace Stem_Protocol.PacketManager
 
         public void ProcessBLEPacket(SerialMessage packet)
         {
+            if (packet.Data.Length <= 8)
+            {
+                return;
+            }
             // Elimina l'indirizzo del sender
             int PackToCopyLenght = packet.Data.Length - 6;
             Array.Copy(packet.Data, 6, packet.Data, 2, PackToCopyLenght);
