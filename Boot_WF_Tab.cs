@@ -19,6 +19,9 @@ public class Boot_Interface_Tab : TabPage
     private System.Windows.Forms.TextBox txtFilePath;
     private System.Windows.Forms.Button btnSelectFile;
     private System.Windows.Forms.Button btnStartProcedure;
+    private System.Windows.Forms.Button btnStartBoot;
+    private System.Windows.Forms.Button btnEndBoot;
+    private System.Windows.Forms.Button btnRestart;
     private DataGridView dgvHexView;
     private CustomProgressBar progressBar;
     //private System.Windows.Forms.ProgressBar progressBar;
@@ -71,13 +74,40 @@ public class Boot_Interface_Tab : TabPage
         };
         btnStartProcedure.Click += BtnStartProcedure_Click;
 
+        // Pulsante per avviare il boot
+        btnStartBoot = new System.Windows.Forms.Button
+        {
+            Text = "Start Boot",
+            Width = 100
+        };
+        btnStartBoot.Click += BtnStartBoot_Click;
+        
+        // Pulsante per terminare il boot
+        btnEndBoot = new System.Windows.Forms.Button
+        {
+            Text = "End Boot",
+            Width = 100
+        };
+        btnEndBoot.Click += BtnEndBoot_Click;
+
+        // Pulsante per riavviare
+        btnRestart = new System.Windows.Forms.Button
+        {
+            Text = "Restart",
+            Width = 100
+        };
+        btnRestart.Click += BtnRestart_Click;
+
         // Contenitore per i pulsanti
         FlowLayoutPanel buttonPanel = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill
         };
         buttonPanel.Controls.Add(btnSelectFile);
+        buttonPanel.Controls.Add(btnStartBoot);
         buttonPanel.Controls.Add(btnStartProcedure);
+        buttonPanel.Controls.Add(btnEndBoot);
+        buttonPanel.Controls.Add(btnRestart);
 
         // DataGridView per visualizzare il contenuto in esadecimale e ASCII
         dgvHexView = new DataGridView
@@ -158,6 +188,28 @@ public class Boot_Interface_Tab : TabPage
         }
     }
 
+
+    private async void BtnStartBoot_Click(object sender, EventArgs e)
+    {
+        btnStartBoot.Enabled = false;
+        await BootHndlr.StartBoot();
+        btnStartBoot.Enabled = true;
+    }
+
+    private async void BtnEndBoot_Click(object sender, EventArgs e)
+    {
+        btnEndBoot.Enabled = false;
+        await BootHndlr.EndBoot();
+        btnEndBoot.Enabled = true;
+    }
+
+    private async void BtnRestart_Click(object sender, EventArgs e)
+    {
+        btnRestart.Enabled = false;
+        await BootHndlr.Restart();
+        btnRestart.Enabled = true;
+    }
+
     private async void BtnStartProcedure_Click(object sender, EventArgs e)
     {
       //  Form1.FormRef.RecipientId = 0x00030141; //indirizzo fisso dell'Eden (andrà estratto dal file)
@@ -193,10 +245,10 @@ public class Boot_Interface_Tab : TabPage
 
             //Form1.FormRef.RecipientId = BackupAddress;
 
-            await BootHndlr.StartBoot();
+          //  await BootHndlr.StartBoot();
 
             //esegui l'upload
-            await BootHndlr.UploadFirmware();  
+            await BootHndlr.UploadFirmwareOnly();  
 
             btnStartProcedure.Enabled = true;
         }
