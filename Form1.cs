@@ -228,7 +228,7 @@ namespace StemPC
             //crea e aggiungi il telemetry manager
             TelemetryTabRef = new Telemetry_Tab(RXpacketManager);
             TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
-        //    tabControl.TabPages.Add(TelemetryTabRef);
+            tabControl.TabPages.Add(TelemetryTabRef);
 
             //Seleziona il tab iniziale
 
