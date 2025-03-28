@@ -181,6 +181,7 @@ namespace Stem_Protocol.BootManager
         {
             // 2. Ciclo di programmazione blocchi
             pageNum = 0;
+            bool UpdateSuccesful = true;
 
             //  int offset = 0;
             for (int offset = 0; offset < firmwareData.Length; offset += FIRMWARE_BLOCK_SIZE)
@@ -198,7 +199,15 @@ namespace Stem_Protocol.BootManager
                 Array.Copy(currentBlockShrinked, currentBlock, currentBlockShrinked.Length);
 
                 // Invia il blocco
-                await SendFirmwareBlock(pageNum, currentBlock, (uint)FIRMWARE_BLOCK_SIZE);
+                bool success = await SendFirmwareBlock(pageNum, currentBlock, (uint)FIRMWARE_BLOCK_SIZE); ;
+                if (!success)
+                {
+                    Console.WriteLine($"Errore: Programmazione fallita alla pagina {pageNum}");
+                    MessageBox.Show($"Errore: Programmazione fallita alla pagina {pageNum}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    // Qui puoi decidere di interrompere il processo o eseguire un'azione di fallback
+                    UpdateSuccesful = false;
+                    break;
+                }
                 //     await Task.Delay(50); // attesa tra un comando e il successivo
                 Form1.FormRef.UpdateTerminal($"{DateTime.Now:HH:mm:ss.fff} - Page={pageNum:X}");
 
@@ -212,7 +221,11 @@ namespace Stem_Protocol.BootManager
             // Aggiorna progress bar
             OnProgressChanged(totalLength, totalLength); //100%
 
-            MessageBox.Show("Aggiornamento firmware completato!", "Successo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            if (UpdateSuccesful)
+            {
+                MessageBox.Show("Aggiornamento firmware completato!", "Successo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
         }
 
         public async Task EndBoot()
@@ -255,8 +268,8 @@ namespace Stem_Protocol.BootManager
             return block;
         }
 
-    
-        private async Task SendFirmwareBlock(uint pageNumber, byte[] block, uint pageSize)
+
+        private async Task<bool> SendFirmwareBlock(uint pageNumber, byte[] block, uint pageSize)
         {
             try
             {
@@ -275,8 +288,12 @@ namespace Stem_Protocol.BootManager
                 {
                     Answer = false;
                     Answer = await protocolManager.SendCommand(CMD_PROGRAM_BLOCK, Data, true);
-                    if (Answer == true) break;
-                }         
+                    if (Answer == true)
+                    {
+                        break;
+                    }
+                }
+                return Answer;
             }
             catch (Exception ex)
             {
