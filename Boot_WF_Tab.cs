@@ -30,8 +30,6 @@ public class Boot_Interface_Tab : TabPage
     private string filePath= "";
     public BootManager BootHndlr;
 
-
-
     public Boot_Interface_Tab()
     {
         Name = "tabPageBoot";

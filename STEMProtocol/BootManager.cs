@@ -77,13 +77,18 @@ namespace Stem_Protocol.BootManager
             bool Answer=false;
 
             // 1. Avvio procedura
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 1; i++)
             {
                 Answer = false;
                 Answer = await protocolManager.SendCommand(CMD_START_PROCEDURE, Array.Empty<byte>(), true);
-                if (Answer == true) break;
+                if (Answer == true)
+                {
+                    MessageBox.Show("Bootloader avviato!", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
                 await Task.Delay(100); // attesa
             }
+            MessageBox.Show("Risposta al comando non ricevuta!", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         public async Task UploadFirmware()
@@ -214,19 +219,26 @@ namespace Stem_Protocol.BootManager
         {
             // 3. Comando di fine procedura
             bool Answer = false;
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 1; i++)
             {
                 Answer = false;
                 Answer = await protocolManager.SendCommand(CMD_END_PROCEDURE, Array.Empty<byte>(), true);
-                if (Answer == true) break;
+                if (Answer == true)
+                {
+                    MessageBox.Show("Bootloader terminato!", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    break;
+                }
                 await Task.Delay(100); // attesa
             }
+
+            MessageBox.Show("Risposta al comando non ricevuta!", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         public async Task Restart()
         {
             // 4. Comando di reset
             protocolManager.SendCommand(CMD_RESTART_MACHINE, Array.Empty<byte>(), false);
+
             //for (int i = 0; i < 2; i++)
             //{
             //    await protocolManager.SendCommand(CMD_RESTART_MACHINE, Array.Empty<byte>(), false);

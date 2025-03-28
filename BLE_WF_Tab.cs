@@ -2,12 +2,18 @@
 using System.Drawing;
 using System.Windows.Forms;
 using BLE_Handler;
+using DocumentFormat.OpenXml.CustomProperties;
+
+using STEMPM.Properties;
 
 public partial class BLEInterfaceTab : TabPage
 {
     private ListBox listBoxDevices;
     private Button btnScan;
     private PictureBox loadingSpinner;
+
+    // Definisci il MemoryStream a livello di classe
+    private MemoryStream gifStream;
 
     public BLEManager bleManager;
 
@@ -33,8 +39,19 @@ public partial class BLEInterfaceTab : TabPage
         btnScan.Click += BtnScan_Click;
 
         // Spinner animato vicino al pulsante
+       
         loadingSpinner = new PictureBox();
-        loadingSpinner.Image = Image.FromFile("loading.gif"); // Assicurati di avere un file GIF di caricamento
+        //carica l'immagine dal file GIF 
+        // loadingSpinner.Image = Image.FromFile("loading.gif"); // Assicurati di avere un file GIF di caricamento
+        ////carica l'immagine dalle risorse
+        //loadingSpinner.Image = Resources.loading;
+
+        // Inizializza il MemoryStream senza chiuderlo
+        gifStream = new MemoryStream(Resources.loading);
+        loadingSpinner.Image = Image.FromStream(gifStream);
+
+        //    loadingSpinner.Image = global::STEMPM.Properties.Resources.loading;
+        //    loadingSpinner.Image = (Image)global::STEMPM.Properties.Resources.ResourceManager.GetObject("loading");
         loadingSpinner.SizeMode = PictureBoxSizeMode.StretchImage;
         loadingSpinner.Size = new System.Drawing.Size(40, 40);
         loadingSpinner.Location = new System.Drawing.Point(120, 5); // Posizione accanto al bottone
