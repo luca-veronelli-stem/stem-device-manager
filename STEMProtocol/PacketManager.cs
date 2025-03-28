@@ -186,7 +186,7 @@ namespace Stem_Protocol.PacketManager
 
                 // Timeout usando il CancellationTokenSource
                //var timeoutTask = Task.Delay(timeoutMs, cancellationTokenSource.Token);
-                var timeoutTask = Task.Delay(1000);
+                var timeoutTask = Task.Delay(4000);
                 var completedTask = await Task.WhenAny(tcs.Task, timeoutTask);
 
                 if (completedTask == tcs.Task)
