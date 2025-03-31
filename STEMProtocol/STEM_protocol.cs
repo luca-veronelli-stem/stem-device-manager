@@ -665,10 +665,10 @@ namespace Stem_Protocol
                             //comando
                             && (data[0] == (0x80 | AppData[0]))
                             && (data[1] == (AppData[1]))
-                            //tipo firmware
-                            && (data[2] == (payload[0]))
-                            && (data[3] == (payload[1]))
-                            //numero pagina
+                            ////tipo firmware per ora commentato, da attivare come parametro dall'esterno
+                            //&& (data[2] == (payload[0]))
+                            //&& (data[3] == (payload[1]))
+                            //numero pagina per ora sospeso
                             && (data[4] == (payload[2]))
                             && (data[5] == (payload[3]))
                             && (data[6] == (payload[4]))

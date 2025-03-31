@@ -93,19 +93,31 @@ namespace Stem_Protocol.BootManager
 
         public async Task UploadFirmware()
         {
-         //   return;
+            // 1. Avvio procedura
+            bool Answer = false;
 
-            //// 1. Avvio procedura
-            //for (int i = 0; i < 2; i++)
-            //{
-            //    SendCanCommand(CMD_START_PROCEDURE, Array.Empty<byte>(), true);
-            //    await Task.Delay(100); // attesa
-            //}
-     
+            // 1. Avvio procedura
+            for (int i = 0; i < 1; i++)
+            {
+                Answer = false;
+                Answer = await protocolManager.SendCommand(CMD_START_PROCEDURE, Array.Empty<byte>(), true);
+                if (Answer == true)
+                {
+                    break;
+                }
+                await Task.Delay(100); // attesa
+            }
+            if (Answer == false)
+            {
+                MessageBox.Show("Boot startup failed!", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
             // 2. Ciclo di programmazione blocchi
             pageNum = 0;
+            bool UpdateSuccesful = true;
 
-          //  int offset = 0;
+            //  int offset = 0;
             for (int offset = 0; offset < firmwareData.Length; offset += FIRMWARE_BLOCK_SIZE)
             {
 
@@ -120,61 +132,49 @@ namespace Stem_Protocol.BootManager
                 // Copia dei dati di currentBlockShrinked in currentBlock
                 Array.Copy(currentBlockShrinked, currentBlock, currentBlockShrinked.Length);
 
-                //if (pageNum == 0)
-                //{
-                //    for (int i = 0; i < 8; i++)
-                //    {
-                //        // Invia il blocco
-                //        await SendFirmwareBlock(pageNum, currentBlock, (uint)FIRMWARE_BLOCK_SIZE);
+                // Invia il blocco
+                bool success = await SendFirmwareBlock(pageNum, currentBlock, (uint)FIRMWARE_BLOCK_SIZE); ;
+                if (!success)
+                {
+                    Console.WriteLine($"Error: Programming failed at page {pageNum}");
+                    MessageBox.Show($"Error: Programming failed at page {pageNum}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    // Qui puoi decidere di interrompere il processo o eseguire un'azione di fallback
+                    UpdateSuccesful = false;
+                    break;
+                }
 
-                //        await Task.Delay(400); // attesa tra un comando e il successivo
-
-                //        Form1.FormRef.UpdateTerminal($"{DateTime.Now:HH:mm:ss.fff} - Page={pageNum:X}");
-                //    }
-                //}
-                //else
-                //{
-                //    for (int i = 0; i < 2; i++)
-                //    {
-                        // Invia il blocco
-                        await SendFirmwareBlock(pageNum, currentBlock, (uint)FIRMWARE_BLOCK_SIZE);
-
-                   //     await Task.Delay(50); // attesa tra un comando e il successivo
-
-                        Form1.FormRef.UpdateTerminal($"{DateTime.Now:HH:mm:ss.fff} - Page={pageNum:X}");
-             //       }
-         //       }
-
+                Form1.FormRef.UpdateTerminal($"{DateTime.Now:HH:mm:ss.fff} - Page={pageNum:X}");
                 currentOffset = offset;
                 pageNum++;
 
                 // Aggiorna progress bar
                 OnProgressChanged(currentOffset, totalLength);
-            //    break;
             }
 
             // 3. Comando di fine procedura
-            bool Answer = false;
+            Answer = false;
 
             // Aggiorna progress bar
             OnProgressChanged(totalLength, totalLength); //100%
 
-            for (int i = 0; i < 5; i++)
-            {
-                Answer = false;
-                Answer = await protocolManager.SendCommand(CMD_END_PROCEDURE, Array.Empty<byte>(), true);
-                if (Answer == true) break;
-                await Task.Delay(100); // attesa
-            }
+            if (UpdateSuccesful) {
+                for (int i = 0; i < 5; i++)
+                {
+                    Answer = false;
+                    Answer = await protocolManager.SendCommand(CMD_END_PROCEDURE, Array.Empty<byte>(), true);
+                    if (Answer == true) break;
+                    await Task.Delay(100); // attesa
+                }
 
-            // 4. Comando di reset
-            for (int i = 0; i < 2; i++)
-            {
-                await protocolManager.SendCommand(CMD_RESTART_MACHINE, Array.Empty<byte>(), false);
-                await Task.Delay(1000); // attesa tra un comando e il successivo
-            }
+                // 4. Comando di reset
+                for (int i = 0; i < 2; i++)
+                {
+                    await protocolManager.SendCommand(CMD_RESTART_MACHINE, Array.Empty<byte>(), false);
+                    await Task.Delay(1000); // attesa tra un comando e il successivo
+                }
 
-            MessageBox.Show("Aggiornamento firmware completato!", "Successo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Firmware update complete!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }        
         }
 
         public async Task UploadFirmwareOnly()

@@ -22,6 +22,7 @@ public class Boot_Interface_Tab : TabPage
     private System.Windows.Forms.Button btnStartBoot;
     private System.Windows.Forms.Button btnEndBoot;
     private System.Windows.Forms.Button btnRestart;
+    private System.Windows.Forms.Button btnAuto;
     private DataGridView dgvHexView;
     private CustomProgressBar progressBar;
     //private System.Windows.Forms.ProgressBar progressBar;
@@ -96,16 +97,30 @@ public class Boot_Interface_Tab : TabPage
         };
         btnRestart.Click += BtnRestart_Click;
 
+        // Pulsante per procedura automatica
+        btnAuto = new System.Windows.Forms.Button
+        {
+            Text = "Upload Firmware",
+            Width = 100
+        };
+        btnAuto.Click += BtnAuto_Click;
+
         // Contenitore per i pulsanti
         FlowLayoutPanel buttonPanel = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill
         };
+
         buttonPanel.Controls.Add(btnSelectFile);
-        buttonPanel.Controls.Add(btnStartBoot);
-        buttonPanel.Controls.Add(btnStartProcedure);
-        buttonPanel.Controls.Add(btnEndBoot);
-        buttonPanel.Controls.Add(btnRestart);
+
+        //Versione Egicon
+        //buttonPanel.Controls.Add(btnStartBoot);
+        //buttonPanel.Controls.Add(btnStartProcedure);
+        //buttonPanel.Controls.Add(btnEndBoot);
+        //buttonPanel.Controls.Add(btnRestart);
+
+        //Versione nostra
+        buttonPanel.Controls.Add(btnAuto);
 
         // DataGridView per visualizzare il contenuto in esadecimale e ASCII
         dgvHexView = new DataGridView
@@ -252,7 +267,29 @@ public class Boot_Interface_Tab : TabPage
         }
     }
 
-  
+    private async void BtnAuto_Click(object sender, EventArgs e)
+    {
+        btnAuto.Enabled = false;
+
+        if (filePath == "")
+        {
+            MessageBox.Show("Select Firmware file .bin!");
+        }
+        else if (Form1.FormRef.RecipientId == 0)
+        {
+            MessageBox.Show("Select destination address!");
+        }
+        else
+        {
+            //setta il perscorso del file di boot
+            BootHndlr.SetFirmwarePath(filePath);
+
+            //esegui l'upload
+            await BootHndlr.UploadFirmware();
+        }
+
+        btnAuto.Enabled = true;
+    }
 
     private void DisplayFileContent(string filePath)
     {
