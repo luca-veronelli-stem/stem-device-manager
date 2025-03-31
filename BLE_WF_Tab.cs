@@ -61,6 +61,16 @@ public partial class BLEInterfaceTab : TabPage
         Controls.Add(listBoxDevices);
         Controls.Add(loadingSpinner);
 
+        // Aggiungi il ComboBox per la scelta dell'opzione di connessione
+        ComboBox comboBoxConnectOptions = new ComboBox();
+        comboBoxConnectOptions.Name = "comboBoxConnectOptions";
+        comboBoxConnectOptions.Location = new Point(listBoxDevices.Right + 10, listBoxDevices.Top);
+        comboBoxConnectOptions.Size = new Size(200, 30);
+        comboBoxConnectOptions.Items.Add("Connect with response");
+        comboBoxConnectOptions.Items.Add("Connect without response");
+        comboBoxConnectOptions.SelectedIndex = 1; // Imposta l'opzione di default
+        Controls.Add(comboBoxConnectOptions);
+
         bleManager = new BLEManager();
         bleManager.OnDeviceDiscovered += BleManager_OnDeviceDiscovered;
         bleManager.OnScanCompleted += BleManager_OnScanCompleted; // Aggiungi un evento di fine scansione
@@ -111,8 +121,14 @@ public partial class BLEInterfaceTab : TabPage
         if (listBoxDevices.SelectedItem != null)
         {
             string deviceName = listBoxDevices.SelectedItem.ToString();
+
+            // Recupera il ComboBox dal controllo (si assume che lo abbiamo aggiunto con il Name "comboBoxConnectOptions")
+            ComboBox comboBoxConnectOptions = this.Controls["comboBoxConnectOptions"] as ComboBox;
+            bool withResponse = (comboBoxConnectOptions.SelectedItem.ToString() == "Connect with response");
+
+            // Passa il parametro al metodo di connessione 
             if (deviceName != null)
-                await bleManager.ConnectToAsync(deviceName);
+                await bleManager.ConnectToAsync(deviceName, withResponse);
         }
     }
 }

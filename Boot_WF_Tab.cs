@@ -45,9 +45,9 @@ public class Boot_Interface_Tab : TabPage
         };
 
         mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30)); // TextBox
-        mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 50)); // Pulsanti
+        mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 80)); // Pulsanti
         mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // DataGridView
-        mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30)); // ProgressBar
+        mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40)); // ProgressBar
 
         // TextBox per mostrare il percorso del file selezionato
         txtFilePath = new System.Windows.Forms.TextBox
@@ -114,13 +114,13 @@ public class Boot_Interface_Tab : TabPage
         buttonPanel.Controls.Add(btnSelectFile);
 
         //Versione Egicon
-        buttonPanel.Controls.Add(btnStartBoot);
-        buttonPanel.Controls.Add(btnStartProcedure);
+        //buttonPanel.Controls.Add(btnStartBoot);
+        //buttonPanel.Controls.Add(btnStartProcedure);
         //buttonPanel.Controls.Add(btnEndBoot);
-        buttonPanel.Controls.Add(btnRestart);
+        //buttonPanel.Controls.Add(btnRestart);
 
         //Versione nostra
-        //buttonPanel.Controls.Add(btnAuto);
+        buttonPanel.Controls.Add(btnAuto);
 
         // DataGridView per visualizzare il contenuto in esadecimale e ASCII
         dgvHexView = new DataGridView

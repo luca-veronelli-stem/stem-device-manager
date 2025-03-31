@@ -162,7 +162,7 @@ namespace BLE_Handler
         /// <summary>
         /// Connette al dispositivo BLE specificato per nome.
         /// </summary>
-        public async Task ConnectToAsync(string deviceName)
+        public async Task ConnectToAsync(string deviceName, bool ConnectWithResponse)
         {
             try
             {
@@ -240,9 +240,12 @@ namespace BLE_Handler
                 txCharacteristic.ValueUpdated += TxCharacteristic_ValueUpdated;
                 await txCharacteristic.StartUpdatesAsync();
 
-                // Abilita la scrittura della caratterisitca rx senza risposta per accelerare il flusso
-              //  rxCharacteristic.WriteType = CharacteristicWriteType.WithoutResponse;
-                rxCharacteristic.WriteType = CharacteristicWriteType.WithResponse;
+                if (ConnectWithResponse == false)
+                {
+                    // Abilita la scrittura della caratterisitca rx senza risposta per accelerare il flusso
+                    rxCharacteristic.WriteType = CharacteristicWriteType.WithoutResponse;
+                }else
+                    rxCharacteristic.WriteType = CharacteristicWriteType.WithResponse;
 
                 // Memorizza il dispositivo per uso futuro
                 connectedDevice = device;

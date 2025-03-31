@@ -396,7 +396,7 @@ namespace Stem_Protocol.PacketManager
                             // Console.WriteLine("Message not sent.");
                         }
                     }
-                    await Task.Delay(5); //ritardo tra un chunck e il successivo
+                //    await Task.Delay(5); //ritardo tra un chunck e il successivo
                 }
                 //            });
                 return true;
