@@ -25,6 +25,7 @@ namespace Stem_Protocol.BootManager
 
         // Dimensione blocco firmware
         private const int FIRMWARE_BLOCK_SIZE = 1024;
+        //private const int FIRMWARE_BLOCK_SIZE = 128;
 
         //Path del firmware
         private string firmwareName="";

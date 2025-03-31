@@ -243,7 +243,7 @@ namespace Stem_Protocol.PacketManager
                                 // Console.WriteLine("Message not sent.");
                             }
                         }
-                    await Task.Delay(5); //ritardo tra un chunck e il successivo
+             //       await Task.Delay(20); //ritardo tra un chunck e il successivo
                     }
                 //            });
                 return true;
@@ -333,7 +333,7 @@ namespace Stem_Protocol.PacketManager
                             // Console.WriteLine("Message not sent.");
                         }
                     }
-                //    await Task.Delay(5); //ritardo tra un chunck e il successivo
+                 //   await Task.Delay(100); //ritardo tra un chunck e il successivo
                 }
 
                 // Timeout usando il CancellationTokenSource

@@ -8,6 +8,7 @@ using Plugin.BLE;
 using Plugin.BLE.Abstractions;
 using Plugin.BLE.Abstractions.Contracts;
 using Plugin.BLE.Abstractions.EventArgs;
+using StemPC;
 
 namespace BLE_Handler
 {
@@ -240,7 +241,8 @@ namespace BLE_Handler
                 await txCharacteristic.StartUpdatesAsync();
 
                 // Abilita la scrittura della caratterisitca rx senza risposta per accelerare il flusso
-                rxCharacteristic.WriteType = CharacteristicWriteType.WithoutResponse;
+              //  rxCharacteristic.WriteType = CharacteristicWriteType.WithoutResponse;
+                rxCharacteristic.WriteType = CharacteristicWriteType.WithResponse;
 
                 // Memorizza il dispositivo per uso futuro
                 connectedDevice = device;
@@ -250,6 +252,7 @@ namespace BLE_Handler
                 ConnectionStatusChanged?.Invoke(this, true);
 
                 Debug.WriteLine($"Connesso al dispositivo: {device.Name} ({device.Id})");
+                Form1.FormRef.UpdateTerminal($"Connesso al dispositivo: {device.Name} ({device.Id})");
 
                 MonitorDeviceConnection();
             }
@@ -337,7 +340,7 @@ namespace BLE_Handler
                 await rxCharacteristic.WriteAsync(data);
                 
                 Debug.WriteLine($"Invio dati riuscito: {data.Length} bytes");
-            //    Debug.WriteLine("Bytes: " + BitConverter.ToString(data));
+             //   Debug.WriteLine("Bytes: " + BitConverter.ToString(data)); //debug dati in uscita
                 
                 return true;
             }

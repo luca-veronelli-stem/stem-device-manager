@@ -568,8 +568,10 @@ namespace Stem_Protocol
                             (data.Length > 0)
                             && (data[0] == (0x80 | AppData[0]))
                             && (data[1] == (AppData[1]))
-                            && (data[2] == (payload[0]))
-                            && (data[3] == (payload[1]))
+                            ////tipo firmware per ora commentato, da attivare come parametro dall'esterno
+                            //&& (data[2] == (payload[0]))
+                            //&& (data[3] == (payload[1]))
+                            //numero pagina 
                             && (data[4] == (payload[2]))
                             && (data[5] == (payload[3]))
                             && (data[6] == (payload[4]))
@@ -668,7 +670,7 @@ namespace Stem_Protocol
                             ////tipo firmware per ora commentato, da attivare come parametro dall'esterno
                             //&& (data[2] == (payload[0]))
                             //&& (data[3] == (payload[1]))
-                            //numero pagina per ora sospeso
+                            //numero pagina
                             && (data[4] == (payload[2]))
                             && (data[5] == (payload[3]))
                             && (data[6] == (payload[4]))
