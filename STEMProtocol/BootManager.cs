@@ -68,6 +68,10 @@ namespace Stem_Protocol.BootManager
             // Legge il firmware
             firmwareData = File.ReadAllBytes(FirmwareName);
             totalLength = firmwareData.Length;
+
+            //Legge il tipo di firmware facendo il cast a 16 bit litle endian dei byte 14 e 15
+            fwType = (ushort)((firmwareData[15] << 8) | firmwareData[14]);
+
             currentOffset = 0;
             // Aggiorna il progresso
             OnProgressChanged(currentOffset, totalLength);
