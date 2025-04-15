@@ -18,7 +18,7 @@ namespace StemPC
 {
     public partial class Form1 : Form
     {
-        public const string Software_Version = "2.8";
+        public const string Software_Version = "2.9";
 
         public string CommunicationPort = "ble";
 
@@ -688,6 +688,42 @@ namespace StemPC
                         richTextBoxTx.AppendText($" ({Val}) ");
                     }
                     else if (e.CurrentVariable.DataType.Contains("uint32_t"))
+                    {
+                        //visualizza in esadecimale
+                        richTextBoxTx.AppendText("0x");
+                        for (int i = 0; i < 4; i++)
+                        {
+                            richTextBoxTx.AppendText(e.Payload[4 + i].ToString("X2"));
+                        }
+                        //e in decimale
+                        int Val = ((e.Payload[4]) << 24) | ((e.Payload[5]) << 16) | ((e.Payload[6]) << 8) | (e.Payload[7]);
+                        richTextBoxTx.AppendText($" ({Val}) ");
+                    }
+                    else if (e.CurrentVariable.DataType.Contains("int8_t"))
+                    {
+                        //visualizza in esadecimale
+                        richTextBoxTx.AppendText("0x");
+                        for (int i = 0; i < 1; i++)
+                        {
+                            richTextBoxTx.AppendText(e.Payload[4 + i].ToString("X2"));
+                        }
+                        //e in decimale
+                        int Val = (e.Payload[4]);
+                        richTextBoxTx.AppendText($" ({Val}) ");
+                    }
+                    else if (e.CurrentVariable.DataType.Contains("int16_t"))
+                    {
+                        //visualizza in esadecimale
+                        richTextBoxTx.AppendText("0x");
+                        for (int i = 0; i < 2; i++)
+                        {
+                            richTextBoxTx.AppendText(e.Payload[4 + i].ToString("X2"));
+                        }
+                        //e in decimale
+                        int Val = ((e.Payload[4]) << 8) | (e.Payload[5]);
+                        richTextBoxTx.AppendText($" ({Val}) ");
+                    }
+                    else if (e.CurrentVariable.DataType.Contains("int32_t"))
                     {
                         //visualizza in esadecimale
                         richTextBoxTx.AppendText("0x");
