@@ -10,6 +10,15 @@
 		<ApplicationIcon>Resources\Ztem.ico</ApplicationIcon>
 		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
 		<PlatformTarget>x64</PlatformTarget>
+		<Configurations>Debug;Release;STEMDM;TOPLIFT-A2-Debug;TOPLIFT-A2-Release</Configurations>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='TOPLIFT-A2-Debug|AnyCPU'">
+	  <DefineConstants>$(DefineConstants);TOPLIFT</DefineConstants>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='TOPLIFT-A2-Release|AnyCPU'">
+	  <DefineConstants>$(DefineConstants);TOPLIFT</DefineConstants>
 	</PropertyGroup>
 
 	<ItemGroup>

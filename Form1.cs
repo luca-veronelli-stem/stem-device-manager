@@ -14,6 +14,9 @@ using DocumentFormat.OpenXml.Drawing.Diagrams;
 using System.Globalization;
 using Stem_Protocol.TelemetryManager;
 
+using System.IO;
+using System.Reflection;
+
 namespace StemPC
 {
     public partial class Form1 : Form
@@ -247,11 +250,39 @@ namespace StemPC
             //tableLayoutPanelProtocol.ColumnStyles[5].Width = 0;
 
             //Estrai i dati dal dizionario stem
+
+            //hExcel = new ExcelHandler();
+            //IndirizziProtocollo = new List<ExcelHandler.RowData>();
+            //Comandi = new List<ExcelHandler.CommandData>();
+            //Dizionario = new List<ExcelHandler.VariableData>();
+            //hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, ExcelfilePath);
+
+#if TOPLIFT
+            // Caricamento diretto del file Excel dalle risorse (embedded)
+            var asm = Assembly.GetExecutingAssembly();
+            const string resourceName = "StemPC.Dizionari STEM.xlsx";
+            using (var stream = asm.GetManifestResourceStream(resourceName))
+            {
+                if (stream == null)
+                    throw new FileNotFoundException("Risorsa non trovata: " + resourceName);
+                // Usa un overload di ExcelHandler che accetta uno Stream
+                hExcel = new ExcelHandler(stream);
+                // Estrai i dati direttamente dal flusso
+                IndirizziProtocollo = new List<ExcelHandler.RowData>();
+                Comandi            = new List<ExcelHandler.CommandData>();
+                Dizionario         = new List<ExcelHandler.VariableData>();
+                hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, Dizionario);
+            }
+#else
+            // Uso del file esterno per configurazioni diverse da client
+            ExcelfilePath = Path.Combine(Application.StartupPath, "Dizionari STEM.xlsx");
             hExcel = new ExcelHandler();
             IndirizziProtocollo = new List<ExcelHandler.RowData>();
             Comandi = new List<ExcelHandler.CommandData>();
             Dizionario = new List<ExcelHandler.VariableData>();
             hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, ExcelfilePath);
+#endif
+
 
             _terminal.WriteLog("--------------------------------------------------------------------");
             // Stampa i risultati (per verifica)

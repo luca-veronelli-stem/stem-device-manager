@@ -1,12 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Spreadsheet;
 using static ExcelHandler;
 
 public class ExcelHandler
 {
+    // Internal stream for embedded resources
+    private readonly Stream _excelStream;
+
+    // Default constructor for file-based usage
+    public ExcelHandler() { }
+
+    // Overload constructor for stream-based usage
+    public ExcelHandler(Stream excelStream)
+    {
+        _excelStream = excelStream ?? throw new ArgumentNullException(nameof(excelStream));
+    }
+
     // Definizione del tipo di dato personalizzato
     public class RowData
     {
@@ -21,10 +33,7 @@ public class ExcelHandler
             Indirizzo = indirizzo;
         }
 
-        public string ToTerminal()
-        {
-            return $"Macchina: {Macchina}, Scheda: {Scheda}, Indirizzo: {Indirizzo}";
-        }
+        public string ToTerminal() => $"Macchina: {Macchina}, Scheda: {Scheda}, Indirizzo: {Indirizzo}";
     }
 
     public class CommandData
@@ -40,10 +49,7 @@ public class ExcelHandler
             CmdL = cmdL;
         }
 
-        public string ToTerminal()
-        {
-            return $"Comando: {Name}, codeH: {CmdH}, codeL: {CmdL}";
-        }
+        public string ToTerminal() => $"Comando: {Name}, codeH: {CmdH}, codeL: {CmdL}";
     }
 
     public class VariableData
@@ -61,12 +67,12 @@ public class ExcelHandler
             DataType = dataType;
         }
 
-        public string ToTerminal()
-        {
-            return $"Variabile logica: {Name}, addrH: {AddrH}, addrL: {AddrL}";
-        }
+        public string ToTerminal() => $"Variabile logica: {Name}, addrH: {AddrH}, addrL: {AddrL}";
     }
 
+    /// <summary>
+    /// Estrae dati protocollo (indirizzi e comandi) da un file esterno
+    /// </summary>
     public void EstraiDatiProtocollo(List<RowData> IndirizziProtocollo, List<CommandData> Comandi, string filePath)
     {
         IndirizziProtocollo.Clear();
@@ -75,61 +81,90 @@ public class ExcelHandler
         {
             using (var workbook = new XLWorkbook(filePath))
             {
-                //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 // Estrazione indirizzi protocollo
-                //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 var worksheet = workbook.Worksheet("indirizzo protocollo stem");
-
-                // Scorri le righe del foglio, iniziando da 2 (se la prima riga contiene intestazioni)
                 foreach (var row in worksheet.RowsUsed().Skip(1))
                 {
-                    // Leggi i dati delle colonne A, C e G
                     var macchina = row.Cell("A").GetValue<string>();
                     var scheda = row.Cell("C").GetValue<string>();
                     var indirizzo = row.Cell("G").GetValue<string>();
-
-                    // Aggiungi alla lista solo se tutti i campi hanno un valore
-                    if (!string.IsNullOrWhiteSpace(macchina) &&
-                        !string.IsNullOrWhiteSpace(scheda) &&
-                        !string.IsNullOrWhiteSpace(indirizzo))
-                    {
-                        // Aggiungi un oggetto RowData alla lista
+                    if (!string.IsNullOrWhiteSpace(macchina) && !string.IsNullOrWhiteSpace(scheda) && !string.IsNullOrWhiteSpace(indirizzo))
                         IndirizziProtocollo.Add(new RowData(macchina, scheda, indirizzo));
-                    }
                 }
 
-                //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 // Estrazione comandi protocollo
-                //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 worksheet = workbook.Worksheet("COMANDI");
-
-                // Scorri le righe del foglio, iniziando da 2 (se la prima riga contiene intestazioni)
                 foreach (var row in worksheet.RowsUsed().Skip(1))
                 {
-                    // Leggi i dati delle colonne A, B e C
                     var name = row.Cell("A").GetValue<string>();
                     var cmdH = row.Cell("B").GetValue<string>();
                     var cmdL = row.Cell("C").GetValue<string>();
-
-                    // Aggiungi alla lista solo se tutti i campi hanno un valore
-                    if (!string.IsNullOrWhiteSpace(name) &&
-                        !string.IsNullOrWhiteSpace(cmdH) &&
-                        !string.IsNullOrWhiteSpace(cmdL))
-                    {
-                        // Aggiungi un oggetto RowData alla lista
+                    if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(cmdH) && !string.IsNullOrWhiteSpace(cmdL))
                         Comandi.Add(new CommandData(name, cmdH, cmdL));
-                    }
                 }
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Errore nell'apertura file excel: {ex.Message}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
-       
-            Application.Exit(); // Chiude l'applicazione
-            Environment.Exit(0); // Termina il processo
-        }   
+            MessageBox.Show($"Errore nell'apertura file excel: {ex.Message}", "Errore",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+            Application.Exit();
+            Environment.Exit(0);
+        }
     }
+
+    /// <summary>
+    /// Estrae dati protocollo (indirizzi, comandi) direttamente da uno stream (risorsa embedded)
+    /// </summary>
+    public void EstraiDatiProtocollo(List<RowData> IndirizziProtocollo, List<CommandData> Comandi, List<VariableData> Dizionario)
+    {
+        if (_excelStream == null)
+            throw new InvalidOperationException("Stream non inizializzato: utilizzare il costruttore ExcelHandler(Stream)");
+
+        IndirizziProtocollo.Clear();
+        Comandi.Clear();
+        Dizionario.Clear(); // al momento non popolato, estendere se necessario
+
+        try
+        {
+            // Assicura la posizione all'inizio dello stream
+            if (_excelStream.CanSeek)
+                _excelStream.Seek(0, SeekOrigin.Begin);
+
+            using (var workbook = new XLWorkbook(_excelStream))
+            {
+                // Estrarre indirizzi e comandi come sopra
+                var worksheet = workbook.Worksheet("indirizzo protocollo stem");
+                foreach (var row in worksheet.RowsUsed().Skip(1))
+                {
+                    var macchina = row.Cell("A").GetValue<string>();
+                    var scheda = row.Cell("C").GetValue<string>();
+                    var indirizzo = row.Cell("G").GetValue<string>();
+                    if (!string.IsNullOrWhiteSpace(macchina) && !string.IsNullOrWhiteSpace(scheda) && !string.IsNullOrWhiteSpace(indirizzo))
+                        IndirizziProtocollo.Add(new RowData(macchina, scheda, indirizzo));
+                }
+                worksheet = workbook.Worksheet("COMANDI");
+                foreach (var row in worksheet.RowsUsed().Skip(1))
+                {
+                    var name = row.Cell("A").GetValue<string>();
+                    var cmdH = row.Cell("B").GetValue<string>();
+                    var cmdL = row.Cell("C").GetValue<string>();
+                    if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(cmdH) && !string.IsNullOrWhiteSpace(cmdL))
+                        Comandi.Add(new CommandData(name, cmdH, cmdL));
+                }
+
+                // TODO: se serve, implementare l'estrazione delle variabili nel Dizionario usando logic simile a EstraiDizionario
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Errore nell'apertura stream excel: {ex.Message}", "Errore",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+            Application.Exit();
+            Environment.Exit(0);
+        }
+    }
+
 
     public void EstraiDizionario(uint RecipientId, List<VariableData> Variabili, string filePath)
     {
