@@ -484,7 +484,7 @@
             // 
             ChannelMenu.DropDownItems.AddRange(new ToolStripItem[] { cANToolStripMenuItem, bluetoothLEToolStripMenuItem });
             ChannelMenu.Name = "ChannelMenu";
-            ChannelMenu.Size = new Size(138, 22);
+            ChannelMenu.Size = new Size(180, 22);
             ChannelMenu.Text = "Comm Type";
             // 
             // cANToolStripMenuItem

@@ -23,7 +23,12 @@ namespace StemPC
     {
         public const string Software_Version = "2.10";
 
+#if TOPLIFT
+        public string CommunicationPort = "can";
+#else
         public string CommunicationPort = "ble";
+#endif
+
 
         private UInt16 Prescaler1s = 0;
 
@@ -150,13 +155,7 @@ namespace StemPC
 
             FormRef = this;
 
-            
-#if TOPLIFT
-            RecipientId = 0x00080381; //indirizzo fisso scheda madre Toplift A2
-            label12.Text = ($"Indirizzo\n 0x{RecipientId.ToString("X8")}");
-#else
             RecipientId = 0;
-#endif
             SelectedCommand = 0;
             senderId = 8;
 
@@ -194,6 +193,12 @@ namespace StemPC
             BootSmartTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
             //tabControl.TabPages.Add(BootSmartTabRef);
 
+            //Aggiorna il flag di comunicazione
+            if (CommunicationPort == "can")
+            {
+                cANToolStripMenuItem.Checked = true;
+                bluetoothLEToolStripMenuItem.Checked = false;
+            }
 
             // Crea la lista dei dispositivi
             List<DeviceInfo> BootSmartDevices = new List<DeviceInfo>
@@ -243,7 +248,14 @@ namespace StemPC
 
             //tabControl.SelectedTab = BootTabRef;
             //tabControl.SelectedTab = CanTabPageRef;
+
+#if TOPLIFT
+            tabControl.TabPages.Remove(BLETabRef);
+            BLEStatusLabel.Visible = false;
+            toolStripSplitButton2.Visible = false;
+#else
             tabControl.SelectedTab = BLETabRef;
+#endif
 
             // Nascondi la colonna delle variabili
             tableLayoutPanelProtocol.ColumnStyles[3].SizeType = SizeType.Absolute;
@@ -289,6 +301,15 @@ namespace StemPC
                 Dizionario         = new List<ExcelHandler.VariableData>();
                 hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, Dizionario);
             }
+
+
+//fissa l'indirizzo toplift ed estrai i dati relativi
+        //    RecipientId = 0x00080381; //indirizzo fisso scheda madre Toplift A2
+            RecipientId = 0x00030141; //indirizzo fisso scheda madre Eden
+            label12.Text = ($"Indirizzo\n 0x{RecipientId.ToString("X8")}");
+            hExcel.EstraiDizionario(RecipientId, Dizionario);
+            TelemetryTabRef.UpdateDictionary(Dizionario);
+
 #else
             // Uso del file esterno per configurazioni diverse da client
             ExcelfilePath = Path.Combine(Application.StartupPath, "Dizionari STEM.xlsx");
@@ -428,7 +449,7 @@ namespace StemPC
                             hExcel.EstraiDizionario(RecipientId, Dizionario);
 #else
                             hExcel.EstraiDizionario(RecipientId, Dizionario, ExcelfilePath);
-#endif 
+#endif
                             TelemetryTabRef.UpdateDictionary(Dizionario);
                         }
                     }
