@@ -150,7 +150,13 @@ namespace StemPC
 
             FormRef = this;
 
+            
+#if TOPLIFT
+            RecipientId = 0x00080381; //indirizzo fisso scheda madre Toplift A2
+            label12.Text = ($"Indirizzo\n 0x{RecipientId.ToString("X8")}");
+#else
             RecipientId = 0;
+#endif
             SelectedCommand = 0;
             senderId = 8;
 
@@ -262,11 +268,11 @@ namespace StemPC
 #if TOPLIFT
             // Ottieni l’assembly
             var asm = Assembly.GetExecutingAssembly();
-            // Recupera tutti i nomi delle risorse incorporate
-            var resourceNames = asm.GetManifestResourceNames();
-            // Mostrali in un MessageBox o nel Output di Debug
-            string elenco = string.Join("\n", resourceNames);
-            MessageBox.Show("Risorse incorporate trovate:\n" + elenco, "Debug risorse");
+            //// Recupera tutti i nomi delle risorse incorporate
+            //var resourceNames = asm.GetManifestResourceNames();
+            //// Mostrali in un MessageBox o nel Output di Debug
+            //string elenco = string.Join("\n", resourceNames);
+            //MessageBox.Show("Risorse incorporate trovate:\n" + elenco, "Debug risorse");
 
             // Caricamento diretto del file Excel dalle risorse (embedded)
             //var asm = Assembly.GetExecutingAssembly();
@@ -418,7 +424,11 @@ namespace StemPC
                         {
                             label12.Text = ($"Indirizzo\n {item.Indirizzo.ToString()}");
                             RecipientId = Convert.ToUInt32(item.Indirizzo.Substring(2), 16);
+#if TOPLIFT
+                            hExcel.EstraiDizionario(RecipientId, Dizionario);
+#else
                             hExcel.EstraiDizionario(RecipientId, Dizionario, ExcelfilePath);
+#endif 
                             TelemetryTabRef.UpdateDictionary(Dizionario);
                         }
                     }

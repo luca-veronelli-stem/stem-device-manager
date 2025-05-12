@@ -19,6 +19,11 @@ namespace STEMPM
             InitializeComponent();
             labelVersion.Text = "Version: " + Form1.Software_Version;
 
+#if TOPLIFT
+            label1.Text = "Top Lift A2 Manager";
+#else
+
+#endif
         }
     }
 }

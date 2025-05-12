@@ -8,15 +8,28 @@ using static ExcelHandler;
 public class ExcelHandler
 {
     // Internal stream for embedded resources
-    private readonly Stream _excelStream;
+ //   private readonly Stream _excelStream;
+
+    //**************************
+    // Buffer interno per stream
+    //**************************
+    private readonly MemoryStream _excelBuffer;
 
     // Default constructor for file-based usage
     public ExcelHandler() { }
 
-    // Overload constructor for stream-based usage
+    /// <summary>
+    /// Costruttore per risorsa embedded via Stream
+    /// Copia lo stream in un MemoryStream per permettere letture multiple
+    /// </summary>
     public ExcelHandler(Stream excelStream)
     {
-        _excelStream = excelStream ?? throw new ArgumentNullException(nameof(excelStream));
+        if (excelStream == null)
+            throw new ArgumentNullException(nameof(excelStream));
+
+        _excelBuffer = new MemoryStream();
+        excelStream.CopyTo(_excelBuffer);
+        _excelBuffer.Position = 0;
     }
 
     // Definizione del tipo di dato personalizzato
@@ -118,7 +131,7 @@ public class ExcelHandler
     /// </summary>
     public void EstraiDatiProtocollo(List<RowData> IndirizziProtocollo, List<CommandData> Comandi, List<VariableData> Dizionario)
     {
-        if (_excelStream == null)
+        if (_excelBuffer == null)
             throw new InvalidOperationException("Stream non inizializzato: utilizzare il costruttore ExcelHandler(Stream)");
 
         IndirizziProtocollo.Clear();
@@ -128,10 +141,10 @@ public class ExcelHandler
         try
         {
             // Assicura la posizione all'inizio dello stream
-            if (_excelStream.CanSeek)
-                _excelStream.Seek(0, SeekOrigin.Begin);
+            if (_excelBuffer.CanSeek)
+                _excelBuffer.Seek(0, SeekOrigin.Begin);
 
-            using (var workbook = new XLWorkbook(_excelStream))
+            using (var workbook = new XLWorkbook(_excelBuffer))
             {
                 // Estrarre indirizzi e comandi come sopra
                 var worksheet = workbook.Worksheet("indirizzo protocollo stem");
@@ -241,9 +254,70 @@ public class ExcelHandler
             //Application.Exit(); // Chiude l'applicazione
             //Environment.Exit(0); // Termina il processo
         }
+    }
 
+    //##############################
+    // Sezione: Dizionario da stream
+    //##############################
+    /// <summary>
+    /// Estrae il dizionario logico da una risorsa embedded (MemoryStream)
+    /// </summary>
+    public void EstraiDizionario(uint RecipientId, List<VariableData> Variabili)
+    {
+        if (_excelBuffer == null)
+            throw new InvalidOperationException("Stream non inizializzato: utilizzare il costruttore ExcelHandler(Stream)");
 
+        Variabili.Clear();
+        try
+        {
+            _excelBuffer.Position = 0;
+            using (var workbook = new XLWorkbook(_excelBuffer))
+            {
+                ProcessWorksheetsForDictionary(RecipientId, Variabili, workbook);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Errore nell'apertura stream excel dizionario: {ex.Message}", "Errore",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    //**************************
+    // Metodo di supporto
+    //**************************
+    /// <summary>
+    /// Logica comune di estrazione delle variabili evidenziate per RecipientId
+    /// </summary>
+    private void ProcessWorksheetsForDictionary(uint RecipientId, List<VariableData> Variabili, XLWorkbook workbook)
+    {
+        foreach (var worksheet in workbook.Worksheets)
+        {
+            foreach (var cell in worksheet.Row(2).CellsUsed())
+            {
+                var cellStr = cell.GetString();
+                if (cellStr.Length <= 2) continue;
+                if (!int.TryParse(cellStr.Substring(2), System.Globalization.NumberStyles.HexNumber, null, out int cellValue)) continue;
+                if (cellValue != RecipientId) continue;
+
+                foreach (var rowTemp in worksheet.RowsUsed().Skip(4))
+                {
+                    var fillColor = rowTemp.Cell("A").Style.Fill.BackgroundColor;
+                    if (fillColor.ColorType != XLColorType.Theme && fillColor.Color.ToArgb() == -7155632)
+                    {
+                        var name = rowTemp.Cell("A").GetValue<string>();
+                        var addrH = rowTemp.Cell("B").GetValue<string>();
+                        var addrL = rowTemp.Cell("C").GetValue<string>();
+                        var dataType = rowTemp.Cell("D").GetValue<string>();
+                        if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(addrH) && !string.IsNullOrWhiteSpace(addrL))
+                        {
+                            Variabili.Add(new VariableData(name, addrH, addrL, dataType));
+                        }
+                    }
+                }
+                return;
+            }
+        }
     }
 }
-
 
