@@ -186,12 +186,17 @@ namespace StemPC
             //crea e aggiungi il bootloader manager
             BootTabRef = new Boot_Interface_Tab();
             BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
+#if TOPLIFT
+#else
             tabControl.TabPages.Add(BootTabRef);
+#endif
 
             //crea e aggiungi il bootloader manager smart
             BootSmartTabRef = new Boot_Smart_Tab();
             BootSmartTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
-            //tabControl.TabPages.Add(BootSmartTabRef);
+#if TOPLIFT
+            tabControl.TabPages.Add(BootSmartTabRef);
+#endif
 
             //Aggiorna il flag di comunicazione
             if (CommunicationPort == "can")
@@ -203,9 +208,10 @@ namespace StemPC
             // Crea la lista dei dispositivi
             List<DeviceInfo> BootSmartDevices = new List<DeviceInfo>
                 {
-                    new DeviceInfo(1, "Pippo"),
-                    new DeviceInfo(2, "Pluto"),
-                    new DeviceInfo(3, "Paperino")
+                    new DeviceInfo(1, "Motherboard"),
+                    new DeviceInfo(2, "Keyboard 1"),
+                    new DeviceInfo(3, "Keyboard 2"),
+                    new DeviceInfo(1, "Keyboard 3"),
                 };
 
             // Popola la tab con la lista dei dispositivi
@@ -250,6 +256,7 @@ namespace StemPC
             //tabControl.SelectedTab = CanTabPageRef;
 
 #if TOPLIFT
+            tabControl.TabPages.Remove(tabPageProtocol);
             tabControl.TabPages.Remove(BLETabRef);
             BLEStatusLabel.Visible = false;
             toolStripSplitButton2.Visible = false;

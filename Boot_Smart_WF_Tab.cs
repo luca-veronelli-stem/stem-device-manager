@@ -63,9 +63,13 @@ public BootManager BootHndlr;
         // Creazione del pulsante di upload con altezza fissa
         btnStartProcedure = new Button
         {
-            Text = "Upload Firmware",
-            Height = 40,  // Altezza fissa
+            // Text = "Upload Firmware",
+            Height = 60,  // Altezza fissa
             Anchor = AnchorStyles.None,  // Centro nella cella, senza espandersi
+           // Image = STEMPM.Properties.Resources.ic_fluent_document_bullet_list_24_filled,
+           // BackgroundImage = STEMPM.Properties.Resources.
+            BackgroundImageLayout = ImageLayout.Zoom,
+            ImageAlign = ContentAlignment.MiddleCenter,
             Margin = new Padding(3)
         };
         btnStartProcedure.Click += BtnStartProcedure_Click;
@@ -151,7 +155,7 @@ public BootManager BootHndlr;
         {
             if (string.IsNullOrEmpty(selection.FilePath))
             {
-                MessageBox.Show($"Seleziona un file firmware per {selection.Device.DisplayName}");
+                MessageBox.Show($"Select firmware file for {selection.Device.DisplayName}");
                 return;
             }
         }
