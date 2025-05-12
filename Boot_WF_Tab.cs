@@ -327,8 +327,6 @@ public class Boot_Interface_Tab : TabPage
         progressBar.Value = (int)((double)e.CurrentOffset / e.TotalLength * 100);
         if (progressBar.Value == 99) progressBar.Value = 100;
     }
-
-
 }
 
 // c# progress bar with percentage

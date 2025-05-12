@@ -193,9 +193,12 @@ public BootManager BootHndlr;
             // Imposta l'indirizzo di destinazione (ad esempio, tramite una proprietà del main form)
             Form1.FormRef.RecipientId = (uint)selection.Device.Address;
 
-            await BootHndlr.StartBoot();
+           // await BootHndlr.StartBoot();
             await BootHndlr.UploadFirmware();
         }
+        // Fine ciclo di upload per ciascun dispositivo
+
+        //invia il reset
 
         btnStartProcedure.Enabled = true;
     }
