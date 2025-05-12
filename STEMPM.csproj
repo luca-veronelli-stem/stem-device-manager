@@ -27,6 +27,7 @@
 
 	<ItemGroup>
 	  <None Remove="Dizionari STEM.xlsx" />
+	  <None Remove="images\ic_fluent_arrow_download_24_filled.png" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -35,6 +36,7 @@
   </ItemGroup>
 
 	<ItemGroup>
+	  <EmbeddedResource Include="images\ic_fluent_arrow_download_24_filled.png" />
 	  <EmbeddedResource Include="Resources\Dizionari STEM.xlsx" />
 	</ItemGroup>
 

@@ -5,6 +5,9 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 
+using System.IO;
+using System.Reflection;
+
 public class DeviceInfo
 {
     public int Address { get; set; }
@@ -60,25 +63,46 @@ public BootManager BootHndlr;
         selectionPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
         selectionPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20));
 
-        // Creazione del pulsante di upload con altezza fissa
-        btnStartProcedure = new Button
+        // 1) Prendi l'assembly corrente
+        Assembly asm = Assembly.GetExecutingAssembly();
+
+        // 2) Il nome della risorsa incorporata
+        string resName = "STEMPM.images.ic_fluent_arrow_download_24_filled.png";
+
+        // 3) Apri lo stream
+        using (Stream s = asm.GetManifestResourceStream(resName))
         {
-            // Text = "Upload Firmware",
-            Height = 60,  // Altezza fissa
-            Anchor = AnchorStyles.None,  // Centro nella cella, senza espandersi
-           // Image = STEMPM.Properties.Resources.ic_fluent_document_bullet_list_24_filled,
-           // BackgroundImage = STEMPM.Properties.Resources.
-            BackgroundImageLayout = ImageLayout.Zoom,
-            ImageAlign = ContentAlignment.MiddleCenter,
-            Margin = new Padding(3)
-        };
-        btnStartProcedure.Click += BtnStartProcedure_Click;
+            if (s == null)
+            {
+                MessageBox.Show($"Risorsa '{resName}' non trovata.\n" +
+                                "Controlla il namespace e il Build Action.",
+                                "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
-        // Aggiungiamo il pannello e il pulsante al layout principale
-        mainLayout.Controls.Add(selectionPanel, 0, 0);
-        mainLayout.Controls.Add(btnStartProcedure, 0, 1);
+            // 4) Carica l'immagine
+            Image img = Image.FromStream(s);
 
-        this.Controls.Add(mainLayout);
+            // Creazione del pulsante di upload con altezza fissa
+            btnStartProcedure = new Button
+            {
+                // Text = "Upload Firmware",
+                Height = 60,  // Altezza fissa
+                Anchor = AnchorStyles.None,  // Centro nella cella, senza espandersi
+                                             // Image = STEMPM.Properties.Resources.ic_fluent_document_bullet_list_24_filled,
+                BackgroundImage = img,
+                BackgroundImageLayout = ImageLayout.Zoom,
+                ImageAlign = ContentAlignment.MiddleCenter,
+                Margin = new Padding(3)
+            };
+            btnStartProcedure.Click += BtnStartProcedure_Click;
+
+            // Aggiungiamo il pannello e il pulsante al layout principale
+            mainLayout.Controls.Add(selectionPanel, 0, 0);
+            mainLayout.Controls.Add(btnStartProcedure, 0, 1);
+
+            this.Controls.Add(mainLayout);
+        }
 
         // Inizializzazione del BootManager
         BootHndlr = new BootManager();
