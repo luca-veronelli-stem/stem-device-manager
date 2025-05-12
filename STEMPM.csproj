@@ -26,9 +26,17 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <None Remove="Dizionari STEM.xlsx" />
+	</ItemGroup>
+
+	<ItemGroup>
 	<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
     <Content Include="Resources\Ztem.ico" />
   </ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Include="Resources\Dizionari STEM.xlsx" />
+	</ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.104.2" />

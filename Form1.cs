@@ -257,10 +257,20 @@ namespace StemPC
             //Dizionario = new List<ExcelHandler.VariableData>();
             //hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, ExcelfilePath);
 
+
+
 #if TOPLIFT
-            // Caricamento diretto del file Excel dalle risorse (embedded)
+            // Ottieni l’assembly
             var asm = Assembly.GetExecutingAssembly();
-            const string resourceName = "StemPC.Dizionari STEM.xlsx";
+            // Recupera tutti i nomi delle risorse incorporate
+            var resourceNames = asm.GetManifestResourceNames();
+            // Mostrali in un MessageBox o nel Output di Debug
+            string elenco = string.Join("\n", resourceNames);
+            MessageBox.Show("Risorse incorporate trovate:\n" + elenco, "Debug risorse");
+
+            // Caricamento diretto del file Excel dalle risorse (embedded)
+            //var asm = Assembly.GetExecutingAssembly();
+            const string resourceName = "STEMPM.Resources.Dizionari STEM.xlsx";
             using (var stream = asm.GetManifestResourceStream(resourceName))
             {
                 if (stream == null)
