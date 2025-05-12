@@ -50,7 +50,7 @@ namespace Stem_Protocol.BootManager
         public void SetHardwareChannel(string channel)
         {
             BootHardwareChannel = channel;
-            //azzera le chiamate del protocl manager
+            //azzera le chiamate del protocol manager
             protocolManager.SendCommandRequest -= protocolManager.OnSendCanCommand;
             protocolManager.SendCommandRequest -= protocolManager.OnSendBleCommand;
             //aggiunge il canale di comunicazione
