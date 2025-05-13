@@ -203,9 +203,7 @@ namespace StemPC
             //crea e aggiungi il bootloader manager smart
             BootSmartTabRef = new Boot_Smart_Tab();
             BootSmartTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
-#if TOPLIFT
-            tabControl.TabPages.Add(BootSmartTabRef);
-#endif
+
 
             //Aggiorna il flag di comunicazione
             if (CommunicationPort == "can")
@@ -259,9 +257,6 @@ namespace StemPC
             TelemetryTabRef = new Telemetry_Tab(RXpacketManager);
             TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
 
-
-            tabControl.TabPages.Add(TelemetryTabRef);
-
             //Seleziona il tab iniziale
 
             //tabControl.SelectedTab = BootTabRef;
@@ -285,8 +280,10 @@ namespace StemPC
             TLTTabRef = new TopLiftTelemetry_Tab();
 
             tabControl.TabPages.Add(TLTTabRef);
+            tabControl.TabPages.Add(BootSmartTabRef);
 #else
             tabControl.SelectedTab = BLETabRef;
+            tabControl.TabPages.Add(TelemetryTabRef);
 #endif
 
             // Nascondi la colonna delle variabili

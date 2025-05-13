@@ -134,4 +134,10 @@
     <value>..\images\loading.gif;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     <comment>immagine di loading.gif</comment>
   </data>
+  <data name="ValvolaOff" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\ValvolaOff.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="ValvolaOn" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\ValvolaOn.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>

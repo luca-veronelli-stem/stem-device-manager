@@ -17,11 +17,12 @@ public class TopLiftTelemetry_Tab : TabPage
     private Button stopTelemetryButton;
     private PictureBox[] imageContainers;
     private Label[] imageLabels;
-    private Button buttonRow3;
+    private Button buttonReadFaults;
     private TextBox textBoxRow3;
     private Label[] labelsRow4;
     private TextBox[] textBoxesRow4;
-    private Button buttonRow4;
+    private Button buttonReadSettings;
+    private Button buttonWriteSettings;
 
     // Variabili booleane associate ai contenitori di immagini
     private bool[] imageStates;
@@ -110,9 +111,9 @@ public class TopLiftTelemetry_Tab : TabPage
         // SECONDA RIGA: 7 contenitori di immagini con label sotto (5+2)
         TableLayoutPanel imageRow = new TableLayoutPanel();
         imageRow.Dock = DockStyle.Fill;
-        imageRow.ColumnCount = 7; // Aumentato a 7 (5+2)
+        imageRow.ColumnCount = 7; 
         imageRow.RowCount = 2;
-        for (int i = 0; i < 7; i++) // Aumentato a 7 (5+2)
+        for (int i = 0; i < 7; i++) 
         {
             imageRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F / 7F)); // Distribuiti equamente
         }
@@ -121,31 +122,48 @@ public class TopLiftTelemetry_Tab : TabPage
         mainLayout.Controls.Add(imageRow, 0, 2); // Ora è alla riga 2 invece che 1
 
         // Creo i contenitori di immagini e le relative label
-        imageContainers = new PictureBox[7]; // Aumentato a 7 (5+2)
-        imageLabels = new Label[7]; // Aumentato a 7 (5+2)
-        imageStates = new bool[7]; // Aumentato a 7 (5+2)
+        imageContainers = new PictureBox[7]; 
+        imageLabels = new Label[7]; 
+        imageStates = new bool[7]; 
 
-        for (int i = 0; i < 7; i++) // Aumentato a 7 (5+2)
+        for (int i = 0; i < 7; i++) 
         {
             // Contenitore immagine
             imageContainers[i] = new PictureBox();
             imageContainers[i].Dock = DockStyle.Fill;
             imageContainers[i].SizeMode = PictureBoxSizeMode.Zoom;
-            imageContainers[i].BorderStyle = BorderStyle.FixedSingle;
-            imageContainers[i].BackColor = Color.White;
+            //         imageContainers[i].BorderStyle = BorderStyle.FixedSingle;
+            imageContainers[i].BorderStyle = BorderStyle.None;
+         //   imageContainers[i].BackColor = Color.White;
             imageContainers[i].Margin = new Padding(5);
             imageContainers[i].Tag = i;  // Salva l'indice per identificarlo
+            if (i == 0) imageContainers[i].Image = Resources.ValvolaOff;
+            else if (i == 1) imageContainers[i].Image = Resources.ValvolaOff;
+            else if (i == 2) imageContainers[i].Image = Resources.ValvolaOff;
+            else if (i == 3) imageContainers[i].Image = Resources.ValvolaOff;
+            //else if (i == 4) imageLabels[i].Text = "PUMP";
+            //else if (i == 5) imageLabels[i].Text = "LS1";
+            //else if (i == 6) imageLabels[i].Text = "LS2";)
             imageRow.Controls.Add(imageContainers[i], i, 0);
 
             // Label sotto l'immagine
             imageLabels[i] = new Label();
-            imageLabels[i].Text = $"Elemento {i + 1}";
+            if (i == 0) imageLabels[i].Text = "EVA";
+            else if (i == 1) imageLabels[i].Text = "EVB";
+            else if (i == 2) imageLabels[i].Text = "EVC";
+            else if (i == 3) imageLabels[i].Text = "P2A";
+            else if (i == 4) imageLabels[i].Text = "PUMP";
+            else if (i == 5) imageLabels[i].Text = "LS1";
+            else if (i == 6) imageLabels[i].Text = "LS2";
+            //  imageLabels[i].Text = $"Elemento {i + 1}";
             imageLabels[i].Dock = DockStyle.Fill;
             imageLabels[i].TextAlign = ContentAlignment.MiddleCenter;
+            imageLabels[i].Font = new Font("Poppins", 10, FontStyle.Bold);
             imageRow.Controls.Add(imageLabels[i], i, 1);
 
             // Stato iniziale (false)
-            imageStates[i] = false;
+            if (i == 1) imageStates[i] = true;
+            else imageStates[i] = false;
             UpdateImageDisplay(i);
         }
 
@@ -166,16 +184,17 @@ public class TopLiftTelemetry_Tab : TabPage
         buttonTextBoxRow.Controls.Add(textBoxRow3, 0, 0);
 
         // Pulsante
-        buttonRow3 = new Button();
-        buttonRow3.Text = "Azione";
-        buttonRow3.Dock = DockStyle.Fill;
-        buttonRow3.Margin = new Padding(5);
-        buttonTextBoxRow.Controls.Add(buttonRow3, 1, 0);
+        buttonReadFaults = new Button();
+        buttonReadFaults.Text = "Read Faults";
+        buttonReadFaults.Font = new Font("Poppins", 10, FontStyle.Bold);
+        buttonReadFaults.Dock = DockStyle.Fill;
+        buttonReadFaults.Margin = new Padding(5);
+        buttonTextBoxRow.Controls.Add(buttonReadFaults, 1, 0);
 
         // QUARTA RIGA: 4 gruppi (label + textbox) e un pulsante
         TableLayoutPanel bottomRow = new TableLayoutPanel();
         bottomRow.Dock = DockStyle.Fill;
-        bottomRow.ColumnCount = 5;
+        bottomRow.ColumnCount = 6;
         bottomRow.RowCount = 2;  // Una riga per le label, una per i textbox
         for (int i = 0; i < 4; i++)
         {
@@ -194,7 +213,11 @@ public class TopLiftTelemetry_Tab : TabPage
         {
             // Label
             labelsRow4[i] = new Label();
-            labelsRow4[i].Text = $"Campo {i + 1}";
+            if (i == 0) labelsRow4[i].Text = "Max High";
+            else if (i == 1) imageLabels[i].Text = "Min High";
+            else if (i == 2) imageLabels[i].Text = "Max Slope";
+            else if (i == 3) imageLabels[i].Text = "Min Slope";
+            //labelsRow4[i].Text = $"Campo {i + 1}";
             labelsRow4[i].Dock = DockStyle.Fill;
             labelsRow4[i].TextAlign = ContentAlignment.BottomLeft;
             labelsRow4[i].Padding = new Padding(5, 0, 0, 5);
@@ -208,12 +231,21 @@ public class TopLiftTelemetry_Tab : TabPage
             bottomRow.Controls.Add(textBoxesRow4[i], i, 1);
         }
 
-        // Pulsante finale
-        buttonRow4 = new Button();
-        buttonRow4.Text = "OK";
-        buttonRow4.Dock = DockStyle.Fill;
-        buttonRow4.Margin = new Padding(5);
-        bottomRow.Controls.Add(buttonRow4, 4, 1);  // Occupa solo la riga inferiore
+        // Pulsante read settings
+        buttonReadSettings = new Button();
+        buttonReadSettings.Text = "READ";
+        buttonReadSettings.Font = new Font("Poppins", 10, FontStyle.Bold);
+        buttonReadSettings.Dock = DockStyle.Fill;
+        buttonReadSettings.Margin = new Padding(5);
+        bottomRow.Controls.Add(buttonReadSettings, 4, 1);  // Occupa solo la riga inferiore
+
+        // Pulsante write settings
+        buttonWriteSettings = new Button();
+        buttonWriteSettings.Text = "WRITE";
+        buttonWriteSettings.Font = new Font("Poppins", 10, FontStyle.Bold);
+        buttonWriteSettings.Dock = DockStyle.Fill;
+        buttonWriteSettings.Margin = new Padding(5);
+        bottomRow.Controls.Add(buttonWriteSettings, 5, 1);  // Occupa solo la riga inferiore
     }
 
     private void SetupEventHandlers()
@@ -221,8 +253,8 @@ public class TopLiftTelemetry_Tab : TabPage
         // Aggiungi qui i gestori eventi per i pulsanti e altri controlli
         startTelemetryButton.Click += StartTelemetryButton_Click;
         stopTelemetryButton.Click += StopTelemetryButton_Click;
-        buttonRow3.Click += ButtonRow3_Click;
-        buttonRow4.Click += ButtonRow4_Click;
+        buttonReadFaults.Click += buttonReadFaults_Click;
+        buttonReadSettings.Click += buttonReadSettings_Click;
     }
 
     private void StartTelemetryButton_Click(object sender, EventArgs e)
@@ -237,19 +269,19 @@ public class TopLiftTelemetry_Tab : TabPage
         // Qui inserisci la logica per arrestare la telemetria
     }
 
-    private void ButtonRow3_Click(object sender, EventArgs e)
+    private void buttonReadFaults_Click(object sender, EventArgs e)
     {
         MessageBox.Show($"Hai inserito: {textBoxRow3.Text}", "Messaggio", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
-    private void ButtonRow4_Click(object sender, EventArgs e)
+    private void buttonReadSettings_Click(object sender, EventArgs e)
     {
-        string messaggio = "Valori inseriti:\n";
-        for (int i = 0; i < 4; i++)
-        {
-            messaggio += $"{labelsRow4[i].Text}: {textBoxesRow4[i].Text}\n";
-        }
-        MessageBox.Show(messaggio, "Dati inseriti", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        //string messaggio = "Valori inseriti:\n";
+        //for (int i = 0; i < 4; i++)
+        //{
+        //    messaggio += $"{labelsRow4[i].Text}: {textBoxesRow4[i].Text}\n";
+        //}
+      //  MessageBox.Show(messaggio, "Dati Letti", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
     /// <summary>
@@ -268,19 +300,23 @@ public class TopLiftTelemetry_Tab : TabPage
 
     private void UpdateImageDisplay(int index)
     {
+        if (index > 3) return;
+
         // Cambia l'immagine in base allo stato
         if (imageStates[index])
         {
+            imageContainers[index].Image=Resources.ValvolaOn;
             // Qui dovresti caricare l'immagine per lo stato true
             // Per ora utilizziamo colori diversi per simulare il cambio di immagine
-            imageContainers[index].BackColor = Color.LightGreen;
-            imageLabels[index].Text = $"Elemento {index + 1} (ON)";
+           // imageContainers[index].BackColor = Color.LightGreen;
+           // imageLabels[index].Text = $"Elemento {index + 1} (ON)";
         }
         else
         {
+            imageContainers[index].Image = Resources.ValvolaOff;
             // Qui dovresti caricare l'immagine per lo stato false
-            imageContainers[index].BackColor = Color.LightGray;
-            imageLabels[index].Text = $"Elemento {index + 1} (OFF)";
+         //   imageContainers[index].BackColor = Color.LightGray;
+         //   imageLabels[index].Text = $"Elemento {index + 1} (OFF)";
         }
     }
 }
