@@ -20,7 +20,7 @@ namespace STEMPM
             labelVersion.Text = "Version: " + Form1.Software_Version;
 
 #if TOPLIFT
-            label1.Text = "Top Lift A2 Manager";
+            label1.Text = "Top Lift A2 \r\n Manager";
 #else
 
 #endif

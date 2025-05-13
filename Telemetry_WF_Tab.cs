@@ -77,7 +77,8 @@ public class Telemetry_Tab : TabPage
         Button button = new Button
         {
             Text = "Add",
-            Anchor = AnchorStyles.Left
+            Anchor = AnchorStyles.Left,
+            TextAlign = ContentAlignment.MiddleCenter,
         };
         button.Click += Button_Click;
         tableLayout.Controls.Add(button, 1, 1);
@@ -86,6 +87,7 @@ public class Telemetry_Tab : TabPage
         Button buttonStart = new Button
         {
             Text = "Start",
+            TextAlign = ContentAlignment.MiddleCenter,
             Anchor = AnchorStyles.Left
         };
         buttonStart.Font = new Font(buttonStart.Font, FontStyle.Bold);
@@ -96,6 +98,7 @@ public class Telemetry_Tab : TabPage
         Button buttonStop = new Button
         {
             Text = "Stop",
+            TextAlign = ContentAlignment.MiddleCenter,
             Anchor = AnchorStyles.Left
         };
         buttonStop.Font = new Font(buttonStop.Font, FontStyle.Bold);

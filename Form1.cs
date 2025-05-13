@@ -917,12 +917,12 @@ namespace StemPC
         {
             if (isConnected)
             {
-                PCanLabel.Text = "PCAN: Connesso";
+                PCanLabel.Text = "PCAN: Connected";
                 PCanLabel.BackColor = System.Drawing.Color.GreenYellow;
             }
             else
             {
-                PCanLabel.Text = "PCAN: Non connesso";
+                PCanLabel.Text = "PCAN: Not Connected";
                 PCanLabel.BackColor = System.Drawing.Color.Salmon;
             }
         }

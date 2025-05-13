@@ -91,6 +91,7 @@ public class PCANManager
                             StringBuilder errorTextB = new StringBuilder(256);
                             PCANBasic.GetErrorText(status, 0, errorTextB);
                             ErrorOccurred?.Invoke(this, errorTextB.ToString());
+                            Disconnect();
                         //    ErrorOccurred?.Invoke(this, "Connessione persa. Tentativo di riconnessione...");
                         }
 

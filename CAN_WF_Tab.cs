@@ -60,12 +60,12 @@ public partial class CANInterfaceTab : TabPage
     {
         if (isConnected)
         {
-            _connectionStatusLabel.Text = "Stato: Connesso";
+            _connectionStatusLabel.Text = "Status: Connected";
             _connectionStatusLabel.ForeColor = System.Drawing.Color.Green;
         }
         else
         {
-            _connectionStatusLabel.Text = "Stato: Disconnesso";
+            _connectionStatusLabel.Text = "Status: Disconnected";
             _connectionStatusLabel.ForeColor = System.Drawing.Color.Red;
         }
     }
@@ -163,10 +163,11 @@ public partial class CANInterfaceTab : TabPage
 
         _connectionStatusLabel = new System.Windows.Forms.Label()
         {
-            Text = "Stato: In attesa",
+            Text = "Status: Waiting",
             ForeColor = System.Drawing.Color.Orange,
             Dock = DockStyle.Fill,
-            TextAlign = ContentAlignment.MiddleLeft
+            TextAlign = ContentAlignment.MiddleLeft,
+            Font = new System.Drawing.Font("Poppins", 8, FontStyle.Regular)
         };
 
         // Layout flessibile

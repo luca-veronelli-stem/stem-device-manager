@@ -42,7 +42,7 @@
             pictureBox1.Image = Properties.Resources.logo_stem_2022_300x81;
             pictureBox1.Location = new Point(3, 3);
             pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(794, 264);
+            pictureBox1.Size = new Size(794, 286);
             pictureBox1.SizeMode = PictureBoxSizeMode.CenterImage;
             pictureBox1.TabIndex = 0;
             pictureBox1.TabStop = false;
@@ -59,10 +59,10 @@
             tableLayoutPanel1.Location = new Point(0, 0);
             tableLayoutPanel1.Name = "tableLayoutPanel1";
             tableLayoutPanel1.RowCount = 4;
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 60F));
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 65F));
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 15F));
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 10F));
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 10F));
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
             tableLayoutPanel1.Size = new Size(800, 450);
             tableLayoutPanel1.TabIndex = 1;
             // 
@@ -72,7 +72,7 @@
             labelVersion.Dock = DockStyle.Fill;
             labelVersion.Font = new Font("Poppins Black", 20F, FontStyle.Bold);
             labelVersion.ForeColor = SystemColors.Info;
-            labelVersion.Location = new Point(3, 315);
+            labelVersion.Location = new Point(3, 359);
             labelVersion.Name = "labelVersion";
             labelVersion.Size = new Size(794, 45);
             labelVersion.TabIndex = 2;
@@ -85,9 +85,9 @@
             label1.Dock = DockStyle.Fill;
             label1.Font = new Font("Poppins Black", 24F, FontStyle.Bold);
             label1.ForeColor = SystemColors.Info;
-            label1.Location = new Point(3, 270);
+            label1.Location = new Point(3, 292);
             label1.Name = "label1";
-            label1.Size = new Size(794, 45);
+            label1.Size = new Size(794, 67);
             label1.TabIndex = 1;
             label1.Text = "Device Manager";
             label1.TextAlign = ContentAlignment.MiddleCenter;
