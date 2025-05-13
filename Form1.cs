@@ -110,6 +110,7 @@ namespace StemPC
         public static Form1 FormRef { get; private set; }
         public Telemetry_Tab TelemetryTabRef { get; private set; }
         public BLEInterfaceTab BLETabRef { get; private set; }
+        public TopLiftTelemetry_Tab TLTTabRef { get; private set; }
 
         //**************************
         //  Events
@@ -216,7 +217,7 @@ namespace StemPC
             // Crea la lista dei dispositivi
             List<DeviceInfo> BootSmartDevices = new List<DeviceInfo>
                 {
-                   // new DeviceInfo(0x00030101, "Keyboard 1"),
+                   new DeviceInfo(0x00030101, "Keyboard 1"),
                    //new DeviceInfo(0x00030102, "Keyboard 2"),
                    //new DeviceInfo(0x00030103, "Keyboard 3"),
                    new DeviceInfo(0x00030141, "Motherboard"),
@@ -257,6 +258,8 @@ namespace StemPC
             //crea e aggiungi il telemetry manager
             TelemetryTabRef = new Telemetry_Tab(RXpacketManager);
             TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
+
+
             tabControl.TabPages.Add(TelemetryTabRef);
 
             //Seleziona il tab iniziale
@@ -273,6 +276,15 @@ namespace StemPC
             tabControl.TabPages.Remove(BLETabRef);
             BLEStatusLabel.Visible = false;
             toolStripSplitButton2.Visible = false;
+
+            //crea e aggiungi il telemetry per Toplift
+
+            //TLTTabRef = new TopLiftTelemetry_Tab(RXpacketManager);
+            //TLTTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
+
+            TLTTabRef = new TopLiftTelemetry_Tab();
+
+            tabControl.TabPages.Add(TLTTabRef);
 #else
             tabControl.SelectedTab = BLETabRef;
 #endif

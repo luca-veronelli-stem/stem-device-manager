@@ -25,6 +25,9 @@
     <Compile Update="Telemetry_WF_Tab.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Update="TopLift_Telemetry_WF_Tab.cs">
+      <SubType>Component</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="Properties\Resources.resx">

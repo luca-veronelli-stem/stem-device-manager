@@ -140,7 +140,8 @@ public class Boot_Smart_Tab : TabPage
                 Text = labels[i],
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Poppins", 12, FontStyle.Regular)
+                Font = new Font("Poppins", 14, FontStyle.Bold),
+                ForeColor = Color.FromArgb(8, 72, 133),
             };
             cellLayout.Controls.Add(lbl, 0, 1);
 
