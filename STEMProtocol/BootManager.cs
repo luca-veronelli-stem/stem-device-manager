@@ -178,7 +178,7 @@ namespace Stem_Protocol.BootManager
                     await Task.Delay(1000); // attesa tra un comando e il successivo
                 }
 
-                MessageBox.Show("Firmware update complete!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+         //       MessageBox.Show("Firmware update completed!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }        
         }
 

@@ -29,6 +29,7 @@ public class Boot_Smart_Tab : TabPage
     private CircularProgressBar circProgressBarSmall;
     private CircularProgressBar[] circProgressBarsLarge = new CircularProgressBar[2];
     private List<BinSelectionControl> binSelections = new List<BinSelectionControl>();
+    private int offsetTotalBar = 0;
     public BootManager BootHndlr;
 
     public Boot_Smart_Tab()
@@ -221,14 +222,16 @@ public class Boot_Smart_Tab : TabPage
         }
         btnStartProcedure.Enabled = false;
 
-        foreach (var pb in circProgressBarsLarge)
-            pb.Value = 0;
+        //reset progress bars
+        foreach (var pb in circProgressBarsLarge) pb.Value = 0;
+        offsetTotalBar = 0;
 
         foreach (var sel in binSelections)
         {
             BootHndlr.SetFirmwarePath(sel.FilePath);
             Form1.FormRef.RecipientId = (uint)sel.Device.Address;
             await BootHndlr.UploadFirmware();
+            offsetTotalBar += circProgressBarsLarge[1].Value;
         }
 
         btnStartProcedure.Enabled = true;
@@ -247,13 +250,13 @@ public class Boot_Smart_Tab : TabPage
             Invoke(new Action(() =>
             {
                 circProgressBarsLarge[0].Value = progress; //aggiorna barra progresso singolo firmware
-                circProgressBarsLarge[1].Value = progress/ binSelections.Count; //aggiorna barra progresso totale
+                circProgressBarsLarge[1].Value = offsetTotalBar + (progress / binSelections.Count); //aggiorna barra progresso totale
             }));
         }
         else
         {
             circProgressBarsLarge[0].Value = progress; //aggiorna barra progresso singolo firmware
-            circProgressBarsLarge[1].Value = progress / binSelections.Count; //aggiorna barra progresso totale
+            circProgressBarsLarge[1].Value = offsetTotalBar + (progress / binSelections.Count); //aggiorna barra progresso totale
         }
     }
 }
