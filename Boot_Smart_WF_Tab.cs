@@ -34,7 +34,7 @@ public class Boot_Smart_Tab : TabPage
     public Boot_Smart_Tab()
     {
         Name = "tabPageBootSmart";
-        Text = "Boot Smart";
+        Text = "Firmware Update";
 
         // Layout principale: selezione, start, progress bar
         TableLayoutPanel mainLayout = new TableLayoutPanel
@@ -220,7 +220,7 @@ public class Boot_Smart_Tab : TabPage
             }
         }
         btnStartProcedure.Enabled = false;
-        circProgressBarSmall.Value = 0;
+
         foreach (var pb in circProgressBarsLarge)
             pb.Value = 0;
 
@@ -236,22 +236,25 @@ public class Boot_Smart_Tab : TabPage
 
     private void UpdateProgressBar(object sender, ProgressEventArgs e)
     {
-        //int progress = e.Progress;
-        //if (InvokeRequired)
-        //{
-        //    Invoke(new Action(() =>
-        //    {
-        //        circProgressBarSmall.Value = progress;
-        //        foreach (var pb in circProgressBarsLarge)
-        //            pb.Value = progress;
-        //    }));
-        //}
-        //else
-        //{
-        //    circProgressBarSmall.Value = progress;
-        //    foreach (var pb in circProgressBarsLarge)
-        //        pb.Value = progress;
-        //}
+
+        int Value = (int)((double)e.CurrentOffset / e.TotalLength * 100);
+        if (Value == 99) Value = 100;
+
+        int progress = Value;
+
+        if (InvokeRequired)
+        {
+            Invoke(new Action(() =>
+            {
+                circProgressBarsLarge[0].Value = progress; //aggiorna barra progresso singolo firmware
+                circProgressBarsLarge[1].Value = progress/ binSelections.Count; //aggiorna barra progresso totale
+            }));
+        }
+        else
+        {
+            circProgressBarsLarge[0].Value = progress; //aggiorna barra progresso singolo firmware
+            circProgressBarsLarge[1].Value = progress / binSelections.Count; //aggiorna barra progresso totale
+        }
     }
 }
 
