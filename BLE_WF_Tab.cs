@@ -34,7 +34,7 @@ public partial class BLEInterfaceTab : TabPage
         listBoxDevices.SelectedIndexChanged += listBoxDevices_SelectedIndexChanged;
 
         btnScan = new Button();
-        btnScan.Text = "Scansiona";
+        btnScan.Text = "Scan";
         btnScan.Location = new System.Drawing.Point(10, 10);
         btnScan.Click += BtnScan_Click;
 

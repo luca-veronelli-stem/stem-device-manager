@@ -16,6 +16,7 @@ using Stem_Protocol.TelemetryManager;
 
 using System.IO;
 using System.Reflection;
+using System.Diagnostics;
 
 namespace StemPC
 {
@@ -214,10 +215,11 @@ namespace StemPC
             // Crea la lista dei dispositivi
             List<DeviceInfo> BootSmartDevices = new List<DeviceInfo>
                 {
-                    new DeviceInfo(0x00030101, "Keyboard 1"),
-                    new DeviceInfo(0x00030141, "Motherboard"),
-                    //new DeviceInfo(3, "Keyboard 2"),
-                    //new DeviceInfo(1, "Keyboard 3"),
+                   // new DeviceInfo(0x00030101, "Keyboard 1"),
+                   //new DeviceInfo(0x00030102, "Keyboard 2"),
+                   //new DeviceInfo(0x00030103, "Keyboard 3"),
+                   new DeviceInfo(0x00030141, "Motherboard"),
+
                 };
 
             // Popola la tab con la lista dei dispositivi
@@ -262,7 +264,7 @@ namespace StemPC
             //tabControl.SelectedTab = CanTabPageRef;
 
 #if TOPLIFT
-           // tabControl.TabPages.Remove(tabPageProtocol);
+            tabControl.TabPages.Remove(tabPageProtocol);
             tabControl.TabPages.Remove(BLETabRef);
             BLEStatusLabel.Visible = false;
             toolStripSplitButton2.Visible = false;
@@ -738,13 +740,15 @@ namespace StemPC
 
         public void AppLayerDecoded(object sender, AppLayerDecoderEventArgs e)
         {
+#if TOPLIFT
+#else
             if (e.CurrentCommand.Name != "None")
             {
                 // Ottieni il timestamp
                 string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
                 //comando riconosciuto
                 richTextBoxTx.AppendText($"RX - {timestamp}: Comando '{e.CurrentCommand.Name} ' da {e.MachineName} per {e.MachineNameRecipient}: ");
-                
+
                 //se il comando è leggi variabile logica lo mostro come è indicato nel dizionario
                 if (e.CurrentCommand.Name == "Leggi variabile logica risposta")
                 {
@@ -760,13 +764,14 @@ namespace StemPC
                         //e in decimale
                         int Val = (e.Payload[4]);
                         richTextBoxTx.AppendText($" ({Val}) ");
-                    }else if (e.CurrentVariable.DataType.Contains("uint16_t"))
+                    }
+                    else if (e.CurrentVariable.DataType.Contains("uint16_t"))
                     {
                         //visualizza in esadecimale
                         richTextBoxTx.AppendText("0x");
                         for (int i = 0; i < 2; i++)
                         {
-                            richTextBoxTx.AppendText(e.Payload[4+i].ToString("X2"));
+                            richTextBoxTx.AppendText(e.Payload[4 + i].ToString("X2"));
                         }
                         //e in decimale
                         int Val = ((e.Payload[4]) << 8) | (e.Payload[5]);
@@ -857,6 +862,7 @@ namespace StemPC
             richTextBoxTx.SelectionStart = richTextBoxTx.Text.Length;
             // Esegue lo scroll fino alla posizione del cursore.
             richTextBoxTx.ScrollToCaret();
+#endif
         }
 
         public void onAppLayerSended(object sender, AppLayerSendEventArgs e)
