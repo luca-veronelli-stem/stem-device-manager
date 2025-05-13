@@ -17,6 +17,7 @@ using Stem_Protocol.TelemetryManager;
 using System.IO;
 using System.Reflection;
 using System.Diagnostics;
+using Windows.Devices.Enumeration;
 
 namespace StemPC
 {
@@ -264,6 +265,10 @@ namespace StemPC
             //tabControl.SelectedTab = CanTabPageRef;
 
 #if TOPLIFT
+            terminalOut.Visible = false;
+            // Rimuovi la riga
+            tableLayoutPanel1.RowStyles.RemoveAt(1);
+            tableLayoutPanel1.RowCount--;
             tabControl.TabPages.Remove(tabPageProtocol);
             tabControl.TabPages.Remove(BLETabRef);
             BLEStatusLabel.Visible = false;
