@@ -3,10 +3,10 @@ using StemPC;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Windows.Forms;
-
 using System.IO;
 using System.Reflection;
+using System.Windows.Forms;
+using CustomControls; // Per CircularProgressBar
 
 public class DeviceInfo
 {
@@ -18,209 +18,252 @@ public class DeviceInfo
         Address = address;
         DisplayName = displayName;
     }
-
 }
 
 public class Boot_Smart_Tab : TabPage
-{ 
-// Pannello che ospiterà i controlli dinamici
-private TableLayoutPanel selectionPanel; 
-// Bottone per avviare la procedura
-private Button btnStartProcedure; 
-// Lista dei controlli associati a ciascun dispositivo
-private List<BinSelectionControl> binSelections = new List<BinSelectionControl>(); 
-public BootManager BootHndlr;
+{
+    private TableLayoutPanel selectionPanel;
+    private Button btnStartProcedure;
+    private FlowLayoutPanel startPanel;
+    private TableLayoutPanel progressBarsPanel;
+    private CircularProgressBar circProgressBarSmall;
+    private CircularProgressBar[] circProgressBarsLarge = new CircularProgressBar[2];
+    private List<BinSelectionControl> binSelections = new List<BinSelectionControl>();
+    public BootManager BootHndlr;
 
     public Boot_Smart_Tab()
     {
         Name = "tabPageBootSmart";
         Text = "Boot Smart";
 
-        // Layout principale con due righe:
-        // - La prima (AutoSize) contiene il pannello di selezione
-        // - La seconda (Absolute) contiene il bottone con altezza fissa
+        // Layout principale: selezione, start, progress bar
         TableLayoutPanel mainLayout = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 2
+            RowCount = 3
         };
         mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 50));
+        mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-        // Creazione del pannello di selezione configurato per adattarsi al contenuto
+        // Pannello selezione
         selectionPanel = new TableLayoutPanel
         {
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
             ColumnCount = 3,
-            Dock = DockStyle.Top,  // Utilizziamo Top in modo che si adatti al contenuto
+            Dock = DockStyle.Top,
             Margin = new Padding(0)
         };
-
-        // Configuriamo le colonne del pannello (30% - 50% - 20%)
         selectionPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30));
         selectionPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
         selectionPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20));
 
-        // 1) Prendi l'assembly corrente
+        // Pannello start
+        startPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            FlowDirection = FlowDirection.LeftToRight,
+            Padding = new Padding(10),
+            AutoSize = true
+        };
+
+        // Crea bottone start
         Assembly asm = Assembly.GetExecutingAssembly();
-
-        // 2) Il nome della risorsa incorporata
         string resName = "STEMPM.images.ic_fluent_arrow_download_24_filled.png";
-
-        // 3) Apri lo stream
         using (Stream s = asm.GetManifestResourceStream(resName))
         {
             if (s == null)
             {
-                MessageBox.Show($"Risorsa '{resName}' non trovata.\n" +
-                                "Controlla il namespace e il Build Action.",
-                                "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Risorsa '{resName}' non trovata.", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-
-            // 4) Carica l'immagine
             Image img = Image.FromStream(s);
-
-            // Creazione del pulsante di upload con altezza fissa
             btnStartProcedure = new Button
             {
-                // Text = "Upload Firmware",
-                Height = 60,  // Altezza fissa
-                Anchor = AnchorStyles.None,  // Centro nella cella, senza espandersi
-                                             // Image = STEMPM.Properties.Resources.ic_fluent_document_bullet_list_24_filled,
+                Height = 60,
+                Width = 60,
+                Anchor = AnchorStyles.None,
                 BackgroundImage = img,
                 BackgroundImageLayout = ImageLayout.Zoom,
-                ImageAlign = ContentAlignment.MiddleCenter,
                 Margin = new Padding(3)
             };
             btnStartProcedure.Click += BtnStartProcedure_Click;
-
-            // Aggiungiamo il pannello e il pulsante al layout principale
-            mainLayout.Controls.Add(selectionPanel, 0, 0);
-            mainLayout.Controls.Add(btnStartProcedure, 0, 1);
-
-            this.Controls.Add(mainLayout);
+            startPanel.Controls.Add(btnStartProcedure);
         }
 
-        // Inizializzazione del BootManager
+
+        // Pannello due barre grandi
+        progressBarsPanel = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 1,
+            Margin = new Padding(10)
+        };
+        progressBarsPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+        progressBarsPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+
+        // Costruisci le due barre con label
+        string[] labels = { "Single board", "Total" };
+        for (int i = 0; i < 2; i++)
+        {
+            // Layout cella con 2 righe
+            var cellLayout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 2
+            };
+            cellLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 80));
+            cellLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 20));
+
+            // Progress bar grande
+            var pb = new CircularProgressBar
+            {
+                Size = new Size(240, 240),
+                LineWidth = 16,
+                ForeColor = Color.FromArgb(8, 72, 133),
+                Value = 0,
+                Maximum = 100,
+                Anchor = AnchorStyles.None,
+                Font = new Font("Poppins", 42, FontStyle.Regular)
+            };
+            circProgressBarsLarge[i] = pb;
+            cellLayout.Controls.Add(pb, 0, 0);
+
+            // Label sotto la barra
+            var lbl = new Label
+            {
+                Text = labels[i],
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Poppins", 12, FontStyle.Regular)
+            };
+            cellLayout.Controls.Add(lbl, 0, 1);
+
+            progressBarsPanel.Controls.Add(cellLayout, i, 0);
+        }
+
+        // Aggiungo controlli a mainLayout
+        mainLayout.Controls.Add(selectionPanel, 0, 0);
+        mainLayout.Controls.Add(startPanel, 0, 1);
+        mainLayout.Controls.Add(progressBarsPanel, 0, 2);
+        this.Controls.Add(mainLayout);
+
+        // Inizializza BootManager
         BootHndlr = new BootManager();
         BootHndlr.ProgressChanged += UpdateProgressBar;
     }
 
-    // Metodo pubblico per popolare la tab con la lista dei dispositivi
     public void PopulateDevices(List<DeviceInfo> devices)
     {
-        // Azzeramento: pulisce il pannello e la lista di selezioni
         selectionPanel.Controls.Clear();
         selectionPanel.RowStyles.Clear();
         selectionPanel.RowCount = 0;
         binSelections.Clear();
 
-        // Per ogni dispositivo crea una riga con Label, TextBox e Button
-        foreach (DeviceInfo device in devices)
+        foreach (var device in devices)
         {
-            // Label che visualizza il DisplayName del dispositivo
-            Label lblDevice = new Label
+            var lblDevice = new Label
             {
                 Text = device.DisplayName,
+                Font = new Font("Poppins", 9, FontStyle.Regular),
                 AutoSize = false,
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleLeft,
                 Margin = new Padding(3)
             };
-
-            // TextBox per mostrare il percorso del file .bin selezionato (sola lettura)
-            TextBox txtFilePath = new TextBox
+            var txtFilePath = new TextBox
             {
                 ReadOnly = true,
                 Dock = DockStyle.Fill,
                 Margin = new Padding(3)
             };
-
-            // Bottone per aprire l'OpenFileDialog e selezionare il file .bin
-            Button btnSelectFile = new Button
+            var btnSelectFile = new Button
             {
                 Text = "Select .bin",
+                Font = new Font("Poppins", 9, FontStyle.Regular),
+                TextAlign = ContentAlignment.MiddleCenter,
                 Dock = DockStyle.Fill,
                 Margin = new Padding(3)
             };
             btnSelectFile.Click += (s, e) =>
             {
-                OpenFileDialog openFileDialog = new OpenFileDialog
+                var ofd = new OpenFileDialog
                 {
                     Filter = "Binary Files|*.bin|All Files|*.*",
                     Title = "Select a Binary File"
                 };
-                if (openFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    txtFilePath.Text = openFileDialog.FileName;
-                }
+                if (ofd.ShowDialog() == DialogResult.OK)
+                    txtFilePath.Text = ofd.FileName;
             };
-
-            // Aggiunge una nuova riga al pannello
             int currentRow = selectionPanel.RowCount;
             selectionPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             selectionPanel.Controls.Add(lblDevice, 0, currentRow);
             selectionPanel.Controls.Add(txtFilePath, 1, currentRow);
             selectionPanel.Controls.Add(btnSelectFile, 2, currentRow);
             selectionPanel.RowCount++;
-
-            // Registra il controllo per la procedura di upload
             binSelections.Add(new BinSelectionControl(device, txtFilePath));
         }
     }
 
     private async void BtnStartProcedure_Click(object sender, EventArgs e)
     {
-        // Verifica che per ogni dispositivo sia stato selezionato un file .bin
-        foreach (var selection in binSelections)
+        foreach (var sel in binSelections)
         {
-            if (string.IsNullOrEmpty(selection.FilePath))
+            if (string.IsNullOrEmpty(sel.FilePath))
             {
-                MessageBox.Show($"Select firmware file for {selection.Device.DisplayName}");
+                MessageBox.Show($"Select firmware file for {sel.Device.DisplayName}");
                 return;
             }
         }
-
         btnStartProcedure.Enabled = false;
+        circProgressBarSmall.Value = 0;
+        foreach (var pb in circProgressBarsLarge)
+            pb.Value = 0;
 
-        // Esegue il ciclo di upload per ciascun dispositivo
-        foreach (var selection in binSelections)
+        foreach (var sel in binSelections)
         {
-            BootHndlr.SetFirmwarePath(selection.FilePath);
-            // Imposta l'indirizzo di destinazione (ad esempio, tramite una proprietà del main form)
-            Form1.FormRef.RecipientId = (uint)selection.Device.Address;
-
-           // await BootHndlr.StartBoot();
+            BootHndlr.SetFirmwarePath(sel.FilePath);
+            Form1.FormRef.RecipientId = (uint)sel.Device.Address;
             await BootHndlr.UploadFirmware();
         }
-        // Fine ciclo di upload per ciascun dispositivo
-
-        //invia il reset
 
         btnStartProcedure.Enabled = true;
     }
 
-    // Metodo per aggiornare la progress bar (da personalizzare se necessario)
     private void UpdateProgressBar(object sender, ProgressEventArgs e)
     {
-        // Implementa eventuale aggiornamento grafico della progressione
+        //int progress = e.Progress;
+        //if (InvokeRequired)
+        //{
+        //    Invoke(new Action(() =>
+        //    {
+        //        circProgressBarSmall.Value = progress;
+        //        foreach (var pb in circProgressBarsLarge)
+        //            pb.Value = progress;
+        //    }));
+        //}
+        //else
+        //{
+        //    circProgressBarSmall.Value = progress;
+        //    foreach (var pb in circProgressBarsLarge)
+        //        pb.Value = progress;
+        //}
     }
-
 }
 
 public class BinSelectionControl
 {
     public DeviceInfo Device { get; private set; }
-    public TextBox FilePathTextBox { get; private set; }
+    private TextBox FilePathTextBox;
     public string FilePath => FilePathTextBox.Text;
 
-    public BinSelectionControl(DeviceInfo device, TextBox filePathTextBox)
+    public BinSelectionControl(DeviceInfo device, TextBox textBox)
     {
         Device = device;
-        FilePathTextBox = filePathTextBox;
+        FilePathTextBox = textBox;
     }
-
 }

@@ -151,7 +151,11 @@ namespace StemPC
 
             labelBytes.Text = "Altri Bytes \r\n (HEX) separati da spazio";
 
+#if TOPLIFT
+            Text = "STEM Toplift A2 Manager " + Software_Version;
+#else
             this.Text += Software_Version;
+#endif
 
             FormRef = this;
 
