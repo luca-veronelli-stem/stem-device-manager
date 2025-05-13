@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "CthwsU//RsY=",
+  "dgSpecHash": "OXDg46pRCK8=",
   "success": true,
   "projectFilePath": "C:\\Users\\Michele\\OneDrive\\Dati\\Lavoro\\VSProjects\\StemProtocolCompanion\\STEMPM.csproj",
   "expectedPackageFiles": [
@@ -14,7 +14,9 @@
     "C:\\Users\\Michele\\.nuget\\packages\\microsoft.win32.primitives\\4.3.0\\microsoft.win32.primitives.4.3.0.nupkg.sha512",
     "C:\\Users\\Michele\\.nuget\\packages\\microsoft.windows.sdk.buildtools\\10.0.26100.1742\\microsoft.windows.sdk.buildtools.10.0.26100.1742.nupkg.sha512",
     "C:\\Users\\Michele\\.nuget\\packages\\netstandard.library\\1.6.1\\netstandard.library.1.6.1.nupkg.sha512",
-    "C:\\Users\\Michele\\.nuget\\packages\\peak.pcanbasic.net\\4.10.0.964\\peak.pcanbasic.net.4.10.0.964.nupkg.sha512",
+    "C:\\Users\\Michele\\.nuget\\packages\\oxyplot.core\\2.2.0\\oxyplot.core.2.2.0.nupkg.sha512",
+    "C:\\Users\\Michele\\.nuget\\packages\\oxyplot.windowsforms\\2.2.0\\oxyplot.windowsforms.2.2.0.nupkg.sha512",
+    "C:\\Users\\Michele\\.nuget\\packages\\peak.pcanbasic.net\\4.10.1.968\\peak.pcanbasic.net.4.10.1.968.nupkg.sha512",
     "C:\\Users\\Michele\\.nuget\\packages\\plugin.ble\\3.1.0\\plugin.ble.3.1.0.nupkg.sha512",
     "C:\\Users\\Michele\\.nuget\\packages\\rbush\\4.0.0\\rbush.4.0.0.nupkg.sha512",
     "C:\\Users\\Michele\\.nuget\\packages\\runtime.android-arm.runtime.native.system.io.ports\\9.0.2\\runtime.android-arm.runtime.native.system.io.ports.9.0.2.nupkg.sha512",
