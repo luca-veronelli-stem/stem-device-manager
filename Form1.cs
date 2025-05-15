@@ -338,8 +338,7 @@ namespace StemPC
             RecipientId = 0x00030141; //indirizzo fisso scheda madre Eden
             label12.Text = ($"Indirizzo\n 0x{RecipientId.ToString("X8")}");
             hExcel.EstraiDizionario(RecipientId, Dizionario);
-            TelemetryTabRef.UpdateDictionary(Dizionario);
-
+            TLTTabRef.UpdateDictionary(Dizionario);
 #else
             // Uso del file esterno per configurazioni diverse da client
             ExcelfilePath = Path.Combine(Application.StartupPath, "Dizionari STEM.xlsx");
@@ -348,6 +347,7 @@ namespace StemPC
             Comandi = new List<ExcelHandler.CommandData>();
             Dizionario = new List<ExcelHandler.VariableData>();
             hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, ExcelfilePath);
+            TelemetryTabRef.UpdateDictionary(Dizionario);
 #endif
 
 
@@ -477,10 +477,11 @@ namespace StemPC
                             RecipientId = Convert.ToUInt32(item.Indirizzo.Substring(2), 16);
 #if TOPLIFT
                             hExcel.EstraiDizionario(RecipientId, Dizionario);
+                            TLTTabRef.UpdateDictionary(Dizionario);
 #else
                             hExcel.EstraiDizionario(RecipientId, Dizionario, ExcelfilePath);
-#endif
                             TelemetryTabRef.UpdateDictionary(Dizionario);
+#endif
                         }
                     }
                     comboBoxCommand.SelectedIndex = 0;

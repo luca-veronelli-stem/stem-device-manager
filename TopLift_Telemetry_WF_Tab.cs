@@ -58,6 +58,11 @@ public class TopLiftTelemetry_Tab : TabPage
         telemetryManager.DataReady += onDataReady;
     }
 
+    public void UpdateDictionary(List<ExcelHandler.VariableData> Dictionary)
+    {
+        MachineDictionary = Dictionary;
+    }
+
     private void InitializeComponent()
     {
         this.SuspendLayout();
@@ -334,12 +339,14 @@ public class TopLiftTelemetry_Tab : TabPage
     private void StartTelemetryButton_Click(object sender, EventArgs e)
     {
         MessageBox.Show("Avvio telemetria...", "Telemetria", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        telemetryManager.TelemetryStart();
         // Qui inserisci la logica per avviare la telemetria
     }
 
     private void StopTelemetryButton_Click(object sender, EventArgs e)
     {
         MessageBox.Show("Arresto telemetria...", "Telemetria", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        telemetryManager.TelemetryStop();
         // Qui inserisci la logica per arrestare la telemetria
     }
 
