@@ -7,9 +7,20 @@ using Stem_Protocol.PacketManager;
 using Stem_Protocol.TelemetryManager;
 using STEMPM.Properties;
 
+using OxyPlot;
+using OxyPlot.Series;
+using OxyPlot.WindowsForms;
+using DocumentFormat.OpenXml.EMMA;
 
 public class TopLiftTelemetry_Tab : TabPage
 {
+    //Lista variabili della macchina
+    private List<ExcelHandler.VariableData> MachineDictionary;
+
+    // Classe per il backend
+    public TelemetryManager telemetryManager;
+
+
     // Dichiarazione dei controlli
     private Panel panel1;
     private Panel panel2;
@@ -24,14 +35,27 @@ public class TopLiftTelemetry_Tab : TabPage
     private Button buttonReadSettings;
     private Button buttonWriteSettings;
 
+    //Plotview section
+    private LineSeries pointSeries1;
+    private PlotView plotView1;
+
+    private LineSeries pointSeries2;
+    private PlotView plotView2;
+
     // Variabili booleane associate ai contenitori di immagini
     private bool[] imageStates;
 
-    public TopLiftTelemetry_Tab()
+    public TopLiftTelemetry_Tab(PacketManager packetManagerRX)
     {
         InitializeComponent();
         InitializeCustomComponents();
         SetupEventHandlers();
+
+        // Creazione del gestore per la telemetria
+        telemetryManager = new TelemetryManager(packetManagerRX);
+
+        // Aggiunta del gestore per l'evento DataReady
+        telemetryManager.DataReady += onDataReady;
     }
 
     private void InitializeComponent()
@@ -98,15 +122,65 @@ public class TopLiftTelemetry_Tab : TabPage
         // Aggiungo i due pannelli per gli elementi grafici
         panel1 = new Panel();
         panel1.Dock = DockStyle.Fill;
-        panel1.BackColor = Color.LightBlue;
+      //  panel1.BackColor = Color.LightBlue;
         panel1.BorderStyle = BorderStyle.FixedSingle;
         topRow.Controls.Add(panel1, 0, 0);
 
+        //plotview init
+        var plotModel1 = new PlotModel { Title = "Height Sensor" };
+        pointSeries1 = new LineSeries
+        {
+            MarkerType = MarkerType.Circle,
+            MarkerSize = 3,
+            MarkerStroke = OxyColors.Black,
+            MarkerFill = OxyColors.Red,
+            LineStyle = LineStyle.Solid,
+            Points =
+            {
+                new DataPoint(0, 0),
+                new DataPoint(10, 18),
+                new DataPoint(20, 12)
+            }
+        };
+        plotModel1.Series.Add(pointSeries1);
+        plotView1 = new PlotView
+        {
+            Dock = DockStyle.Fill, // Occupa tutto il Panel
+            Model = plotModel1, // Aggiungi punti iniziali
+        };
+        // plotView1.Model = 
+        panel1.Controls.Add(plotView1);
+
         panel2 = new Panel();
         panel2.Dock = DockStyle.Fill;
-        panel2.BackColor = Color.LightGreen;
+//        panel2.BackColor = Color.LightGreen;
         panel2.BorderStyle = BorderStyle.FixedSingle;
         topRow.Controls.Add(panel2, 1, 0);
+
+        //plotview init
+        var plotModel2 = new PlotModel { Title = "Slope Sensor" };
+        pointSeries2 = new LineSeries
+        {
+            MarkerType = MarkerType.Circle,
+            MarkerSize = 3,
+            MarkerStroke = OxyColors.Black,
+            MarkerFill = OxyColors.Red,
+            LineStyle = LineStyle.Solid,
+            Points =
+            {
+                new DataPoint(0, 0),
+                new DataPoint(10, 6),
+                new DataPoint(20, 18)
+            }
+        };
+        plotModel2.Series.Add(pointSeries2);
+        plotView2 = new PlotView
+        {
+            Dock = DockStyle.Fill, // Occupa tutto il Panel
+            Model = plotModel2, // Aggiungi punti iniziali
+        };
+        // plotView1.Model = 
+        panel2.Controls.Add(plotView2);
 
         // SECONDA RIGA: 7 contenitori di immagini con label sotto (5+2)
         TableLayoutPanel imageRow = new TableLayoutPanel();
@@ -213,10 +287,10 @@ public class TopLiftTelemetry_Tab : TabPage
         {
             // Label
             labelsRow4[i] = new Label();
-            if (i == 0) labelsRow4[i].Text = "Max High";
-            else if (i == 1) imageLabels[i].Text = "Min High";
-            else if (i == 2) imageLabels[i].Text = "Max Slope";
-            else if (i == 3) imageLabels[i].Text = "Min Slope";
+            if (i == 0) labelsRow4[i].Text = "Max Height";
+            else if (i == 1) labelsRow4[i].Text = "Min Height";
+            else if (i == 2) labelsRow4[i].Text = "Max Slope";
+            else if (i == 3) labelsRow4[i].Text = "Min Slope";
             //labelsRow4[i].Text = $"Campo {i + 1}";
             labelsRow4[i].Dock = DockStyle.Fill;
             labelsRow4[i].TextAlign = ContentAlignment.BottomLeft;
@@ -318,5 +392,19 @@ public class TopLiftTelemetry_Tab : TabPage
          //   imageContainers[index].BackColor = Color.LightGray;
          //   imageLabels[index].Text = $"Elemento {index + 1} (OFF)";
         }
+    }
+
+    private async void onDataReady(object sender, DataReadyEventArgs e)
+    {
+        //var container = activeElements[e.ListIndex];
+        //var control = container.Controls[1];
+        //if (control is Label label)
+        //{
+        //    await Task.Run(() => label.Invoke((MethodInvoker)(() => label.Text = telemetryManager.GetVariableName(e.ListIndex) + " " + e.Value.ToString())));
+        //}
+        //else
+        //{
+        //    MessageBox.Show("Il controllo non è una Label.", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        //}
     }
 }

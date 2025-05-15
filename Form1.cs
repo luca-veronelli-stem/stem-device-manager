@@ -277,7 +277,8 @@ namespace StemPC
             //TLTTabRef = new TopLiftTelemetry_Tab(RXpacketManager);
             //TLTTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
 
-            TLTTabRef = new TopLiftTelemetry_Tab();
+            TLTTabRef = new TopLiftTelemetry_Tab(RXpacketManager);
+            TLTTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
 
             tabControl.TabPages.Add(TLTTabRef);
             tabControl.TabPages.Add(BootSmartTabRef);
