@@ -187,7 +187,7 @@ public class TopLiftTelemetry_Tab : TabPage
         // plotView1.Model = 
         panel2.Controls.Add(plotView2);
 
-        // SECONDA RIGA: 7 contenitori di immagini con label sotto (5+2)
+        // SECONDA RIGA: 7 contenitori di immagini con label sotto
         TableLayoutPanel imageRow = new TableLayoutPanel();
         imageRow.Dock = DockStyle.Fill;
         imageRow.ColumnCount = 7; 
@@ -339,10 +339,26 @@ public class TopLiftTelemetry_Tab : TabPage
     private void StartTelemetryButton_Click(object sender, EventArgs e)
     {
         MessageBox.Show("Avvio telemetria...", "Telemetria", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        telemetryManager.ResetDictionary();
-        telemetryManager.AddToDictionary(MachineDictionary[1]);
-        telemetryManager.TelemetryStart();
+
         // Qui inserisci la logica per avviare la telemetria
+        telemetryManager.ResetDictionary();
+     //   telemetryManager.AddToDictionary(MachineDictionary[1]); //test forza firmware scheda
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato pompa")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EV1")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EV2")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EV3")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EV4")]);
+        telemetryManager.TelemetryStart();
+    }
+
+    private int GetVariableIndex(String Name)
+    {
+        for (int i = 0; i < MachineDictionary.Count; i++)
+        {
+            if (MachineDictionary[i].Name == Name) return i;
+        }
+
+        return -1;
     }
 
     private void StopTelemetryButton_Click(object sender, EventArgs e)
@@ -405,6 +421,36 @@ public class TopLiftTelemetry_Tab : TabPage
 
     private async void onDataReady(object sender, DataReadyEventArgs e)
     {
+        //Verifica quale variabile arriva e completa i campi di conseguenza
+        String VarName = telemetryManager.GetVariableName(e.ListIndex);
+        switch (VarName)
+        {
+            case "Stato pompa":
+                break;
+            case "Stato EV1":
+                if (e.Value!=0)  imageStates[0] = true;
+                else imageStates[0] = false;
+                UpdateImageDisplay(0);
+                break;
+            case "Stato EV2":
+                if (e.Value != 0) imageStates[1] = true;
+                else imageStates[1] = false;
+                UpdateImageDisplay(1);
+                break;
+            case "Stato EV3":
+                if (e.Value != 0) imageStates[2] = true;
+                else imageStates[2] = false;
+                UpdateImageDisplay(2);
+                break;
+            case "Stato EV4":
+                if (e.Value != 0) imageStates[3] = true;
+                else imageStates[3] = false;
+                UpdateImageDisplay(3);
+                break;
+            default:
+                break;
+        }
+        
         //var container = activeElements[e.ListIndex];
         //var control = container.Controls[1];
         //if (control is Label label)

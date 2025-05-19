@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using Stem_Protocol;
 using DocumentFormat.OpenXml.Drawing;
 using static Stem_Protocol.NetworkLayer;
+using DocumentFormat.OpenXml.Drawing.Charts;
 
 namespace Stem_Protocol.TelemetryManager;
 
@@ -98,6 +99,16 @@ public class TelemetryManager
             return "Index out of range";
         else 
             return TelemetryDictionary[index].Name;
+    }
+
+    public int GetVariableIndex(String Name)
+    {
+        for (int i= 0; i<TelemetryDictionary.Count; i++)
+        {
+            if (TelemetryDictionary[i].Name==Name) return i;
+        }
+
+        return -1;
     }
 
     public void onAppLayerPacketReady(object sender, PacketReadyEventArgs e)
