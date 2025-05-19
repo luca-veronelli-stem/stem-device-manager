@@ -629,7 +629,15 @@ public class TopLiftTelemetry_Tab : TabPage
                 break;
             case "Allarmi":
                 {
-                 
+                    if (this.InvokeRequired)
+                    {
+                        this.Invoke(new Action(() => textBoxRow3.Text = e.Value.ToString()));
+                    }
+                    else
+                    {
+                        textBoxRow3.Text = e.Value.ToString();
+                    }
+                    
                 }
                 break;
             default:
