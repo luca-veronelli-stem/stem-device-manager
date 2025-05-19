@@ -224,7 +224,7 @@ namespace StemPC
                    new DeviceInfo(0x000803C1, "Keyboard 1"),
                    new DeviceInfo(0x000803C2, "Keyboard 2"),
                    //new DeviceInfo(0x00030103, "Keyboard 3"),
-                   new DeviceInfo(0x00080381, "Motherboard"),      
+                   new DeviceInfo(0x00080381, "Motherboard"),
                 };
 
             // Popola la tab con la lista dei dispositivi
@@ -607,7 +607,7 @@ namespace StemPC
             var networkPackets = networkLayer.NetworkPackets;
 
             var packetManager = new PacketManager(Form1.FormRef.senderId);
-            bool result=false;
+            bool result = false;
 
             switch (CommunicationPort)
             {
@@ -725,7 +725,8 @@ namespace StemPC
             ExcelHandler.VariableData CurrentVariable = new ExcelHandler.VariableData("None", "0", "0", "");
 
             //se il comando è leggi variabile logica lo mostro come è indicato nel dizionario
-            if (CurrentCommand.Name== "Leggi variabile logica risposta") {
+            if (CurrentCommand.Name == "Leggi variabile logica risposta")
+            {
                 // Stampa i risultati (per verifica)
                 foreach (ExcelHandler.VariableData itemtemp in Dizionario)
                 {
@@ -735,7 +736,7 @@ namespace StemPC
                     {
                         CurrentVariable = itemtemp;
                         break;
-                    }            
+                    }
                 }
             }
 
