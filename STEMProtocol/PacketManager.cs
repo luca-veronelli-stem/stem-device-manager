@@ -32,7 +32,6 @@ namespace Stem_Protocol.PacketManager
         public List<SDL> BLEChannelsList = new List<SDL>();
 
         //events
-        //  public event Action<PacketReadyEventArgs> OnAppLayerPacketReceived;
         public event PacketReadyEventHandler OnAppLayerPacketReceived = null;
 
         //methods

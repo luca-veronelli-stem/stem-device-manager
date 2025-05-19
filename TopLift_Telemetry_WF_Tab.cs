@@ -432,11 +432,11 @@ public class TopLiftTelemetry_Tab : TabPage
         ResetPlot(pointSeries2, plotView2);
 
         //Carica in telemetria i dati valvole e pompa
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EV1")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EV2")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EV3")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EVA")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EVB")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EVC")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Valore RAW del potenzio altezza")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EV4")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato P2A")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato pompa")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato finecorsa ")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Valore RAW del potenzio inclinazione")]);
@@ -462,7 +462,17 @@ public class TopLiftTelemetry_Tab : TabPage
 
     private void buttonReadFaults_Click(object sender, EventArgs e)
     {
-        MessageBox.Show($"Hai inserito: {textBoxRow3.Text}", "Messaggio", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        // Qui inserisci la logica per avviare la telemetria
+        telemetryManager.TelemetryStop();
+        telemetryManager.ResetDictionary();
+
+        //Carica in telemetria i fault
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Allarmi")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Allarmi")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Allarmi")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Allarmi")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Allarmi")]);
+        telemetryManager.TelemetryStartOneShot();
     }
 
     private void buttonReadSettings_Click(object sender, EventArgs e)
@@ -571,22 +581,22 @@ public class TopLiftTelemetry_Tab : TabPage
         String VarName = telemetryManager.GetVariableName(e.ListIndex);
         switch (VarName)
         {
-            case "Stato EV1":
+            case "Stato EVA":
                 if (e.Value!=0)  imageStates[0] = true;
                 else imageStates[0] = false;
                 UpdateImageDisplay(0);
                 break;
-            case "Stato EV2":
+            case "Stato EVB":
                 if (e.Value != 0) imageStates[1] = true;
                 else imageStates[1] = false;
                 UpdateImageDisplay(1);
                 break;
-            case "Stato EV3":
+            case "Stato EVC":
                 if (e.Value != 0) imageStates[2] = true;
                 else imageStates[2] = false;
                 UpdateImageDisplay(2);
                 break;
-            case "Stato EV4":
+            case "Stato P2A":
                 if (e.Value != 0) imageStates[3] = true;
                 else imageStates[3] = false;
                 UpdateImageDisplay(3);
@@ -617,8 +627,11 @@ public class TopLiftTelemetry_Tab : TabPage
                     UpdatePlot(e.Value, pointSeries2, xAxis2, plotView2);
                 }
                 break;
-
-                
+            case "Allarmi":
+                {
+                 
+                }
+                break;
             default:
                 break;
         }

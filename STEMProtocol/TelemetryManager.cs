@@ -154,6 +154,13 @@ public class TelemetryManager
         await TelemetryRequestTask();
     }
 
+
+    public async Task TelemetryStartOneShot()
+    {
+        TelemetryOn = true;
+        await TelemetryRequestTaskOneShot();
+    }
+
     private int CurrentIndex = 0;
 
     public async Task TelemetryRequestTask()
@@ -168,6 +175,29 @@ public class TelemetryManager
             else
             {
                 CurrentIndex = 0;
+            }
+
+            //crea un array di byte dove nei primi 2 bytes ci sono i valori Addrh e AddrL della variabile da richiedere dal TelemetryDictionary di indice CurrentIndex
+            byte[] Data = new byte[] { Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrH, 16), Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrL, 16) };
+
+            await protocolManager.SendCommand(CMD_READ_VARIABLE, Data, false);
+            await Task.Delay(150);
+        }
+    }
+
+    public async Task TelemetryRequestTaskOneShot()
+    {
+        while (TelemetryOn == true)
+        {
+            //richiedi una variabile alla volta in modo sequenziale del dizionario TelemetryDictionary
+            if (CurrentIndex < TelemetryDictionary.Count - 1)
+            {
+                CurrentIndex++;
+            }
+            else
+            {
+                CurrentIndex = 0;
+                TelemetryOn = false;
             }
 
             //crea un array di byte dove nei primi 2 bytes ci sono i valori Addrh e AddrL della variabile da richiedere dal TelemetryDictionary di indice CurrentIndex

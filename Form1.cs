@@ -215,11 +215,16 @@ namespace StemPC
             // Crea la lista dei dispositivi
             List<DeviceInfo> BootSmartDevices = new List<DeviceInfo>
                 {
-                   new DeviceInfo(0x00030101, "Keyboard 1"),
+                //EDEN devices
+                   //new DeviceInfo(0x00030101, "Keyboard 1"),
                    //new DeviceInfo(0x00030102, "Keyboard 2"),
-                   //new DeviceInfo(0x00030103, "Keyboard 3"),
-                   new DeviceInfo(0x00030141, "Motherboard"),
+                   //new DeviceInfo(0x00030141, "Motherboard"),
 
+                //TOPLIFT devices
+                   new DeviceInfo(0x000803C1, "Keyboard 1"),
+                   new DeviceInfo(0x000803C2, "Keyboard 2"),
+                   //new DeviceInfo(0x00030103, "Keyboard 3"),
+                   new DeviceInfo(0x00080381, "Motherboard"),      
                 };
 
             // Popola la tab con la lista dei dispositivi
@@ -334,8 +339,8 @@ namespace StemPC
 
 
 //fissa l'indirizzo toplift ed estrai i dati relativi
-        //    RecipientId = 0x00080381; //indirizzo fisso scheda madre Toplift A2
-            RecipientId = 0x00030141; //indirizzo fisso scheda madre Eden
+            RecipientId = 0x00080381; //indirizzo fisso scheda madre Toplift A2
+        //    RecipientId = 0x00030141; //indirizzo fisso scheda madre Eden
             label12.Text = ($"Indirizzo\n 0x{RecipientId.ToString("X8")}");
             hExcel.EstraiDizionario(RecipientId, Dizionario);
             TLTTabRef.UpdateDictionary(Dizionario);
