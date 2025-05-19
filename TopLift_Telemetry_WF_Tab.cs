@@ -14,6 +14,7 @@ using DocumentFormat.OpenXml.EMMA;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 using OxyPlot.Axes;
+using OxyPlotCustom;
 
 public class TopLiftTelemetry_Tab : TabPage
 {
@@ -42,17 +43,19 @@ public class TopLiftTelemetry_Tab : TabPage
     private LineSeries pointSeries1;
     private PlotView plotView1;
     private LinearAxis xAxis1;
+    private LinearAxis yAxis1;
 
     private LineSeries pointSeries2;
     private PlotView plotView2;
     private LinearAxis xAxis2;
+    private LinearAxis yAxis2;
 
     // Variabili booleane associate ai contenitori di immagini
     private bool[] imageStates;
 
     //oxyplot variables
     private int time;
-    private double windowWidth = 10;     // ampiezza della finestra X (es. 10 secondi)
+    private double windowWidth = 200;     // ampiezza della finestra X (es. 10 secondi)
 
 
     public TopLiftTelemetry_Tab(PacketManager packetManagerRX)
@@ -144,29 +147,35 @@ public class TopLiftTelemetry_Tab : TabPage
         //plotview init
         var plotModel1 = new PlotModel { Title = "Height Sensor" };
 
+        plotModel1.DefaultFont = "Poppins";
+
         // Asse X in secondi, con range iniziale [0, windowWidth]
         xAxis1 = new LinearAxis
         {
             Position = AxisPosition.Bottom,
             Minimum = 0,
             Maximum = windowWidth,
-            Title = "Tempo (s)"
+            Title = "Sample num"
         };
         plotModel1.Axes.Add(xAxis1);
 
+        // Asse Y in valore assoluto 0-32767
+        yAxis1 = new LinearAxis
+        {
+            Position = AxisPosition.Left,
+            Minimum = 0,
+            Maximum = 32767,
+        };
+        plotModel1.Axes.Add(yAxis1);
+
         pointSeries1 = new LineSeries
         {
-            MarkerType = MarkerType.Circle,
-            MarkerSize = 3,
+            MarkerType = MarkerType.Cross,
+            MarkerSize = 2,
             MarkerStroke = OxyColors.Black,
             MarkerFill = OxyColors.Red,
             LineStyle = LineStyle.Solid,
-            //Points =
-            //{
-            //    new DataPoint(0, 0),
-            //    new DataPoint(10, 18),
-            //    new DataPoint(20, 12)
-            //}
+            Color = OxyColor.FromRgb(8, 72, 133)
         };
 
         plotModel1.Series.Add(pointSeries1);
@@ -187,28 +196,68 @@ public class TopLiftTelemetry_Tab : TabPage
 
         //plotview init
         var plotModel2 = new PlotModel { Title = "Slope Sensor" };
+        plotModel2.DefaultFont = "Poppins";
+
+        // Asse X in secondi, con range iniziale [0, windowWidth]
+        xAxis2 = new LinearAxis
+        {
+            Position = AxisPosition.Bottom,
+            Minimum = 0,
+            Maximum = windowWidth,
+            Title = "Sample num"
+        };
+
+        plotModel2.Axes.Add(xAxis2);
+
+        // Asse Y in valore assoluto 0-32767
+        yAxis2 = new LinearAxis
+        {
+            Position = AxisPosition.Left,
+            Minimum = 0,
+            Maximum = 32767,
+        };
+        plotModel2.Axes.Add(yAxis2);
+
         pointSeries2 = new LineSeries
         {
-            MarkerType = MarkerType.Circle,
-            MarkerSize = 3,
+            MarkerType = MarkerType.Cross,
+            MarkerSize = 2,
             MarkerStroke = OxyColors.Black,
             MarkerFill = OxyColors.Red,
             LineStyle = LineStyle.Solid,
-            Points =
-            {
-                new OxyPlot.DataPoint(0, 0),
-                new OxyPlot.DataPoint(10, 6),
-                new OxyPlot.DataPoint(20, 18)
-            }
+            Color = OxyColor.FromRgb(8, 72, 133)
         };
+
         plotModel2.Series.Add(pointSeries2);
+        
         plotView2 = new PlotView
         {
             Dock = DockStyle.Fill, // Occupa tutto il Panel
             Model = plotModel2, // Aggiungi punti iniziali
         };
-        // plotView1.Model = 
         panel2.Controls.Add(plotView2);
+
+        //// 1. Crea un controller personalizzato
+        //var controller = new PlotController();
+
+        //// 2. Rimuovi il binding di default della rotellina
+        //controller.UnbindMouseWheel();
+
+        //// 3. Associa la rotellina solo allo zoom sull’asse X
+
+
+        //// Crea un nuovo manipolatore personalizzato
+        //var xAxisZoomer = new XAxisMouseWheelZoomManipulator(plotView1);
+        //controller.BindMouseWheel(xAxisZoomer.HandleMouseWheel);
+        ////// Aggiunge il nuovo manipolatore personalizzato
+        ////controller.BindMouseWheel(OxyModifierKeys.None, xAxisZoomer.HandleMouseWheel);
+        ////     controller.BindMouseWheel(PlotCommands.z);
+
+
+
+        //// 4. Assegna il controller al tuo PlotView
+        //plotView1.Controller = controller;
+        //plotView2.Controller = controller;
 
         // SECONDA RIGA: 7 contenitori di immagini con label sotto
         TableLayoutPanel imageRow = new TableLayoutPanel();
@@ -386,10 +435,12 @@ public class TopLiftTelemetry_Tab : TabPage
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EV1")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EV2")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EV3")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Valore RAW del potenzio altezza")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EV4")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato pompa")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato finecorsa ")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Valore RAW del potenzio altezza")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Valore RAW del potenzio inclinazione")]);
+    
         telemetryManager.TelemetryStart();
     }
 
@@ -560,6 +611,14 @@ public class TopLiftTelemetry_Tab : TabPage
                     UpdatePlot(e.Value, pointSeries1, xAxis1, plotView1);
                 }
                 break;
+            case "Valore RAW del potenzio inclinazione":
+                {
+                    time += 1;
+                    UpdatePlot(e.Value, pointSeries2, xAxis2, plotView2);
+                }
+                break;
+
+                
             default:
                 break;
         }
