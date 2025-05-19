@@ -247,6 +247,8 @@ public class Telemetry_Tab : TabPage
 
     private void ButtonStart_Click(object sender, EventArgs e)
     {
+        // Aggiorno la lista dei dispositivi da interrogare
+        telemetryManager.AddToDictionary(MachineDictionary[1]);
         telemetryManager.TelemetryStart();
     }
 

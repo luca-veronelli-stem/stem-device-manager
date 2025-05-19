@@ -76,6 +76,12 @@ public class TelemetryManager
         TelemetryDictionary.RemoveAt(index);
     }
 
+    public void ResetDictionary()
+    {
+        int Count = TelemetryDictionary.Count;
+        for (int i=0; i<Count; i++) TelemetryDictionary.RemoveAt(0);
+    }
+
     public void UpdateMyAddress(uint address)
     {
         myAddress = address;

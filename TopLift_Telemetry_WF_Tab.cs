@@ -339,6 +339,8 @@ public class TopLiftTelemetry_Tab : TabPage
     private void StartTelemetryButton_Click(object sender, EventArgs e)
     {
         MessageBox.Show("Avvio telemetria...", "Telemetria", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        telemetryManager.ResetDictionary();
+        telemetryManager.AddToDictionary(MachineDictionary[1]);
         telemetryManager.TelemetryStart();
         // Qui inserisci la logica per avviare la telemetria
     }
