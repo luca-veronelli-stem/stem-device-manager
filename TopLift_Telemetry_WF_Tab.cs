@@ -338,16 +338,16 @@ public class TopLiftTelemetry_Tab : TabPage
 
     private void StartTelemetryButton_Click(object sender, EventArgs e)
     {
-        MessageBox.Show("Avvio telemetria...", "Telemetria", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
         // Qui inserisci la logica per avviare la telemetria
+        telemetryManager.TelemetryStop();
         telemetryManager.ResetDictionary();
-     //   telemetryManager.AddToDictionary(MachineDictionary[1]); //test forza firmware scheda
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato pompa")]);
+        //Carica in telemetria i dati valvole e pompa
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EV1")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EV2")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EV3")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EV4")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato pompa")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato finecorsa ")]); 
         telemetryManager.TelemetryStart();
     }
 
@@ -363,7 +363,6 @@ public class TopLiftTelemetry_Tab : TabPage
 
     private void StopTelemetryButton_Click(object sender, EventArgs e)
     {
-        MessageBox.Show("Arresto telemetria...", "Telemetria", MessageBoxButtons.OK, MessageBoxIcon.Information);
         telemetryManager.TelemetryStop();
         // Qui inserisci la logica per arrestare la telemetria
     }
@@ -399,23 +398,54 @@ public class TopLiftTelemetry_Tab : TabPage
 
     private void UpdateImageDisplay(int index)
     {
-        if (index > 3) return;
+        if (index > 6) return;
 
-        // Cambia l'immagine in base allo stato
-        if (imageStates[index])
-        {
-            imageContainers[index].Image=Resources.ValvolaOn;
-            // Qui dovresti caricare l'immagine per lo stato true
-            // Per ora utilizziamo colori diversi per simulare il cambio di immagine
-           // imageContainers[index].BackColor = Color.LightGreen;
-           // imageLabels[index].Text = $"Elemento {index + 1} (ON)";
+        if (index < 4) { 
+            // Cambia l'immagine in base allo stato
+            if (imageStates[index])
+            {
+                imageContainers[index].Image = Resources.ValvolaOn;
+            }
+            else
+            {
+                imageContainers[index].Image = Resources.ValvolaOff;
+            }
         }
-        else
+        else if (index == 4)
         {
-            imageContainers[index].Image = Resources.ValvolaOff;
-            // Qui dovresti caricare l'immagine per lo stato false
-         //   imageContainers[index].BackColor = Color.LightGray;
-         //   imageLabels[index].Text = $"Elemento {index + 1} (OFF)";
+            // Cambia l'immagine in base allo stato
+            if (imageStates[index])
+            {
+                imageContainers[index].Image = Resources.PompaOn;
+            }
+            else
+            {
+                imageContainers[index].Image = Resources.PompaOff;
+            }
+        }
+        else if (index == 5)
+        {
+            // Cambia l'immagine in base allo stato
+            if (imageStates[index])
+            {
+                imageContainers[index].Image = Resources.LSOn;
+            }
+            else
+            {
+                imageContainers[index].Image = Resources.LSOff;
+            }
+        }
+        else if (index == 6)
+        {
+            // Cambia l'immagine in base allo stato
+            if (imageStates[index])
+            {
+                imageContainers[index].Image = Resources.LSOn;
+            }
+            else
+            {
+                imageContainers[index].Image = Resources.LSOff;
+            }
         }
     }
 
@@ -425,8 +455,6 @@ public class TopLiftTelemetry_Tab : TabPage
         String VarName = telemetryManager.GetVariableName(e.ListIndex);
         switch (VarName)
         {
-            case "Stato pompa":
-                break;
             case "Stato EV1":
                 if (e.Value!=0)  imageStates[0] = true;
                 else imageStates[0] = false;
@@ -446,6 +474,21 @@ public class TopLiftTelemetry_Tab : TabPage
                 if (e.Value != 0) imageStates[3] = true;
                 else imageStates[3] = false;
                 UpdateImageDisplay(3);
+                break;
+            case "Stato pompa":
+                if (e.Value != 0) imageStates[4] = true;
+                else imageStates[4] = false;
+                UpdateImageDisplay(4);
+                break;
+            case "Stato finecorsa ":
+
+                if ((e.Value & 0x01) != 0) imageStates[5] = true;
+                else imageStates[5] = false;
+                UpdateImageDisplay(5);
+
+                if ((e.Value & 0x02) != 0) imageStates[6] = true;
+                else imageStates[6] = false;
+                UpdateImageDisplay(6);
                 break;
             default:
                 break;
