@@ -11,6 +11,9 @@ using OxyPlot;
 using OxyPlot.Series;
 using OxyPlot.WindowsForms;
 using DocumentFormat.OpenXml.EMMA;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
+using OxyPlot.Axes;
 
 public class TopLiftTelemetry_Tab : TabPage
 {
@@ -38,12 +41,19 @@ public class TopLiftTelemetry_Tab : TabPage
     //Plotview section
     private LineSeries pointSeries1;
     private PlotView plotView1;
+    private LinearAxis xAxis1;
 
     private LineSeries pointSeries2;
     private PlotView plotView2;
+    private LinearAxis xAxis2;
 
     // Variabili booleane associate ai contenitori di immagini
     private bool[] imageStates;
+
+    //oxyplot variables
+    private int time;
+    private double windowWidth = 10;     // ampiezza della finestra X (es. 10 secondi)
+
 
     public TopLiftTelemetry_Tab(PacketManager packetManagerRX)
     {
@@ -133,6 +143,17 @@ public class TopLiftTelemetry_Tab : TabPage
 
         //plotview init
         var plotModel1 = new PlotModel { Title = "Height Sensor" };
+
+        // Asse X in secondi, con range iniziale [0, windowWidth]
+        xAxis1 = new LinearAxis
+        {
+            Position = AxisPosition.Bottom,
+            Minimum = 0,
+            Maximum = windowWidth,
+            Title = "Tempo (s)"
+        };
+        plotModel1.Axes.Add(xAxis1);
+
         pointSeries1 = new LineSeries
         {
             MarkerType = MarkerType.Circle,
@@ -140,20 +161,22 @@ public class TopLiftTelemetry_Tab : TabPage
             MarkerStroke = OxyColors.Black,
             MarkerFill = OxyColors.Red,
             LineStyle = LineStyle.Solid,
-            Points =
-            {
-                new DataPoint(0, 0),
-                new DataPoint(10, 18),
-                new DataPoint(20, 12)
-            }
+            //Points =
+            //{
+            //    new DataPoint(0, 0),
+            //    new DataPoint(10, 18),
+            //    new DataPoint(20, 12)
+            //}
         };
+
         plotModel1.Series.Add(pointSeries1);
+
         plotView1 = new PlotView
         {
             Dock = DockStyle.Fill, // Occupa tutto il Panel
             Model = plotModel1, // Aggiungi punti iniziali
         };
-        // plotView1.Model = 
+
         panel1.Controls.Add(plotView1);
 
         panel2 = new Panel();
@@ -173,9 +196,9 @@ public class TopLiftTelemetry_Tab : TabPage
             LineStyle = LineStyle.Solid,
             Points =
             {
-                new DataPoint(0, 0),
-                new DataPoint(10, 6),
-                new DataPoint(20, 18)
+                new OxyPlot.DataPoint(0, 0),
+                new OxyPlot.DataPoint(10, 6),
+                new OxyPlot.DataPoint(20, 18)
             }
         };
         plotModel2.Series.Add(pointSeries2);
@@ -241,8 +264,7 @@ public class TopLiftTelemetry_Tab : TabPage
             imageRow.Controls.Add(imageLabels[i], i, 1);
 
             // Stato iniziale (false)
-            if (i == 1) imageStates[i] = true;
-            else imageStates[i] = false;
+            imageStates[i] = false;
             UpdateImageDisplay(i);
         }
 
@@ -336,18 +358,38 @@ public class TopLiftTelemetry_Tab : TabPage
         buttonReadSettings.Click += buttonReadSettings_Click;
     }
 
+    private void ResetPlot(LineSeries pointSeries, PlotView plotView)
+    {
+        // 1) Pulisci i dati esistenti
+        pointSeries.Points.Clear();
+
+        // 2) Ripristini la finestra X originale
+        xAxis1.Minimum = 0;
+        xAxis1.Maximum = windowWidth;
+
+        // 3) Ridisegni (importante per aggiornare subito la griglia vuota)
+        plotView.InvalidatePlot(true);
+    }
+
     private void StartTelemetryButton_Click(object sender, EventArgs e)
     {
         // Qui inserisci la logica per avviare la telemetria
         telemetryManager.TelemetryStop();
         telemetryManager.ResetDictionary();
+
+        //Azzera il grafico oxyplot
+        time = 0;
+        ResetPlot(pointSeries1, plotView1);
+        ResetPlot(pointSeries2, plotView2);
+
         //Carica in telemetria i dati valvole e pompa
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EV1")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EV2")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EV3")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EV4")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato pompa")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato finecorsa ")]); 
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato finecorsa ")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Valore RAW del potenzio altezza")]);
         telemetryManager.TelemetryStart();
     }
 
@@ -449,6 +491,29 @@ public class TopLiftTelemetry_Tab : TabPage
         }
     }
 
+    private void UpdatePlot(uint newValue, LineSeries pointSeries, LinearAxis xAxis, PlotView plotView)
+    {
+        // Simulo un segnale: qui puoi inserire il tuo dato in tempo reale
+        //   double newValue = Math.Sin(2 * Math.PI * 0.5 * time);
+
+        // Aggiungo il nuovo punto
+        pointSeries.Points.Add(new OxyPlot.DataPoint(time, newValue));
+
+        // Scorro la finestra sull'asse X
+        if (time > windowWidth)
+        {
+            xAxis.Minimum = time - windowWidth;
+            xAxis.Maximum = time;
+        }
+
+        // Evita che la serie cresca indefinitamente (opzionale)
+        if (pointSeries.Points.Count > 1000)
+            pointSeries.Points.RemoveAt(0);
+
+        // Ridisegno il plot
+        plotView.InvalidatePlot(true);
+    }
+
     private async void onDataReady(object sender, DataReadyEventArgs e)
     {
         //Verifica quale variabile arriva e completa i campi di conseguenza
@@ -481,7 +546,6 @@ public class TopLiftTelemetry_Tab : TabPage
                 UpdateImageDisplay(4);
                 break;
             case "Stato finecorsa ":
-
                 if ((e.Value & 0x01) != 0) imageStates[5] = true;
                 else imageStates[5] = false;
                 UpdateImageDisplay(5);
@@ -490,19 +554,14 @@ public class TopLiftTelemetry_Tab : TabPage
                 else imageStates[6] = false;
                 UpdateImageDisplay(6);
                 break;
+            case "Valore RAW del potenzio altezza":
+                {
+                    time += 1;
+                    UpdatePlot(e.Value, pointSeries1, xAxis1, plotView1);
+                }
+                break;
             default:
                 break;
         }
-        
-        //var container = activeElements[e.ListIndex];
-        //var control = container.Controls[1];
-        //if (control is Label label)
-        //{
-        //    await Task.Run(() => label.Invoke((MethodInvoker)(() => label.Text = telemetryManager.GetVariableName(e.ListIndex) + " " + e.Value.ToString())));
-        //}
-        //else
-        //{
-        //    MessageBox.Show("Il controllo non è una Label.", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //}
     }
 }
