@@ -668,13 +668,17 @@ public class TopLiftTelemetry_Tab : TabPage
                 break;
             case "Allarmi":
                 {
+                    string FaultString = null;
+                    if (e.Value != 0) FaultString = e.Value.ToString();
+                    else FaultString = "No active Faults";
+
                     if (this.InvokeRequired)
                     {
-                        this.Invoke(new Action(() => textBoxRow3.Text = e.Value.ToString()));
+                        this.Invoke(new Action(() => textBoxRow3.Text = FaultString));
                     }
                     else
                     {
-                        textBoxRow3.Text = e.Value.ToString();
+                        textBoxRow3.Text = FaultString;
                     }     
                 }
                 break;
