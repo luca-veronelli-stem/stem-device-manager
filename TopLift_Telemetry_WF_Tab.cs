@@ -17,6 +17,7 @@ using OxyPlot.Axes;
 using OxyPlotCustom;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Windows.ApplicationModel.Background;
+using System.Threading.Tasks;
 
 public class TopLiftTelemetry_Tab : TabPage
 {
@@ -73,7 +74,7 @@ public class TopLiftTelemetry_Tab : TabPage
         telemetryManager.DataReady += onDataReady;
     }
 
-    public void UpdateDictionary(List<ExcelHandler.VariableData> Dictionary)
+    public async Task UpdateDictionary(List<ExcelHandler.VariableData> Dictionary)
     {
         MachineDictionary = Dictionary;
     }
