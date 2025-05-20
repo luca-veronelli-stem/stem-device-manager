@@ -199,7 +199,7 @@ public class TelemetryManager
             byte[] Data = new byte[] { Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrH, 16), Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrL, 16) };
 
             await protocolManager.SendCommand(CMD_READ_VARIABLE, Data, false);
-            await Task.Delay(150);
+            await Task.Delay(130);
         }
     }
 
@@ -241,12 +241,32 @@ public class TelemetryManager
                 TelemetryOn = false;
             }
 
+            //e poi c'è il valore della variabile con la dimensione ricavata dal dizionario stem
+            //switch (TelemetryDictionary[CurrentIndex].DataType)
+            //{
+            //    case "uint16_t":
+            //        Data.Append(Convert.ToByte(TelemetryDictionaryValues[CurrentIndex], 10));
+            //        break;
+            //    default:
+            //        break;
+            //}
+
+            if (int.TryParse(TelemetryDictionaryValues[CurrentIndex], out int valuetest) && valuetest >= 0 && valuetest <= 32767)
+            {
+                // Input valido
+              
+            }
+            else
+            {
+                // Input non valido
+                continue;
+            }
+
             // Converte la stringa in ushort (valore 0–65535)
             ushort value = Convert.ToUInt16(TelemetryDictionaryValues[CurrentIndex], 10);
 
             // Converte in array di byte in little-endian (default)
             byte[] bytesVal = BitConverter.GetBytes(value);
-
             // Se l'architettura è little-endian, inverti l’ordine per ottenere big-endian
             if (BitConverter.IsLittleEndian)
             {
@@ -263,15 +283,7 @@ public class TelemetryManager
             // Se ti serve di nuovo un array:
             byte[] Data = data.ToArray();
 
-            //e poi c'è il valore della variabile con la dimensione ricavata dal dizionario stem
-            //switch (TelemetryDictionary[CurrentIndex].DataType)
-            //{
-            //    case "uint16_t":
-            //        Data.Append(Convert.ToByte(TelemetryDictionaryValues[CurrentIndex], 10));
-            //        break;
-            //    default:
-            //        break;
-            //}
+
 
             await protocolManager.SendCommand(CMD_WRITE_VARIABLE, Data, false);
             await Task.Delay(100);

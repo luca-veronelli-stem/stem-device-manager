@@ -422,7 +422,7 @@ public class TopLiftTelemetry_Tab : TabPage
         plotView.InvalidatePlot(true);
     }
 
-    private void StartTelemetryButton_Click(object sender, EventArgs e)
+    private async void StartTelemetryButton_Click(object sender, EventArgs e)
     {
         // Qui inserisci la logica per avviare la telemetria
         telemetryManager.TelemetryStop();
@@ -443,7 +443,7 @@ public class TopLiftTelemetry_Tab : TabPage
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato finecorsa ")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Valore RAW del potenzio inclinazione")]);
     
-        telemetryManager.TelemetryStart();
+        await telemetryManager.TelemetryStart();
     }
 
     private int GetVariableIndex(String Name)
@@ -462,7 +462,7 @@ public class TopLiftTelemetry_Tab : TabPage
         // Qui inserisci la logica per arrestare la telemetria
     }
 
-    private void buttonReadFaults_Click(object sender, EventArgs e)
+    private async void buttonReadFaults_Click(object sender, EventArgs e)
     {
         // Qui inserisci la logica per avviare la telemetria
         telemetryManager.TelemetryStop();
@@ -474,10 +474,10 @@ public class TopLiftTelemetry_Tab : TabPage
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Allarmi")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Allarmi")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Allarmi")]);
-        telemetryManager.ReadOneShot();
+        await telemetryManager.ReadOneShot();
     }
 
-    private void buttonReadSettings_Click(object sender, EventArgs e)
+    private async void buttonReadSettings_Click(object sender, EventArgs e)
     {
         // Qui inserisci la logica per avviare la telemetria
         telemetryManager.TelemetryStop();
@@ -496,7 +496,7 @@ public class TopLiftTelemetry_Tab : TabPage
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione orizz.")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza max")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza min")]);
-        telemetryManager.ReadOneShot();
+        await telemetryManager.ReadOneShot();
     }
 
     private async void buttonWriteSettings_Click(object sender, EventArgs e)
