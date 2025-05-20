@@ -17,12 +17,14 @@ public class TelemetryManager
 {
     // Comando per la lettura della variabile
     private const ushort CMD_READ_VARIABLE = 0x0001;
+    private const ushort CMD_WRITE_VARIABLE = 0x0002;
 
     // Gestore del protocollo
     private ProtocolManager protocolManager;
 
     //Lista variabili da richiedere
     private List<ExcelHandler.VariableData> TelemetryDictionary;
+    private List<string> TelemetryDictionaryValues;
 
     //global rx packet manager
     private PacketManager.PacketManager rXPacketManager;
@@ -48,6 +50,7 @@ public class TelemetryManager
         rXPacketManager.OnAppLayerPacketReceived += onAppLayerPacketReady;
         TelemetryOn = false;
         TelemetryDictionary = new List<ExcelHandler.VariableData>();
+        TelemetryDictionaryValues = new List<string>();
     }
 
     public void SetHardwareChannel(string channel)
@@ -72,6 +75,12 @@ public class TelemetryManager
         TelemetryDictionary.Add(data);
     }
 
+    public void AddToDictionaryForWrite(ExcelHandler.VariableData data, string value)
+    {
+        TelemetryDictionary.Add(data);
+        TelemetryDictionaryValues.Add(value);
+    }
+
     public void RemoveFromDictionary(int index)
     {
         TelemetryDictionary.RemoveAt(index);
@@ -81,6 +90,9 @@ public class TelemetryManager
     {
         int Count = TelemetryDictionary.Count;
         for (int i=0; i<Count; i++) TelemetryDictionary.RemoveAt(0);
+
+        Count = TelemetryDictionaryValues.Count;
+        for (int i = 0; i < Count; i++) TelemetryDictionaryValues.RemoveAt(0);     
     }
 
     public void UpdateMyAddress(uint address)
@@ -155,10 +167,16 @@ public class TelemetryManager
     }
 
 
-    public async Task TelemetryStartOneShot()
+    public async Task ReadOneShot()
     {
         TelemetryOn = true;
         await TelemetryRequestTaskOneShot();
+    }
+
+    public async Task WriteOneShot()
+    {
+        TelemetryOn = true;
+        await TelemetryWriteTaskOneShot();
     }
 
     private int CurrentIndex = 0;
@@ -204,7 +222,59 @@ public class TelemetryManager
             byte[] Data = new byte[] { Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrH, 16), Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrL, 16) };
 
             await protocolManager.SendCommand(CMD_READ_VARIABLE, Data, false);
-            await Task.Delay(150);
+            await Task.Delay(100);
+        }
+    }
+
+    public async Task TelemetryWriteTaskOneShot()
+    {
+        while (TelemetryOn == true)
+        {
+            //richiedi una variabile alla volta in modo sequenziale del dizionario TelemetryDictionary
+            if (CurrentIndex < TelemetryDictionary.Count - 1)
+            {
+                CurrentIndex++;
+            }
+            else
+            {
+                CurrentIndex = 0;
+                TelemetryOn = false;
+            }
+
+            // Converte la stringa in ushort (valore 0–65535)
+            ushort value = Convert.ToUInt16(TelemetryDictionaryValues[CurrentIndex], 10);
+
+            // Converte in array di byte in little-endian (default)
+            byte[] bytesVal = BitConverter.GetBytes(value);
+
+            // Se l'architettura è little-endian, inverti l’ordine per ottenere big-endian
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytesVal);
+            }
+
+            //crea un array di byte dove nei primi 2 bytes ci sono i valori Addrh e AddrL della variabile da richiedere dal TelemetryDictionary di indice CurrentIndex
+            List<byte> data = new List<byte> { 
+                Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrH, 16), 
+                Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrL, 16), };
+
+            data.AddRange(bytesVal);
+
+            // Se ti serve di nuovo un array:
+            byte[] Data = data.ToArray();
+
+            //e poi c'è il valore della variabile con la dimensione ricavata dal dizionario stem
+            //switch (TelemetryDictionary[CurrentIndex].DataType)
+            //{
+            //    case "uint16_t":
+            //        Data.Append(Convert.ToByte(TelemetryDictionaryValues[CurrentIndex], 10));
+            //        break;
+            //    default:
+            //        break;
+            //}
+
+            await protocolManager.SendCommand(CMD_WRITE_VARIABLE, Data, false);
+            await Task.Delay(100);
         }
     }
 
@@ -212,150 +282,6 @@ public class TelemetryManager
     {
         TelemetryOn = false;
     }
-
-
-    //public async Task StartBoot()
-    //{
-    //    bool Answer=false;
-
-    //    // 1. Avvio procedura
-    //    for (int i = 0; i < 10; i++)
-    //    {
-    //        Answer = false;
-    //        Answer = await protocolManager.SendCanCommand(CMD_START_PROCEDURE, Array.Empty<byte>(), true);
-    //        if (Answer == true) break;
-    //        await Task.Delay(100); // attesa
-    //    }
-    //}
-
-    //public async Task UploadFirmware()
-    //{
-    // //   return;
-
-    //    //// 1. Avvio procedura
-    //    //for (int i = 0; i < 2; i++)
-    //    //{
-    //    //    SendCanCommand(CMD_START_PROCEDURE, Array.Empty<byte>(), true);
-    //    //    await Task.Delay(100); // attesa
-    //    //}
-
-    //    // 2. Ciclo di programmazione blocchi
-    //    pageNum = 0;
-
-    //  //  int offset = 0;
-    //    for (int offset = 0; offset < firmwareData.Length; offset += FIRMWARE_BLOCK_SIZE)
-    //    {
-
-    //        // Prepara il blocco corrente
-    //        byte[] currentBlock = new byte[FIRMWARE_BLOCK_SIZE];
-
-    //        // Riempimento iniziale di currentBlock con 0xFF
-    //        Array.Fill(currentBlock, (byte) 0xFF);
-
-    //        byte[] currentBlockShrinked = GetCurrentBlock(firmwareData, offset);
-
-    //        // Copia dei dati di currentBlockShrinked in currentBlock
-    //        Array.Copy(currentBlockShrinked, currentBlock, currentBlockShrinked.Length);
-
-    //        //if (pageNum == 0)
-    //        //{
-    //        //    for (int i = 0; i < 8; i++)
-    //        //    {
-    //        //        // Invia il blocco
-    //        //        await SendFirmwareBlock(pageNum, currentBlock, (uint)FIRMWARE_BLOCK_SIZE);
-
-    //        //        await Task.Delay(400); // attesa tra un comando e il successivo
-
-    //        //        Form1.FormRef.UpdateTerminal($"{DateTime.Now:HH:mm:ss.fff} - Page={pageNum:X}");
-    //        //    }
-    //        //}
-    //        //else
-    //        //{
-    //        //    for (int i = 0; i < 2; i++)
-    //        //    {
-    //                // Invia il blocco
-    //                await SendFirmwareBlock(pageNum, currentBlock, (uint)FIRMWARE_BLOCK_SIZE);
-
-    //           //     await Task.Delay(50); // attesa tra un comando e il successivo
-
-    //                Form1.FormRef.UpdateTerminal($"{DateTime.Now:HH:mm:ss.fff} - Page={pageNum:X}");
-    //     //       }
-    // //       }
-
-    //        currentOffset = offset;
-    //        pageNum++;
-
-    //        // Aggiorna progress bar
-    //        OnProgressChanged(currentOffset, totalLength);
-    //    //    break;
-    //    }
-
-    //    // 3. Comando di fine procedura
-    //    bool Answer = false;
-
-    //    // Aggiorna progress bar
-    //    OnProgressChanged(totalLength, totalLength); //100%
-
-    //    for (int i = 0; i < 5; i++)
-    //    {
-    //        Answer = false;
-    //        Answer = await protocolManager.SendCanCommand(CMD_END_PROCEDURE, Array.Empty<byte>(), true);
-    //        if (Answer == true) break;
-    //        await Task.Delay(100); // attesa
-    //    }
-
-    //    // 4. Comando di reset
-    //    for (int i = 0; i < 2; i++)
-    //    {
-    //        await protocolManager.SendCanCommand(CMD_RESTART_MACHINE, Array.Empty<byte>(), false);
-    //        await Task.Delay(1000); // attesa tra un comando e il successivo
-    //    }
-
-    //    MessageBox.Show("Aggiornamento firmware completato!", "Successo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-    //}
-
-    //private byte[] GetCurrentBlock(byte[] firmwareData, int offset)
-    //{
-    //    int remainingBytes = Math.Min(FIRMWARE_BLOCK_SIZE, firmwareData.Length - offset);
-    //    byte[] block = new byte[remainingBytes];
-
-    //    Array.Copy(firmwareData, offset, block, 0, remainingBytes);
-    //    return block;
-    //}
-
-
-    //private async Task SendFirmwareBlock(uint pageNumber, byte[] block, uint pageSize)
-    //{
-    //    try
-    //    {
-    //        //Crea il comando invia pagina 
-    //        byte[] Data = new byte[]{
-    //            (byte)(fwType >> 8), (byte)fwType,
-    //            (byte)(pageNumber >> 24), (byte)(pageNumber >> 16), (byte)(pageNumber >> 8), (byte)(pageNumber),
-    //            (byte)(pageSize>> 24), (byte)(pageSize >> 16), (byte)(pageSize >> 8), (byte)(pageSize),
-    //            0x00, 0x00, 0x00, 0x00
-    //        }.Concat(block).ToArray();
-
-    //        bool Answer = false;
-
-    //        // Invia blocco firmware al dispositivo CAN
-    //        for (int i = 0; i < 10; i++)
-    //        {
-    //            Answer = false;
-    //            Answer = await protocolManager.SendCanCommand(CMD_PROGRAM_BLOCK, Data, true);
-    //            if (Answer == true) break;
-    //        }         
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        throw new Exception($"Errore durante l'invio della pagina {pageNumber}: {ex.Message}");
-    //    }
-    //}
-
-    //protected virtual void OnProgressChanged(int currentOffset, int totalLength)
-    //{
-    //    ProgressChanged?.Invoke(this, new ProgressEventArgs(currentOffset, totalLength));
-    //}
 }
 
 // Classe per incapsulare i parametri dell'evento dataready del pacchetto di lettura variabile

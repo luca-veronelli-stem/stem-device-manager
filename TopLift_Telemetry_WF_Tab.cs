@@ -474,7 +474,7 @@ public class TopLiftTelemetry_Tab : TabPage
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Allarmi")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Allarmi")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Allarmi")]);
-        telemetryManager.TelemetryStartOneShot();
+        telemetryManager.ReadOneShot();
     }
 
     private void buttonReadSettings_Click(object sender, EventArgs e)
@@ -496,29 +496,32 @@ public class TopLiftTelemetry_Tab : TabPage
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione orizz.")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza max")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza min")]);
-        telemetryManager.TelemetryStartOneShot();
+        telemetryManager.ReadOneShot();
     }
 
-    private void buttonWriteSettings_Click(object sender, EventArgs e)
+    private async void buttonWriteSettings_Click(object sender, EventArgs e)
     {
         // Qui inserisci la logica per avviare la telemetria
         telemetryManager.TelemetryStop();
         telemetryManager.ResetDictionary();
 
         //Carica in telemetria i fault
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione giu'")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione orizz.")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza max")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza min")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione giu'")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione orizz.")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza max")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza min")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione giu'")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione orizz.")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza max")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza min")]);
-        telemetryManager.TelemetryStartOneShot();
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio inclinazione giu'")], textBoxesRow4[3].Text);
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio inclinazione orizz.")], textBoxesRow4[2].Text);
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio altezza max")], textBoxesRow4[0].Text);
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio altezza min")], textBoxesRow4[1].Text);
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio inclinazione giu'")], textBoxesRow4[3].Text);
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio inclinazione orizz.")], textBoxesRow4[2].Text);
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio altezza max")], textBoxesRow4[0].Text);
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio altezza min")], textBoxesRow4[1].Text);
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio inclinazione giu'")], textBoxesRow4[3].Text);
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio inclinazione orizz.")], textBoxesRow4[2].Text);
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio altezza max")], textBoxesRow4[0].Text);
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio altezza min")], textBoxesRow4[1].Text);
+
+        await telemetryManager.WriteOneShot();
+
+        buttonReadSettings_Click(this, EventArgs.Empty);
     }
 
     /// <summary>
