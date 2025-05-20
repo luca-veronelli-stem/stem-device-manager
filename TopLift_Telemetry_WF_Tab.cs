@@ -16,6 +16,7 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 using OxyPlot.Axes;
 using OxyPlotCustom;
 using DocumentFormat.OpenXml.Spreadsheet;
+using Windows.ApplicationModel.Background;
 
 public class TopLiftTelemetry_Tab : TabPage
 {
@@ -368,7 +369,6 @@ public class TopLiftTelemetry_Tab : TabPage
             else if (i == 1) labelsRow4[i].Text = "Min Height";
             else if (i == 2) labelsRow4[i].Text = "Max Slope";
             else if (i == 3) labelsRow4[i].Text = "Min Slope";
-            //labelsRow4[i].Text = $"Campo {i + 1}";
             labelsRow4[i].Dock = DockStyle.Fill;
             labelsRow4[i].TextAlign = ContentAlignment.BottomLeft;
             labelsRow4[i].Padding = new Padding(5, 0, 0, 5);
@@ -672,8 +672,47 @@ public class TopLiftTelemetry_Tab : TabPage
                     else
                     {
                         textBoxRow3.Text = e.Value.ToString();
-                    }
-                    
+                    }     
+                }
+                break;
+            case "Potenzio inclinazione giu'":
+                if (this.InvokeRequired)
+                {
+                    this.Invoke(new Action(() => textBoxesRow4[3].Text = e.Value.ToString()));
+                }
+                else
+                {
+                    textBoxesRow4[3].Text = e.Value.ToString();
+                }           
+                break;
+            case "Potenzio inclinazione orizz.":
+                if (this.InvokeRequired)
+                {
+                    this.Invoke(new Action(() => textBoxesRow4[2].Text = e.Value.ToString()));
+                }
+                else
+                {
+                    textBoxesRow4[2].Text = e.Value.ToString();
+                }
+                break;
+            case "Potenzio altezza max":
+                if (this.InvokeRequired)
+                {
+                    this.Invoke(new Action(() => textBoxesRow4[0].Text = e.Value.ToString()));
+                }
+                else
+                {
+                    textBoxesRow4[0].Text = e.Value.ToString();
+                }
+                break;
+            case "Potenzio altezza min":
+                if (this.InvokeRequired)
+                {
+                    this.Invoke(new Action(() => textBoxesRow4[1].Text = e.Value.ToString()));
+                }
+                else
+                {
+                    textBoxesRow4[1].Text = e.Value.ToString();
                 }
                 break;
             default:
