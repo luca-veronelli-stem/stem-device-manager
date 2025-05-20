@@ -12,11 +12,13 @@ public class DeviceInfo
 {
     public int Address { get; set; }
     public string DisplayName { get; set; }
+    public bool IsOptional { get; set; }
 
-    public DeviceInfo(int address, string displayName)
+    public DeviceInfo(int address, string displayName, bool isOptional)
     {
         Address = address;
         DisplayName = displayName;
+        IsOptional = isOptional;
     }
 }
 
@@ -181,7 +183,7 @@ public class Boot_Smart_Tab : TabPage
             {
                 ReadOnly = true,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(3)
+                Margin = new Padding(3),
             };
             var btnSelectFile = new Button
             {
@@ -215,12 +217,13 @@ public class Boot_Smart_Tab : TabPage
     {
         foreach (var sel in binSelections)
         {
-            if (string.IsNullOrEmpty(sel.FilePath))
+            if ((string.IsNullOrEmpty(sel.FilePath))&&(sel.Device.IsOptional==false))
             {
                 MessageBox.Show($"Select firmware file for {sel.Device.DisplayName}");
                 return;
             }
         }
+
         btnStartProcedure.Enabled = false;
 
         //reset progress bars
@@ -229,10 +232,43 @@ public class Boot_Smart_Tab : TabPage
 
         foreach (var sel in binSelections)
         {
-            BootHndlr.SetFirmwarePath(sel.FilePath);
-            Form1.FormRef.RecipientId = (uint)sel.Device.Address;
-            await BootHndlr.UploadFirmware();
-            offsetTotalBar += circProgressBarsLarge[1].Value;
+            if (!(string.IsNullOrEmpty(sel.FilePath))){
+                BootHndlr.SetFirmwarePath(sel.FilePath);
+                Form1.FormRef.RecipientId = (uint)sel.Device.Address;
+                await BootHndlr.UploadFirmware();
+            }
+            else
+            {
+                int progress = 100;
+
+                if (InvokeRequired)
+                {
+                    Invoke(new Action(() =>
+                    {
+                        circProgressBarsLarge[0].Value = progress; //aggiorna barra progresso singolo firmware
+                        circProgressBarsLarge[1].Value = offsetTotalBar + (progress / binSelections.Count); //aggiorna barra progresso totale
+                    }));
+                }
+                else
+                {
+                    circProgressBarsLarge[0].Value = progress; //aggiorna barra progresso singolo firmware
+                    circProgressBarsLarge[1].Value = offsetTotalBar + (progress / binSelections.Count); //aggiorna barra progresso totale
+                }
+            }
+
+            offsetTotalBar += (100 / binSelections.Count);
+        }
+
+        if (InvokeRequired)
+        {
+            Invoke(new Action(() =>
+            {         
+                circProgressBarsLarge[1].Value = 100; //aggiorna barra progresso totale
+            }));
+        }
+        else
+        {
+            circProgressBarsLarge[1].Value = 100; //aggiorna barra progresso totale
         }
 
         btnStartProcedure.Enabled = true;

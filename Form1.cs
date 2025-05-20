@@ -221,10 +221,10 @@ namespace StemPC
                    //new DeviceInfo(0x00030141, "Motherboard"),
 
                 //TOPLIFT devices
-                   new DeviceInfo(0x000803C1, "Keyboard 1"),
-                   new DeviceInfo(0x000803C2, "Keyboard 2"),
+                   new DeviceInfo(0x000803C1, "Keyboard 1", true),
+                   new DeviceInfo(0x000803C2, "Keyboard 2", true),
                    //new DeviceInfo(0x00030103, "Keyboard 3"),
-                   new DeviceInfo(0x00080381, "Motherboard"),
+                   new DeviceInfo(0x00080381, "Motherboard", false),
                 };
 
             // Popola la tab con la lista dei dispositivi
