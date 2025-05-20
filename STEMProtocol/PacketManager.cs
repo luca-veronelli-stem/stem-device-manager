@@ -93,6 +93,8 @@ namespace Stem_Protocol.PacketManager
                 packetQueues.Add(packetId, new List<byte[]>());
             }
 
+           // if (packetId> packetQueues.Count) { return; }
+
             packetQueues[packetId].Add(packetChunkBytes);
 
             if (remainingChunks == 0)
