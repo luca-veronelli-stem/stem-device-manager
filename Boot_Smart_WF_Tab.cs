@@ -129,7 +129,7 @@ public class Boot_Smart_Tab : TabPage
                 Value = 0,
                 Maximum = 100,
                 Anchor = AnchorStyles.None,
-                Font = new Font("Poppins", 42, FontStyle.Regular)
+                Font = new System.Drawing.Font("Poppins", 42, FontStyle.Regular)
             };
             circProgressBarsLarge[i] = pb;
             cellLayout.Controls.Add(pb, 0, 0);
@@ -140,7 +140,7 @@ public class Boot_Smart_Tab : TabPage
                 Text = labels[i],
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Poppins", 14, FontStyle.Bold),
+                Font = new System.Drawing.Font("Poppins", 14, FontStyle.Bold),
                 ForeColor = Color.FromArgb(8, 72, 133),
             };
             cellLayout.Controls.Add(lbl, 0, 1);
@@ -171,7 +171,7 @@ public class Boot_Smart_Tab : TabPage
             var lblDevice = new Label
             {
                 Text = device.DisplayName,
-                Font = new Font("Poppins", 9, FontStyle.Regular),
+                Font = new System.Drawing.Font("Poppins", 9, FontStyle.Regular),
                 AutoSize = false,
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleLeft,
@@ -186,7 +186,7 @@ public class Boot_Smart_Tab : TabPage
             var btnSelectFile = new Button
             {
                 Text = "Select .bin",
-                Font = new Font("Poppins", 9, FontStyle.Regular),
+                Font = new System.Drawing.Font("Poppins", 9, FontStyle.Regular),
                 TextAlign = ContentAlignment.MiddleCenter,
                 Dock = DockStyle.Fill,
                 Margin = new Padding(3)

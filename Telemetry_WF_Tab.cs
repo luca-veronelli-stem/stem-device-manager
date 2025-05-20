@@ -57,7 +57,7 @@ public class Telemetry_Tab : TabPage
             Anchor = AnchorStyles.Left,
         };
         // Imposta il font in grassetto
-        label.Font = new Font(label.Font, FontStyle.Bold);
+        label.Font = new System.Drawing.Font(label.Font, FontStyle.Bold);
         tableLayout.Controls.Add(label, 0, 0);
         // Imposta il ColumnSpan a 2 (la label occuperà due colonne)
         tableLayout.SetColumnSpan(label, 2);
@@ -90,7 +90,7 @@ public class Telemetry_Tab : TabPage
             TextAlign = ContentAlignment.MiddleCenter,
             Anchor = AnchorStyles.Left
         };
-        buttonStart.Font = new Font(buttonStart.Font, FontStyle.Bold);
+        buttonStart.Font = new System.Drawing.Font(buttonStart.Font, FontStyle.Bold);
         buttonStart.Click += ButtonStart_Click;
         tableLayout.Controls.Add(buttonStart, 2, 1);
 
@@ -101,7 +101,7 @@ public class Telemetry_Tab : TabPage
             TextAlign = ContentAlignment.MiddleCenter,
             Anchor = AnchorStyles.Left
         };
-        buttonStop.Font = new Font(buttonStop.Font, FontStyle.Bold);
+        buttonStop.Font = new System.Drawing.Font(buttonStop.Font, FontStyle.Bold);
         buttonStop.Click += ButtonStop_Click;
         tableLayout.Controls.Add(buttonStop, 3, 1);
 

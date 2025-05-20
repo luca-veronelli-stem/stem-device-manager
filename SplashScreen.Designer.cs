@@ -70,7 +70,7 @@
             // 
             labelVersion.AutoSize = true;
             labelVersion.Dock = DockStyle.Fill;
-            labelVersion.Font = new Font("Poppins Black", 20F, FontStyle.Bold);
+            labelVersion.Font = new System.Drawing.Font("Poppins Black", 20F, FontStyle.Bold);
             labelVersion.ForeColor = SystemColors.Info;
             labelVersion.Location = new Point(3, 359);
             labelVersion.Name = "labelVersion";
@@ -83,7 +83,7 @@
             // 
             label1.AutoSize = true;
             label1.Dock = DockStyle.Fill;
-            label1.Font = new Font("Poppins Black", 24F, FontStyle.Bold);
+            label1.Font = new System.Drawing.Font("Poppins Black", 24F, FontStyle.Bold);
             label1.ForeColor = SystemColors.Info;
             label1.Location = new Point(3, 292);
             label1.Name = "label1";

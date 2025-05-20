@@ -15,6 +15,7 @@ using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 using OxyPlot.Axes;
 using OxyPlotCustom;
+using DocumentFormat.OpenXml.Spreadsheet;
 
 public class TopLiftTelemetry_Tab : TabPage
 {
@@ -117,7 +118,7 @@ public class TopLiftTelemetry_Tab : TabPage
         startTelemetryButton.Text = "Start Telemetry";
         startTelemetryButton.Dock = DockStyle.Fill;
         startTelemetryButton.Margin = new Padding(5);
-        startTelemetryButton.Font = new Font(startTelemetryButton.Font.FontFamily, 10, FontStyle.Bold);
+        startTelemetryButton.Font = new System.Drawing.Font(startTelemetryButton.Font.FontFamily, 10, FontStyle.Bold);
         telemetryButtonsRow.Controls.Add(startTelemetryButton, 0, 0);
 
         // Pulsante Stop Telemetry
@@ -125,7 +126,7 @@ public class TopLiftTelemetry_Tab : TabPage
         stopTelemetryButton.Text = "Stop Telemetry";
         stopTelemetryButton.Dock = DockStyle.Fill;
         stopTelemetryButton.Margin = new Padding(5);
-        stopTelemetryButton.Font = new Font(stopTelemetryButton.Font.FontFamily, 10, FontStyle.Bold);
+        stopTelemetryButton.Font = new System.Drawing.Font(stopTelemetryButton.Font.FontFamily, 10, FontStyle.Bold);
         telemetryButtonsRow.Controls.Add(stopTelemetryButton, 1, 0);
 
         // SECONDA RIGA (precedentemente prima): Due celle affiancate per elementi grafici
@@ -170,7 +171,7 @@ public class TopLiftTelemetry_Tab : TabPage
 
         pointSeries1 = new LineSeries
         {
-            MarkerType = MarkerType.Cross,
+            MarkerType = OxyPlot.MarkerType.Cross,
             MarkerSize = 2,
             MarkerStroke = OxyColors.Black,
             MarkerFill = OxyColors.Red,
@@ -220,7 +221,7 @@ public class TopLiftTelemetry_Tab : TabPage
 
         pointSeries2 = new LineSeries
         {
-            MarkerType = MarkerType.Cross,
+            MarkerType = OxyPlot.MarkerType.Cross,
             MarkerSize = 2,
             MarkerStroke = OxyColors.Black,
             MarkerFill = OxyColors.Red,
@@ -309,7 +310,7 @@ public class TopLiftTelemetry_Tab : TabPage
             //  imageLabels[i].Text = $"Elemento {i + 1}";
             imageLabels[i].Dock = DockStyle.Fill;
             imageLabels[i].TextAlign = ContentAlignment.MiddleCenter;
-            imageLabels[i].Font = new Font("Poppins", 10, FontStyle.Bold);
+            imageLabels[i].Font = new System.Drawing.Font("Poppins", 10, FontStyle.Bold);
             imageRow.Controls.Add(imageLabels[i], i, 1);
 
             // Stato iniziale (false)
@@ -336,7 +337,7 @@ public class TopLiftTelemetry_Tab : TabPage
         // Pulsante
         buttonReadFaults = new Button();
         buttonReadFaults.Text = "Read Faults";
-        buttonReadFaults.Font = new Font("Poppins", 10, FontStyle.Bold);
+        buttonReadFaults.Font = new System.Drawing.Font("Poppins", 10, FontStyle.Bold);
         buttonReadFaults.Dock = DockStyle.Fill;
         buttonReadFaults.Margin = new Padding(5);
         buttonTextBoxRow.Controls.Add(buttonReadFaults, 1, 0);
@@ -384,7 +385,7 @@ public class TopLiftTelemetry_Tab : TabPage
         // Pulsante read settings
         buttonReadSettings = new Button();
         buttonReadSettings.Text = "READ";
-        buttonReadSettings.Font = new Font("Poppins", 10, FontStyle.Bold);
+        buttonReadSettings.Font = new System.Drawing.Font("Poppins", 10, FontStyle.Bold);
         buttonReadSettings.Dock = DockStyle.Fill;
         buttonReadSettings.Margin = new Padding(5);
         bottomRow.Controls.Add(buttonReadSettings, 4, 1);  // Occupa solo la riga inferiore
@@ -392,7 +393,7 @@ public class TopLiftTelemetry_Tab : TabPage
         // Pulsante write settings
         buttonWriteSettings = new Button();
         buttonWriteSettings.Text = "WRITE";
-        buttonWriteSettings.Font = new Font("Poppins", 10, FontStyle.Bold);
+        buttonWriteSettings.Font = new System.Drawing.Font("Poppins", 10, FontStyle.Bold);
         buttonWriteSettings.Dock = DockStyle.Fill;
         buttonWriteSettings.Margin = new Padding(5);
         bottomRow.Controls.Add(buttonWriteSettings, 5, 1);  // Occupa solo la riga inferiore
@@ -405,6 +406,7 @@ public class TopLiftTelemetry_Tab : TabPage
         stopTelemetryButton.Click += StopTelemetryButton_Click;
         buttonReadFaults.Click += buttonReadFaults_Click;
         buttonReadSettings.Click += buttonReadSettings_Click;
+        buttonWriteSettings.Click += buttonWriteSettings_Click;
     }
 
     private void ResetPlot(LineSeries pointSeries, PlotView plotView)
@@ -477,12 +479,46 @@ public class TopLiftTelemetry_Tab : TabPage
 
     private void buttonReadSettings_Click(object sender, EventArgs e)
     {
-        //string messaggio = "Valori inseriti:\n";
-        //for (int i = 0; i < 4; i++)
-        //{
-        //    messaggio += $"{labelsRow4[i].Text}: {textBoxesRow4[i].Text}\n";
-        //}
-      //  MessageBox.Show(messaggio, "Dati Letti", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        // Qui inserisci la logica per avviare la telemetria
+        telemetryManager.TelemetryStop();
+        telemetryManager.ResetDictionary();
+
+        //Carica in telemetria i fault
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione giu'")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione orizz.")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza max")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza min")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione giu'")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione orizz.")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza max")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza min")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione giu'")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione orizz.")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza max")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza min")]);
+        telemetryManager.TelemetryStartOneShot();
+    }
+
+    private void buttonWriteSettings_Click(object sender, EventArgs e)
+    {
+        // Qui inserisci la logica per avviare la telemetria
+        telemetryManager.TelemetryStop();
+        telemetryManager.ResetDictionary();
+
+        //Carica in telemetria i fault
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione giu'")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione orizz.")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza max")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza min")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione giu'")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione orizz.")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza max")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza min")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione giu'")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione orizz.")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza max")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza min")]);
+        telemetryManager.TelemetryStartOneShot();
     }
 
     /// <summary>

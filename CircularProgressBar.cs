@@ -53,7 +53,7 @@ namespace CustomControls
                      ControlStyles.OptimizedDoubleBuffer |
                      ControlStyles.ResizeRedraw |
                      ControlStyles.UserPaint, true);
-            Font = new Font("Segoe UI", 14, FontStyle.Bold);
+            Font = new System.Drawing.Font("Segoe UI", 14, FontStyle.Bold);
             ForeColor = Color.SeaGreen;
             Size = new Size(150, 150);
         }
