@@ -1,4 +1,6 @@
 ﻿using Stem_Protocol.BootManager;
+using Stem_Protocol.PacketManager;
+using Stem_Protocol.TelemetryManager;
 using StemPC;
 using System;
 using System.Collections.Generic;
@@ -32,9 +34,14 @@ public class Boot_Smart_Tab : TabPage
     private CircularProgressBar[] circProgressBarsLarge = new CircularProgressBar[2];
     private List<BinSelectionControl> binSelections = new List<BinSelectionControl>();
     private int offsetTotalBar = 0;
-    public BootManager BootHndlr;
 
-    public Boot_Smart_Tab()
+    // Classi per il backend
+    public BootManager BootHndlr;
+    public TelemetryManager telemetryManager;
+    //Lista variabili della macchina
+    private List<ExcelHandler.VariableData> MachineDictionary;
+
+    public Boot_Smart_Tab(PacketManager packetManagerRX)
     {
         Name = "tabPageBootSmart";
         Text = "Firmware Update";
@@ -96,23 +103,24 @@ public class Boot_Smart_Tab : TabPage
             startPanel.Controls.Add(btnStartProcedure);
         }
 
-
-        // Pannello due barre grandi
+        // Pannello due barre grandi + riga aggiuntiva per versioni firmware
         progressBarsPanel = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
-            RowCount = 1,
+            RowCount = 2,               // <-- ora 2 righe
             Margin = new Padding(10)
         };
+        // Definisco prima riga per le progress bar e seconda riga AutoSize
         progressBarsPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
         progressBarsPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+        progressBarsPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        progressBarsPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
-        // Costruisci le due barre con label
+        // Costruisco le due barre con label (riga 0)
         string[] labels = { "Single board", "Total" };
         for (int i = 0; i < 2; i++)
         {
-            // Layout cella con 2 righe
             var cellLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
@@ -122,7 +130,6 @@ public class Boot_Smart_Tab : TabPage
             cellLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 80));
             cellLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 20));
 
-            // Progress bar grande
             var pb = new CircularProgressBar
             {
                 Size = new Size(240, 240),
@@ -136,7 +143,6 @@ public class Boot_Smart_Tab : TabPage
             circProgressBarsLarge[i] = pb;
             cellLayout.Controls.Add(pb, 0, 0);
 
-            // Label sotto la barra
             var lbl = new Label
             {
                 Text = labels[i],
@@ -150,6 +156,56 @@ public class Boot_Smart_Tab : TabPage
             progressBarsPanel.Controls.Add(cellLayout, i, 0);
         }
 
+        // RIGA 1: pannello per versioni firmware con TableLayoutPanel
+        var bottomPanel = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 3,
+            RowCount = 1,
+            AutoSize = true,
+            Margin = new Padding(3)
+        };
+        // Colonna 0: Label auto
+        bottomPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        // Colonna 1: TextBox al 100%
+        bottomPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        // Colonna 2: Button auto
+        bottomPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+
+        // Label
+        var lblVersions = new Label
+        {
+            Text = "Boards Firmware Versions:",
+            AutoSize = true,
+            Font = new System.Drawing.Font("Poppins", 9, FontStyle.Regular),
+            TextAlign = ContentAlignment.MiddleLeft,
+            Margin = new Padding(3, 8, 3, 3)
+        };
+        bottomPanel.Controls.Add(lblVersions, 0, 0);
+
+        // TextBox che riempie tutta la colonna centrale
+        var txtVersions = new TextBox
+        {
+            ReadOnly = true,
+            Dock = DockStyle.Fill,
+            Margin = new Padding(3)
+        };
+        bottomPanel.Controls.Add(txtVersions, 1, 0);
+
+        // Pulsante
+        var btnReadVersions = new Button
+        {
+            Text = "Read Versions",
+            AutoSize = true,
+            Margin = new Padding(3)
+        };
+        btnReadVersions.Click += btnReadVersions_Click;
+        bottomPanel.Controls.Add(btnReadVersions, 2, 0);
+
+        // Aggiungo bottomPanel a progressBarsPanel in riga 1, estendendolo su 2 colonne
+        progressBarsPanel.Controls.Add(bottomPanel, 0, 1);
+        progressBarsPanel.SetColumnSpan(bottomPanel, 2);
+
         // Aggiungo controlli a mainLayout
         mainLayout.Controls.Add(selectionPanel, 0, 0);
         mainLayout.Controls.Add(startPanel, 0, 1);
@@ -159,6 +215,17 @@ public class Boot_Smart_Tab : TabPage
         // Inizializza BootManager
         BootHndlr = new BootManager();
         BootHndlr.ProgressChanged += UpdateProgressBar;
+
+        // Creazione del gestore per la telemetria
+        telemetryManager = new TelemetryManager(packetManagerRX);
+
+        // Aggiunta del gestore per l'evento DataReady
+        telemetryManager.DataReady += onDataReady;
+    }
+
+    public void UpdateDictionary(List<ExcelHandler.VariableData> Dictionary)
+    {
+        MachineDictionary = Dictionary;
     }
 
     public void PopulateDevices(List<DeviceInfo> devices)
@@ -294,6 +361,155 @@ public class Boot_Smart_Tab : TabPage
         {
             circProgressBarsLarge[0].Value = progress; //aggiorna barra progresso singolo firmware
             circProgressBarsLarge[1].Value = offsetTotalBar + (progress / binSelections.Count); //aggiorna barra progresso totale
+        }
+    }
+
+    private int GetVariableIndex(String Name)
+    {
+        for (int i = 0; i < MachineDictionary.Count; i++)
+        {
+            if (MachineDictionary[i].Name == Name) return i;
+        }
+
+        return -1;
+    }
+
+    private async void btnReadVersions_Click(object sender, EventArgs e)
+    {
+        // Qui inserisci la logica per avviare la telemetria
+        telemetryManager.TelemetryStop();
+        telemetryManager.ResetDictionary();
+
+        //Carica in telemetria i fault
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Firmware scheda")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Firmware scheda")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Firmware scheda")]);
+        await telemetryManager.ReadOneShot();
+    }
+
+    private async void onDataReady(object sender, DataReadyEventArgs e)
+    {
+        //Verifica quale variabile arriva e completa i campi di conseguenza
+        String VarName = telemetryManager.GetVariableName(e.ListIndex);
+        switch (VarName)
+        {
+            case "Firmware scheda":
+                if (e.Value != 0) telemetryManager.TelemetryStop();
+                break;
+            //case "Stato EVA":
+            //    if (e.Value != 0) imageStates[0] = true;
+            //    else imageStates[0] = false;
+            //    UpdateImageDisplay(0);
+            //    break;
+            //case "Stato EVB":
+            //    if (e.Value != 0) imageStates[1] = true;
+            //    else imageStates[1] = false;
+            //    UpdateImageDisplay(1);
+            //    break;
+            //case "Stato EVC":
+            //    if (e.Value != 0) imageStates[2] = true;
+            //    else imageStates[2] = false;
+            //    UpdateImageDisplay(2);
+            //    break;
+            //case "Stato P2A":
+            //    if (e.Value != 0) imageStates[3] = true;
+            //    else imageStates[3] = false;
+            //    UpdateImageDisplay(3);
+            //    break;
+            //case "Stato pompa":
+            //    if (e.Value != 0) imageStates[4] = true;
+            //    else imageStates[4] = false;
+            //    UpdateImageDisplay(4);
+            //    break;
+            //case "Stato finecorsa ":
+            //    if ((e.Value & 0x01) != 0) imageStates[5] = true;
+            //    else imageStates[5] = false;
+            //    UpdateImageDisplay(5);
+
+            //    if ((e.Value & 0x02) != 0) imageStates[6] = true;
+            //    else imageStates[6] = false;
+            //    UpdateImageDisplay(6);
+            //    break;
+            //case "Valore RAW del potenzio altezza":
+            //    {
+            //        time += 1;
+            //        UpdatePlot(e.Value, pointSeries1, xAxis1, plotView1);
+            //    }
+            //    break;
+            //case "Valore RAW del potenzio inclinazione":
+            //    {
+            //        time += 1;
+            //        UpdatePlot(e.Value, pointSeries2, xAxis2, plotView2);
+            //    }
+            //    break;
+            //case "Allarmi":
+            //    {
+            //        string FaultString = null;
+            //        if (e.Value != 0) FaultString = e.Value.ToString();
+            //        else FaultString = "No active Faults";
+
+            //        if (this.InvokeRequired)
+            //        {
+            //            this.Invoke(new Action(() => textBoxRow3.Text = FaultString));
+            //        }
+            //        else
+            //        {
+            //            textBoxRow3.Text = FaultString;
+            //        }
+            //    }
+            //    break;
+            //case "Potenzio inclinazione giu'":
+            //    if (this.InvokeRequired)
+            //    {
+            //        this.Invoke(new Action(() => textBoxesRow4[3].Text = e.Value.ToString()));
+            //    }
+            //    else
+            //    {
+            //        textBoxesRow4[3].Text = e.Value.ToString();
+            //    }
+            //    break;
+            //case "Potenzio inclinazione orizz.":
+            //    if (this.InvokeRequired)
+            //    {
+            //        this.Invoke(new Action(() => textBoxesRow4[2].Text = e.Value.ToString()));
+            //    }
+            //    else
+            //    {
+            //        textBoxesRow4[2].Text = e.Value.ToString();
+            //    }
+            //    break;
+            //case "Potenzio altezza max":
+            //    if (this.InvokeRequired)
+            //    {
+            //        this.Invoke(new Action(() => textBoxesRow4[0].Text = e.Value.ToString()));
+            //    }
+            //    else
+            //    {
+            //        textBoxesRow4[0].Text = e.Value.ToString();
+            //    }
+            //    break;
+            //case "Potenzio altezza min":
+            //    if (this.InvokeRequired)
+            //    {
+            //        this.Invoke(new Action(() => textBoxesRow4[1].Text = e.Value.ToString()));
+            //    }
+            //    else
+            //    {
+            //        textBoxesRow4[1].Text = e.Value.ToString();
+            //    }
+            //    break;
+            //case "Tempo di ritardo all'accensione":
+            //    if (this.InvokeRequired)
+            //    {
+            //        this.Invoke(new Action(() => textBoxesRow4[4].Text = e.Value.ToString()));
+            //    }
+            //    else
+            //    {
+            //        textBoxesRow4[4].Text = e.Value.ToString();
+            //    }
+            //    break;
+            default:
+                break;
         }
     }
 }

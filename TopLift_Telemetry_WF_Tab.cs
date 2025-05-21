@@ -74,7 +74,7 @@ public class TopLiftTelemetry_Tab : TabPage
         telemetryManager.DataReady += onDataReady;
     }
 
-    public async Task UpdateDictionary(List<ExcelHandler.VariableData> Dictionary)
+    public void UpdateDictionary(List<ExcelHandler.VariableData> Dictionary)
     {
         MachineDictionary = Dictionary;
     }
@@ -101,8 +101,8 @@ public class TopLiftTelemetry_Tab : TabPage
         mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F)); // Nuova prima riga (pulsanti telemetria)
         mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 55F));  // Seconda riga (celle grafiche) - molto più alta
         mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));  // Terza riga (contenitori immagini)
-        mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 10F));  // Quarta riga (pulsante e textbox) - più bassa
-        mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 10F));  // Quinta riga (gruppi e pulsante) - più bassa
+        mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 8F));  // Quarta riga (pulsante e textbox) - più bassa
+        mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 12F));  // Quinta riga (gruppi e pulsante) - più bassa
         mainLayout.Padding = new Padding(10);
         this.Controls.Add(mainLayout);
 

@@ -23,7 +23,7 @@ namespace StemPC
 {
     public partial class Form1 : Form
     {
-        public const string Software_Version = "2.10";
+        public const string Software_Version = "2.11";
 
 #if TOPLIFT
         public string CommunicationPort = "can";
@@ -207,7 +207,7 @@ namespace StemPC
 #endif
 
             //crea e aggiungi il bootloader manager smart
-            BootSmartTabRef = new Boot_Smart_Tab();
+            BootSmartTabRef = new Boot_Smart_Tab(RXpacketManager);
             BootSmartTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
 
             //Aggiorna il flag di comunicazione
@@ -224,7 +224,7 @@ namespace StemPC
                 //TOPLIFT devices
                    new DeviceInfo(0x000803C1, "Keyboard 1", true),
                    new DeviceInfo(0x000803C2, "Keyboard 2", true),
-         //          new DeviceInfo(0x000803C3, "Keyboard 3", true),
+                   new DeviceInfo(0x000803C3, "Keyboard 3", true),
                    new DeviceInfo(0x00080381, "Motherboard", false),
                 #elif EDEN
                 //EDEN devices
@@ -354,6 +354,7 @@ namespace StemPC
             label12.Text = ($"Indirizzo\n 0x{RecipientId.ToString("X8")}");
             hExcel.EstraiDizionario(RecipientId, Dizionario);
             TLTTabRef.UpdateDictionary(Dizionario);
+            BootSmartTabRef.UpdateDictionary(Dizionario);
 #else
             // Uso del file esterno per configurazioni diverse da client
             ExcelfilePath = Path.Combine(Application.StartupPath, "Dizionari STEM.xlsx");

@@ -101,6 +101,7 @@
             // 
             // statusStrip1
             // 
+            statusStrip1.ImageScalingSize = new Size(48, 48);
             statusStrip1.Items.AddRange(new ToolStripItem[] { toolStripSplitButton2, PCanLabel, toolStripStatusLabel2, BLEStatusLabel, toolStripStatusLabel1 });
             statusStrip1.Location = new Point(0, 640);
             statusStrip1.Name = "statusStrip1";
@@ -115,7 +116,7 @@
             toolStripSplitButton2.Image = STEMPM.Properties.Resources.ic_fluent_serial_port_24_filled;
             toolStripSplitButton2.ImageTransparentColor = Color.Magenta;
             toolStripSplitButton2.Name = "toolStripSplitButton2";
-            toolStripSplitButton2.Size = new Size(32, 18);
+            toolStripSplitButton2.Size = new Size(64, 18);
             toolStripSplitButton2.Text = "toolStripSplitButton2";
             // 
             // ChannelMenu
@@ -526,7 +527,7 @@
             listBoxSerialPorts.ItemHeight = 22;
             listBoxSerialPorts.Location = new Point(556, 31);
             listBoxSerialPorts.Name = "listBoxSerialPorts";
-            listBoxSerialPorts.Size = new Size(197, 246);
+            listBoxSerialPorts.Size = new Size(197, 180);
             listBoxSerialPorts.TabIndex = 0;
             // 
             // Form1

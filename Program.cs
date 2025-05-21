@@ -8,9 +8,12 @@
  ******************************************************************************
  *
  * 2.10: + TopLift A2 and Eden XP activation
+ * 2.11: + Read firmware version activation
  *
  *
  * TODO:
+ * - Completare decodifica faults
+ * - Completare 
  *
  * @attention
  *
