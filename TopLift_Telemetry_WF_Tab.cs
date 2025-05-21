@@ -295,9 +295,6 @@ public class TopLiftTelemetry_Tab : TabPage
             else if (i == 1) imageContainers[i].Image = Resources.ValvolaOff;
             else if (i == 2) imageContainers[i].Image = Resources.ValvolaOff;
             else if (i == 3) imageContainers[i].Image = Resources.ValvolaOff;
-            //else if (i == 4) imageLabels[i].Text = "PUMP";
-            //else if (i == 5) imageLabels[i].Text = "LS1";
-            //else if (i == 6) imageLabels[i].Text = "LS2";)
             imageRow.Controls.Add(imageContainers[i], i, 0);
 
             // Label sotto l'immagine
@@ -317,6 +314,7 @@ public class TopLiftTelemetry_Tab : TabPage
 
             // Stato iniziale (false)
             imageStates[i] = false;
+            imageStates[0] = true;
             UpdateImageDisplay(i);
         }
 
