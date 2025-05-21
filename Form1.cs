@@ -209,6 +209,7 @@ namespace StemPC
             //crea e aggiungi il bootloader manager smart
             BootSmartTabRef = new Boot_Smart_Tab(RXpacketManager);
             BootSmartTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
+            BootSmartTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
 
             //Aggiorna il flag di comunicazione
             if (CommunicationPort == "can")

@@ -34,6 +34,7 @@ public class Boot_Smart_Tab : TabPage
     private CircularProgressBar[] circProgressBarsLarge = new CircularProgressBar[2];
     private List<BinSelectionControl> binSelections = new List<BinSelectionControl>();
     private int offsetTotalBar = 0;
+    private TextBox txtVersions;
 
     // Classi per il backend
     public BootManager BootHndlr;
@@ -175,7 +176,7 @@ public class Boot_Smart_Tab : TabPage
         // Label
         var lblVersions = new Label
         {
-            Text = "Boards Firmware Versions:",
+            Text = "Motherboard Fimware Version:",
             AutoSize = true,
             Font = new System.Drawing.Font("Poppins", 9, FontStyle.Regular),
             TextAlign = ContentAlignment.MiddleLeft,
@@ -184,7 +185,7 @@ public class Boot_Smart_Tab : TabPage
         bottomPanel.Controls.Add(lblVersions, 0, 0);
 
         // TextBox che riempie tutta la colonna centrale
-        var txtVersions = new TextBox
+        txtVersions = new TextBox
         {
             ReadOnly = true,
             Dock = DockStyle.Fill,
@@ -195,7 +196,7 @@ public class Boot_Smart_Tab : TabPage
         // Pulsante
         var btnReadVersions = new Button
         {
-            Text = "Read Versions",
+            Text = "Read Version",
             AutoSize = true,
             Margin = new Padding(3)
         };
@@ -394,120 +395,18 @@ public class Boot_Smart_Tab : TabPage
         switch (VarName)
         {
             case "Firmware scheda":
-                if (e.Value != 0) telemetryManager.TelemetryStop();
+            uint MajorVersion = ((e.Value) >> 8);
+            uint MinorVersion = ((e.Value) & ((uint)0x000000FF));
+
+                if (this.InvokeRequired)
+                {
+                    this.Invoke(new Action(() => txtVersions.Text = " " + MajorVersion.ToString() + "." + MinorVersion.ToString()));
+                }
+                else
+                {
+                    txtVersions.Text = " " + MajorVersion.ToString() + "." + MinorVersion.ToString();
+                }
                 break;
-            //case "Stato EVA":
-            //    if (e.Value != 0) imageStates[0] = true;
-            //    else imageStates[0] = false;
-            //    UpdateImageDisplay(0);
-            //    break;
-            //case "Stato EVB":
-            //    if (e.Value != 0) imageStates[1] = true;
-            //    else imageStates[1] = false;
-            //    UpdateImageDisplay(1);
-            //    break;
-            //case "Stato EVC":
-            //    if (e.Value != 0) imageStates[2] = true;
-            //    else imageStates[2] = false;
-            //    UpdateImageDisplay(2);
-            //    break;
-            //case "Stato P2A":
-            //    if (e.Value != 0) imageStates[3] = true;
-            //    else imageStates[3] = false;
-            //    UpdateImageDisplay(3);
-            //    break;
-            //case "Stato pompa":
-            //    if (e.Value != 0) imageStates[4] = true;
-            //    else imageStates[4] = false;
-            //    UpdateImageDisplay(4);
-            //    break;
-            //case "Stato finecorsa ":
-            //    if ((e.Value & 0x01) != 0) imageStates[5] = true;
-            //    else imageStates[5] = false;
-            //    UpdateImageDisplay(5);
-
-            //    if ((e.Value & 0x02) != 0) imageStates[6] = true;
-            //    else imageStates[6] = false;
-            //    UpdateImageDisplay(6);
-            //    break;
-            //case "Valore RAW del potenzio altezza":
-            //    {
-            //        time += 1;
-            //        UpdatePlot(e.Value, pointSeries1, xAxis1, plotView1);
-            //    }
-            //    break;
-            //case "Valore RAW del potenzio inclinazione":
-            //    {
-            //        time += 1;
-            //        UpdatePlot(e.Value, pointSeries2, xAxis2, plotView2);
-            //    }
-            //    break;
-            //case "Allarmi":
-            //    {
-            //        string FaultString = null;
-            //        if (e.Value != 0) FaultString = e.Value.ToString();
-            //        else FaultString = "No active Faults";
-
-            //        if (this.InvokeRequired)
-            //        {
-            //            this.Invoke(new Action(() => textBoxRow3.Text = FaultString));
-            //        }
-            //        else
-            //        {
-            //            textBoxRow3.Text = FaultString;
-            //        }
-            //    }
-            //    break;
-            //case "Potenzio inclinazione giu'":
-            //    if (this.InvokeRequired)
-            //    {
-            //        this.Invoke(new Action(() => textBoxesRow4[3].Text = e.Value.ToString()));
-            //    }
-            //    else
-            //    {
-            //        textBoxesRow4[3].Text = e.Value.ToString();
-            //    }
-            //    break;
-            //case "Potenzio inclinazione orizz.":
-            //    if (this.InvokeRequired)
-            //    {
-            //        this.Invoke(new Action(() => textBoxesRow4[2].Text = e.Value.ToString()));
-            //    }
-            //    else
-            //    {
-            //        textBoxesRow4[2].Text = e.Value.ToString();
-            //    }
-            //    break;
-            //case "Potenzio altezza max":
-            //    if (this.InvokeRequired)
-            //    {
-            //        this.Invoke(new Action(() => textBoxesRow4[0].Text = e.Value.ToString()));
-            //    }
-            //    else
-            //    {
-            //        textBoxesRow4[0].Text = e.Value.ToString();
-            //    }
-            //    break;
-            //case "Potenzio altezza min":
-            //    if (this.InvokeRequired)
-            //    {
-            //        this.Invoke(new Action(() => textBoxesRow4[1].Text = e.Value.ToString()));
-            //    }
-            //    else
-            //    {
-            //        textBoxesRow4[1].Text = e.Value.ToString();
-            //    }
-            //    break;
-            //case "Tempo di ritardo all'accensione":
-            //    if (this.InvokeRequired)
-            //    {
-            //        this.Invoke(new Action(() => textBoxesRow4[4].Text = e.Value.ToString()));
-            //    }
-            //    else
-            //    {
-            //        textBoxesRow4[4].Text = e.Value.ToString();
-            //    }
-            //    break;
             default:
                 break;
         }
