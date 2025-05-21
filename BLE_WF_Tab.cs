@@ -68,7 +68,7 @@ public partial class BLEInterfaceTab : TabPage
         comboBoxConnectOptions.Size = new Size(200, 30);
         comboBoxConnectOptions.Items.Add("Connect with response");
         comboBoxConnectOptions.Items.Add("Connect without response");
-        comboBoxConnectOptions.SelectedIndex = 1; // Imposta l'opzione di default
+        comboBoxConnectOptions.SelectedIndex = 0; // Imposta l'opzione di default
         Controls.Add(comboBoxConnectOptions);
 
         bleManager = new BLEManager();

@@ -27,6 +27,8 @@ namespace StemPC
 
 #if TOPLIFT
         public string CommunicationPort = "can";
+#elif EDEN
+        public string CommunicationPort = "ble";
 #else
         public string CommunicationPort = "ble";
 #endif
@@ -156,6 +158,8 @@ namespace StemPC
 
 #if TOPLIFT
             Text = "STEM Toplift A2 Manager " + Software_Version;
+#elif EDEN
+            Text = "STEM Eden XP Manager " + Software_Version;
 #else
             this.Text += Software_Version;
 #endif
@@ -196,6 +200,8 @@ namespace StemPC
 
 #if TOPLIFT
 
+#elif EDEN
+
 #else
             tabControl.TabPages.Add(BootTabRef);
 #endif
@@ -203,7 +209,6 @@ namespace StemPC
             //crea e aggiungi il bootloader manager smart
             BootSmartTabRef = new Boot_Smart_Tab();
             BootSmartTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
-
 
             //Aggiorna il flag di comunicazione
             if (CommunicationPort == "can")
@@ -215,16 +220,20 @@ namespace StemPC
             // Crea la lista dei dispositivi
             List<DeviceInfo> BootSmartDevices = new List<DeviceInfo>
                 {
-                //EDEN devices
-                   //new DeviceInfo(0x00030101, "Keyboard 1"),
-                   //new DeviceInfo(0x00030102, "Keyboard 2"),
-                   //new DeviceInfo(0x00030141, "Motherboard"),
-
+                #if TOPLIFT
                 //TOPLIFT devices
                    new DeviceInfo(0x000803C1, "Keyboard 1", true),
                    new DeviceInfo(0x000803C2, "Keyboard 2", true),
          //          new DeviceInfo(0x000803C3, "Keyboard 3", true),
                    new DeviceInfo(0x00080381, "Motherboard", false),
+                #elif EDEN
+                //EDEN devices
+                    new DeviceInfo(0x00030101, "Keyboard 1", true),
+                    new DeviceInfo(0x00030102, "Keyboard 2", true),
+                    new DeviceInfo(0x00030141, "Motherboard", false),
+                #else
+
+                #endif
                 };
 
             // Popola la tab con la lista dei dispositivi
@@ -290,6 +299,7 @@ namespace StemPC
 #else
             tabControl.SelectedTab = BLETabRef;
             tabControl.TabPages.Add(TelemetryTabRef);
+            tabControl.TabPages.Add(BootSmartTabRef);
 #endif
 
             // Nascondi la colonna delle variabili
@@ -355,7 +365,6 @@ namespace StemPC
             TelemetryTabRef.UpdateDictionary(Dizionario);
 #endif
 
-
             _terminal.WriteLog("--------------------------------------------------------------------");
             // Stampa i risultati (per verifica)
             foreach (ExcelHandler.RowData item in IndirizziProtocollo)
@@ -371,9 +380,50 @@ namespace StemPC
             foreach (ExcelHandler.CommandData item in Comandi)
             {
                 UpdateTerminal(item.ToTerminal());
-                //popola il combo macchine
+                //popola il combo comandi
                 if ((!comboBoxCommand.Items.Contains(item.Name)) && (!item.Name.Contains("risposta")) && (!item.Name.Contains("Risposta"))) comboBoxCommand.Items.Add(item.Name);
             }
+
+#if EDEN
+            // Ottieni la stringa correntemente selezionata
+            string macchinaSelezionata = "EDEN";
+            string schedaSelezionata = "Madre";
+            // Cerca i nomi della macchina
+            foreach (ExcelHandler.RowData item in IndirizziProtocollo)
+            {
+                //popola il combo delle schede
+                if ((item.Scheda == schedaSelezionata) && (item.Macchina == macchinaSelezionata))
+                {
+                    label12.Text = ($"Indirizzo\n {item.Indirizzo.ToString()}");
+                    RecipientId = Convert.ToUInt32(item.Indirizzo.Substring(2), 16);
+                    hExcel.EstraiDizionario(RecipientId, Dizionario, ExcelfilePath);
+                    TelemetryTabRef.UpdateDictionary(Dizionario);
+                    //aggiorna il combo Macchina
+                    int indice = comboBoxMachine.FindStringExact(macchinaSelezionata);
+
+                    if (indice != -1)
+                    {
+                        comboBoxMachine.SelectedIndex = indice;
+                    }
+                    else
+                    {
+                        //    MessageBox.Show($"Elemento \"{elementoDaCercare}\" non trovato nel ComboBox.");
+                    }
+
+                    //aggiorna il combo Scheda
+                    indice = comboBoxBoard.FindStringExact(schedaSelezionata);
+
+                    if (indice != -1)
+                    {
+                        comboBoxBoard.SelectedIndex = indice;
+                    }
+                    else
+                    {
+                        //    MessageBox.Show($"Elemento \"{elementoDaCercare}\" non trovato nel ComboBox.");
+                    }
+                }
+            }
+#endif
 
             //installa l'evento di aggiornamento textbox applayer
             AppLayerCommandDecoded += onAppLayerDecoded;

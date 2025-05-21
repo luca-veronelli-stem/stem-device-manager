@@ -122,20 +122,20 @@
             // 
             ChannelMenu.DropDownItems.AddRange(new ToolStripItem[] { cANToolStripMenuItem, bluetoothLEToolStripMenuItem });
             ChannelMenu.Name = "ChannelMenu";
-            ChannelMenu.Size = new Size(180, 22);
+            ChannelMenu.Size = new Size(138, 22);
             ChannelMenu.Text = "Comm Type";
             // 
             // cANToolStripMenuItem
             // 
             cANToolStripMenuItem.Name = "cANToolStripMenuItem";
-            cANToolStripMenuItem.Size = new Size(180, 22);
+            cANToolStripMenuItem.Size = new Size(141, 22);
             cANToolStripMenuItem.Text = "CAN";
             cANToolStripMenuItem.Click += cANToolStripMenuItem_Click;
             // 
             // bluetoothLEToolStripMenuItem
             // 
             bluetoothLEToolStripMenuItem.Name = "bluetoothLEToolStripMenuItem";
-            bluetoothLEToolStripMenuItem.Size = new Size(180, 22);
+            bluetoothLEToolStripMenuItem.Size = new Size(141, 22);
             bluetoothLEToolStripMenuItem.Text = "Bluetooth LE";
             bluetoothLEToolStripMenuItem.Click += bluetoothLEToolStripMenuItem_Click;
             // 
@@ -251,7 +251,7 @@
             labelDictionary.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             labelDictionary.AutoSize = true;
             labelDictionary.BackColor = Color.FromArgb(8, 72, 133);
-            labelDictionary.Font = new System.Drawing.Font("Poppins", 12F, FontStyle.Bold);
+            labelDictionary.Font = new Font("Poppins", 12F, FontStyle.Bold);
             labelDictionary.ForeColor = SystemColors.ControlLightLight;
             labelDictionary.Location = new Point(215, 7);
             labelDictionary.Margin = new Padding(5, 7, 5, 7);
@@ -312,7 +312,7 @@
             labelBytes.AutoSize = true;
             labelBytes.BackColor = Color.FromArgb(8, 72, 133);
             tableLayoutPanelProtocol.SetColumnSpan(labelBytes, 2);
-            labelBytes.Font = new System.Drawing.Font("Poppins", 12F, FontStyle.Bold);
+            labelBytes.Font = new Font("Poppins", 12F, FontStyle.Bold);
             labelBytes.ForeColor = SystemColors.ControlLightLight;
             labelBytes.Location = new Point(425, 7);
             labelBytes.Margin = new Padding(5, 7, 5, 7);
@@ -327,7 +327,7 @@
             labelByte2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             labelByte2.AutoSize = true;
             labelByte2.BackColor = Color.FromArgb(8, 72, 133);
-            labelByte2.Font = new System.Drawing.Font("Poppins", 12F, FontStyle.Bold);
+            labelByte2.Font = new Font("Poppins", 12F, FontStyle.Bold);
             labelByte2.ForeColor = SystemColors.ControlLightLight;
             labelByte2.Location = new Point(355, 7);
             labelByte2.Margin = new Padding(5, 7, 5, 7);
@@ -342,7 +342,7 @@
             labelByte1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             labelByte1.AutoSize = true;
             labelByte1.BackColor = Color.FromArgb(8, 72, 133);
-            labelByte1.Font = new System.Drawing.Font("Poppins", 12F, FontStyle.Bold);
+            labelByte1.Font = new Font("Poppins", 12F, FontStyle.Bold);
             labelByte1.ForeColor = SystemColors.ControlLightLight;
             labelByte1.Location = new Point(285, 7);
             labelByte1.Margin = new Padding(5, 7, 5, 7);
@@ -357,7 +357,7 @@
             label4.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label4.AutoSize = true;
             label4.BackColor = Color.FromArgb(8, 72, 133);
-            label4.Font = new System.Drawing.Font("Poppins", 12F, FontStyle.Bold);
+            label4.Font = new Font("Poppins", 12F, FontStyle.Bold);
             label4.ForeColor = SystemColors.ControlLightLight;
             label4.Location = new Point(145, 7);
             label4.Margin = new Padding(5, 7, 5, 7);
@@ -372,7 +372,7 @@
             label2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label2.AutoSize = true;
             label2.BackColor = Color.FromArgb(8, 72, 133);
-            label2.Font = new System.Drawing.Font("Poppins", 12F, FontStyle.Bold);
+            label2.Font = new Font("Poppins", 12F, FontStyle.Bold);
             label2.ForeColor = SystemColors.ControlLightLight;
             label2.Location = new Point(75, 7);
             label2.Margin = new Padding(5, 7, 5, 7);
@@ -417,7 +417,7 @@
             label3.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label3.AutoSize = true;
             label3.BackColor = Color.FromArgb(8, 72, 133);
-            label3.Font = new System.Drawing.Font("Poppins", 12F, FontStyle.Bold);
+            label3.Font = new Font("Poppins", 12F, FontStyle.Bold);
             label3.ForeColor = SystemColors.ControlLightLight;
             label3.Location = new Point(5, 7);
             label3.Margin = new Padding(5, 7, 5, 7);
@@ -430,7 +430,7 @@
             // buttonSendPS
             // 
             buttonSendPS.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            buttonSendPS.Font = new System.Drawing.Font("Poppins", 12F, FontStyle.Bold);
+            buttonSendPS.Font = new Font("Poppins", 12F, FontStyle.Bold);
             buttonSendPS.Location = new Point(713, 371);
             buttonSendPS.Name = "buttonSendPS";
             buttonSendPS.Size = new Size(70, 97);
@@ -444,7 +444,7 @@
             label12.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label12.AutoSize = true;
             label12.BackColor = Color.FromArgb(8, 72, 133);
-            label12.Font = new System.Drawing.Font("Poppins", 12F, FontStyle.Bold);
+            label12.Font = new Font("Poppins", 12F, FontStyle.Bold);
             label12.ForeColor = SystemColors.ControlLightLight;
             label12.Location = new Point(715, 121);
             label12.Margin = new Padding(5, 7, 5, 7);
@@ -513,7 +513,7 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Bold);
+            label1.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             label1.Location = new Point(590, 9);
             label1.Name = "label1";
             label1.Size = new Size(150, 15);
@@ -535,7 +535,7 @@
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 660);
             Controls.Add(tableLayoutPanel1);
-            Font = new System.Drawing.Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            Font = new Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "Form1";
             Text = "STEM Device Manager ";

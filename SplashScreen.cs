@@ -21,6 +21,8 @@ namespace STEMPM
 
 #if TOPLIFT
             label1.Text = "Top Lift A2 \r\n Manager";
+#elif EDEN
+            label1.Text = "Eden XP \r\n Manager";
 #else
 
 #endif

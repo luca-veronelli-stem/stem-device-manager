@@ -1,3 +1,23 @@
+/**
+ ******************************************************************************
+ * @file    Program.cs
+ * @author  Michele Pignedoli
+ * @version 2.10
+ * @date    21/5/2025
+ * @brief   STEM Device Manager Main program body
+ ******************************************************************************
+ *
+ * 2.10: + TopLift A2 and Eden XP activation
+ *
+ *
+ * TODO:
+ *
+ * @attention
+ *
+ * <h2><center>&copy; COPYRIGHT 2025 STEM </center></h2>
+ *
+ */
+
 using STEMPM;
 
 namespace StemPC
