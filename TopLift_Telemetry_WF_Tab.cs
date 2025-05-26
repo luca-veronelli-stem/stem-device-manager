@@ -341,26 +341,26 @@ public class TopLiftTelemetry_Tab : TabPage
         buttonReadFaults.Margin = new Padding(5);
         buttonTextBoxRow.Controls.Add(buttonReadFaults, 1, 0);
 
-        // QUARTA RIGA: 5 gruppi (label + textbox) e 2 pulsanti
+        // QUARTA RIGA: 9 gruppi (label + textbox) e 2 pulsanti
         TableLayoutPanel bottomRow = new TableLayoutPanel();
         bottomRow.Dock = DockStyle.Fill;
-        bottomRow.ColumnCount = 7;
+        bottomRow.ColumnCount = 11;
         bottomRow.RowCount = 2;  // Una riga per le label, una per i textbox
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 9; i++)
         {
-            bottomRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 16F));  // 5 gruppi
+            bottomRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, (8.8F)));  // 9 gruppi
         }
         bottomRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10F));  // Pulsante read
         bottomRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10F));  // Pulsante write
         bottomRow.RowStyles.Add(new RowStyle(SizeType.Percent, 40F));  // Riga per label
         bottomRow.RowStyles.Add(new RowStyle(SizeType.Percent, 60F));  // Riga per textbox/button
-        mainLayout.Controls.Add(bottomRow, 0, 4); // Ora è alla riga 4 invece che 3
+        mainLayout.Controls.Add(bottomRow, 0, 4); // Ora è alla riga 4 
 
-        // Creo i 5 gruppi label + textbox
-        labelsRow4 = new Label[5];
-        textBoxesRow4 = new TextBox[5];
+        // Creo i 9 gruppi label + textbox
+        labelsRow4 = new Label[9];
+        textBoxesRow4 = new TextBox[9];
 
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 9; i++)
         {
             // Label
             labelsRow4[i] = new Label();
@@ -368,8 +368,12 @@ public class TopLiftTelemetry_Tab : TabPage
             else if (i == 1) labelsRow4[i].Text = "Min Height";
             else if (i == 2) labelsRow4[i].Text = "Max Slope";
             else if (i == 3) labelsRow4[i].Text = "Min Slope";
+            else if (i == 4) labelsRow4[i].Text = "Height 1"; 
+            else if (i == 5) labelsRow4[i].Text = "Height 2";
+            else if (i == 6) labelsRow4[i].Text = "Height 3";
+            else if (i == 7) labelsRow4[i].Text = "Loading height";
             else labelsRow4[i].Text = "Initial Delay ms";
-            
+
             labelsRow4[i].Dock = DockStyle.Fill;
             labelsRow4[i].TextAlign = ContentAlignment.BottomLeft;
             labelsRow4[i].Padding = new Padding(5, 0, 0, 5);
@@ -389,7 +393,7 @@ public class TopLiftTelemetry_Tab : TabPage
         buttonReadSettings.Font = new System.Drawing.Font("Poppins", 10, FontStyle.Bold);
         buttonReadSettings.Dock = DockStyle.Fill;
         buttonReadSettings.Margin = new Padding(5);
-        bottomRow.Controls.Add(buttonReadSettings, 5, 1);  // Occupa solo la riga inferiore
+        bottomRow.Controls.Add(buttonReadSettings, 9, 1);  // Occupa solo la riga inferiore
 
         // Pulsante write settings
         buttonWriteSettings = new Button();
@@ -397,7 +401,7 @@ public class TopLiftTelemetry_Tab : TabPage
         buttonWriteSettings.Font = new System.Drawing.Font("Poppins", 10, FontStyle.Bold);
         buttonWriteSettings.Dock = DockStyle.Fill;
         buttonWriteSettings.Margin = new Padding(5);
-        bottomRow.Controls.Add(buttonWriteSettings, 6, 1);  // Occupa solo la riga inferiore
+        bottomRow.Controls.Add(buttonWriteSettings, 10, 1);  // Occupa solo la riga inferiore
     }
 
     private void SetupEventHandlers()
