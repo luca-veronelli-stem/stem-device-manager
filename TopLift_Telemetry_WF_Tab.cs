@@ -41,6 +41,8 @@ public class TopLiftTelemetry_Tab : TabPage
     private TextBox[] textBoxesRow4;
     private Button buttonReadSettings;
     private Button buttonWriteSettings;
+    private Button buttonLoadSettings;
+    private Button buttonSaveSettings;
 
     //Plotview section
     private LineSeries pointSeries1;
@@ -352,8 +354,8 @@ public class TopLiftTelemetry_Tab : TabPage
         }
         bottomRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10F));  // Pulsante read
         bottomRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10F));  // Pulsante write
-        bottomRow.RowStyles.Add(new RowStyle(SizeType.Percent, 40F));  // Riga per label
-        bottomRow.RowStyles.Add(new RowStyle(SizeType.Percent, 60F));  // Riga per textbox/button
+        bottomRow.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));  // Riga per label
+        bottomRow.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));  // Riga per textbox/button
         mainLayout.Controls.Add(bottomRow, 0, 4); // Ora è alla riga 4 
 
         // Creo i 9 gruppi label + textbox
@@ -387,18 +389,34 @@ public class TopLiftTelemetry_Tab : TabPage
             bottomRow.Controls.Add(textBoxesRow4[i], i, 1);
         }
 
+        // Pulsante read settings from file
+        buttonLoadSettings = new Button();
+        buttonLoadSettings.Text = "LOAD FROM FILE";
+        buttonLoadSettings.Font = new System.Drawing.Font("Poppins", 9, FontStyle.Bold);
+        buttonLoadSettings.Dock = DockStyle.Fill;
+        buttonLoadSettings.Margin = new Padding(5);
+        bottomRow.Controls.Add(buttonLoadSettings, 9, 0);  // Occupa solo la riga inferiore
+
+        // Pulsante write settings to file
+        buttonSaveSettings = new Button();
+        buttonSaveSettings.Text = "SAVE TO FILE";
+        buttonSaveSettings.Font = new System.Drawing.Font("Poppins", 9, FontStyle.Bold);
+        buttonSaveSettings.Dock = DockStyle.Fill;
+        buttonSaveSettings.Margin = new Padding(5);
+        bottomRow.Controls.Add(buttonSaveSettings, 10, 0);  // Occupa solo la riga inferiore
+
         // Pulsante read settings
         buttonReadSettings = new Button();
-        buttonReadSettings.Text = "READ";
-        buttonReadSettings.Font = new System.Drawing.Font("Poppins", 10, FontStyle.Bold);
+        buttonReadSettings.Text = "READ FROM BOARD";
+        buttonReadSettings.Font = new System.Drawing.Font("Poppins", 9, FontStyle.Bold);
         buttonReadSettings.Dock = DockStyle.Fill;
         buttonReadSettings.Margin = new Padding(5);
         bottomRow.Controls.Add(buttonReadSettings, 9, 1);  // Occupa solo la riga inferiore
 
         // Pulsante write settings
         buttonWriteSettings = new Button();
-        buttonWriteSettings.Text = "WRITE";
-        buttonWriteSettings.Font = new System.Drawing.Font("Poppins", 10, FontStyle.Bold);
+        buttonWriteSettings.Text = "WRITE TO BOARD";
+        buttonWriteSettings.Font = new System.Drawing.Font("Poppins", 9, FontStyle.Bold);
         buttonWriteSettings.Dock = DockStyle.Fill;
         buttonWriteSettings.Margin = new Padding(5);
         bottomRow.Controls.Add(buttonWriteSettings, 10, 1);  // Occupa solo la riga inferiore
