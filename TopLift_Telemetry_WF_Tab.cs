@@ -494,12 +494,20 @@ public class TopLiftTelemetry_Tab : TabPage
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza max")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza min")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza min")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Altezza di carico")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Altezza 1 da chiuso")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Altezza 2 da chiuso")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Altezza 3 da chiuso")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Tempo di ritardo all'accensione")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione giu'")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione orizz.")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza max")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza min")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza min")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Altezza di carico")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Altezza 1 da chiuso")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Altezza 2 da chiuso")]);
+        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Altezza 3 da chiuso")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Tempo di ritardo all'accensione")]);
         await telemetryManager.ReadOneShot();
     }
@@ -515,12 +523,20 @@ public class TopLiftTelemetry_Tab : TabPage
         telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio inclinazione orizz.")], textBoxesRow4[2].Text);
         telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio altezza max")], textBoxesRow4[0].Text);
         telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio altezza min")], textBoxesRow4[1].Text);
-        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Tempo di ritardo all'accensione")], textBoxesRow4[4].Text);
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Altezza di carico")], textBoxesRow4[4].Text);
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Altezza 1 da chiuso")], textBoxesRow4[5].Text);
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Altezza 2 da chiuso")], textBoxesRow4[6].Text);
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Altezza 3 da chiuso")], textBoxesRow4[7].Text);
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Tempo di ritardo all'accensione")], textBoxesRow4[8].Text);
         telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio inclinazione giu'")], textBoxesRow4[3].Text);
         telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio inclinazione orizz.")], textBoxesRow4[2].Text);
         telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio altezza max")], textBoxesRow4[0].Text);
         telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio altezza min")], textBoxesRow4[1].Text);
-        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Tempo di ritardo all'accensione")], textBoxesRow4[4].Text);
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Altezza di carico")], textBoxesRow4[4].Text);
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Altezza 1 da chiuso")], textBoxesRow4[5].Text);
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Altezza 2 da chiuso")], textBoxesRow4[6].Text);
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Altezza 3 da chiuso")], textBoxesRow4[7].Text);
+        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Tempo di ritardo all'accensione")], textBoxesRow4[8].Text);
 
         await telemetryManager.WriteOneShot();
 
@@ -725,7 +741,7 @@ public class TopLiftTelemetry_Tab : TabPage
                     textBoxesRow4[1].Text = e.Value.ToString();
                 }
                 break;
-            case "Tempo di ritardo all'accensione":
+            case "Altezza di carico":
                 if (this.InvokeRequired)
                 {
                     this.Invoke(new Action(() => textBoxesRow4[4].Text = e.Value.ToString()));
@@ -733,6 +749,46 @@ public class TopLiftTelemetry_Tab : TabPage
                 else
                 {
                     textBoxesRow4[4].Text = e.Value.ToString();
+                }
+                break;
+            case "Altezza 1 da chiuso":
+                if (this.InvokeRequired)
+                {
+                    this.Invoke(new Action(() => textBoxesRow4[5].Text = e.Value.ToString()));
+                }
+                else
+                {
+                    textBoxesRow4[5].Text = e.Value.ToString();
+                }
+                break;
+            case "Altezza 2 da chiuso":
+                if (this.InvokeRequired)
+                {
+                    this.Invoke(new Action(() => textBoxesRow4[6].Text = e.Value.ToString()));
+                }
+                else
+                {
+                    textBoxesRow4[6].Text = e.Value.ToString();
+                }
+                break;
+            case "Altezza 3 da chiuso":
+                if (this.InvokeRequired)
+                {
+                    this.Invoke(new Action(() => textBoxesRow4[7].Text = e.Value.ToString()));
+                }
+                else
+                {
+                    textBoxesRow4[7].Text = e.Value.ToString();
+                }
+                break;
+            case "Tempo di ritardo all'accensione":
+                if (this.InvokeRequired)
+                {
+                    this.Invoke(new Action(() => textBoxesRow4[8].Text = e.Value.ToString()));
+                }
+                else
+                {
+                    textBoxesRow4[8].Text = e.Value.ToString();
                 }
                 break;
             default:
