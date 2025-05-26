@@ -314,7 +314,6 @@ public class TopLiftTelemetry_Tab : TabPage
 
             // Stato iniziale (false)
             imageStates[i] = false;
-            imageStates[0] = true;
             UpdateImageDisplay(i);
         }
 

@@ -2,18 +2,19 @@
  ******************************************************************************
  * @file    Program.cs
  * @author  Michele Pignedoli
- * @version 2.10
+ * @version 2.11
  * @date    21/5/2025
  * @brief   STEM Device Manager Main program body
  ******************************************************************************
  *
  * 2.10: + TopLift A2 and Eden XP activation
- * 2.11: + Read firmware version activation
+ * 2.11: + Read firmware version activation for mainboard
  *
  *
  * TODO:
  * - Completare decodifica faults
- * - Completare 
+ * - Completare parametri con altezze di carico
+ * - Attivare Load/save parameters
  *
  * @attention
  *

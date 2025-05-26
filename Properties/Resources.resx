@@ -143,13 +143,13 @@
   <data name="PompaOff" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\images\PompaOff.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="PompaOn" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\images\PompaOn.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="ValvolaOff" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\images\ValvolaOff.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="ValvolaOn" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\images\ValvolaOn.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="PompaOn" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\images\PompaOn.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>
