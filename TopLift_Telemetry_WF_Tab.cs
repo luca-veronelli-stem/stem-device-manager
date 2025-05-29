@@ -712,7 +712,65 @@ public class TopLiftTelemetry_Tab : TabPage
             case "Allarmi":
                 {
                     string FaultString = null;
-                    if (e.Value != 0) FaultString = e.Value.ToString();
+                    uint FaultValue = e.Value;
+
+                   // FaultValue = 0xFFFFFFFF;
+
+                    if (FaultValue != 0)
+                    {
+                        if ((FaultValue & 0x00000001) != 0) // Controlla se il bit 0 è 1
+                        {
+                            FaultString += " Pump Overcurrent ";
+                        }
+                        if ((FaultValue & 0x00000002) != 0)
+                        {
+                            FaultString += " Pump Open Circuit ";
+                        }
+                        if ((FaultValue & 0x00000004) != 0)
+                        {
+                            FaultString += " EVA Overcurrent ";
+                        }
+                        if ((FaultValue & 0x00000008) != 0)
+                        {
+                            FaultString += " EVA Open Circuit ";
+                        }
+                        if ((FaultValue & 0x00000010) != 0)
+                        {
+                            FaultString += " EVB Overcurrent ";
+                        }
+                        if ((FaultValue & 0x00000020) != 0)
+                        {
+                            FaultString += " EVB Open Circuit ";
+                        }
+                        if ((FaultValue & 0x00000040) != 0)
+                        {
+                            FaultString += " EVC Overcurrent ";
+                        }
+                        if ((FaultValue & 0x00000080) != 0)
+                        {
+                            FaultString += " EVC Open Circuit ";
+                        }
+                        if ((FaultValue & 0x00000100) != 0)
+                        {
+                            FaultString += " P2A Overcurrent ";
+                        }
+                        if ((FaultValue & 0x00000200) != 0)
+                        {
+                            FaultString += " P2A Open Circuit ";
+                        }
+                        if ((FaultValue & 0x00040000) != 0)
+                        {
+                            FaultString += " Low battery ";
+                        }
+                        if ((FaultValue & 0x00100000) != 0)
+                        {
+                            FaultString += " Software error ";
+                        }
+                        if ((FaultValue & 0x00200000) != 0)
+                        {
+                            FaultString += " EEPROM error ";
+                        }
+                    }
                     else FaultString = "No active Faults";
 
                     if (this.InvokeRequired)
