@@ -734,6 +734,7 @@ namespace StemPC
 
             // Accesso all'array di byte ricevuto
             byte[] payload = e.Packet;
+            if (payload.Length < 2) return;
             uint sourceAddress = e.SourceAddress;
             uint destinationAddress = e.DestinationAddress;
 

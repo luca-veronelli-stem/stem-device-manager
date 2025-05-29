@@ -60,7 +60,7 @@ public class TopLiftTelemetry_Tab : TabPage
 
     //oxyplot variables
     private int time;
-    private double windowWidth = 200;     // ampiezza della finestra X (es. 10 secondi)
+    private double windowWidth = 100;     // ampiezza della finestra X (es. 10 secondi)
 
 
     public TopLiftTelemetry_Tab(PacketManager packetManagerRX)
@@ -630,6 +630,7 @@ public class TopLiftTelemetry_Tab : TabPage
 
     private void UpdatePlot(uint newValue, LineSeries pointSeries, LinearAxis xAxis, PlotView plotView)
     {
+       // return;
         // Simulo un segnale: qui puoi inserire il tuo dato in tempo reale
         //   double newValue = Math.Sin(2 * Math.PI * 0.5 * time);
 
@@ -694,13 +695,15 @@ public class TopLiftTelemetry_Tab : TabPage
             case "Valore RAW del potenzio altezza":
                 {
                     time += 1;
+                    if (e.Value!=0)
                     UpdatePlot(e.Value, pointSeries1, xAxis1, plotView1);
                 }
                 break;
             case "Valore RAW del potenzio inclinazione":
                 {
                     time += 1;
-                    UpdatePlot(e.Value, pointSeries2, xAxis2, plotView2);
+                    if (e.Value != 0)
+                        UpdatePlot(e.Value, pointSeries2, xAxis2, plotView2);
                 }
                 break;
             case "Allarmi":

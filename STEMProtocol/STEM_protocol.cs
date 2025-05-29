@@ -139,12 +139,24 @@ namespace Stem_Protocol
         private byte[] _transportHeader;
         private byte[] _transportPacket;
         private byte[] _crc;
+
         private string _formatString = ">BIH";
 
+        public bool IsValid { get; protected set; } = true;
+
         public TransportLayer(byte cryptFlag, int senderId, byte[] data, bool pack = true)
-            : base(data[0], data[1], data.Skip(2).ToArray(), pack)
+               : base(
+                   data != null && data.Length > 0 ? data[0] : (byte)0,
+                   data != null && data.Length > 1 ? data[1] : (byte)0,
+                   data != null && data.Length > 2 ? data.Skip(2).ToArray() : Array.Empty<byte>(),
+                   pack)
         {
-            _cryptFlag = cryptFlag;
+                if (data == null || data.Length < 2)
+                {
+                    IsValid = false;
+                    return;
+                }
+             _cryptFlag = cryptFlag;
             _senderId = senderId;
             _lPack = (ushort)data.Length;
             if (pack)
@@ -274,14 +286,39 @@ namespace Stem_Protocol
 
         private int packetId;
 
-        public NetworkLayer(string interfaceType, int version, uint recipientId, byte[] data, bool pack = true)
-            : base(data[0], BitConverter.ToInt32(data, 1), data.Skip(7).ToArray(), pack)
+        public NetworkLayer(
+       string interfaceType,
+       int version,
+       uint recipientId,
+       byte[] data,
+       bool pack = true
+   )
+       : base(
+           // cmdInit
+           data != null && data.Length > 0 ? data[0] : (byte)0,
+           // senderId (4 byte da indice 1)
+           data != null && data.Length > 4 ? BitConverter.ToInt32(data, 1) : 0,
+           // payload: tutto da indice 7 in poi
+           data != null && data.Length > 6 ? data.Skip(7).ToArray() : Array.Empty<byte>(),
+           pack
+       )
         {
+            // 1) Se il TL non è valido, esci subito lanciando un'eccezione
+            if (!IsValid)
+                throw new InvalidOperationException("TransportLayer non valido: impossibile costruire NetworkLayer.");
+
+            // 2) Controllo minimo su data
+            if (data == null || data.Length < 7)
+                throw new ArgumentException("Array data troppo corto per costruire NetworkLayer.", nameof(data));
+
+            // 3) Inizializza i campi specifici del network
             _interface = interfaceType.ToLower();
             _version = version;
             _recipientId = recipientId;
             packetId = 0;
             SetPacketChunkSize();
+
+            // 4) Costruisci header & packet di rete
             if (pack)
             {
                 BuildNetworkHeader();

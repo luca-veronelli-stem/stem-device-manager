@@ -130,7 +130,7 @@ public class TelemetryManager
         uint sourceAddressPackt = e.SourceAddress;
         uint destinationAddressPackt = e.DestinationAddress;
         uint Value = 0;
-
+        if (payload.Length < 2) return;
         //prosegui solo se ricevi una risposta a lettura dalla sorgente per me
         if ((payload[0] == 0x80) && (payload[1] == 0x01) && (payload.Length > 4))
         {
@@ -199,7 +199,7 @@ public class TelemetryManager
             byte[] Data = new byte[] { Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrH, 16), Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrL, 16) };
 
             await protocolManager.SendCommand(CMD_READ_VARIABLE, Data, false);
-            await Task.Delay(150);
+            await Task.Delay(250);
         }
     }
 

@@ -17,7 +17,7 @@ using Windows.Storage.Streams;
 
 namespace Stem_Protocol.PacketManager
 {
-    public class PacketManager
+    public class PacketManager : IDisposable
     {
         //properties
         private uint _id;
@@ -44,6 +44,14 @@ namespace Stem_Protocol.PacketManager
             //    OnAppLayerPacketReceived = eventHandler;
             //}
             PacketReadyEventList =new List<NetworkLayer.PacketReadyEventHandler>();
+        }
+
+        public void Dispose()
+        {
+            foreach (var can in CANChannelsList)
+                can.PacketReceived -= OnCANPacketReceived;
+            foreach (var ble in BLEChannelsList)
+                ble.PacketReceived -= OnBLEPacketReceived;
         }
 
         public uint Id
@@ -87,22 +95,41 @@ namespace Stem_Protocol.PacketManager
             var packetId = (netInfo >> 2) & 0x07;
             var version = netInfo & 0x03;
 
-            if (!packetQueues.ContainsKey(packetId))
+            // // Controlla sempre che packetId sia presente nel dizionario prima di accedere
+            // if (!packetQueues.ContainsKey(packetId))
+            // {
+            //     // Azzera la lista pacchetti ricevuti ad ogni cambio di Id
+            //     packetQueues[packetId] = new List<byte[]>();
+            // }
+
+            // //if (!packetQueues.ContainsKey(packetId))
+            // //{
+            // //    //Azzera la lista pacchetti ricevuti ad ogni cambio di Id
+            // //    packetQueues.Add(packetId, new List<byte[]>());
+            // //}
+
+            //// if (packetId> packetQueues.Count) { return; }
+
+            // packetQueues[packetId].Add(packetChunkBytes);
+
+            lock (packetQueues)
             {
-                //Azzera la lista pacchetti ricevuti ad ogni cambio di Id
-                packetQueues.Add(packetId, new List<byte[]>());
+                if (!packetQueues.ContainsKey(packetId))
+                {
+                    packetQueues[packetId] = new List<byte[]>();
+                }
+                packetQueues[packetId].Add(packetChunkBytes);
             }
-
-           // if (packetId> packetQueues.Count) { return; }
-
-            packetQueues[packetId].Add(packetChunkBytes);
 
             if (remainingChunks == 0)
             {
+                byte[] unifiedPacket;
                 //PACKET READY
-                var unifiedPacket = packetQueues[packetId].SelectMany(chunk => chunk).ToArray();
-                packetQueues.Remove(packetId);
-
+                lock (packetQueues)
+                {
+                    unifiedPacket = packetQueues[packetId].SelectMany(chunk => chunk).ToArray();
+                    packetQueues.Remove(packetId);
+                }
                 //FIX PACKET LENGHT
 
                 if (unifiedPacket.Length > 7)
@@ -428,6 +455,17 @@ namespace Stem_Protocol.PacketManager
             //poi interpretalo
             ProcessPacket("ble", packet.Data);
         }
+        //public void Remove_CAN_Channel(CANDataLayer canDataLayer)
+        //{
+        //    canDataLayer.PacketReceived -= OnCANPacketReceived;
+        //    CANChannelsList.Remove(canDataLayer);
+        //}
+
+        //public void Remove_BLE_Channel(SDL serialDataLayer)
+        //{
+        //    serialDataLayer.PacketReceived -= OnBLEPacketReceived;
+        //    BLEChannelsList.Remove(serialDataLayer);
+        //}
     }
 }
 
