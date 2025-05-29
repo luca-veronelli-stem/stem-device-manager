@@ -18,6 +18,7 @@ using OxyPlotCustom;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Windows.ApplicationModel.Background;
 using System.Threading.Tasks;
+using System.Reflection.Emit;
 
 public class TopLiftTelemetry_Tab : TabPage
 {
@@ -34,10 +35,10 @@ public class TopLiftTelemetry_Tab : TabPage
     private Button startTelemetryButton;
     private Button stopTelemetryButton;
     private PictureBox[] imageContainers;
-    private Label[] imageLabels;
+    private System.Windows.Forms.Label[] imageLabels;
     private Button buttonReadFaults;
     private TextBox textBoxRow3;
-    private Label[] labelsRow4;
+    private System.Windows.Forms.Label[] labelsRow4;
     private TextBox[] textBoxesRow4;
     private Button buttonReadSettings;
     private Button buttonWriteSettings;
@@ -279,7 +280,7 @@ public class TopLiftTelemetry_Tab : TabPage
 
         // Creo i contenitori di immagini e le relative label
         imageContainers = new PictureBox[7]; 
-        imageLabels = new Label[7]; 
+        imageLabels = new System.Windows.Forms.Label[7]; 
         imageStates = new bool[7]; 
 
         for (int i = 0; i < 7; i++) 
@@ -300,7 +301,7 @@ public class TopLiftTelemetry_Tab : TabPage
             imageRow.Controls.Add(imageContainers[i], i, 0);
 
             // Label sotto l'immagine
-            imageLabels[i] = new Label();
+            imageLabels[i] = new System.Windows.Forms.Label();
             if (i == 0) imageLabels[i].Text = "EVA";
             else if (i == 1) imageLabels[i].Text = "EVB";
             else if (i == 2) imageLabels[i].Text = "EVC";
@@ -359,13 +360,13 @@ public class TopLiftTelemetry_Tab : TabPage
         mainLayout.Controls.Add(bottomRow, 0, 4); // Ora è alla riga 4 
 
         // Creo i 9 gruppi label + textbox
-        labelsRow4 = new Label[9];
+        labelsRow4 = new System.Windows.Forms.Label[9];
         textBoxesRow4 = new TextBox[9];
 
         for (int i = 0; i < 9; i++)
         {
             // Label
-            labelsRow4[i] = new Label();
+            labelsRow4[i] = new System.Windows.Forms.Label();
             if (i == 0) labelsRow4[i].Text = "Max Height";
             else if (i == 1) labelsRow4[i].Text = "Min Height";
             else if (i == 2) labelsRow4[i].Text = "Max Slope";
@@ -430,6 +431,8 @@ public class TopLiftTelemetry_Tab : TabPage
         buttonReadFaults.Click += buttonReadFaults_Click;
         buttonReadSettings.Click += buttonReadSettings_Click;
         buttonWriteSettings.Click += buttonWriteSettings_Click;
+        buttonSaveSettings.Click += BtnSave_Click;
+        buttonLoadSettings.Click += BtnLoad_Click;
     }
 
     private void ResetPlot(LineSeries pointSeries, PlotView plotView)
@@ -816,4 +819,93 @@ public class TopLiftTelemetry_Tab : TabPage
                 break;
         }
     }
+
+    private void BtnSave_Click(object sender, EventArgs e)
+    {
+        using (SaveFileDialog sfd = new SaveFileDialog())
+        {
+            sfd.Title = "Save Parameters";
+            sfd.Filter = "Text Files (*.txt)|*.txt|All Files (*.*)|*.*";
+            sfd.DefaultExt = "txt";
+            if (sfd.ShowDialog() != DialogResult.OK)
+                return;
+
+            try
+            {
+                var lines = new string[]
+                {
+                        $"{labelsRow4[0].Text}: {textBoxesRow4[0].Text}",
+                        $"{labelsRow4[1].Text}: {textBoxesRow4[1].Text}",
+                        $"{labelsRow4[2].Text}: {textBoxesRow4[2].Text}",
+                        $"{labelsRow4[3].Text}: {textBoxesRow4[3].Text}",
+                        $"{labelsRow4[4].Text}: {textBoxesRow4[4].Text}",
+                        $"{labelsRow4[5].Text}: {textBoxesRow4[5].Text}",
+                        $"{labelsRow4[6].Text}: {textBoxesRow4[6].Text}",
+                        $"{labelsRow4[7].Text}: {textBoxesRow4[7].Text}",
+                        $"{labelsRow4[8].Text}: {textBoxesRow4[8].Text}"
+                };
+
+                File.WriteAllLines(sfd.FileName, lines);
+                MessageBox.Show("Parameters saved succesfully:\n" + sfd.FileName,
+                                "Save Parameters", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Errore in saving parameters:\n" + ex.Message,
+                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+    }
+
+    private void BtnLoad_Click(object sender, EventArgs e)
+    {
+        using (OpenFileDialog ofd = new OpenFileDialog())
+        {
+            ofd.Title = "Load Parameters";
+            ofd.Filter = "Text Files (*.txt)|*.txt|All Files (*.*)|*.*";
+            if (ofd.ShowDialog() != DialogResult.OK)
+                return;
+
+            try
+            {
+                string[] lines = File.ReadAllLines(ofd.FileName);
+                if (lines.Length < 9)
+                {
+                    MessageBox.Show($"File corrupted or incomplete : {lines.Length} parameters found.",
+                                    "Load Parameters", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // Assumi formato "Label: Value"
+                string[] parts;
+                parts = lines[0].Split(new[] { ':', }, 2);
+                textBoxesRow4[0].Text = parts.Length > 1 ? parts[1].Trim() : string.Empty;
+                parts = lines[1].Split(new[] { ':', }, 2);
+                textBoxesRow4[1].Text = parts.Length > 1 ? parts[1].Trim() : string.Empty;
+                parts = lines[2].Split(new[] { ':', }, 2);
+                textBoxesRow4[2].Text = parts.Length > 1 ? parts[1].Trim() : string.Empty;
+                parts = lines[3].Split(new[] { ':', }, 2);
+                textBoxesRow4[3].Text = parts.Length > 1 ? parts[1].Trim() : string.Empty;
+                parts = lines[4].Split(new[] { ':', }, 2);
+                textBoxesRow4[4].Text = parts.Length > 1 ? parts[1].Trim() : string.Empty;
+                parts = lines[5].Split(new[] { ':', }, 2);
+                textBoxesRow4[5].Text = parts.Length > 1 ? parts[1].Trim() : string.Empty;
+                parts = lines[6].Split(new[] { ':', }, 2);
+                textBoxesRow4[6].Text = parts.Length > 1 ? parts[1].Trim() : string.Empty;
+                parts = lines[7].Split(new[] { ':', }, 2);
+                textBoxesRow4[7].Text = parts.Length > 1 ? parts[1].Trim() : string.Empty;
+                parts = lines[8].Split(new[] { ':', }, 2);
+                textBoxesRow4[8].Text = parts.Length > 1 ? parts[1].Trim() : string.Empty;
+
+                MessageBox.Show("Parameters loaded succesfully from:\n" + ofd.FileName,
+                                "Load Parameters", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading parameters:\n" + ex.Message,
+                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+    }
 }
+
