@@ -60,12 +60,14 @@
             label1 = new Label();
             listBoxSerialPorts = new ListBox();
             statusStrip1 = new StatusStrip();
-            BLEStatusLabel = new ToolStripStatusLabel();
-            PCanLabel = new ToolStripStatusLabel();
             toolStripSplitButton3 = new ToolStripSplitButton();
             toolStripMenuItem1 = new ToolStripMenuItem();
             cANToolStripMenuItem = new ToolStripMenuItem();
             bluetoothLEToolStripMenuItem = new ToolStripMenuItem();
+            PCanLabel = new ToolStripStatusLabel();
+            BLEStatusLabel = new ToolStripStatusLabel();
+            toolStripStatusLabel1 = new ToolStripStatusLabel();
+            toolStripStatusLabel2 = new ToolStripStatusLabel();
             tableLayoutPanel1.SuspendLayout();
             tabControl.SuspendLayout();
             tabPageProtocol.SuspendLayout();
@@ -462,26 +464,12 @@
             // 
             // statusStrip1
             // 
-            statusStrip1.Items.AddRange(new ToolStripItem[] { toolStripSplitButton3, PCanLabel, BLEStatusLabel });
+            statusStrip1.Items.AddRange(new ToolStripItem[] { toolStripSplitButton3, toolStripStatusLabel2, PCanLabel, toolStripStatusLabel1, BLEStatusLabel });
             statusStrip1.Location = new Point(0, 638);
             statusStrip1.Name = "statusStrip1";
             statusStrip1.Size = new Size(800, 22);
             statusStrip1.TabIndex = 3;
             statusStrip1.Text = "statusStrip2";
-            // 
-            // BLEStatusLabel
-            // 
-            BLEStatusLabel.BackColor = Color.Salmon;
-            BLEStatusLabel.Name = "BLEStatusLabel";
-            BLEStatusLabel.Size = new Size(113, 17);
-            BLEStatusLabel.Text = "BLE: Not Connected";
-            // 
-            // PCanLabel
-            // 
-            PCanLabel.BackColor = Color.Salmon;
-            PCanLabel.Name = "PCanLabel";
-            PCanLabel.Size = new Size(126, 17);
-            PCanLabel.Text = "PCAN: Not Connected";
             // 
             // toolStripSplitButton3
             // 
@@ -497,20 +485,46 @@
             // 
             toolStripMenuItem1.DropDownItems.AddRange(new ToolStripItem[] { cANToolStripMenuItem, bluetoothLEToolStripMenuItem });
             toolStripMenuItem1.Name = "toolStripMenuItem1";
-            toolStripMenuItem1.Size = new Size(180, 22);
+            toolStripMenuItem1.Size = new Size(138, 22);
             toolStripMenuItem1.Text = "Comm Type";
             // 
             // cANToolStripMenuItem
             // 
             cANToolStripMenuItem.Name = "cANToolStripMenuItem";
-            cANToolStripMenuItem.Size = new Size(180, 22);
+            cANToolStripMenuItem.Size = new Size(141, 22);
             cANToolStripMenuItem.Text = "CAN";
             // 
             // bluetoothLEToolStripMenuItem
             // 
             bluetoothLEToolStripMenuItem.Name = "bluetoothLEToolStripMenuItem";
-            bluetoothLEToolStripMenuItem.Size = new Size(180, 22);
+            bluetoothLEToolStripMenuItem.Size = new Size(141, 22);
             bluetoothLEToolStripMenuItem.Text = "Bluetooth LE";
+            // 
+            // PCanLabel
+            // 
+            PCanLabel.BackColor = Color.Salmon;
+            PCanLabel.Name = "PCanLabel";
+            PCanLabel.Size = new Size(126, 17);
+            PCanLabel.Text = "PCAN: Not Connected";
+            // 
+            // BLEStatusLabel
+            // 
+            BLEStatusLabel.BackColor = Color.Salmon;
+            BLEStatusLabel.Name = "BLEStatusLabel";
+            BLEStatusLabel.Size = new Size(113, 17);
+            BLEStatusLabel.Text = "BLE: Not Connected";
+            // 
+            // toolStripStatusLabel1
+            // 
+            toolStripStatusLabel1.AutoSize = false;
+            toolStripStatusLabel1.Name = "toolStripStatusLabel1";
+            toolStripStatusLabel1.Size = new Size(5, 17);
+            // 
+            // toolStripStatusLabel2
+            // 
+            toolStripStatusLabel2.AutoSize = false;
+            toolStripStatusLabel2.Name = "toolStripStatusLabel2";
+            toolStripStatusLabel2.Size = new Size(5, 17);
             // 
             // Form1
             // 
@@ -577,5 +591,7 @@
         private ToolStripMenuItem toolStripMenuItem1;
         private ToolStripMenuItem cANToolStripMenuItem;
         private ToolStripMenuItem bluetoothLEToolStripMenuItem;
+        private ToolStripStatusLabel toolStripStatusLabel1;
+        private ToolStripStatusLabel toolStripStatusLabel2;
     }
 }
