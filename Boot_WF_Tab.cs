@@ -113,14 +113,17 @@ public class Boot_Interface_Tab : TabPage
 
         buttonPanel.Controls.Add(btnSelectFile);
 
+#if EGICON
         //Versione Egicon
-        //buttonPanel.Controls.Add(btnStartBoot);
-        //buttonPanel.Controls.Add(btnStartProcedure);
-        //buttonPanel.Controls.Add(btnEndBoot);
-        //buttonPanel.Controls.Add(btnRestart);
+        buttonPanel.Controls.Add(btnStartBoot);
+        buttonPanel.Controls.Add(btnStartProcedure);
+        buttonPanel.Controls.Add(btnEndBoot);
+        buttonPanel.Controls.Add(btnRestart);
+#else
 
         //Versione nostra
         buttonPanel.Controls.Add(btnAuto);
+#endif
 
         // DataGridView per visualizzare il contenuto in esadecimale e ASCII
         dgvHexView = new DataGridView

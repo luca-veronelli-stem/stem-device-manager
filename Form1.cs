@@ -297,6 +297,8 @@ namespace StemPC
 
             tabControl.TabPages.Add(TLTTabRef);
             tabControl.TabPages.Add(BootSmartTabRef);
+#elif EGICON
+            tabControl.SelectedTab = BLETabRef;
 #else
             tabControl.SelectedTab = BLETabRef;
             tabControl.TabPages.Add(TelemetryTabRef);
