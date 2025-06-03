@@ -160,6 +160,8 @@ namespace StemPC
             Text = "STEM Toplift A2 Manager " + Software_Version;
 #elif EDEN
             Text = "STEM Eden XP Manager " + Software_Version;
+#elif EGICON
+            Text = "STEM Spark Manager " + Software_Version;
 #else
             this.Text += Software_Version;
 #endif
@@ -323,8 +325,6 @@ namespace StemPC
             //Dizionario = new List<ExcelHandler.VariableData>();
             //hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, ExcelfilePath);
 
-
-
 #if TOPLIFT
             // Ottieni l’assembly
             var asm = Assembly.GetExecutingAssembly();
@@ -349,8 +349,6 @@ namespace StemPC
                 Dizionario         = new List<ExcelHandler.VariableData>();
                 hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, Dizionario);
             }
-
-
 //fissa l'indirizzo toplift ed estrai i dati relativi
             RecipientId = 0x00080381; //indirizzo fisso scheda madre Toplift A2
         //    RecipientId = 0x00030141; //indirizzo fisso scheda madre Eden
@@ -392,6 +390,45 @@ namespace StemPC
             // Ottieni la stringa correntemente selezionata
             string macchinaSelezionata = "EDEN";
             string schedaSelezionata = "Madre";
+            // Cerca i nomi della macchina
+            foreach (ExcelHandler.RowData item in IndirizziProtocollo)
+            {
+                //popola il combo delle schede
+                if ((item.Scheda == schedaSelezionata) && (item.Macchina == macchinaSelezionata))
+                {
+                    label12.Text = ($"Indirizzo\n {item.Indirizzo.ToString()}");
+                    RecipientId = Convert.ToUInt32(item.Indirizzo.Substring(2), 16);
+                    hExcel.EstraiDizionario(RecipientId, Dizionario, ExcelfilePath);
+                    TelemetryTabRef.UpdateDictionary(Dizionario);
+                    //aggiorna il combo Macchina
+                    int indice = comboBoxMachine.FindStringExact(macchinaSelezionata);
+
+                    if (indice != -1)
+                    {
+                        comboBoxMachine.SelectedIndex = indice;
+                    }
+                    else
+                    {
+                        //    MessageBox.Show($"Elemento \"{elementoDaCercare}\" non trovato nel ComboBox.");
+                    }
+
+                    //aggiorna il combo Scheda
+                    indice = comboBoxBoard.FindStringExact(schedaSelezionata);
+
+                    if (indice != -1)
+                    {
+                        comboBoxBoard.SelectedIndex = indice;
+                    }
+                    else
+                    {
+                        //    MessageBox.Show($"Elemento \"{elementoDaCercare}\" non trovato nel ComboBox.");
+                    }
+                }
+            }
+#elif EGICON
+            // Ottieni la stringa correntemente selezionata
+            string macchinaSelezionata = "SPARK";
+            string schedaSelezionata = "HMI";
             // Cerca i nomi della macchina
             foreach (ExcelHandler.RowData item in IndirizziProtocollo)
             {
