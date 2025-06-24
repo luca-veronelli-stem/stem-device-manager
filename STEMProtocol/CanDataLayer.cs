@@ -12,6 +12,7 @@ using PCAN_Handler;
 using Peak.Can.Basic;
 using DocumentFormat.OpenXml.InkML;
 using System.Windows.Forms;
+using Peak.Can.Basic.BackwardCompatibility;
 
 namespace CanDataLayer;
 
@@ -61,8 +62,20 @@ public class CANDataLayer : IDisposable
 
         if (canInterface == "pcan")
         {
+            TPCANBaudrate baudrate;
+
+            switch (Bitrate)
+            {
+                default:
+                case 100000:
+                    baudrate=TPCANBaudrate.PCAN_BAUD_100K;
+                    break;
+                case 250000:
+                    baudrate = TPCANBaudrate.PCAN_BAUD_250K;
+                    break;
+            }
             //PCAN
-            _pcanManager = new PCANManager();
+            _pcanManager = new PCANManager(baudrate);
 
             // Sottoscrizione agli eventi
             _pcanManager.PacketReceived += OnPacketReceived;

@@ -57,7 +57,7 @@ public class PCANManager
     public PCANManager(TPCANBaudrate initialBaudRate = TPCANBaudrate.PCAN_BAUD_100K)
     {
         _currentBaudRate = initialBaudRate;
-        Initialize();
+        Initialize(initialBaudRate);
         StartConnectionMonitoring();
     }
 

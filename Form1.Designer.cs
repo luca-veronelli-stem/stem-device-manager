@@ -485,20 +485,20 @@
             // 
             toolStripMenuItem1.DropDownItems.AddRange(new ToolStripItem[] { cANToolStripMenuItem, bluetoothLEToolStripMenuItem });
             toolStripMenuItem1.Name = "toolStripMenuItem1";
-            toolStripMenuItem1.Size = new Size(180, 22);
+            toolStripMenuItem1.Size = new Size(138, 22);
             toolStripMenuItem1.Text = "Comm Type";
             // 
             // cANToolStripMenuItem
             // 
             cANToolStripMenuItem.Name = "cANToolStripMenuItem";
-            cANToolStripMenuItem.Size = new Size(180, 22);
+            cANToolStripMenuItem.Size = new Size(141, 22);
             cANToolStripMenuItem.Text = "CAN";
             cANToolStripMenuItem.Click += cANToolStripMenuItem_Click;
             // 
             // bluetoothLEToolStripMenuItem
             // 
             bluetoothLEToolStripMenuItem.Name = "bluetoothLEToolStripMenuItem";
-            bluetoothLEToolStripMenuItem.Size = new Size(180, 22);
+            bluetoothLEToolStripMenuItem.Size = new Size(141, 22);
             bluetoothLEToolStripMenuItem.Text = "Bluetooth LE";
             bluetoothLEToolStripMenuItem.Click += bluetoothLEToolStripMenuItem_Click;
             // 

@@ -23,7 +23,7 @@ namespace StemPC
 {
     public partial class Form1 : Form
     {
-        public const string Software_Version = "2.11";
+        public const string Software_Version = "2.12 (pcan a 250k)";
 
 #if TOPLIFT
         public string CommunicationPort = "can";
@@ -179,7 +179,7 @@ namespace StemPC
             //crea e aggiungi pcan
             var canInterface = "pcan";
             var channel = "PCAN_USBBUS1";
-            var bitrate = 100000;
+            var bitrate = 250000;
             _CDL = new CANDataLayer(channel, canInterface, bitrate);
             _CDL.ConnectionStatusChanged += OnPCANConnectionStatusChanged;
 
