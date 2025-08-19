@@ -22,7 +22,7 @@ namespace StemPC
 {
     public partial class Form1 : Form
     {
-        public const string Software_Version = "2.12 (pcan a 250k)";
+        public const string Software_Version = "2.13 (pcan a 250k)";
 
 #if TOPLIFT
         public string CommunicationPort = "can";
@@ -211,6 +211,7 @@ namespace StemPC
             //RXpacketManager.Add_Serial_Channel(_SDL);
             RXpacketManager.Add_CAN_Channel(_CDL);
             RXpacketManager.Add_BLE_Channel(_BLE_SDL);
+            RXpacketManager.Add_Serial_Channel(_SDL);
 
             //crea e aggiungi il bootloader manager
             BootTabRef = new Boot_Interface_Tab();
@@ -319,7 +320,8 @@ namespace StemPC
 #elif EGICON
             tabControl.SelectedTab = BLETabRef;
 #else
-            tabControl.SelectedTab = BLETabRef;
+           // tabControl.SelectedTab = BLETabRef;
+            tabControl.SelectedTab = tabControl.TabPages["tabPageProtocol"];
 
             tabControl.TabPages.Add(TelemetryTabRef);
             tabControl.TabPages.Add(BootSmartTabRef);
@@ -1163,7 +1165,7 @@ namespace StemPC
                 {
                     // Qui puoi fare la connessione alla porta scelta
                     _serialPortManager.Connect(port);
-                    MessageBox.Show($"Connesso a {port}", "Info");
+                 //   MessageBox.Show($"Connesso a {port}", "Info");
                 };
 
                 serialToolStripMenuItem.DropDownItems.Add(portItem);

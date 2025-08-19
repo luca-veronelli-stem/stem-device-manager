@@ -30,6 +30,8 @@ namespace Stem_Protocol.PacketManager
 
         public List<CANDataLayer> CANChannelsList = new List<CANDataLayer>();
         public List<SDL> BLEChannelsList = new List<SDL>();
+        public List<SDL> SerialChannelsList = new List<SDL>();
+        
 
         //events
         public event PacketReadyEventHandler OnAppLayerPacketReceived = null;
@@ -318,82 +320,82 @@ namespace Stem_Protocol.PacketManager
             return (BLEChannelsList.Count - 1); //return the index of ble channel list
         }
 
-    public async Task<bool> SendBLEAndWaitForResponseAsync(
-    List<Tuple<byte[], uint, byte[]>> networkPackets,
-    Func<byte[], bool> responseValidator, // Funzione di validazione risposta
-    int timeoutMs = 600 // Timeout in millisecondi
-)
+        public async Task<bool> SendBLEAndWaitForResponseAsync(
+        List<Tuple<byte[], uint, byte[]>> networkPackets,
+        Func<byte[], bool> responseValidator, // Funzione di validazione risposta
+        int timeoutMs = 600 // Timeout in millisecondi
+        )
         {
-            var tcs = new TaskCompletionSource<bool>();
-            var cancellationTokenSource = new CancellationTokenSource();
+                var tcs = new TaskCompletionSource<bool>();
+                var cancellationTokenSource = new CancellationTokenSource();
 
-            void OnBleMessageReceived(object sender, AppLayerDecoderEventArgs e)
-            {
-                if (responseValidator(e.Payload))
+                void OnBleMessageReceived(object sender, AppLayerDecoderEventArgs e)
                 {
-                    // Completa il TaskCompletionSource con successo
-                    tcs.TrySetResult(true);
-                }
-            }
-
-            try
-            {
-                // Sottoscrivi all'evento per ricevere i pacchetti
-                Form1.FormRef.AppLayerCommandDecoded += OnBleMessageReceived;
-
-                foreach (var packet in networkPackets)
-                {
-                    var netInfo = packet.Item1;
-                    var recipientId = packet.Item2;
-                    var packetChunk = packet.Item3;
-
-                    var message = new SerialMessage(netInfo.Concat(BitConverter.GetBytes(recipientId)).Concat(packetChunk).ToArray(), DateTime.Now);
-
-                    if (BLEChannelsList.Count > 0)
+                    if (responseValidator(e.Payload))
                     {
-                        try
-                        {
-                            BLEChannelsList.ElementAt(0).Send(message);
-                            // Console.WriteLine($"Message sent on {bus.ChannelInfo}: {BitConverter.ToString(message.Data)}");
-                        }
-                        catch (Exception)
-                        {
-                            // Console.WriteLine("Message not sent.");
-                        }
+                        // Completa il TaskCompletionSource con successo
+                        tcs.TrySetResult(true);
                     }
-                 //   await Task.Delay(100); //ritardo tra un chunck e il successivo
                 }
 
-                // Timeout usando il CancellationTokenSource
-                //var timeoutTask = Task.Delay(timeoutMs, cancellationTokenSource.Token);
-                var timeoutTask = Task.Delay(5000);
-                var completedTask = await Task.WhenAny(tcs.Task, timeoutTask);
+                try
+                {
+                    // Sottoscrivi all'evento per ricevere i pacchetti
+                    Form1.FormRef.AppLayerCommandDecoded += OnBleMessageReceived;
 
-                if (completedTask == tcs.Task)
-                {
-                    // Risposta ricevuta prima del timeout
-                    cancellationTokenSource.Cancel(); // Cancella il timeout
-                    return tcs.Task.Result;
+                    foreach (var packet in networkPackets)
+                    {
+                        var netInfo = packet.Item1;
+                        var recipientId = packet.Item2;
+                        var packetChunk = packet.Item3;
+
+                        var message = new SerialMessage(netInfo.Concat(BitConverter.GetBytes(recipientId)).Concat(packetChunk).ToArray(), DateTime.Now);
+
+                        if (BLEChannelsList.Count > 0)
+                        {
+                            try
+                            {
+                                BLEChannelsList.ElementAt(0).Send(message);
+                                // Console.WriteLine($"Message sent on {bus.ChannelInfo}: {BitConverter.ToString(message.Data)}");
+                            }
+                            catch (Exception)
+                            {
+                                // Console.WriteLine("Message not sent.");
+                            }
+                        }
+                     //   await Task.Delay(100); //ritardo tra un chunck e il successivo
+                    }
+
+                    // Timeout usando il CancellationTokenSource
+                    //var timeoutTask = Task.Delay(timeoutMs, cancellationTokenSource.Token);
+                    var timeoutTask = Task.Delay(5000);
+                    var completedTask = await Task.WhenAny(tcs.Task, timeoutTask);
+
+                    if (completedTask == tcs.Task)
+                    {
+                        // Risposta ricevuta prima del timeout
+                        cancellationTokenSource.Cancel(); // Cancella il timeout
+                        return tcs.Task.Result;
+                    }
+                    else
+                    {
+                        // Timeout raggiunto
+                        return false;
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    // Timeout raggiunto
+                    Console.WriteLine($"Errore durante l'invio del pacchetto: {ex.Message}");
                     return false;
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Errore durante l'invio del pacchetto: {ex.Message}");
-                return false;
-            }
-            finally
-            {
-                // Rimuovi l'evento per evitare memory leaks
-                Form1.FormRef.AppLayerCommandDecoded -= OnBleMessageReceived;
+                finally
+                {
+                    // Rimuovi l'evento per evitare memory leaks
+                    Form1.FormRef.AppLayerCommandDecoded -= OnBleMessageReceived;
 
-                // Rilascia il CancellationTokenSource
-                cancellationTokenSource.Dispose();
-            }
+                    // Rilascia il CancellationTokenSource
+                    cancellationTokenSource.Dispose();
+                }
         }
 
         public async Task<bool> SendThroughBLEAsync(List<Tuple<byte[], uint, byte[]>> networkPackets)
@@ -466,6 +468,171 @@ namespace Stem_Protocol.PacketManager
         //    serialDataLayer.PacketReceived -= OnBLEPacketReceived;
         //    BLEChannelsList.Remove(serialDataLayer);
         //}
+
+        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        //                  Serial related functions
+        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        public int Add_Serial_Channel(SDL serialDataLayer)
+        {
+            serialDataLayer.PacketReceived += OnSerialPacketReceived;
+            SerialChannelsList.Add(serialDataLayer);
+
+            return (SerialChannelsList.Count - 1); //return the index of Serial channel list
+        }
+
+        public async Task<bool> SendSerialAndWaitForResponseAsync(
+        List<Tuple<byte[], uint, byte[]>> networkPackets,
+        Func<byte[], bool> responseValidator, // Funzione di validazione risposta
+        int timeoutMs = 600 // Timeout in millisecondi
+        )
+        {
+            var tcs = new TaskCompletionSource<bool>();
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            void OnSerialMessageReceived(object sender, AppLayerDecoderEventArgs e)
+            {
+                if (responseValidator(e.Payload))
+                {
+                    // Completa il TaskCompletionSource con successo
+                    tcs.TrySetResult(true);
+                }
+            }
+
+            try
+            {
+                // Sottoscrivi all'evento per ricevere i pacchetti
+                Form1.FormRef.AppLayerCommandDecoded += OnSerialMessageReceived;
+
+                foreach (var packet in networkPackets)
+                {
+                    var netInfo = packet.Item1;
+                    var recipientId = packet.Item2;
+                    var packetChunk = packet.Item3;
+
+                    var message = new SerialMessage(netInfo.Concat(BitConverter.GetBytes(recipientId)).Concat(packetChunk).ToArray(), DateTime.Now);
+
+                    if (SerialChannelsList.Count > 0)
+                    {
+                        try
+                        {
+                            SerialChannelsList.ElementAt(0).Send(message);
+                            // Console.WriteLine($"Message sent on {bus.ChannelInfo}: {BitConverter.ToString(message.Data)}");
+                        }
+                        catch (Exception)
+                        {
+                            // Console.WriteLine("Message not sent.");
+                        }
+                    }
+                    //   await Task.Delay(100); //ritardo tra un chunck e il successivo
+                }
+
+                // Timeout usando il CancellationTokenSource
+                //var timeoutTask = Task.Delay(timeoutMs, cancellationTokenSource.Token);
+                var timeoutTask = Task.Delay(5000);
+                var completedTask = await Task.WhenAny(tcs.Task, timeoutTask);
+
+                if (completedTask == tcs.Task)
+                {
+                    // Risposta ricevuta prima del timeout
+                    cancellationTokenSource.Cancel(); // Cancella il timeout
+                    return tcs.Task.Result;
+                }
+                else
+                {
+                    // Timeout raggiunto
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Errore durante l'invio del pacchetto: {ex.Message}");
+                return false;
+            }
+            finally
+            {
+                // Rimuovi l'evento per evitare memory leaks
+                Form1.FormRef.AppLayerCommandDecoded -= OnSerialMessageReceived;
+
+                // Rilascia il CancellationTokenSource
+                cancellationTokenSource.Dispose();
+            }
+        }
+
+        public async Task<bool> SendThroughSerialAsync(List<Tuple<byte[], uint, byte[]>> networkPackets)
+        {
+            try
+            {
+                //// Usa Task.Run per eseguire il lavoro intensivo
+                //return await Task.Run(() =>
+                //{
+                foreach (var packet in networkPackets)
+                {
+                    var netInfo = packet.Item1;
+                    var recipientId = packet.Item2;
+                    var packetChunk = packet.Item3;
+
+
+                    var message = new SerialMessage(netInfo.Concat(BitConverter.GetBytes(recipientId)).Concat(packetChunk).ToArray(), DateTime.Now);
+
+                    if (SerialChannelsList.Count > 0)
+                    {
+                        try
+                        {
+                            SerialChannelsList.ElementAt(0).Send(message);
+                            // Console.WriteLine($"Message sent on {bus.ChannelInfo}: {BitConverter.ToString(message.Data)}");
+                        }
+                        catch (Exception)
+                        {
+                            // Console.WriteLine("Message not sent.");
+                        }
+                    }
+                    //    await Task.Delay(5); //ritardo tra un chunck e il successivo
+                }
+                //            });
+                return true;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return false;
+            }
+        }
+
+        private void OnSerialPacketReceived(object sender, SerialMessage RxPacket)
+        {
+            ProcessSerialPacket(RxPacket);
+        }
+
+        public void ProcessSerialPacket(SerialMessage packet)
+        {
+            if (packet.Data.Length <= 8)
+            {
+                return;
+            }
+            // Elimina l'indirizzo del sender
+            int PackToCopyLenght = packet.Data.Length - 6;
+            Array.Copy(packet.Data, 6, packet.Data, 2, PackToCopyLenght);
+            // e rimuovi gli ultimi 4 byte dal pacchetto
+            packet.Data = packet.Data.Take(packet.Data.Length - 4).ToArray();
+            //poi interpretalo
+            ProcessPacket("Serial", packet.Data);
+        }
+        //public void Remove_CAN_Channel(CANDataLayer canDataLayer)
+        //{
+        //    canDataLayer.PacketReceived -= OnCANPacketReceived;
+        //    CANChannelsList.Remove(canDataLayer);
+        //}
+
+        //public void Remove_Serial_Channel(SDL serialDataLayer)
+        //{
+        //    serialDataLayer.PacketReceived -= OnSerialPacketReceived;
+        //    SerialChannelsList.Remove(serialDataLayer);
+        //}
+
+
+
+
     }
 }
 
