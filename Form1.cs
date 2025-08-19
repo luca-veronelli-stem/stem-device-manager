@@ -196,8 +196,12 @@ namespace StemPC
             _BLE_SDL.ConnectionStatusChanged += OnBLEConnectionStatusChanged;
 
             //crea e aggiungi Seriale
+            //attiva la seriale
+            _serialPortManager = new SerialPortManager();  // Inizializza l'istanza di SerialManager
+                                                           // Ottieni tutte le porte seriali disponibili
+                                                           // e aggiungi le porte alla ListBox
             _SDL = new SDL("SERIAL", "serial", 115200, _serialPortManager);
-            //_SDL.ConnectionStatusChanged += OnSerialConnectionStatusChanged;
+            _SDL.ConnectionStatusChanged += OnSerialConnectionStatusChanged;
 
             //crea il protocollo stem di ricezione
             RXpacketManager = new PacketManager(0xFFFFFFFF);
@@ -262,10 +266,7 @@ namespace StemPC
             //attiva il terminale
             _terminal = new Terminal(); // Inizializza l'istanza di Terminal
 
-            //attiva la seriale
-            _serialPortManager = new SerialPortManager();  // Inizializza l'istanza di SerialManager
-                                                           // Ottieni tutte le porte seriali disponibili
-                                                           // e aggiungi le porte alla ListBox
+        
             listBoxSerialPorts.Items.Clear();
             _serialPortManager.ScanPorts();
             listBoxSerialPorts.Items.AddRange(_serialPortManager.AvailablePorts.ToArray());
@@ -1068,6 +1069,36 @@ namespace StemPC
                 PCanLabel.BackColor = System.Drawing.Color.Salmon;
             }
         }
+
+
+        private void OnSerialConnectionStatusChanged(object sender, bool isConnected)
+        {
+            // Metodo thread-safe per aggiornare lo stato della connessione
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new Action(() => UpdateSerialConnectionStatus(isConnected)));
+            }
+            else
+            {
+                UpdateSerialConnectionStatus(isConnected);
+            }
+        }
+
+        private void UpdateSerialConnectionStatus(bool isConnected)
+        {
+            if (isConnected)
+            {
+                COMStatusLabel.Text = "COM: Connesso";
+                COMStatusLabel.BackColor = System.Drawing.Color.GreenYellow;
+            }
+            else
+            {
+                COMStatusLabel.Text = "COM: Non connesso";
+                COMStatusLabel.BackColor = System.Drawing.Color.Salmon;
+            }
+        }
+
+
 
         private void OnBLEConnectionStatusChanged(object sender, bool isConnected)
         {
