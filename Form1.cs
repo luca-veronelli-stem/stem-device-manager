@@ -40,11 +40,6 @@ namespace StemPC
         //************************** 
         private Terminal _terminal;
 
-        //**************************
-        //  Serial port variables
-        //**************************
-        private SerialPortManager _serialPortManager;
-        private SerialPortManager _serialPort;
 
         //**********************************
         //   CAN port variables
@@ -59,7 +54,8 @@ namespace StemPC
         //**********************************
         //   Serial port variables
         //**********************************
-        public SDL _SDL;
+        private SerialPortManager _serialPortManager;
+        public  SDL _SDL;
 
         //**************************
         //  Code gen variables
@@ -255,18 +251,54 @@ namespace StemPC
             _terminal = new Terminal(); // Inizializza l'istanza di Terminal
 
             //attiva la seriale
-            _serialPortManager = new SerialPortManager();
-            //("COM3", 19200); ;// Inizializza l'istanza di SerialManager
-                                                                        // Ottieni tutte le porte seriali disponibili
-                                                                        // e aggiungi le porte alla ListBox
+            _serialPortManager = new SerialPortManager();  // Inizializza l'istanza di SerialManager
+                                                           // Ottieni tutte le porte seriali disponibili
+                                                           // e aggiungi le porte alla ListBox
             listBoxSerialPorts.Items.Clear();
             _serialPortManager.ScanPorts();
             listBoxSerialPorts.Items.AddRange(_serialPortManager.AvailablePorts.ToArray());
 
-            UpdateTerminal(DateTime.Now + ": Stem Protocol Manager " + Software_Version);
-            timerBaseTime.Enabled = true;
+            // Supponiamo che tu abbia un ToolStripMenuItem chiamato "serialToolStripMenuItem"
+            // nel tuo MenuStrip o ContextMenuStrip
 
-          //  tabControl.TabPages.Remove(tabPageUART);
+            //private void UpdateSerialPortsMenu()
+            {
+                // Pulisce eventuali voci precedenti
+                serialToolStripMenuItem.DropDownItems.Clear();
+
+                // Aggiorna la lista delle porte disponibili
+                _serialPortManager.ScanPorts();
+
+                // Crea una voce di menu per ogni porta
+                foreach (string port in _serialPortManager.AvailablePorts)
+                {
+                    ToolStripMenuItem portItem = new ToolStripMenuItem(port);
+
+                    // Aggiunge un gestore per il click
+                    portItem.Click += (s, e) =>
+                    {
+                        // Qui puoi fare la connessione alla porta scelta
+                        _serialPortManager.Connect(port);
+                        MessageBox.Show($"Connesso a {port}", "Info");
+                    };
+
+                        serialToolStripMenuItem.DropDownItems.Add(portItem);
+                }
+
+                // Se non ci sono porte, mostra una voce disabilitata
+                if (_serialPortManager.AvailablePorts.Count == 0)
+                {
+                    ToolStripMenuItem noPortsItem = new ToolStripMenuItem("Nessuna porta disponibile");
+                    noPortsItem.Enabled = false;
+                        serialToolStripMenuItem.DropDownItems.Add(noPortsItem);
+                }
+            }
+
+        UpdateTerminal(DateTime.Now + ": Stem Protocol Manager " + Software_Version);
+        
+        timerBaseTime.Enabled = true;
+
+        tabControl.TabPages.Remove(tabPageUART);
 
             //inizializza il code generator
             // Crea un'istanza della classe SP_Config_Generator e chiama il metodo per generare il file
@@ -274,8 +306,6 @@ namespace StemPC
             codeFilePath = "SP_Config.h";
 
             tabControl.TabPages.Remove(tabPageCodeGen);
-
-    
 
             //primo giro di update connessione can
             OnPCANConnectionStatusChanged(this, _CDL.IsConnected);

@@ -64,6 +64,7 @@
             toolStripMenuItem1 = new ToolStripMenuItem();
             cANToolStripMenuItem = new ToolStripMenuItem();
             bluetoothLEToolStripMenuItem = new ToolStripMenuItem();
+            serialToolStripMenuItem = new ToolStripMenuItem();
             toolStripStatusLabel2 = new ToolStripStatusLabel();
             PCanLabel = new ToolStripStatusLabel();
             toolStripStatusLabel1 = new ToolStripStatusLabel();
@@ -483,24 +484,30 @@
             // 
             // toolStripMenuItem1
             // 
-            toolStripMenuItem1.DropDownItems.AddRange(new ToolStripItem[] { cANToolStripMenuItem, bluetoothLEToolStripMenuItem });
+            toolStripMenuItem1.DropDownItems.AddRange(new ToolStripItem[] { cANToolStripMenuItem, bluetoothLEToolStripMenuItem, serialToolStripMenuItem });
             toolStripMenuItem1.Name = "toolStripMenuItem1";
-            toolStripMenuItem1.Size = new Size(138, 22);
+            toolStripMenuItem1.Size = new Size(180, 22);
             toolStripMenuItem1.Text = "Comm Type";
             // 
             // cANToolStripMenuItem
             // 
             cANToolStripMenuItem.Name = "cANToolStripMenuItem";
-            cANToolStripMenuItem.Size = new Size(141, 22);
+            cANToolStripMenuItem.Size = new Size(180, 22);
             cANToolStripMenuItem.Text = "CAN";
             cANToolStripMenuItem.Click += cANToolStripMenuItem_Click;
             // 
             // bluetoothLEToolStripMenuItem
             // 
             bluetoothLEToolStripMenuItem.Name = "bluetoothLEToolStripMenuItem";
-            bluetoothLEToolStripMenuItem.Size = new Size(141, 22);
+            bluetoothLEToolStripMenuItem.Size = new Size(180, 22);
             bluetoothLEToolStripMenuItem.Text = "Bluetooth LE";
             bluetoothLEToolStripMenuItem.Click += bluetoothLEToolStripMenuItem_Click;
+            // 
+            // serialToolStripMenuItem
+            // 
+            serialToolStripMenuItem.Name = "serialToolStripMenuItem";
+            serialToolStripMenuItem.Size = new Size(180, 22);
+            serialToolStripMenuItem.Text = "Serial";
             // 
             // toolStripStatusLabel2
             // 
@@ -595,5 +602,6 @@
         private ToolStripMenuItem bluetoothLEToolStripMenuItem;
         private ToolStripStatusLabel toolStripStatusLabel1;
         private ToolStripStatusLabel toolStripStatusLabel2;
+        private ToolStripMenuItem serialToolStripMenuItem;
     }
 }
