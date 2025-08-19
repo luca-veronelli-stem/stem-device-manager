@@ -69,6 +69,8 @@
             PCanLabel = new ToolStripStatusLabel();
             toolStripStatusLabel1 = new ToolStripStatusLabel();
             BLEStatusLabel = new ToolStripStatusLabel();
+            toolStripStatusLabel3 = new ToolStripStatusLabel();
+            COMStatusLabel = new ToolStripStatusLabel();
             tableLayoutPanel1.SuspendLayout();
             tabControl.SuspendLayout();
             tabPageProtocol.SuspendLayout();
@@ -465,7 +467,7 @@
             // 
             // statusStrip1
             // 
-            statusStrip1.Items.AddRange(new ToolStripItem[] { toolStripSplitButton3, toolStripStatusLabel2, PCanLabel, toolStripStatusLabel1, BLEStatusLabel });
+            statusStrip1.Items.AddRange(new ToolStripItem[] { toolStripSplitButton3, toolStripStatusLabel2, PCanLabel, toolStripStatusLabel1, BLEStatusLabel, toolStripStatusLabel3, COMStatusLabel });
             statusStrip1.Location = new Point(0, 638);
             statusStrip1.Name = "statusStrip1";
             statusStrip1.Size = new Size(800, 22);
@@ -486,28 +488,29 @@
             // 
             toolStripMenuItem1.DropDownItems.AddRange(new ToolStripItem[] { cANToolStripMenuItem, bluetoothLEToolStripMenuItem, serialToolStripMenuItem });
             toolStripMenuItem1.Name = "toolStripMenuItem1";
-            toolStripMenuItem1.Size = new Size(180, 22);
+            toolStripMenuItem1.Size = new Size(138, 22);
             toolStripMenuItem1.Text = "Comm Type";
             // 
             // cANToolStripMenuItem
             // 
             cANToolStripMenuItem.Name = "cANToolStripMenuItem";
-            cANToolStripMenuItem.Size = new Size(180, 22);
+            cANToolStripMenuItem.Size = new Size(141, 22);
             cANToolStripMenuItem.Text = "CAN";
             cANToolStripMenuItem.Click += cANToolStripMenuItem_Click;
             // 
             // bluetoothLEToolStripMenuItem
             // 
             bluetoothLEToolStripMenuItem.Name = "bluetoothLEToolStripMenuItem";
-            bluetoothLEToolStripMenuItem.Size = new Size(180, 22);
+            bluetoothLEToolStripMenuItem.Size = new Size(141, 22);
             bluetoothLEToolStripMenuItem.Text = "Bluetooth LE";
             bluetoothLEToolStripMenuItem.Click += bluetoothLEToolStripMenuItem_Click;
             // 
             // serialToolStripMenuItem
             // 
             serialToolStripMenuItem.Name = "serialToolStripMenuItem";
-            serialToolStripMenuItem.Size = new Size(180, 22);
+            serialToolStripMenuItem.Size = new Size(141, 22);
             serialToolStripMenuItem.Text = "Serial";
+            serialToolStripMenuItem.DropDownOpening += serialToolStripMenuItem_DropDownOpening;
             // 
             // toolStripStatusLabel2
             // 
@@ -534,6 +537,19 @@
             BLEStatusLabel.Name = "BLEStatusLabel";
             BLEStatusLabel.Size = new Size(113, 17);
             BLEStatusLabel.Text = "BLE: Not Connected";
+            // 
+            // toolStripStatusLabel3
+            // 
+            toolStripStatusLabel3.AutoSize = false;
+            toolStripStatusLabel3.Name = "toolStripStatusLabel3";
+            toolStripStatusLabel3.Size = new Size(5, 17);
+            // 
+            // COMStatusLabel
+            // 
+            COMStatusLabel.BackColor = Color.Salmon;
+            COMStatusLabel.Name = "COMStatusLabel";
+            COMStatusLabel.Size = new Size(122, 17);
+            COMStatusLabel.Text = "COM: Not Connected";
             // 
             // Form1
             // 
@@ -603,5 +619,7 @@
         private ToolStripStatusLabel toolStripStatusLabel1;
         private ToolStripStatusLabel toolStripStatusLabel2;
         private ToolStripMenuItem serialToolStripMenuItem;
+        private ToolStripStatusLabel toolStripStatusLabel3;
+        private ToolStripStatusLabel COMStatusLabel;
     }
 }

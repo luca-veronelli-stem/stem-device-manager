@@ -172,6 +172,10 @@ namespace StemPC
             SelectedCommand = 0;
             senderId = 8;
 
+            //*************************************************************
+            //   INIT PORTE DI COMUNICAZIONE CON RELATIVI MANAGER
+            //*************************************************************
+
             //attiva il check della porta di comunicazione di default
             cANToolStripMenuItem.Checked = false;
             bluetoothLEToolStripMenuItem.Checked = true;
@@ -186,13 +190,21 @@ namespace StemPC
             //crea e aggiungi il ble manager
             BLETabRef = new BLEInterfaceTab();
             tabControl.TabPages.Add(BLETabRef);
+
             //crea e aggiungi ble
             _BLE_SDL = new SDL("BLE", "ble", 100000, BLETabRef.bleManager);
             _BLE_SDL.ConnectionStatusChanged += OnBLEConnectionStatusChanged;
 
+            //crea e aggiungi Seriale
+            //_SDL = new SDL("SERIAL", "serial", 100000, _serialPortManager);
+            //_SDL.ConnectionStatusChanged += OnSerialConnectionStatusChanged;
+
             //crea il protocollo stem di ricezione
             RXpacketManager = new PacketManager(0xFFFFFFFF);
             RXpacketManager.OnAppLayerPacketReceived += onAppLayerPacketReady;
+
+            //aggiungi i canali hardware
+            //RXpacketManager.Add_Serial_Channel(_SDL);
             RXpacketManager.Add_CAN_Channel(_CDL);
             RXpacketManager.Add_BLE_Channel(_BLE_SDL);
 
@@ -257,42 +269,6 @@ namespace StemPC
             listBoxSerialPorts.Items.Clear();
             _serialPortManager.ScanPorts();
             listBoxSerialPorts.Items.AddRange(_serialPortManager.AvailablePorts.ToArray());
-
-            // Supponiamo che tu abbia un ToolStripMenuItem chiamato "serialToolStripMenuItem"
-            // nel tuo MenuStrip o ContextMenuStrip
-
-            //private void UpdateSerialPortsMenu()
-            {
-                // Pulisce eventuali voci precedenti
-                serialToolStripMenuItem.DropDownItems.Clear();
-
-                // Aggiorna la lista delle porte disponibili
-                _serialPortManager.ScanPorts();
-
-                // Crea una voce di menu per ogni porta
-                foreach (string port in _serialPortManager.AvailablePorts)
-                {
-                    ToolStripMenuItem portItem = new ToolStripMenuItem(port);
-
-                    // Aggiunge un gestore per il click
-                    portItem.Click += (s, e) =>
-                    {
-                        // Qui puoi fare la connessione alla porta scelta
-                        _serialPortManager.Connect(port);
-                        MessageBox.Show($"Connesso a {port}", "Info");
-                    };
-
-                        serialToolStripMenuItem.DropDownItems.Add(portItem);
-                }
-
-                // Se non ci sono porte, mostra una voce disabilitata
-                if (_serialPortManager.AvailablePorts.Count == 0)
-                {
-                    ToolStripMenuItem noPortsItem = new ToolStripMenuItem("Nessuna porta disponibile");
-                    noPortsItem.Enabled = false;
-                        serialToolStripMenuItem.DropDownItems.Add(noPortsItem);
-                }
-            }
 
         UpdateTerminal(DateTime.Now + ": Stem Protocol Manager " + Software_Version);
         
@@ -753,6 +729,11 @@ namespace StemPC
                     packetManager.Add_BLE_Channel(Form1.FormRef._BLE_SDL);
                     result = await packetManager.SendThroughBLEAsync(networkPackets);
                     break;
+                case "serial":
+                    //Invia i pacchetti tramite seriale
+              //      packetManager.Add_Serial_Channel(Form1.FormRef._SDL);
+              //      result = await packetManager.SendThroughSerialAsync(networkPackets);
+                    break;
             }
             //// Invia i pacchetti tramite CAN
             //var packetManager = new PacketManager(Form1.FormRef.senderId);
@@ -1131,6 +1112,39 @@ namespace StemPC
             TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
             cANToolStripMenuItem.Checked = false;
             bluetoothLEToolStripMenuItem.Checked = true;
+        }
+
+        private void serialToolStripMenuItem_DropDownOpening(object sender, EventArgs e)
+        {
+            // Pulisce eventuali voci precedenti
+            serialToolStripMenuItem.DropDownItems.Clear();
+
+            // Aggiorna la lista delle porte disponibili
+            _serialPortManager.ScanPorts();
+
+            // Crea una voce di menu per ogni porta
+            foreach (string port in _serialPortManager.AvailablePorts)
+            {
+                ToolStripMenuItem portItem = new ToolStripMenuItem(port);
+
+                // Aggiunge un gestore per il click
+                portItem.Click += (s, e) =>
+                {
+                    // Qui puoi fare la connessione alla porta scelta
+                    _serialPortManager.Connect(port);
+                    MessageBox.Show($"Connesso a {port}", "Info");
+                };
+
+                serialToolStripMenuItem.DropDownItems.Add(portItem);
+            }
+
+            // Se non ci sono porte, mostra una voce disabilitata
+            if (_serialPortManager.AvailablePorts.Count == 0)
+            {
+                ToolStripMenuItem noPortsItem = new ToolStripMenuItem("Nessuna porta disponibile");
+                noPortsItem.Enabled = false;
+                serialToolStripMenuItem.DropDownItems.Add(noPortsItem);
+            }
         }
     }
 }
