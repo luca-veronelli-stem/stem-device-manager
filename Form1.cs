@@ -1,23 +1,22 @@
-using Microsoft.VisualBasic.Logging;
-using System.Windows.Forms;
-using System.IO.Ports; // used for serial port
+using CanDataLayer;
+using DocumentFormat.OpenXml.Drawing.Diagrams;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
-
+using Microsoft.VisualBasic.Logging;
+using SerialDataLayer;
+using SerialPort_Handler;
 using Stem_Protocol;
 using Stem_Protocol.PacketManager;
-using CanDataLayer;
-using SerialDataLayer;
-using static Stem_Protocol.NetworkLayer;
-using static ExcelHandler;
-using System.Collections.Generic;
-using DocumentFormat.OpenXml.Drawing.Diagrams;
-using System.Globalization;
 using Stem_Protocol.TelemetryManager;
-
-using System.IO;
-using System.Reflection;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.IO.Ports; // used for serial port
+using System.Reflection;
+using System.Windows.Forms;
 using Windows.Devices.Enumeration;
+using static ExcelHandler;
+using static Stem_Protocol.NetworkLayer;
 
 namespace StemPC
 {
@@ -53,9 +52,14 @@ namespace StemPC
         public CANDataLayer _CDL;
 
         //**********************************
-        //   Serial/BLE port variables
+        //   BLE port variables
         //**********************************
         public SDL _BLE_SDL;
+
+        //**********************************
+        //   Serial port variables
+        //**********************************
+        public SDL _SDL;
 
         //**************************
         //  Code gen variables
@@ -103,9 +107,9 @@ namespace StemPC
         // Ricezione globale dei pacchetti stem (pe rora una sola, da far poi diventare dinamica alla ricezione di ogni pacchetto)
         public PacketManager RXpacketManager;
 
-        //**************************
+        //******************************
         //  public Elements instances
-        //**************************
+        //******************************
         public CANInterfaceTab CanTabPageRef { get; private set; }
         public Boot_Interface_Tab BootTabRef { get; private set; }
         public Boot_Smart_Tab BootSmartTabRef { get; private set; }
@@ -251,13 +255,18 @@ namespace StemPC
             _terminal = new Terminal(); // Inizializza l'istanza di Terminal
 
             //attiva la seriale
-            _serialPortManager = new SerialPortManager("COM3", 19200); ;// Inizializza l'istanza di SerialManager
+            _serialPortManager = new SerialPortManager();
+            //("COM3", 19200); ;// Inizializza l'istanza di SerialManager
+                                                                        // Ottieni tutte le porte seriali disponibili
+                                                                        // e aggiungi le porte alla ListBox
+            listBoxSerialPorts.Items.Clear();
+            _serialPortManager.ScanPorts();
+            listBoxSerialPorts.Items.AddRange(_serialPortManager.AvailablePorts.ToArray());
+
             UpdateTerminal(DateTime.Now + ": Stem Protocol Manager " + Software_Version);
             timerBaseTime.Enabled = true;
-            // Ottieni tutte le porte seriali disponibili
-            // e aggiungi le porte alla ListBox
-            listBoxSerialPorts.Items.Clear();
-            listBoxSerialPorts.Items.AddRange(_serialPortManager.GetPorts());
+
+          //  tabControl.TabPages.Remove(tabPageUART);
 
             //inizializza il code generator
             // Crea un'istanza della classe SP_Config_Generator e chiama il metodo per generare il file
@@ -265,7 +274,8 @@ namespace StemPC
             codeFilePath = "SP_Config.h";
 
             tabControl.TabPages.Remove(tabPageCodeGen);
-            tabControl.TabPages.Remove(tabPageUART);
+
+    
 
             //primo giro di update connessione can
             OnPCANConnectionStatusChanged(this, _CDL.IsConnected);
@@ -303,6 +313,7 @@ namespace StemPC
             tabControl.SelectedTab = BLETabRef;
 #else
             tabControl.SelectedTab = BLETabRef;
+
             tabControl.TabPages.Add(TelemetryTabRef);
             tabControl.TabPages.Add(BootSmartTabRef);
 #endif

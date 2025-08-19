@@ -10,6 +10,9 @@ using Stem_Protocol;
 //BLE support
 using BLE_Handler;
 
+//COM support
+using SerialPort_Handler;
+
 //using System.Windows.Forms;
 
 namespace SerialDataLayer;
