@@ -189,9 +189,9 @@ namespace SerialPort_Handler
         /// Invia dati (byte[]) alla porta seriale aperta (asincrono).
         /// </summary>
         /// <param name="data">Array di byte da inviare.</param>
-        public async Task SendMessageAsync(byte[] data)
+        public Task<bool> SendMessageAsync(byte[] data)
         {
-            await Task.Run(() => SendMessage(data));
+            return Task.Run(() => SendMessage(data));
         }
 
         /// <summary>

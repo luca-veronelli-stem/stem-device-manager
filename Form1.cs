@@ -196,7 +196,7 @@ namespace StemPC
             _BLE_SDL.ConnectionStatusChanged += OnBLEConnectionStatusChanged;
 
             //crea e aggiungi Seriale
-            //_SDL = new SDL("SERIAL", "serial", 100000, _serialPortManager);
+            _SDL = new SDL("SERIAL", "serial", 115200, _serialPortManager);
             //_SDL.ConnectionStatusChanged += OnSerialConnectionStatusChanged;
 
             //crea il protocollo stem di ricezione

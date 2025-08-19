@@ -44,36 +44,38 @@ public class SDL : IDisposable
     public int    Bitrate { get; }
     public bool   IsConnected;
 
-    private BLEManager _bleManager =null;
+    private BLEManager          _bleManager = null;
+    private SerialPortManager   _serialManager = null;
 
     // Eventi
     public event EventHandler<bool> ConnectionStatusChanged;
     public event EventHandler<SerialMessage> PacketReceived;
     public event EventHandler<TX_Serial_Data> PacketSended;
 
-    public SDL(string channel, string serialInterface, int bitrate, BLEManager bleManager)
+    public SDL(string channel, string serialInterface, int bitrate, object Manager)
     {
         Channel = channel;
         SerialInterface = serialInterface;
         Bitrate = bitrate;
 
-        // Implementation to initialize CAN bus:
-
         if (SerialInterface == "ble")
         {
             //BLE
-            _bleManager = bleManager;
+            _bleManager = (BLEManager) Manager;
 
             // Sottoscrizione agli eventi
             _bleManager.PacketReceived += OnBLEPacketReceived;
             _bleManager.ConnectionStatusChanged += OnConnectionStatusChanged;
-            //_pcanManager.ErrorOccurred += OnErrorOccurred;
+            IsConnected = false;
+        }
+        else if (SerialInterface == "serial")
+        {
+            //Serial
+            _serialManager = (SerialPortManager) Manager;
 
-            ////avvia il pcan
-            //if (_pcanManager.IsConnected)
-            //{
-            //    _pcanManager.StartReading();
-            //}
+            // Sottoscrizione agli eventi
+            _serialManager.PacketReceived += OnSerialPacketReceived;
+            _serialManager.ConnectionStatusChanged += OnConnectionStatusChanged;
             IsConnected = false;
         }
 
@@ -103,9 +105,35 @@ public class SDL : IDisposable
                 PacketSended?.Invoke(this, TX_serial_Data);
 //            }
         }
+        else if ((_serialManager != null) && (SerialInterface == "serial"))
+        {
+            //if (_bleManager.IsConnected)
+            //{
+            if (await _serialManager.SendMessageAsync(message.Data) == true)
+            {
+                result = 1;
+            }
+            else
+            {
+                result = 0;
+            }
+
+            TX_Serial_Data TX_serial_Data = new TX_Serial_Data();
+            TX_serial_Data.Result = result;
+            TX_serial_Data.Message = message;
+            PacketSended?.Invoke(this, TX_serial_Data);
+            //            }
+        }
     }
 
     private void OnBLEPacketReceived(object sender, BLEPacketEventArgs e)
+    {
+        //aggiungi i messaggi alla coda del network layer
+        SerialMessage RxMessage = new SerialMessage(e.Data, e.Timestamp);
+        PacketReceived?.Invoke(this, RxMessage);
+    }
+
+    private void OnSerialPacketReceived(object sender, SerialPacketEventArgs e)
     {
         //aggiungi i messaggi alla coda del network layer
         SerialMessage RxMessage = new SerialMessage(e.Data, e.Timestamp);
