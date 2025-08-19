@@ -68,6 +68,10 @@ public class TelemetryManager
         {
             protocolManager.SendCommandRequest += protocolManager.OnSendBleCommand;
         }
+        else if (TelemetryHardwareChannel == "serial")
+        {
+            protocolManager.SendCommandRequest += protocolManager.OnSendSerialCommand;
+        }
     }
 
     public void AddToDictionary(ExcelHandler.VariableData data)

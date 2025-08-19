@@ -53,6 +53,8 @@ namespace Stem_Protocol.BootManager
             //azzera le chiamate del protocol manager
             protocolManager.SendCommandRequest -= protocolManager.OnSendCanCommand;
             protocolManager.SendCommandRequest -= protocolManager.OnSendBleCommand;
+            protocolManager.SendCommandRequest -= protocolManager.OnSendSerialCommand;
+
             //aggiunge il canale di comunicazione
             if (BootHardwareChannel == "can")
             {
@@ -60,6 +62,10 @@ namespace Stem_Protocol.BootManager
             }else if (BootHardwareChannel == "ble")
             {
                 protocolManager.SendCommandRequest += protocolManager.OnSendBleCommand;
+            }
+            else if (BootHardwareChannel == "serial")
+            {
+                protocolManager.SendCommandRequest += protocolManager.OnSendSerialCommand;
             }
         }
 

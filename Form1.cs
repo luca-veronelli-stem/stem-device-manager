@@ -29,7 +29,7 @@ namespace StemPC
 #elif EDEN
         public string CommunicationPort = "ble";
 #else
-        public string CommunicationPort = "ble";
+        public string CommunicationPort = "serial";
 #endif
 
 
@@ -734,14 +734,10 @@ namespace StemPC
                     break;
                 case "serial":
                     //Invia i pacchetti tramite seriale
-              //      packetManager.Add_Serial_Channel(Form1.FormRef._SDL);
-              //      result = await packetManager.SendThroughSerialAsync(networkPackets);
+                    packetManager.Add_Serial_Channel(Form1.FormRef._SDL);
+                    result = await packetManager.SendThroughSerialAsync(networkPackets);
                     break;
             }
-            //// Invia i pacchetti tramite CAN
-            //var packetManager = new PacketManager(Form1.FormRef.senderId);
-            //packetManager.Add_CAN_Channel(Form1.FormRef._CDL);
-            //bool result = await packetManager.SendThroughCANAsync(networkPackets);
         }
 
         private void comboBoxCommand_SelectedIndexChanged(object sender, EventArgs e)
@@ -1136,6 +1132,7 @@ namespace StemPC
             TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
             cANToolStripMenuItem.Checked = true;
             bluetoothLEToolStripMenuItem.Checked = false;
+            serialToolStripMenuItem.Checked = false;
         }
 
         private void bluetoothLEToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1145,6 +1142,7 @@ namespace StemPC
             TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
             cANToolStripMenuItem.Checked = false;
             bluetoothLEToolStripMenuItem.Checked = true;
+            serialToolStripMenuItem.Checked = false;
         }
 
         private void serialToolStripMenuItem_DropDownOpening(object sender, EventArgs e)
@@ -1165,7 +1163,14 @@ namespace StemPC
                 {
                     // Qui puoi fare la connessione alla porta scelta
                     _serialPortManager.Connect(port);
-                 //   MessageBox.Show($"Connesso a {port}", "Info");
+
+                    CommunicationPort = "serial";
+                    BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
+                    TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
+                    cANToolStripMenuItem.Checked = false;
+                    bluetoothLEToolStripMenuItem.Checked = false;
+                    serialToolStripMenuItem.Checked = true;
+                    //   MessageBox.Show($"Connesso a {port}", "Info");
                 };
 
                 serialToolStripMenuItem.DropDownItems.Add(portItem);
