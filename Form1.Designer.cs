@@ -63,6 +63,8 @@
             toolStripSplitButton3 = new ToolStripSplitButton();
             toolStripMenuItem1 = new ToolStripMenuItem();
             cANToolStripMenuItem = new ToolStripMenuItem();
+            toolStripMenuItem2 = new ToolStripMenuItem();
+            toolStripMenuItem3 = new ToolStripMenuItem();
             bluetoothLEToolStripMenuItem = new ToolStripMenuItem();
             serialToolStripMenuItem = new ToolStripMenuItem();
             toolStripStatusLabel2 = new ToolStripStatusLabel();
@@ -488,27 +490,41 @@
             // 
             toolStripMenuItem1.DropDownItems.AddRange(new ToolStripItem[] { cANToolStripMenuItem, bluetoothLEToolStripMenuItem, serialToolStripMenuItem });
             toolStripMenuItem1.Name = "toolStripMenuItem1";
-            toolStripMenuItem1.Size = new Size(138, 22);
+            toolStripMenuItem1.Size = new Size(180, 22);
             toolStripMenuItem1.Text = "Comm Type";
             // 
             // cANToolStripMenuItem
             // 
+            cANToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { toolStripMenuItem2, toolStripMenuItem3 });
             cANToolStripMenuItem.Name = "cANToolStripMenuItem";
-            cANToolStripMenuItem.Size = new Size(141, 22);
+            cANToolStripMenuItem.Size = new Size(180, 22);
             cANToolStripMenuItem.Text = "CAN";
-            cANToolStripMenuItem.Click += cANToolStripMenuItem_Click;
+            // 
+            // toolStripMenuItem2
+            // 
+            toolStripMenuItem2.Name = "toolStripMenuItem2";
+            toolStripMenuItem2.Size = new Size(180, 22);
+            toolStripMenuItem2.Text = "100 Kbps";
+            toolStripMenuItem2.Click += toolStripMenuItem2_Click;
+            // 
+            // toolStripMenuItem3
+            // 
+            toolStripMenuItem3.Name = "toolStripMenuItem3";
+            toolStripMenuItem3.Size = new Size(180, 22);
+            toolStripMenuItem3.Text = "250Kbps";
+            toolStripMenuItem3.Click += toolStripMenuItem3_Click;
             // 
             // bluetoothLEToolStripMenuItem
             // 
             bluetoothLEToolStripMenuItem.Name = "bluetoothLEToolStripMenuItem";
-            bluetoothLEToolStripMenuItem.Size = new Size(141, 22);
+            bluetoothLEToolStripMenuItem.Size = new Size(180, 22);
             bluetoothLEToolStripMenuItem.Text = "Bluetooth LE";
             bluetoothLEToolStripMenuItem.Click += bluetoothLEToolStripMenuItem_Click;
             // 
             // serialToolStripMenuItem
             // 
             serialToolStripMenuItem.Name = "serialToolStripMenuItem";
-            serialToolStripMenuItem.Size = new Size(141, 22);
+            serialToolStripMenuItem.Size = new Size(180, 22);
             serialToolStripMenuItem.Text = "Serial";
             serialToolStripMenuItem.DropDownOpening += serialToolStripMenuItem_DropDownOpening;
             // 
@@ -621,5 +637,7 @@
         private ToolStripMenuItem serialToolStripMenuItem;
         private ToolStripStatusLabel toolStripStatusLabel3;
         private ToolStripStatusLabel COMStatusLabel;
+        private ToolStripMenuItem toolStripMenuItem2;
+        private ToolStripMenuItem toolStripMenuItem3;
     }
 }

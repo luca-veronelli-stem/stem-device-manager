@@ -22,7 +22,7 @@ namespace StemPC
 {
     public partial class Form1 : Form
     {
-        public const string Software_Version = "2.13 (pcan a 250k)";
+        public const string Software_Version = "2.14";
 
 #if TOPLIFT
         public string CommunicationPort = "can";
@@ -55,7 +55,7 @@ namespace StemPC
         //   Serial port variables
         //**********************************
         private SerialPortManager _serialPortManager;
-        public  SDL _SDL;
+        public SDL _SDL;
 
         //**************************
         //  Code gen variables
@@ -239,22 +239,22 @@ namespace StemPC
 
             // Crea la lista dei dispositivi
             List<DeviceInfo> BootSmartDevices = new List<DeviceInfo>
-                {
-                #if TOPLIFT
+            {
+#if TOPLIFT
                 //TOPLIFT devices
                    new DeviceInfo(0x000803C1, "Keyboard 1", true),
                    new DeviceInfo(0x000803C2, "Keyboard 2", true),
                    new DeviceInfo(0x000803C3, "Keyboard 3", true),
                    new DeviceInfo(0x00080381, "Motherboard", false),
-                #elif EDEN
+#elif EDEN
                 //EDEN devices
                     new DeviceInfo(0x00030101, "Keyboard 1", true),
                     new DeviceInfo(0x00030102, "Keyboard 2", true),
                     new DeviceInfo(0x00030141, "Motherboard", false),
-                #else
+#else
 
-                #endif
-                };
+#endif
+            };
 
             // Popola la tab con la lista dei dispositivi
             BootSmartTabRef.PopulateDevices(BootSmartDevices);
@@ -267,16 +267,16 @@ namespace StemPC
             //attiva il terminale
             _terminal = new Terminal(); // Inizializza l'istanza di Terminal
 
-        
+
             listBoxSerialPorts.Items.Clear();
             _serialPortManager.ScanPorts();
             listBoxSerialPorts.Items.AddRange(_serialPortManager.AvailablePorts.ToArray());
 
-        UpdateTerminal(DateTime.Now + ": Stem Protocol Manager " + Software_Version);
-        
-        timerBaseTime.Enabled = true;
+            UpdateTerminal(DateTime.Now + ": Stem Protocol Manager " + Software_Version);
 
-        tabControl.TabPages.Remove(tabPageUART);
+            timerBaseTime.Enabled = true;
+
+            tabControl.TabPages.Remove(tabPageUART);
 
             //inizializza il code generator
             // Crea un'istanza della classe SP_Config_Generator e chiama il metodo per generare il file
@@ -320,7 +320,7 @@ namespace StemPC
 #elif EGICON
             tabControl.SelectedTab = BLETabRef;
 #else
-           // tabControl.SelectedTab = BLETabRef;
+            // tabControl.SelectedTab = BLETabRef;
             tabControl.SelectedTab = tabControl.TabPages["tabPageProtocol"];
 
             tabControl.TabPages.Add(TelemetryTabRef);
@@ -1125,15 +1125,15 @@ namespace StemPC
             }
         }
 
-        private void cANToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            CommunicationPort = "can";
-            BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
-            TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
-            cANToolStripMenuItem.Checked = true;
-            bluetoothLEToolStripMenuItem.Checked = false;
-            serialToolStripMenuItem.Checked = false;
-        }
+        //private void cANToolStripMenuItem_Click(object sender, EventArgs e)
+        //{
+        //    CommunicationPort = "can";
+        //    BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
+        //    TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
+        //    cANToolStripMenuItem.Checked = true;
+        //    bluetoothLEToolStripMenuItem.Checked = false;
+        //    serialToolStripMenuItem.Checked = false;
+        //}
 
         private void bluetoothLEToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -1183,6 +1183,48 @@ namespace StemPC
                 noPortsItem.Enabled = false;
                 serialToolStripMenuItem.DropDownItems.Add(noPortsItem);
             }
+        }
+
+        private void toolStripMenuItem2_Click(object sender, EventArgs e)
+        {
+            //crea e aggiungi pcan
+            var canInterface = "pcan";
+            var channel = "PCAN_USBBUS1";
+            var bitrate = 100000;
+            if (_CDL != null)
+            {
+                _CDL.ConnectionStatusChanged -= OnPCANConnectionStatusChanged;
+            }
+            _CDL = new CANDataLayer(channel, canInterface, bitrate);
+            _CDL.ConnectionStatusChanged += OnPCANConnectionStatusChanged;
+
+            CommunicationPort = "can";
+            BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
+            TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
+            cANToolStripMenuItem.Checked = true;
+            bluetoothLEToolStripMenuItem.Checked = false;
+            serialToolStripMenuItem.Checked = false;
+        }
+
+        private void toolStripMenuItem3_Click(object sender, EventArgs e)
+        {
+            //crea e aggiungi pcan
+            var canInterface = "pcan";
+            var channel = "PCAN_USBBUS1";
+            var bitrate = 250000;
+            if (_CDL != null)
+            {
+                _CDL.ConnectionStatusChanged -= OnPCANConnectionStatusChanged;
+            }
+            _CDL = new CANDataLayer(channel, canInterface, bitrate);
+            _CDL.ConnectionStatusChanged += OnPCANConnectionStatusChanged;
+
+            CommunicationPort = "can";
+            BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
+            TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
+            cANToolStripMenuItem.Checked = true;
+            bluetoothLEToolStripMenuItem.Checked = false;
+            serialToolStripMenuItem.Checked = false;
         }
     }
 }
