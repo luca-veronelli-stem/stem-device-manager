@@ -70,8 +70,14 @@ public class CANDataLayer : IDisposable
                 case 100000:
                     baudrate=TPCANBaudrate.PCAN_BAUD_100K;
                     break;
+                case 125000:
+                    baudrate = TPCANBaudrate.PCAN_BAUD_100K;
+                    break;
                 case 250000:
                     baudrate = TPCANBaudrate.PCAN_BAUD_250K;
+                    break;
+                case 500000:
+                    baudrate = TPCANBaudrate.PCAN_BAUD_500K;
                     break;
             }
             //PCAN

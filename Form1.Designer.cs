@@ -64,7 +64,9 @@
             toolStripMenuItem1 = new ToolStripMenuItem();
             cANToolStripMenuItem = new ToolStripMenuItem();
             toolStripMenuItem2 = new ToolStripMenuItem();
+            kbpsToolStripMenuItem1 = new ToolStripMenuItem();
             toolStripMenuItem3 = new ToolStripMenuItem();
+            kbpsToolStripMenuItem = new ToolStripMenuItem();
             bluetoothLEToolStripMenuItem = new ToolStripMenuItem();
             serialToolStripMenuItem = new ToolStripMenuItem();
             toolStripStatusLabel2 = new ToolStripStatusLabel();
@@ -495,7 +497,7 @@
             // 
             // cANToolStripMenuItem
             // 
-            cANToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { toolStripMenuItem2, toolStripMenuItem3 });
+            cANToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { toolStripMenuItem2, kbpsToolStripMenuItem1, toolStripMenuItem3, kbpsToolStripMenuItem });
             cANToolStripMenuItem.Name = "cANToolStripMenuItem";
             cANToolStripMenuItem.Size = new Size(180, 22);
             cANToolStripMenuItem.Text = "CAN";
@@ -507,12 +509,26 @@
             toolStripMenuItem2.Text = "100 Kbps";
             toolStripMenuItem2.Click += toolStripMenuItem2_Click;
             // 
+            // kbpsToolStripMenuItem1
+            // 
+            kbpsToolStripMenuItem1.Name = "kbpsToolStripMenuItem1";
+            kbpsToolStripMenuItem1.Size = new Size(180, 22);
+            kbpsToolStripMenuItem1.Text = "125 Kbps";
+            kbpsToolStripMenuItem1.Click += kbpsToolStripMenuItem1_Click;
+            // 
             // toolStripMenuItem3
             // 
             toolStripMenuItem3.Name = "toolStripMenuItem3";
             toolStripMenuItem3.Size = new Size(180, 22);
             toolStripMenuItem3.Text = "250Kbps";
             toolStripMenuItem3.Click += toolStripMenuItem3_Click;
+            // 
+            // kbpsToolStripMenuItem
+            // 
+            kbpsToolStripMenuItem.Name = "kbpsToolStripMenuItem";
+            kbpsToolStripMenuItem.Size = new Size(180, 22);
+            kbpsToolStripMenuItem.Text = "500Kbps";
+            kbpsToolStripMenuItem.Click += kbpsToolStripMenuItem_Click;
             // 
             // bluetoothLEToolStripMenuItem
             // 
@@ -639,5 +655,7 @@
         private ToolStripStatusLabel COMStatusLabel;
         private ToolStripMenuItem toolStripMenuItem2;
         private ToolStripMenuItem toolStripMenuItem3;
+        private ToolStripMenuItem kbpsToolStripMenuItem1;
+        private ToolStripMenuItem kbpsToolStripMenuItem;
     }
 }

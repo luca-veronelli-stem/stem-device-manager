@@ -1226,5 +1226,47 @@ namespace StemPC
             bluetoothLEToolStripMenuItem.Checked = false;
             serialToolStripMenuItem.Checked = false;
         }
+
+        private void kbpsToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            //crea e aggiungi pcan
+            var canInterface = "pcan";
+            var channel = "PCAN_USBBUS1";
+            var bitrate = 125000;
+            if (_CDL != null)
+            {
+                _CDL.ConnectionStatusChanged -= OnPCANConnectionStatusChanged;
+            }
+            _CDL = new CANDataLayer(channel, canInterface, bitrate);
+            _CDL.ConnectionStatusChanged += OnPCANConnectionStatusChanged;
+
+            CommunicationPort = "can";
+            BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
+            TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
+            cANToolStripMenuItem.Checked = true;
+            bluetoothLEToolStripMenuItem.Checked = false;
+            serialToolStripMenuItem.Checked = false;
+        }
+
+        private void kbpsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //crea e aggiungi pcan
+            var canInterface = "pcan";
+            var channel = "PCAN_USBBUS1";
+            var bitrate = 500000;
+            if (_CDL != null)
+            {
+                _CDL.ConnectionStatusChanged -= OnPCANConnectionStatusChanged;
+            }
+            _CDL = new CANDataLayer(channel, canInterface, bitrate);
+            _CDL.ConnectionStatusChanged += OnPCANConnectionStatusChanged;
+
+            CommunicationPort = "can";
+            BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
+            TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
+            cANToolStripMenuItem.Checked = true;
+            bluetoothLEToolStripMenuItem.Checked = false;
+            serialToolStripMenuItem.Checked = false;
+        }
     }
 }
