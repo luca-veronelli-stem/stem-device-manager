@@ -1,26 +1,26 @@
-/**
- ******************************************************************************
- * @file    Program.cs
- * @author  Michele Pignedoli
- * @version 2.11
- * @date    21/5/2025
- * @brief   STEM Device Manager Main program body
- ******************************************************************************
- *
- * 2.10: + TopLift A2 and Eden XP activation
- * 2.11: + Read firmware version activation for mainboard
- *
- *
- * TODO:
- * - Completare decodifica faults
- * - Completare parametri con altezze di carico
- * - Attivare Load/save parameters
- *
- * @attention
- *
- * <h2><center>&copy; COPYRIGHT 2025 STEM </center></h2>
- *
- */
+/// <summary>
+///*****************************************************************************
+/// @file    Program.cs
+/// @author  Michele Pignedoli
+///@version  2.14
+/// @date    27/10/2025
+/// @brief   STEM Device Manager Main program body
+///*****************************************************************************
+///
+/// 2.10: + TopLift A2 and Eden XP activation
+/// 2.11: + Read firmware version activation for mainboard
+/// 2.14: + CAN baud rate variable
+///       + uart suport
+///
+///
+/// TODO:
+/// - Completare decodifica faults
+///
+/// @attention
+///
+/// <h2><center>&copy; COPYRIGHT 2025 STEM </center></h2>
+///
+/// </summary>
 
 using STEMPM;
 

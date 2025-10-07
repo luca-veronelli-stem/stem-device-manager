@@ -29,7 +29,22 @@ public class CANPacketEventArgs : EventArgs
     }
 }
 
-// Classe per la gestione del dispositivo PCAN
+/// <summary>
+/// Gestisce la comunicazione con dispositivi PEAK PCAN-USB per il bus CAN.
+/// Fornisce funzionalità di connessione, lettura, scrittura e monitoraggio automatico.
+/// </summary>
+/// <remarks>
+/// Questa classe implementa il pattern event-driven per la gestione asincrona
+/// dei messaggi CAN e del monitoraggio della connessione.
+/// </remarks>
+/// <example>
+/// <code>
+/// var pcan = new PCANManager(TPCANBaudrate.PCAN_BAUD_250K);
+/// pcan.PacketReceived += (s, e) => Console.WriteLine($"ID: {e.ArbitrationId:X}");
+/// pcan.StartReading();
+/// </code>
+/// </example>
+
 public class PCANManager
 {
     private const   TPCANHandle Channel = 0x51; // PCAN_USB
@@ -37,7 +52,13 @@ public class PCANManager
     private bool    _isConnected;
 
     // Evento per lo stato della connessione
+    /// <summary>
+    /// Si verifica quando cambia lo stato della connessione al dispositivo PCAN.
+    /// </summary>
     public event EventHandler<bool>                 ConnectionStatusChanged;
+    /// <summary>
+    /// Si verifica quando viene ricevuto un nuovo pacchetto CAN.
+    /// </summary>
     public event EventHandler<CANPacketEventArgs>   PacketReceived;
     public event EventHandler<string>               ErrorOccurred;
 
@@ -122,6 +143,112 @@ public class PCANManager
                 await Task.Delay(1000); // Controllo dello stato ogni secondo
             }
         });
+    }
+
+    /// <summary>
+    /// Cambia il baud rate del canale CAN a runtime
+    /// </summary>
+    /// <param name="newBaudRateKbps">Baud rate in kbps (100, 125, 250, 500)</param>
+    /// <returns>True se il cambio è avvenuto con successo, False altrimenti</returns>
+    public bool ChangeBaudRate(int newBaudRateKbps)
+    {
+        TPCANBaudrate newBaudRate;
+
+        // Converti il valore in kbps nell'enum TPCANBaudrate
+        switch (newBaudRateKbps)
+        {
+            case 100000:
+                newBaudRate = TPCANBaudrate.PCAN_BAUD_100K;
+                break;
+            case 125000:
+                newBaudRate = TPCANBaudrate.PCAN_BAUD_125K;
+                break;
+            case 250000:
+                newBaudRate = TPCANBaudrate.PCAN_BAUD_250K;
+                break;
+            case 500000:
+                newBaudRate = TPCANBaudrate.PCAN_BAUD_500K;
+                break;
+            default:
+                ErrorOccurred?.Invoke(this, $"Baud rate non supportato: {newBaudRateKbps} kbps. Valori validi: 100, 125, 250, 500");
+                return false;
+        }
+
+        try
+        {
+            // Salva lo stato della connessione
+            bool wasConnected = _isConnected;
+
+            // Disconnetti temporaneamente
+            var uninitResult = PCANBasic.Uninitialize(Channel);
+            if (uninitResult != TPCANStatus.PCAN_ERROR_OK)
+            {
+                StringBuilder errorText = new StringBuilder(256);
+                PCANBasic.GetErrorText(uninitResult, 0, errorText);
+                ErrorOccurred?.Invoke(this, $"Errore durante la disconnessione: {errorText}");
+                return false;
+            }
+
+            // Piccolo ritardo per assicurare la completa disconnessione
+            System.Threading.Thread.Sleep(100);
+
+            // Inizializza con il nuovo baud rate
+            var initResult = PCANBasic.Initialize(Channel, newBaudRate);
+
+            if (initResult == TPCANStatus.PCAN_ERROR_OK)
+            {
+                _currentBaudRate = newBaudRate;
+                IsConnected = true;
+
+                // Se era connesso prima, riavvia la lettura
+                if (wasConnected)
+                {
+                    StartReading();
+                }
+
+                return true;
+            }
+            else
+            {
+                StringBuilder errorText = new StringBuilder(256);
+                PCANBasic.GetErrorText(initResult, 0, errorText);
+                ErrorOccurred?.Invoke(this, $"Errore durante la reinizializzazione con baud rate {newBaudRateKbps} kbps: {errorText}");
+
+                // Tenta di ripristinare il baud rate precedente
+                var recoveryResult = PCANBasic.Initialize(Channel, _currentBaudRate);
+                IsConnected = recoveryResult == TPCANStatus.PCAN_ERROR_OK;
+
+                if (IsConnected && wasConnected)
+                {
+                    StartReading();
+                }
+
+                return false;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorOccurred?.Invoke(this, $"Eccezione durante il cambio del baud rate: {ex.Message}");
+            return false;
+        }
+    }
+
+    // Metodo di utilità per ottenere il baud rate corrente in kbps
+    public int GetCurrentBaudRateKbps()
+    {
+        switch (_currentBaudRate)
+        {
+            case TPCANBaudrate.PCAN_BAUD_100K:
+                return 100;
+            case TPCANBaudrate.PCAN_BAUD_125K:
+                return 125;
+            case TPCANBaudrate.PCAN_BAUD_250K:
+                return 250;
+            case TPCANBaudrate.PCAN_BAUD_500K:
+                return 500;
+            default:
+                return 0;
+        }
     }
 
     public void StartReading()

@@ -98,6 +98,16 @@ public class CANDataLayer : IDisposable
         }
     }
 
+    public void ChangeBaudrate(string canInterface, int bitrate)
+    {
+        if (canInterface == "pcan")
+        {
+            if (_pcanManager == null) return;
+            //PCAN
+            _pcanManager.ChangeBaudRate(bitrate);
+        }
+    }
+
     public async void Send(CANMessage message)
     {
         int result=0;

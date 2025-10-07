@@ -133,6 +133,11 @@ public class Telemetry_Tab : TabPage
 
     private async void onDataReady(object sender, DataReadyEventArgs e)
     {
+        if (e.ListIndex >= activeElements.Count)
+        {
+            MessageBox.Show("Il controllo non è una Label.", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
+        }
         var container = activeElements[e.ListIndex];
         var control = container.Controls[1];
         if (control is Label label)

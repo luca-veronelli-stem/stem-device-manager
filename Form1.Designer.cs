@@ -492,55 +492,55 @@
             // 
             toolStripMenuItem1.DropDownItems.AddRange(new ToolStripItem[] { cANToolStripMenuItem, bluetoothLEToolStripMenuItem, serialToolStripMenuItem });
             toolStripMenuItem1.Name = "toolStripMenuItem1";
-            toolStripMenuItem1.Size = new Size(180, 22);
+            toolStripMenuItem1.Size = new Size(138, 22);
             toolStripMenuItem1.Text = "Comm Type";
             // 
             // cANToolStripMenuItem
             // 
             cANToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { toolStripMenuItem2, kbpsToolStripMenuItem1, toolStripMenuItem3, kbpsToolStripMenuItem });
             cANToolStripMenuItem.Name = "cANToolStripMenuItem";
-            cANToolStripMenuItem.Size = new Size(180, 22);
+            cANToolStripMenuItem.Size = new Size(141, 22);
             cANToolStripMenuItem.Text = "CAN";
             // 
             // toolStripMenuItem2
             // 
             toolStripMenuItem2.Name = "toolStripMenuItem2";
-            toolStripMenuItem2.Size = new Size(180, 22);
+            toolStripMenuItem2.Size = new Size(121, 22);
             toolStripMenuItem2.Text = "100 Kbps";
             toolStripMenuItem2.Click += toolStripMenuItem2_Click;
             // 
             // kbpsToolStripMenuItem1
             // 
             kbpsToolStripMenuItem1.Name = "kbpsToolStripMenuItem1";
-            kbpsToolStripMenuItem1.Size = new Size(180, 22);
+            kbpsToolStripMenuItem1.Size = new Size(121, 22);
             kbpsToolStripMenuItem1.Text = "125 Kbps";
             kbpsToolStripMenuItem1.Click += kbpsToolStripMenuItem1_Click;
             // 
             // toolStripMenuItem3
             // 
             toolStripMenuItem3.Name = "toolStripMenuItem3";
-            toolStripMenuItem3.Size = new Size(180, 22);
+            toolStripMenuItem3.Size = new Size(121, 22);
             toolStripMenuItem3.Text = "250Kbps";
             toolStripMenuItem3.Click += toolStripMenuItem3_Click;
             // 
             // kbpsToolStripMenuItem
             // 
             kbpsToolStripMenuItem.Name = "kbpsToolStripMenuItem";
-            kbpsToolStripMenuItem.Size = new Size(180, 22);
+            kbpsToolStripMenuItem.Size = new Size(121, 22);
             kbpsToolStripMenuItem.Text = "500Kbps";
             kbpsToolStripMenuItem.Click += kbpsToolStripMenuItem_Click;
             // 
             // bluetoothLEToolStripMenuItem
             // 
             bluetoothLEToolStripMenuItem.Name = "bluetoothLEToolStripMenuItem";
-            bluetoothLEToolStripMenuItem.Size = new Size(180, 22);
+            bluetoothLEToolStripMenuItem.Size = new Size(141, 22);
             bluetoothLEToolStripMenuItem.Text = "Bluetooth LE";
             bluetoothLEToolStripMenuItem.Click += bluetoothLEToolStripMenuItem_Click;
             // 
             // serialToolStripMenuItem
             // 
             serialToolStripMenuItem.Name = "serialToolStripMenuItem";
-            serialToolStripMenuItem.Size = new Size(180, 22);
+            serialToolStripMenuItem.Size = new Size(141, 22);
             serialToolStripMenuItem.Text = "Serial";
             serialToolStripMenuItem.DropDownOpening += serialToolStripMenuItem_DropDownOpening;
             // 

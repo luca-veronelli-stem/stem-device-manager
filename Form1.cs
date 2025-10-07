@@ -2,6 +2,7 @@ using CanDataLayer;
 using DocumentFormat.OpenXml.Drawing.Diagrams;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Microsoft.VisualBasic.Logging;
+using Peak.Can.Basic;
 using SerialDataLayer;
 using SerialPort_Handler;
 using Stem_Protocol;
@@ -26,10 +27,9 @@ namespace StemPC
 
 #if TOPLIFT
         public string CommunicationPort = "can";
-#elif EDEN
-        public string CommunicationPort = "ble";
 #else
-        public string CommunicationPort = "serial";
+        public string CommunicationPort = "ble";
+ //       public string CommunicationPort = "serial";
 #endif
 
 
@@ -320,11 +320,12 @@ namespace StemPC
 #elif EGICON
             tabControl.SelectedTab = BLETabRef;
 #else
-            // tabControl.SelectedTab = BLETabRef;
-            tabControl.SelectedTab = tabControl.TabPages["tabPageProtocol"];
+            tabControl.SelectedTab = BLETabRef;
+           
+            //tabControl.SelectedTab = tabControl.TabPages["tabPageProtocol"];
 
-            tabControl.TabPages.Add(TelemetryTabRef);
-            tabControl.TabPages.Add(BootSmartTabRef);
+          //  tabControl.TabPages.Add(TelemetryTabRef);
+          //  tabControl.TabPages.Add(BootSmartTabRef);
 #endif
 
             // Nascondi la colonna delle variabili
@@ -1187,16 +1188,7 @@ namespace StemPC
 
         private void toolStripMenuItem2_Click(object sender, EventArgs e)
         {
-            //crea e aggiungi pcan
-            var canInterface = "pcan";
-            var channel = "PCAN_USBBUS1";
-            var bitrate = 100000;
-            if (_CDL != null)
-            {
-                _CDL.ConnectionStatusChanged -= OnPCANConnectionStatusChanged;
-            }
-            _CDL = new CANDataLayer(channel, canInterface, bitrate);
-            _CDL.ConnectionStatusChanged += OnPCANConnectionStatusChanged;
+            _CDL.ChangeBaudrate("pcan", 100000);
 
             CommunicationPort = "can";
             BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
@@ -1208,16 +1200,7 @@ namespace StemPC
 
         private void toolStripMenuItem3_Click(object sender, EventArgs e)
         {
-            //crea e aggiungi pcan
-            var canInterface = "pcan";
-            var channel = "PCAN_USBBUS1";
-            var bitrate = 250000;
-            if (_CDL != null)
-            {
-                _CDL.ConnectionStatusChanged -= OnPCANConnectionStatusChanged;
-            }
-            _CDL = new CANDataLayer(channel, canInterface, bitrate);
-            _CDL.ConnectionStatusChanged += OnPCANConnectionStatusChanged;
+            _CDL.ChangeBaudrate("pcan", 250000);
 
             CommunicationPort = "can";
             BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
@@ -1229,16 +1212,7 @@ namespace StemPC
 
         private void kbpsToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            //crea e aggiungi pcan
-            var canInterface = "pcan";
-            var channel = "PCAN_USBBUS1";
-            var bitrate = 125000;
-            if (_CDL != null)
-            {
-                _CDL.ConnectionStatusChanged -= OnPCANConnectionStatusChanged;
-            }
-            _CDL = new CANDataLayer(channel, canInterface, bitrate);
-            _CDL.ConnectionStatusChanged += OnPCANConnectionStatusChanged;
+            _CDL.ChangeBaudrate("pcan", 125000);
 
             CommunicationPort = "can";
             BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
@@ -1250,16 +1224,7 @@ namespace StemPC
 
         private void kbpsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //crea e aggiungi pcan
-            var canInterface = "pcan";
-            var channel = "PCAN_USBBUS1";
-            var bitrate = 500000;
-            if (_CDL != null)
-            {
-                _CDL.ConnectionStatusChanged -= OnPCANConnectionStatusChanged;
-            }
-            _CDL = new CANDataLayer(channel, canInterface, bitrate);
-            _CDL.ConnectionStatusChanged += OnPCANConnectionStatusChanged;
+            _CDL.ChangeBaudrate("pcan", 500000);
 
             CommunicationPort = "can";
             BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
