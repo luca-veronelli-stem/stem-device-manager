@@ -1,6 +1,7 @@
 using CanDataLayer;
 using DocumentFormat.OpenXml.Drawing.Diagrams;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.VisualBasic.Logging;
 using Peak.Can.Basic;
 using SerialDataLayer;
@@ -23,7 +24,7 @@ namespace StemPC
 {
     public partial class Form1 : Form
     {
-        public const string Software_Version = "2.14";
+        public const string Software_Version = "2.15";
 
 #if TOPLIFT
         public string CommunicationPort = "can";
@@ -291,6 +292,7 @@ namespace StemPC
             //crea e aggiungi il telemetry manager
             TelemetryTabRef = new Telemetry_Tab(RXpacketManager);
             TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
+            TelemetryTabRef.telemetryManager.UpdateMyAddress(senderId);
 
             //Seleziona il tab iniziale
 
@@ -595,9 +597,14 @@ namespace StemPC
 #if TOPLIFT
                             hExcel.EstraiDizionario(RecipientId, Dizionario);
                             TLTTabRef.UpdateDictionary(Dizionario);
+                            TLTTabRef.telemetryManager.UpdateSourceAddress(RecipientId);
 #else
                             hExcel.EstraiDizionario(RecipientId, Dizionario, ExcelfilePath);
-                            TelemetryTabRef.UpdateDictionary(Dizionario);
+                            if (TelemetryTabRef != null)
+                            {
+                                TelemetryTabRef.UpdateDictionary(Dizionario);
+                                TelemetryTabRef.telemetryManager.UpdateSourceAddress(RecipientId);
+                            }
 #endif
                         }
                     }

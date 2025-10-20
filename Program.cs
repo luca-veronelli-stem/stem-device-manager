@@ -2,8 +2,8 @@
 ///*****************************************************************************
 /// @file    Program.cs
 /// @author  Michele Pignedoli
-///@version  2.14
-/// @date    27/10/2025
+///@version  2.15
+/// @date    20/10/2025
 /// @brief   STEM Device Manager Main program body
 ///*****************************************************************************
 ///
@@ -11,7 +11,8 @@
 /// 2.11: + Read firmware version activation for mainboard
 /// 2.14: + CAN baud rate variable
 ///       + uart suport
-///
+/// 2.15: + Fix telemetria lenta
+///       + attivazione telemetria veloce
 ///
 /// TODO:
 /// - Completare decodifica faults
