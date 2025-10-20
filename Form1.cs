@@ -324,7 +324,7 @@ namespace StemPC
            
             //tabControl.SelectedTab = tabControl.TabPages["tabPageProtocol"];
 
-          //  tabControl.TabPages.Add(TelemetryTabRef);
+            tabControl.TabPages.Add(TelemetryTabRef);
           //  tabControl.TabPages.Add(BootSmartTabRef);
 #endif
 

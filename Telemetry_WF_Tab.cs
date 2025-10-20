@@ -250,11 +250,13 @@ public class Telemetry_Tab : TabPage
         }
     }
 
-    private void ButtonStart_Click(object sender, EventArgs e)
+    private async void ButtonStart_Click(object sender, EventArgs e)
     {
+        #if TOPLIFT
         // Aggiorno la lista dei dispositivi da interrogare
         telemetryManager.AddToDictionary(MachineDictionary[1]);
-        telemetryManager.TelemetryStart();
+        #endif
+        await telemetryManager.TelemetryStart();
     }
 
     private void ButtonStop_Click(object sender, EventArgs e)

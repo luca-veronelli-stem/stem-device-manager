@@ -15,9 +15,15 @@ namespace Stem_Protocol.TelemetryManager;
 
 public class TelemetryManager
 {
-    // Comando per la lettura della variabile
+    // Comando per la lettura della variabile (telemetri lenta)
     private const ushort CMD_READ_VARIABLE = 0x0001;
     private const ushort CMD_WRITE_VARIABLE = 0x0002;
+
+    // Comandi per l'impostazione e l'avvio della telmetria e ricezione dei dati (telemetria veloce)
+    private const ushort CMD_CONFIGURE_TELEMETRY = 0x0015;
+    private const ushort CMD_START_TELEMETRY = 0x0016;
+    private const ushort CMD_STOP_TELEMETRY = 0x0017;
+    private const ushort CMD_TELEMETRY_DATA = 0x0018;
 
     // Gestore del protocollo
     private ProtocolManager protocolManager;
