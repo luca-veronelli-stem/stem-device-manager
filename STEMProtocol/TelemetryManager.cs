@@ -45,6 +45,7 @@ public class TelemetryManager
 
     private string TelemetryHardwareChannel = "ble";
 
+
     //Eventi della classe
     public event EventHandler<DataReadyEventArgs>? DataReady;
 
@@ -144,33 +145,33 @@ public class TelemetryManager
 
         //TELEMETRIA LENTA
 
-        ////prosegui solo se ricevi una risposta a lettura dalla sorgente per me
-        //if ((payload[0] == 0x80) && (payload[1] == 0x01) && (payload.Length > 4))
-        //{
-        //    //Cerca nella lista TelemetryDictionary se esiste un elemento il cui corridpondente numerico della stringa addrH e addrL è uguale al payload[2] e payload[3]
-        //    foreach (ExcelHandler.VariableData data in TelemetryDictionary)
-        //    {
-        //        if ((int.Parse(data.AddrH, System.Globalization.NumberStyles.HexNumber) == payload[2]) &&
-        //            (int.Parse(data.AddrL, System.Globalization.NumberStyles.HexNumber) == payload[3]))
-        //        {
-        //            if (payload.Length == 5)
-        //            {
-        //                Value = payload[4]; //dato a byte
-        //            }
-        //            else if (payload.Length == 6)
-        //            {
-        //                Value = (((uint)payload[4] << 8) | ((uint)payload[5])); //dato a word
-        //            }
-        //            else if (payload.Length == 8)
-        //            {
-        //                Value = (((uint)payload[4] << 24) | ((uint)payload[5] << 16) | ((uint)payload[6] << 8) | ((uint)payload[7])); //dato a dword
-        //            }
-        //            //Aggiorna la label opportuna
-        //            DataReadyEventArgs dataReadyEventArgs = new DataReadyEventArgs(TelemetryDictionary.IndexOf(data), Value);
-        //            DataReady?.Invoke(this, dataReadyEventArgs);
-        //        }
-        //    }
-        //}
+        //prosegui solo se ricevi una risposta a lettura dalla sorgente per me
+        if ((payload[0] == 0x80) && (payload[1] == 0x01) && (payload.Length > 4))
+        {
+            //Cerca nella lista TelemetryDictionary se esiste un elemento il cui corridpondente numerico della stringa addrH e addrL è uguale al payload[2] e payload[3]
+            foreach (ExcelHandler.VariableData data in TelemetryDictionary)
+            {
+                if ((int.Parse(data.AddrH, System.Globalization.NumberStyles.HexNumber) == payload[2]) &&
+                    (int.Parse(data.AddrL, System.Globalization.NumberStyles.HexNumber) == payload[3]))
+                {
+                    if (payload.Length == 5)
+                    {
+                        Value = payload[4]; //dato a byte
+                    }
+                    else if (payload.Length == 6)
+                    {
+                        Value = (((uint)payload[4] << 8) | ((uint)payload[5])); //dato a word
+                    }
+                    else if (payload.Length == 8)
+                    {
+                        Value = (((uint)payload[4] << 24) | ((uint)payload[5] << 16) | ((uint)payload[6] << 8) | ((uint)payload[7])); //dato a dword
+                    }
+                    //Aggiorna la label opportuna
+                    DataReadyEventArgs dataReadyEventArgs = new DataReadyEventArgs(TelemetryDictionary.IndexOf(data), Value);
+                    DataReady?.Invoke(this, dataReadyEventArgs);
+                }
+            }
+        }
 
         //TELEMETRIA VELOCE
 
@@ -184,22 +185,26 @@ public class TelemetryManager
                 //Cerca nella lista TelemetryDictionary come interpretare la coda dei dati del payload
                 foreach (ExcelHandler.VariableData data in TelemetryDictionary)
                 {
-             //      //calcola l'indirizzo logico della variabile
-             //       int addrLogical = (int.Parse(data.AddrH, System.Globalization.NumberStyles.HexNumber) << 8) | (int.Parse(data.AddrL, System.Globalization.NumberStyles.HexNumber));
-                     //verifica che la posizione del dato sia valida
+                    //      //calcola l'indirizzo logico della variabile
+                    //       int addrLogical = (int.Parse(data.AddrH, System.Globalization.NumberStyles.HexNumber) << 8) | (int.Parse(data.AddrL, System.Globalization.NumberStyles.HexNumber));
+                    //verifica che la posizione del dato sia valida
                     if (dataPosition < payload.Length)
                     {
-                        if (data.DataType == "uint8_t")
+                        string dataType = data.DataType.Trim();
+
+                        if (dataType == "uint8_t")
                         {
                             Value = payload[dataPosition]; //dato a byte
                         }
-                        else if (data.DataType == "uint16_t")
+                        else if (dataType == "uint16_t")
                         {
-                            Value = (((uint)payload[dataPosition] << 8) | ((uint)payload[dataPosition + 1])); //dato a word
+                            //i dati di telemetria sono in little endian
+                            Value = (((uint)payload[dataPosition + 1] << 8) | ((uint)payload[dataPosition])); //dato a word
                         }
-                        else if (data.DataType == "uint32_t")
+                        else if (dataType == "uint32_t")
                         {
-                            Value = (((uint)payload[dataPosition] << 24) | ((uint)payload[dataPosition + 1] << 16) | ((uint)payload[dataPosition + 2] << 8) | ((uint)payload[dataPosition + 3])); //dato a dword
+                            //i dati di telemetria sono in little endian
+                            Value = (((uint)payload[dataPosition + 3] << 24) | ((uint)payload[dataPosition + 2] << 16) | ((uint)payload[dataPosition + 1] << 8) | ((uint)payload[dataPosition])); //dato a dword
                         }
                         //Aggiorna la label opportuna
                         DataReadyEventArgs dataReadyEventArgs = new DataReadyEventArgs(TelemetryDictionary.IndexOf(data), Value);
@@ -211,30 +216,6 @@ public class TelemetryManager
                     }
                 }
             }
-
-            ////Cerca nella lista TelemetryDictionary se esiste un elemento il cui corridpondente numerico della stringa addrH e addrL è uguale al payload[2] e payload[3]
-            //foreach (ExcelHandler.VariableData data in TelemetryDictionary)
-            //{
-            //    if ((int.Parse(data.AddrH, System.Globalization.NumberStyles.HexNumber) == payload[2]) &&
-            //        (int.Parse(data.AddrL, System.Globalization.NumberStyles.HexNumber) == payload[3]))
-            //    {
-            //        if (payload.Length == 5)
-            //        {
-            //            Value = payload[4]; //dato a byte
-            //        }
-            //        else if (payload.Length == 6)
-            //        {
-            //            Value = (((uint)payload[4] << 8) | ((uint)payload[5])); //dato a word
-            //        }
-            //        else if (payload.Length == 8)
-            //        {
-            //            Value = (((uint)payload[4] << 24) | ((uint)payload[5] << 16) | ((uint)payload[6] << 8) | ((uint)payload[7])); //dato a dword
-            //        }
-            //        //Aggiorna la label opportuna
-            //        DataReadyEventArgs dataReadyEventArgs = new DataReadyEventArgs(TelemetryDictionary.IndexOf(data), Value);
-            //        DataReady?.Invoke(this, dataReadyEventArgs);
-            //    }
-            //}
         }
 
 
@@ -281,7 +262,7 @@ public class TelemetryManager
         Payload[8] = (byte)(0x00);
         //periodo ms (100ms)
         Payload[9] = (byte)(0x00);
-        Payload[10] = (byte)(0x64);
+        Payload[10] = (byte)(0xC8);
         //indirizzo scheda (sourceAddress)
         Payload[11] = (byte)((sourceAddress >> 24) & 0xFF);
         Payload[12] = (byte)((sourceAddress >> 16) & 0xFF);
@@ -300,8 +281,9 @@ public class TelemetryManager
         PayloadStart[0] = 0x00; //istanza telemetria da avviare
 
         await protocolManager.SendCommand(CMD_START_TELEMETRY, PayloadStart, false);
+        await Task.Delay(150);
 
-        //avvia telemetria lenta
+        ////avvia telemetria lenta
         //await TelemetryRequestTask();
     }
 

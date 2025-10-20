@@ -381,7 +381,7 @@ public class Boot_Smart_Tab : TabPage
         telemetryManager.TelemetryStop();
         telemetryManager.ResetDictionary();
 
-        //Carica in telemetria i fault
+        //Carica in telemetria il firmware della scheda
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Firmware scheda")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Firmware scheda")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Firmware scheda")]);
