@@ -216,8 +216,6 @@ public class TelemetryManager
                 }
             }
         }
-
-
     }
 
     public async Task TelemetryStart()
