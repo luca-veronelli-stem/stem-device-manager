@@ -467,16 +467,16 @@ namespace Stem_Protocol
 
             //(da sistemare TOPX)
             //CAN
-              ApplicationPacket = ApplicationPacket.Take(ApplicationPacket.Length - 2).ToArray();
-              OnSP_PacketReady(ApplicationPacket, Source_Address, _recipientId);
+            ApplicationPacket = ApplicationPacket.Take(ApplicationPacket.Length - 2).ToArray();
+            OnSP_PacketReady(ApplicationPacket, Source_Address, _recipientId);
 
-            //BLE
-            //Togli i primi 7 byte di intestazione e togli il crc al transport packet eliminando  gli ultimi 2 byte del buffer
-        //    byte[] PacketApplication=new byte[TransportPacket[6]-2];
-        //    Buffer.BlockCopy(TransportPacket.ToArray(), 7, PacketApplication, 0, TransportPacket[6] - 6);   
-            
-            // Emettere l'evento con il pacchetto ricevuto
-        //    OnSP_PacketReady(PacketApplication, Source_Address, _recipientId);
+            ////BLE
+            ////Togli i primi 7 byte di intestazione e togli il crc al transport packet eliminando gli ultimi 2 byte del buffer
+            //byte[] PacketApplication = new byte[TransportPacket[6] - 2];
+            //Buffer.BlockCopy(TransportPacket.ToArray(), 7, PacketApplication, 0, TransportPacket[6] - 6);
+
+            ////Emettere l'evento con il pacchetto ricevuto
+            //OnSP_PacketReady(PacketApplication, Source_Address, _recipientId);
         }
 
         // Metodo protetto per emettere l'evento
