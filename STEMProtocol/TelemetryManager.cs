@@ -195,24 +195,23 @@ public class TelemetryManager
                         if (dataType == "uint8_t")
                         {
                             Value = payload[dataPosition]; //dato a byte
+                            dataPosition++;
                         }
                         else if (dataType == "uint16_t")
                         {
                             //i dati di telemetria sono in little endian
                             Value = (((uint)payload[dataPosition + 1] << 8) | ((uint)payload[dataPosition])); //dato a word
+                            dataPosition += 2;
                         }
                         else if (dataType == "uint32_t")
                         {
                             //i dati di telemetria sono in little endian
                             Value = (((uint)payload[dataPosition + 3] << 24) | ((uint)payload[dataPosition + 2] << 16) | ((uint)payload[dataPosition + 1] << 8) | ((uint)payload[dataPosition])); //dato a dword
+                            dataPosition += 4;
                         }
                         //Aggiorna la label opportuna
                         DataReadyEventArgs dataReadyEventArgs = new DataReadyEventArgs(TelemetryDictionary.IndexOf(data), Value);
                         DataReady?.Invoke(this, dataReadyEventArgs);
-
-                        //prepara il dataposition per la variabile successiva
-                        //calcola la posizione del dato nel payload
-                        dataPosition = dataPosition + ((data.DataType == "uint8_t") ? 1 : (data.DataType == "uint16_t") ? 2 : 4);
                     }
                 }
             }
