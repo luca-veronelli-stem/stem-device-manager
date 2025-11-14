@@ -8,4 +8,12 @@
         DIS0026166,
         DIS0026182
     }
+
+    // Tipi possibili ti test per le pulsantiere
+    public enum ButtonPanelTestType
+    {
+        Buzzer,
+        Led,
+        Buttons
+    }
 }
