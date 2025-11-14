@@ -1,5 +1,6 @@
 ﻿namespace STEMPM.Core.Enums
 {
+    // Tipi possibili di pulsantiere
     public enum ButtonPanelType
     {
         DIS0023789,
