@@ -22,7 +22,9 @@
 /// <h2><center>&copy; COPYRIGHT 2025 STEM </center></h2>
 ///
 /// </summary>
-
+using Microsoft.Extensions.DependencyInjection;
+using STEMPM.Core.Interfaces;
+using STEMPM.Services;
 using STEMPM;
 
 namespace StemPC
@@ -35,6 +37,14 @@ namespace StemPC
         [STAThread]
         static void Main()
         {
+            // Configurazione della dependency injection
+            var services = new ServiceCollection();
+
+            // Modulo di test per pulsantiera
+            services.AddTransient<IButtonPanelTestService, ButtonPanelTestService>();
+
+            var serviceProvider = services.BuildServiceProvider();
+
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
