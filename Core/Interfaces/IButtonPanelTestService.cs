@@ -8,5 +8,8 @@ namespace STEMPM.Core.Interfaces
     {
         // Esegue tutti i test per una pulsantiera specifica e restituisce i risultati
         Task<List<ButtonPanelTestResult>> RunAllTestsAsync(ButtonPanelType panelType);
+        Task<ButtonPanelTestResult> TestButtonsAsync(ButtonPanel panel);
+        Task<ButtonPanelTestResult> TestLedAsync(ButtonPanel panel);
+        Task<ButtonPanelTestResult> TestBuzzerAsync(ButtonPanel panel);
     }
 }
