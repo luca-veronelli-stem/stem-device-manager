@@ -10,6 +10,13 @@ namespace STEMPM.GUI.Views
         public ButtonPanelTestTabControl()
         {
             InitializeComponent();
+
+            // Popola la ComboBox con i tipi di pulsantiere disponibili
+            comboBoxPanelType.DataSource = Enum.GetValues(typeof(ButtonPanelType));
+            comboBoxPanelType.SelectedIndex = -1;
+            // Popola la ComboBox con i tipi di test disponibili
+            comboBoxSelectTest.DataSource = Enum.GetValues(typeof(ButtonPanelTestType));
+            comboBoxSelectTest.SelectedIndex = -1;
         }
 
         public ButtonPanelType GetSelectedPanelType()
