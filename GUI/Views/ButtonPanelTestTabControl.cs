@@ -5,8 +5,10 @@ namespace STEMPM.GUI.Views
 {
     public partial class ButtonPanelTestTabControl : UserControl, IButtonPanelTestTab
     {
+        // Evento pubblico per notificare quando l'utente fa clic sul pulsante di esecuzione dei test
         public event EventHandler? OnRunTestsClicked;
 
+        // Costruttore del controllo
         public ButtonPanelTestTabControl()
         {
             InitializeComponent();

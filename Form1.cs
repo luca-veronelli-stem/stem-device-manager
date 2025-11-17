@@ -505,6 +505,7 @@ namespace StemPC
             AppLayerCommandSended += onAppLayerSended;
         }
 
+        // Aggiungi la tab per il collaudo pulsantiere
         private void AddButtonPanelTestTab()
         {
             var buttonPanelTestControl = new ButtonPanelTestTabControl();
