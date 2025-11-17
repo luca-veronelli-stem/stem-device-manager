@@ -43,6 +43,7 @@ namespace StemPC
             // Modulo di test per pulsantiera
             services.AddTransient<IButtonPanelTestService, ButtonPanelTestService>();
 
+            // Provider di servizi per dependency injection
             var serviceProvider = services.BuildServiceProvider();
 
             // To customize application configuration such as set high DPI settings or default font,
