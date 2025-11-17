@@ -23,18 +23,39 @@ namespace STEMPM.Presenters
         private async void HandleRunTestsAsync(object? sender, EventArgs e)
         {
             ButtonPanelType panelType = _view.GetSelectedPanelType();
+            ButtonPanelTestType testType = _view.GetSelectedTestType();
 
-            if (!Enum.IsDefined(typeof(ButtonPanelType), panelType))
-            {
-                _view.ShowError("Tipo di pulsantiera invalido.");
-                return;
-            }
+            ButtonPanel panel = ButtonPanel.GetByType(panelType);
 
-            _view.ShowProgress($"Collaudo tastiera di tipo {panelType}...");
+            _view.ShowProgress($"Collaudo pulsantiera di tipo {panelType}...");
             try
             {
-                List<ButtonPanelTestResult> results = await _service.TestAllAsync(panelType);
-                _view.DisplayResults(results);
+                List<ButtonPanelTestResult> results = new List<ButtonPanelTestResult>();
+
+                switch (testType)
+                {
+                    case ButtonPanelTestType.Complete:
+                        results = await _service.TestAllAsync(panelType);
+                        break;
+                    case ButtonPanelTestType.Buttons:
+                        results.Add(await _service.TestButtonsAsync(panelType));
+                        break;
+                    case ButtonPanelTestType.Led:
+                        // TODO : Quando la pulsantiera selezionata non supporta il LED, nascondere l'opzione nella combobox
+                        if (!panel.HasLed)
+                        {
+                            _view.ShowError("Il collaudo per i LED è disabilitato per questa pulsantiera");
+                            return;
+                        }
+                        results.Add(await _service.TestLedAsync(panelType));
+                        break;
+                    case ButtonPanelTestType.Buzzer:
+                        results.Add(await _service.TestBuzzerAsync(panelType));
+                        break;
+                    default:
+                        _view.ShowError("Tipo di collaudo sconosciuto.");
+                        return;
+                }
             }
             catch (Exception ex)
             {
