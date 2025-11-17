@@ -43,6 +43,7 @@ namespace StemPC
             // Modulo di test per pulsantiera
             services.AddTransient<IButtonPanelTestService, ButtonPanelTestService>();
 
+            // Provider di servizi per dependency injection
             var serviceProvider = services.BuildServiceProvider();
 
             // To customize application configuration such as set high DPI settings or default font,
@@ -55,7 +56,7 @@ namespace StemPC
             Application.DoEvents();
 
             // Crea il main form
-            Form1 mainForm = new Form1();
+            Form1 mainForm = new Form1(serviceProvider);
             mainForm.Load += (sender, e) => splash.Close(); // Chiude la splash screen all'avvio del MainForm
 
             Application.Run(mainForm);

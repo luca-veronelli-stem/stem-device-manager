@@ -131,9 +131,9 @@
             // tabPageProtocol
             // 
             tabPageProtocol.Controls.Add(tableLayoutPanelProtocol);
-            tabPageProtocol.Location = new Point(4, 31);
+            tabPageProtocol.Location = new Point(4, 24);
             tabPageProtocol.Name = "tabPageProtocol";
-            tabPageProtocol.Size = new Size(786, 471);
+            tabPageProtocol.Size = new Size(786, 478);
             tabPageProtocol.TabIndex = 3;
             tabPageProtocol.Text = "Application Layer";
             tabPageProtocol.UseVisualStyleBackColor = true;
@@ -174,16 +174,16 @@
             tableLayoutPanelProtocol.RowStyles.Add(new RowStyle(SizeType.Percent, 8.207344F));
             tableLayoutPanelProtocol.RowStyles.Add(new RowStyle(SizeType.Percent, 53.9956856F));
             tableLayoutPanelProtocol.RowStyles.Add(new RowStyle(SizeType.Percent, 21.5982742F));
-            tableLayoutPanelProtocol.Size = new Size(786, 471);
+            tableLayoutPanelProtocol.Size = new Size(786, 478);
             tableLayoutPanelProtocol.TabIndex = 2;
             // 
             // comboBoxVariables
             // 
             comboBoxVariables.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             comboBoxVariables.FormattingEnabled = true;
-            comboBoxVariables.Location = new Point(213, 79);
+            comboBoxVariables.Location = new Point(213, 80);
             comboBoxVariables.Name = "comboBoxVariables";
-            comboBoxVariables.Size = new Size(64, 30);
+            comboBoxVariables.Size = new Size(64, 23);
             comboBoxVariables.TabIndex = 30;
             // 
             // labelDictionary
@@ -191,12 +191,12 @@
             labelDictionary.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             labelDictionary.AutoSize = true;
             labelDictionary.BackColor = Color.FromArgb(8, 72, 133);
-            labelDictionary.Font = new Font("Poppins", 12F, FontStyle.Bold);
+            labelDictionary.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold);
             labelDictionary.ForeColor = SystemColors.ControlLightLight;
             labelDictionary.Location = new Point(215, 7);
             labelDictionary.Margin = new Padding(5, 7, 5, 7);
             labelDictionary.Name = "labelDictionary";
-            labelDictionary.Size = new Size(60, 62);
+            labelDictionary.Size = new Size(60, 63);
             labelDictionary.TabIndex = 29;
             labelDictionary.Text = "Variable Name";
             labelDictionary.TextAlign = ContentAlignment.MiddleCenter;
@@ -207,10 +207,10 @@
             richTextBoxTx.BackColor = SystemColors.Window;
             tableLayoutPanelProtocol.SetColumnSpan(richTextBoxTx, 7);
             richTextBoxTx.ForeColor = SystemColors.WindowText;
-            richTextBoxTx.Location = new Point(3, 117);
+            richTextBoxTx.Location = new Point(3, 119);
             richTextBoxTx.Name = "richTextBoxTx";
             tableLayoutPanelProtocol.SetRowSpan(richTextBoxTx, 2);
-            richTextBoxTx.Size = new Size(704, 351);
+            richTextBoxTx.Size = new Size(704, 356);
             richTextBoxTx.TabIndex = 28;
             richTextBoxTx.Text = "";
             // 
@@ -218,10 +218,10 @@
             // 
             textBox3.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             tableLayoutPanelProtocol.SetColumnSpan(textBox3, 2);
-            textBox3.Location = new Point(423, 79);
+            textBox3.Location = new Point(423, 80);
             textBox3.MaxLength = 300;
             textBox3.Name = "textBox3";
-            textBox3.Size = new Size(360, 25);
+            textBox3.Size = new Size(360, 21);
             textBox3.TabIndex = 18;
             textBox3.WordWrap = false;
             textBox3.KeyPress += MaskedTextBox_KeyPress;
@@ -229,10 +229,10 @@
             // textBox2
             // 
             textBox2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            textBox2.Location = new Point(353, 79);
+            textBox2.Location = new Point(353, 80);
             textBox2.MaxLength = 2;
             textBox2.Name = "textBox2";
-            textBox2.Size = new Size(64, 25);
+            textBox2.Size = new Size(64, 21);
             textBox2.TabIndex = 17;
             textBox2.KeyPress += MaskedTextBox_KeyPress;
             // 
@@ -240,9 +240,9 @@
             // 
             comboBoxBoard.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             comboBoxBoard.FormattingEnabled = true;
-            comboBoxBoard.Location = new Point(73, 79);
+            comboBoxBoard.Location = new Point(73, 80);
             comboBoxBoard.Name = "comboBoxBoard";
-            comboBoxBoard.Size = new Size(64, 30);
+            comboBoxBoard.Size = new Size(64, 23);
             comboBoxBoard.TabIndex = 15;
             comboBoxBoard.SelectedIndexChanged += comboBoxBoard_SelectedIndexChanged;
             // 
@@ -252,12 +252,12 @@
             labelBytes.AutoSize = true;
             labelBytes.BackColor = Color.FromArgb(8, 72, 133);
             tableLayoutPanelProtocol.SetColumnSpan(labelBytes, 2);
-            labelBytes.Font = new Font("Poppins", 12F, FontStyle.Bold);
+            labelBytes.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold);
             labelBytes.ForeColor = SystemColors.ControlLightLight;
             labelBytes.Location = new Point(425, 7);
             labelBytes.Margin = new Padding(5, 7, 5, 7);
             labelBytes.Name = "labelBytes";
-            labelBytes.Size = new Size(356, 62);
+            labelBytes.Size = new Size(356, 63);
             labelBytes.TabIndex = 9;
             labelBytes.Text = "Byte3 (HEX)";
             labelBytes.TextAlign = ContentAlignment.MiddleCenter;
@@ -267,12 +267,12 @@
             labelByte2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             labelByte2.AutoSize = true;
             labelByte2.BackColor = Color.FromArgb(8, 72, 133);
-            labelByte2.Font = new Font("Poppins", 12F, FontStyle.Bold);
+            labelByte2.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold);
             labelByte2.ForeColor = SystemColors.ControlLightLight;
             labelByte2.Location = new Point(355, 7);
             labelByte2.Margin = new Padding(5, 7, 5, 7);
             labelByte2.Name = "labelByte2";
-            labelByte2.Size = new Size(60, 62);
+            labelByte2.Size = new Size(60, 63);
             labelByte2.TabIndex = 8;
             labelByte2.Text = "Byte2 (HEX)";
             labelByte2.TextAlign = ContentAlignment.MiddleCenter;
@@ -282,12 +282,12 @@
             labelByte1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             labelByte1.AutoSize = true;
             labelByte1.BackColor = Color.FromArgb(8, 72, 133);
-            labelByte1.Font = new Font("Poppins", 12F, FontStyle.Bold);
+            labelByte1.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold);
             labelByte1.ForeColor = SystemColors.ControlLightLight;
             labelByte1.Location = new Point(285, 7);
             labelByte1.Margin = new Padding(5, 7, 5, 7);
             labelByte1.Name = "labelByte1";
-            labelByte1.Size = new Size(60, 62);
+            labelByte1.Size = new Size(60, 63);
             labelByte1.TabIndex = 7;
             labelByte1.Text = "Byte1 (HEX)";
             labelByte1.TextAlign = ContentAlignment.MiddleCenter;
@@ -297,12 +297,12 @@
             label4.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label4.AutoSize = true;
             label4.BackColor = Color.FromArgb(8, 72, 133);
-            label4.Font = new Font("Poppins", 12F, FontStyle.Bold);
+            label4.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold);
             label4.ForeColor = SystemColors.ControlLightLight;
             label4.Location = new Point(145, 7);
             label4.Margin = new Padding(5, 7, 5, 7);
             label4.Name = "label4";
-            label4.Size = new Size(60, 62);
+            label4.Size = new Size(60, 63);
             label4.TabIndex = 6;
             label4.Text = "Comando";
             label4.TextAlign = ContentAlignment.MiddleCenter;
@@ -312,12 +312,12 @@
             label2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label2.AutoSize = true;
             label2.BackColor = Color.FromArgb(8, 72, 133);
-            label2.Font = new Font("Poppins", 12F, FontStyle.Bold);
+            label2.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold);
             label2.ForeColor = SystemColors.ControlLightLight;
             label2.Location = new Point(75, 7);
             label2.Margin = new Padding(5, 7, 5, 7);
             label2.Name = "label2";
-            label2.Size = new Size(60, 62);
+            label2.Size = new Size(60, 63);
             label2.TabIndex = 3;
             label2.Text = "Scheda";
             label2.TextAlign = ContentAlignment.MiddleCenter;
@@ -326,9 +326,9 @@
             // 
             comboBoxMachine.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             comboBoxMachine.FormattingEnabled = true;
-            comboBoxMachine.Location = new Point(3, 79);
+            comboBoxMachine.Location = new Point(3, 80);
             comboBoxMachine.Name = "comboBoxMachine";
-            comboBoxMachine.Size = new Size(64, 30);
+            comboBoxMachine.Size = new Size(64, 23);
             comboBoxMachine.TabIndex = 5;
             comboBoxMachine.SelectedIndexChanged += comboBoxMachine_SelectedIndexChanged;
             // 
@@ -336,19 +336,19 @@
             // 
             comboBoxCommand.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             comboBoxCommand.FormattingEnabled = true;
-            comboBoxCommand.Location = new Point(143, 79);
+            comboBoxCommand.Location = new Point(143, 80);
             comboBoxCommand.Name = "comboBoxCommand";
-            comboBoxCommand.Size = new Size(64, 30);
+            comboBoxCommand.Size = new Size(64, 23);
             comboBoxCommand.TabIndex = 14;
             comboBoxCommand.SelectedIndexChanged += comboBoxCommand_SelectedIndexChanged;
             // 
             // textBox1
             // 
             textBox1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            textBox1.Location = new Point(283, 79);
+            textBox1.Location = new Point(283, 80);
             textBox1.MaxLength = 2;
             textBox1.Name = "textBox1";
-            textBox1.Size = new Size(64, 25);
+            textBox1.Size = new Size(64, 21);
             textBox1.TabIndex = 16;
             textBox1.KeyPress += MaskedTextBox_KeyPress;
             // 
@@ -357,12 +357,12 @@
             label3.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label3.AutoSize = true;
             label3.BackColor = Color.FromArgb(8, 72, 133);
-            label3.Font = new Font("Poppins", 12F, FontStyle.Bold);
+            label3.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold);
             label3.ForeColor = SystemColors.ControlLightLight;
             label3.Location = new Point(5, 7);
             label3.Margin = new Padding(5, 7, 5, 7);
             label3.Name = "label3";
-            label3.Size = new Size(60, 62);
+            label3.Size = new Size(60, 63);
             label3.TabIndex = 4;
             label3.Text = "Macchina";
             label3.TextAlign = ContentAlignment.MiddleCenter;
@@ -370,10 +370,10 @@
             // buttonSendPS
             // 
             buttonSendPS.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            buttonSendPS.Font = new Font("Poppins", 12F, FontStyle.Bold);
-            buttonSendPS.Location = new Point(713, 371);
+            buttonSendPS.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold);
+            buttonSendPS.Location = new Point(713, 377);
             buttonSendPS.Name = "buttonSendPS";
-            buttonSendPS.Size = new Size(70, 97);
+            buttonSendPS.Size = new Size(70, 98);
             buttonSendPS.TabIndex = 27;
             buttonSendPS.Text = "Invia";
             buttonSendPS.UseVisualStyleBackColor = true;
@@ -384,12 +384,12 @@
             label12.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label12.AutoSize = true;
             label12.BackColor = Color.FromArgb(8, 72, 133);
-            label12.Font = new Font("Poppins", 12F, FontStyle.Bold);
+            label12.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold);
             label12.ForeColor = SystemColors.ControlLightLight;
-            label12.Location = new Point(715, 121);
+            label12.Location = new Point(715, 123);
             label12.Margin = new Padding(5, 7, 5, 7);
             label12.Name = "label12";
-            label12.Size = new Size(66, 240);
+            label12.Size = new Size(66, 244);
             label12.TabIndex = 23;
             label12.Text = "Indirizzo";
             label12.TextAlign = ContentAlignment.MiddleCenter;
@@ -463,10 +463,10 @@
             // listBoxSerialPorts
             // 
             listBoxSerialPorts.FormattingEnabled = true;
-            listBoxSerialPorts.ItemHeight = 22;
+            listBoxSerialPorts.ItemHeight = 15;
             listBoxSerialPorts.Location = new Point(556, 31);
             listBoxSerialPorts.Name = "listBoxSerialPorts";
-            listBoxSerialPorts.Size = new Size(197, 180);
+            listBoxSerialPorts.Size = new Size(197, 169);
             listBoxSerialPorts.TabIndex = 0;
             // 
             // statusStrip1
@@ -492,7 +492,7 @@
             // 
             toolStripMenuItem1.DropDownItems.AddRange(new ToolStripItem[] { cANToolStripMenuItem, bluetoothLEToolStripMenuItem, serialToolStripMenuItem });
             toolStripMenuItem1.Name = "toolStripMenuItem1";
-            toolStripMenuItem1.Size = new Size(138, 22);
+            toolStripMenuItem1.Size = new Size(139, 22);
             toolStripMenuItem1.Text = "Comm Type";
             // 
             // cANToolStripMenuItem
@@ -585,12 +585,12 @@
             // 
             // Form1
             // 
-            AutoScaleDimensions = new SizeF(7F, 22F);
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 660);
             Controls.Add(statusStrip1);
             Controls.Add(tableLayoutPanel1);
-            Font = new Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "Form1";
             Text = "STEM Device Manager ";

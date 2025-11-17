@@ -1,22 +1,14 @@
+using Microsoft.Extensions.DependencyInjection;
+using STEMPM.Core.Interfaces;
+using STEMPM.Presenters;
+using STEMPM.GUI.Views;
 using CanDataLayer;
-using DocumentFormat.OpenXml.Drawing.Diagrams;
-using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
-using DocumentFormat.OpenXml.Wordprocessing;
-using Microsoft.VisualBasic.Logging;
-using Peak.Can.Basic;
 using SerialDataLayer;
 using SerialPort_Handler;
 using Stem_Protocol;
 using Stem_Protocol.PacketManager;
-using Stem_Protocol.TelemetryManager;
-using System.Collections.Generic;
-using System.Diagnostics;
+using STEMPM;
 using System.Globalization;
-using System.IO;
-using System.IO.Ports; // used for serial port
-using System.Reflection;
-using System.Windows.Forms;
-using Windows.Devices.Enumeration;
 using static ExcelHandler;
 using static Stem_Protocol.NetworkLayer;
 
@@ -24,6 +16,9 @@ namespace StemPC
 {
     public partial class Form1 : Form
     {
+        // Dependency Injection Service Provider
+        private readonly IServiceProvider _serviceProvider;
+
         public const string Software_Version = "2.15";
 
 #if TOPLIFT
@@ -151,9 +146,21 @@ namespace StemPC
 
         public event EventHandler<AppLayerSendEventArgs> AppLayerCommandSended;
 
-        public Form1()
+        public Form1(IServiceProvider serviceProvider)
         {
             InitializeComponent();
+            // Inietta il service provider
+            _serviceProvider = serviceProvider;
+
+            // Controlla se il TabControl esiste già e crealo se non esiste
+            if (tabControl == null)
+            {
+                tabControl = new TabControl() { Dock = DockStyle.Fill };
+                Controls.Add(tabControl);
+            }
+
+            // Aggiungi la tab per il collaudo pulsantiere
+            AddButtonPanelTestTab();
 
             labelBytes.Text = "Altri Bytes \r\n (HEX) separati da spazio";
 
@@ -264,6 +271,10 @@ namespace StemPC
             // CanTabPageRef = new CANInterfaceTab(_CDL);
             // CanTabPageRef.ActivateEvents();
             // tabControl.TabPages.Add(CanTabPageRef);
+
+            // crea e aggiungi la tab per il collaudo pulsantiere
+            //ButtonPanelTestTab buttonPanelTestTab = new ButtonPanelTestTab();
+            //tabControl.TabPages.Add(buttonPanelTestTab);
 
             //attiva il terminale
             _terminal = new Terminal(); // Inizializza l'istanza di Terminal
@@ -492,6 +503,20 @@ namespace StemPC
             //installa l'evento di aggiornamento textbox applayer
             AppLayerCommandDecoded += onAppLayerDecoded;
             AppLayerCommandSended += onAppLayerSended;
+        }
+
+        // Aggiungi la tab per il collaudo pulsantiere
+        private void AddButtonPanelTestTab()
+        {
+            var buttonPanelTestControl = new ButtonPanelTestTabControl();
+            var presenter = new ButtonPanelTestPresenter(buttonPanelTestControl, 
+                _serviceProvider.GetRequiredService<IButtonPanelTestService>());
+
+            var tabPage = new TabPage("Collaudo tastiere");
+            tabPage.Controls.Add(buttonPanelTestControl);
+            buttonPanelTestControl.Dock = DockStyle.Fill;
+
+            tabControl.TabPages.Add(tabPage);
         }
 
         public void UpdateTerminal(string message)

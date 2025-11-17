@@ -12,6 +12,7 @@
     // Tipi possibili ti test per le pulsantiere
     public enum ButtonPanelTestType
     {
+        Complete,
         Buttons,
         Led,
         Buzzer
