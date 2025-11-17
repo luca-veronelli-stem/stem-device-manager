@@ -55,7 +55,7 @@ namespace StemPC
             Application.DoEvents();
 
             // Crea il main form
-            Form1 mainForm = new Form1();
+            Form1 mainForm = new Form1(serviceProvider);
             mainForm.Load += (sender, e) => splash.Close(); // Chiude la splash screen all'avvio del MainForm
 
             Application.Run(mainForm);

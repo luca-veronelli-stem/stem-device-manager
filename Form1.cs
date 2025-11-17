@@ -9,6 +9,7 @@ using SerialPort_Handler;
 using Stem_Protocol;
 using Stem_Protocol.PacketManager;
 using Stem_Protocol.TelemetryManager;
+using STEMPM;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -24,6 +25,9 @@ namespace StemPC
 {
     public partial class Form1 : Form
     {
+        // Dependency Injection Service Provider
+        private readonly IServiceProvider _serviceProvider;
+
         public const string Software_Version = "2.15";
 
 #if TOPLIFT
@@ -151,9 +155,10 @@ namespace StemPC
 
         public event EventHandler<AppLayerSendEventArgs> AppLayerCommandSended;
 
-        public Form1()
+        public Form1(IServiceProvider serviceProvider)
         {
             InitializeComponent();
+            _serviceProvider = serviceProvider;
 
             labelBytes.Text = "Altri Bytes \r\n (HEX) separati da spazio";
 
