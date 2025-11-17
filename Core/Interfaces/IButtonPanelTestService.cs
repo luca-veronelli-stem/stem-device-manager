@@ -7,15 +7,15 @@ namespace STEMPM.Core.Interfaces
     internal interface IButtonPanelTestService
     {
         // Esegue tutti i test per una pulsantiera specifica e restituisce i risultati
-        Task<List<ButtonPanelTestResult>> RunAllTestsAsync(ButtonPanelType panelType);
+        Task<List<ButtonPanelTestResult>> TestAllAsync(ButtonPanelType panelType);
 
         // Esegue il test dei pulsanti per una pulsantiera specifica
-        Task<ButtonPanelTestResult> TestButtonsAsync(ButtonPanel panel);
+        Task<ButtonPanelTestResult> TestButtonsAsync(ButtonPanelType panelType);
 
         // Esegue il test del LED per una pulsantiera specifica
-        Task<ButtonPanelTestResult> TestLedAsync(ButtonPanel panel);
+        Task<ButtonPanelTestResult> TestLedAsync(ButtonPanelType panelType);
 
         // Esegue il test del buzzer per una pulsantiera specifica
-        Task<ButtonPanelTestResult> TestBuzzerAsync(ButtonPanel panel);
+        Task<ButtonPanelTestResult> TestBuzzerAsync(ButtonPanelType panelType);
     }
 }
