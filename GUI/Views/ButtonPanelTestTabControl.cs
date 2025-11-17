@@ -19,24 +19,33 @@ namespace STEMPM.GUI.Views
             comboBoxSelectTest.SelectedIndex = -1;
         }
 
+        // Restituisce il tipo di pulsantiera selezionato
         public ButtonPanelType GetSelectedPanelType()
         {
-            throw new NotImplementedException();
+            return (ButtonPanelType)comboBoxPanelType.SelectedItem;
         }
 
+        // Aggiorna la lista dei risultati con il risultato del collaudo eseguito
         public void DisplayResults(List<ButtonPanelTestResult> results)
         {
-            throw new NotImplementedException();
+            listBoxResults.Items.Clear();
+            foreach (var result in results)
+            {
+                string status = result.Passed ? "PASSED" : "FAILED";
+                listBoxResults.Items.Add($"[{result.PanelType}] {result.TestType}: {status} - {result.Message}");
+            }
         }
 
+        // Aggiorna lo stato del collaudo
         public void ShowProgress(string message)
         {
-            throw new NotImplementedException();
+            labelStatus.Text = message;
         }
 
+        // Mostra eventuali messaggi di errore
         public void ShowError(string message)
         {
-            throw new NotImplementedException();
+            MessageBox.Show(message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 }
