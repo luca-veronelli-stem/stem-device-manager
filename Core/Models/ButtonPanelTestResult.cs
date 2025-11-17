@@ -3,7 +3,7 @@
 namespace STEMPM.Core.Models
 {
     // Modello che rappresenta il risultato di un test su una pulsantiera
-    internal class ButtonPanelTestResult
+    public class ButtonPanelTestResult
     {
         public ButtonPanelType PanelType { get; set; }
         public ButtonPanelTestType TestType { get; set; }
