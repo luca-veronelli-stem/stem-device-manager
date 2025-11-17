@@ -12,6 +12,9 @@ namespace STEMPM.GUI.Views
         // Metodo per ottenere il tipo di pulsantiera selezionato dall'utente
         ButtonPanelType GetSelectedPanelType();
 
+        // Metodo per ottenere il tipo di collaudo selezionato dall'utente
+        ButtonPanelTestType GetSelectedTestType();
+
         // Metodo per visualizzare i risultati del collaudo
         void DisplayResults(List<ButtonPanelTestResult> results);
 
