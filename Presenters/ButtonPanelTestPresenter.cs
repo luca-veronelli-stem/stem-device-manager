@@ -32,6 +32,7 @@ namespace STEMPM.Presenters
             {
                 List<ButtonPanelTestResult> results = new List<ButtonPanelTestResult>();
 
+                // Chiama il servizio per il tipo di collaudo selezionato
                 switch (testType)
                 {
                     case ButtonPanelTestType.Complete:
@@ -50,11 +51,14 @@ namespace STEMPM.Presenters
                         _view.ShowError("Tipo di collaudo sconosciuto.");
                         return;
                 }
+
+                _view.DisplayResults(results);
             }
             catch (Exception ex)
             {
                 _view.ShowError(ex.Message);
             }
+
             _view.ShowProgress("Collaudo completo.");
         }
     }
