@@ -41,12 +41,6 @@ namespace STEMPM.Presenters
                         results.Add(await _service.TestButtonsAsync(panelType));
                         break;
                     case ButtonPanelTestType.Led:
-                        // TODO : Quando la pulsantiera selezionata non supporta il LED, nascondere l'opzione nella combobox
-                        if (!panel.HasLed)
-                        {
-                            _view.ShowError("Il collaudo per i LED è disabilitato per questa pulsantiera");
-                            return;
-                        }
                         results.Add(await _service.TestLedAsync(panelType));
                         break;
                     case ButtonPanelTestType.Buzzer:

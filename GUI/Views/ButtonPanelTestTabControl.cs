@@ -16,13 +16,36 @@ namespace STEMPM.GUI.Views
             // Popola la ComboBox con i tipi di pulsantiere disponibili
             comboBoxPanelType.DataSource = Enum.GetValues(typeof(ButtonPanelType));
             comboBoxPanelType.SelectedIndex = 0;
+            comboBoxPanelType.SelectedIndexChanged += ComboBoxPanelType_SelectedIndexChanged;
 
             // Popola la ComboBox con i tipi di test disponibili
-            comboBoxSelectTest.DataSource = Enum.GetValues(typeof(ButtonPanelTestType));
+            UpdateTestTypeComboBox((ButtonPanelType)comboBoxPanelType.SelectedItem);
             comboBoxSelectTest.SelectedIndex = 0;
 
             // Associa l'evento di click del pulsante all'evento pubblico
             buttonRunTests.Click += (s, e) => OnRunTestsClicked?.Invoke(this, EventArgs.Empty);
+        }
+
+        // Gestore per aggiornare i test disponibili in base al tipo di panel
+        private void ComboBoxPanelType_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            var selectedType = (ButtonPanelType)comboBoxPanelType.SelectedItem;
+            UpdateTestTypeComboBox(selectedType);
+        }
+
+        // Metodo helper per aggiornare comboBoxSelectTest filtrando opzioni non supportate
+        private void UpdateTestTypeComboBox(ButtonPanelType panelType)
+        {
+            var panel = ButtonPanel.GetByType(panelType);
+            var allTestTypes = Enum.GetValues(typeof(ButtonPanelTestType)).Cast<ButtonPanelTestType>().ToList();
+
+            // Rimuovi Led se non supportato
+            if (!panel.HasLed)
+            {
+                allTestTypes.Remove(ButtonPanelTestType.Led);
+            }
+
+            comboBoxSelectTest.DataSource = allTestTypes;
         }
 
         // Restituisce il tipo di pulsantiera selezionato
@@ -44,6 +67,7 @@ namespace STEMPM.GUI.Views
             foreach (var result in results)
             {
                 string status = result.Passed ? "PASSATO" : "FALLITO";
+                // TODO : tornare a capo se il messaggio è troppo lungo
                 listBoxResults.Items.Add($"[{result.PanelType}] {result.TestType}: {status} - {result.Message}");
             }
         }
