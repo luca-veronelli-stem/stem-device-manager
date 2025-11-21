@@ -6,7 +6,6 @@ using STEMPM.Core.Interfaces;
 using STEMPM.Core.Models;
 using static StemPC.Form1;
 
-
 namespace STEMPM.Services
 {
     // Implementazione del servizio di test delle pulsantiere
@@ -16,8 +15,10 @@ namespace STEMPM.Services
         private const ushort CMD_WRITE_VARIABLE = 0x0002;
         private const ushort VAR_GREEN_LED = 0x8002;
         private const ushort VAR_RED_LED = 0x8003;
+        private const ushort VAR_BUZZER = 0x8004;
         private readonly byte[] VALUE_OFF = { 0x00, 0x00, 0x00, 0x00 };
         private readonly byte[] VALUE_ON = { 0x00, 0x00, 0x00, 0x80 };
+        private readonly byte[] VALUE_SINGLE_BLINK = { 0x00, 0xFF, 0x80, 0x61 };
 
         private const int BUTTON_PRESS_TIMEOUT_MS = 10000;
 
@@ -137,8 +138,8 @@ namespace STEMPM.Services
                 if (e.Payload.SequenceEqual(expectedPayload))
                 {
                     tcs.TrySetResult(true);
-        }
-        }
+                }
+            }
 
             Form1.FormRef.AppLayerCommandDecoded += OnAppLayerDecoded;
 
@@ -148,7 +149,7 @@ namespace STEMPM.Services
                 if (completedTask == tcs.Task)
                 {
                     return true;
-        }
+                }
                 return false;
             }
             finally
@@ -263,7 +264,18 @@ namespace STEMPM.Services
         // Esegue il test del buzzer della pulsantiera
         public async Task<ButtonPanelTestResult> TestBuzzerAsync(ButtonPanelType panelType, Func<string, Task<bool>> userConfirm)
         {
-            throw new NotImplementedException();
+            // Attiva buzzer per mezzo secondo
+            var onPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_BUZZER, VALUE_SINGLE_BLINK);
+            await SendCommandAsync(CMD_WRITE_VARIABLE, onPayload, waitAnswer: true);
+            bool passed = await userConfirm("Hai sentito il buzzer suonare?");
+
+            return new ButtonPanelTestResult
+            {
+                PanelType = panelType,
+                TestType = ButtonPanelTestType.Buzzer,
+                Passed = passed,
+                Message = passed ? "Buzzer funziona correttamente" : "Buzzer non rilevato"
+            };
         }
     }
 }
