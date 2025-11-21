@@ -79,7 +79,6 @@ namespace STEMPM.GUI.Views
         // Aggiorna la lista dei risultati con il risultato del collaudo eseguito
         public void DisplayResults(List<ButtonPanelTestResult> results)
         {
-            listBoxResults.Items.Clear();
             foreach (var result in results)
             {
                 string status = result.Passed ? "PASSATO" : "FALLITO";
