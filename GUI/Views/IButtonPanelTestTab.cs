@@ -15,6 +15,12 @@ namespace STEMPM.GUI.Views
         // Metodo per ottenere il tipo di collaudo selezionato dall'utente
         ButtonPanelTestType GetSelectedTestType();
 
+        // Metodo per mostrare un prompt all'utente
+        Task ShowPromptAsync(string message, string title = "Istruzione collaudo pulsanti");
+
+        // Metodo per chiedere una conferma all'utente
+        Task<bool> ShowConfirmAsync(string message, ButtonPanelTestType testType);
+
         // Metodo per visualizzare i risultati del collaudo
         void DisplayResults(List<ButtonPanelTestResult> results);
 

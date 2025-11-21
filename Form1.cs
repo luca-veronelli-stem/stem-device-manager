@@ -512,7 +512,7 @@ namespace StemPC
             var presenter = new ButtonPanelTestPresenter(buttonPanelTestControl, 
                 _serviceProvider.GetRequiredService<IButtonPanelTestService>());
 
-            var tabPage = new TabPage("Collaudo tastiere");
+            var tabPage = new TabPage("Collaudo pulsantiere");
             tabPage.Controls.Add(buttonPanelTestControl);
             buttonPanelTestControl.Dock = DockStyle.Fill;
 

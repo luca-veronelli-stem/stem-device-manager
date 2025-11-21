@@ -30,38 +30,42 @@ namespace STEMPM.Presenters
             _view.ShowProgress($"Collaudo pulsantiera di tipo {panelType}...");
             try
             {
+                // Funzione per vhiamare le messageBoxes per il prompt del collaudo pulsanti
+                Func<string, Task> promptFunc = async (msg) => await _view.ShowPromptAsync(msg);
+
+                // Funzione per chiamare le MessageBoxes di conferma del collaudo LED e buzzer
+                Func<string, Task<bool>> confirmFunc = async msg => await _view.ShowConfirmAsync(msg, testType);
+
                 List<ButtonPanelTestResult> results = new List<ButtonPanelTestResult>();
 
+                // Chiama il servizio per il tipo di collaudo selezionato
                 switch (testType)
                 {
                     case ButtonPanelTestType.Complete:
-                        results = await _service.TestAllAsync(panelType);
+                        results = await _service.TestAllAsync(panelType, confirmFunc, promptFunc);
                         break;
                     case ButtonPanelTestType.Buttons:
-                        results.Add(await _service.TestButtonsAsync(panelType));
+                        results.Add(await _service.TestButtonsAsync(panelType, promptFunc));
                         break;
                     case ButtonPanelTestType.Led:
-                        // TODO : Quando la pulsantiera selezionata non supporta il LED, nascondere l'opzione nella combobox
-                        if (!panel.HasLed)
-                        {
-                            _view.ShowError("Il collaudo per i LED è disabilitato per questa pulsantiera");
-                            return;
-                        }
-                        results.Add(await _service.TestLedAsync(panelType));
+                        results.Add(await _service.TestLedAsync(panelType, confirmFunc));
                         break;
                     case ButtonPanelTestType.Buzzer:
-                        results.Add(await _service.TestBuzzerAsync(panelType));
+                        results.Add(await _service.TestBuzzerAsync(panelType, confirmFunc));
                         break;
                     default:
                         _view.ShowError("Tipo di collaudo sconosciuto.");
                         return;
                 }
+
+                _view.DisplayResults(results);
+                _view.ShowProgress("Collaudo completo.");
             }
             catch (Exception ex)
             {
                 _view.ShowError(ex.Message);
+                _view.ShowProgress($"Collaudo fallito");
             }
-            _view.ShowProgress("Collaudo completo.");
         }
     }
 }
