@@ -13,6 +13,8 @@ namespace STEMPM.Services
     internal class ButtonPanelTestService : IButtonPanelTestService
     {
 
+        private const int BUTTON_PRESS_TIMEOUT_MS = 10000;
+
         // Costruisce payload
         private byte[] BuildPayload(ushort command, ushort variableId, byte[]? value)
         {
@@ -117,9 +119,39 @@ namespace STEMPM.Services
                 throw new Exception("Fallito invio comando.");
             }
         }
+
+        // Gestisce la rilevazione della prezzione del pulsante
+        private async Task<bool> AwaitButtonPressEventAsync(byte[] expectedPayload, int timeoutMs)
+        {
+            var tcs = new TaskCompletionSource<bool>();
+            var cts = new CancellationTokenSource(timeoutMs);
+
+            void OnAppLayerDecoded(object? sender, AppLayerDecoderEventArgs e)
+            {
+                if (e.Payload.SequenceEqual(expectedPayload))
+                {
+                    tcs.TrySetResult(true);
         }
         }
+
+            Form1.FormRef.AppLayerCommandDecoded += OnAppLayerDecoded;
+
+            try
+            {
+                var completedTask = await Task.WhenAny(tcs.Task, Task.Delay(timeoutMs, cts.Token));
+                if (completedTask == tcs.Task)
+                {
+                    return true;
         }
+                return false;
+            }
+            finally
+            {
+                Form1.FormRef.AppLayerCommandDecoded -= OnAppLayerDecoded;
+                cts.Dispose();
+            }
+        }
+
         // Esegue tutti i test disponibili per una pulsantiera specifica e restituisce i risultati
         public async Task<List<ButtonPanelTestResult>> TestAllAsync(ButtonPanelType panelType, Func<string, Task<bool>> userConfirm, Func<string, Task> userPrompt)
         {
@@ -146,7 +178,33 @@ namespace STEMPM.Services
         // Esegue il test dei pulsanti della pulsantiera
         public async Task<ButtonPanelTestResult> TestButtonsAsync(ButtonPanelType panelType, Func<string, Task> userPrompt)
         {
-            throw new NotImplementedException();
+            var panel = ButtonPanel.GetByType(panelType);
+            bool allPassed = true;
+            string message = "";
+
+            for (int i = 1; i <= panel.ButtonCount; i++)
+            {
+                // Calcola expected payload (da tuo esempio: [00 02 80 00 XX] dove XX = 1 << (i-1))
+                byte buttonCode = (byte)(1 << (i - 1)); // 0x01, 0x02, 0x04, 0x08, ...
+                byte[] expectedPayload = new byte[] { 0x00, 0x02, 0x80, 0x00, buttonCode };
+
+                // Prompt utente
+                await userPrompt($"Premi il pulsante {i}");
+
+                // Await event con matching payload
+                bool passed = await AwaitButtonPressEventAsync(expectedPayload, BUTTON_PRESS_TIMEOUT_MS);
+
+                allPassed &= passed;
+                message += $"Pulsante {i}: {(passed ? "OK" : "Fallito")};";
+            }
+
+            return new ButtonPanelTestResult
+            {
+                PanelType = panelType,
+                TestType = ButtonPanelTestType.Buttons,
+                Passed = allPassed,
+                Message = message.TrimEnd(';')
+            };
         }
 
         // Esegue il collaudo dei LED della pulsantiera
