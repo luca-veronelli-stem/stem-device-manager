@@ -12,6 +12,12 @@ namespace STEMPM.Services
     // Implementazione del servizio di test delle pulsantiere
     internal class ButtonPanelTestService : IButtonPanelTestService
     {
+        // TODO : Estrarre questi comandi, variabili e valori in una repository
+        private const ushort CMD_WRITE_VARIABLE = 0x0002;
+        private const ushort VAR_GREEN_LED = 0x8002;
+        private const ushort VAR_RED_LED = 0x8003;
+        private readonly byte[] VALUE_OFF = { 0x00, 0x00, 0x00, 0x00 };
+        private readonly byte[] VALUE_ON = { 0x00, 0x00, 0x00, 0x80 };
 
         private const int BUTTON_PRESS_TIMEOUT_MS = 10000;
 
@@ -210,7 +216,48 @@ namespace STEMPM.Services
         // Esegue il collaudo dei LED della pulsantiera
         public async Task<ButtonPanelTestResult> TestLedAsync(ButtonPanelType panelType, Func<string, Task<bool>> userConfirm)
         {
-            throw new NotImplementedException();
+            bool passed = true;
+
+            // Collaudo accensione LED verde
+            var onPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_GREEN_LED, VALUE_ON);
+            await SendCommandAsync(CMD_WRITE_VARIABLE, onPayload, waitAnswer: true);
+            passed &= await userConfirm("Il LED verde è acceso?");
+
+            // Collaudo spegnimento LED verde
+            var offPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_GREEN_LED, VALUE_OFF);
+            await SendCommandAsync(CMD_WRITE_VARIABLE, offPayload, waitAnswer: true);
+            passed &= await userConfirm("Il LED verde è spento?");
+
+            // Collaudo accensione LED rosso
+            onPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_RED_LED, VALUE_ON);
+            await SendCommandAsync(CMD_WRITE_VARIABLE, onPayload, waitAnswer: true);
+            passed &= await userConfirm("Il LED rosso è acceso?");
+
+            // Collaudo spegnimento LED rosso
+            offPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_RED_LED, VALUE_OFF);
+            await SendCommandAsync(CMD_WRITE_VARIABLE, offPayload, waitAnswer: true);
+            passed &= await userConfirm("Il LED rosso è spento?");
+
+            // Collaudo accensione simultanea LED verde e rosso
+            onPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_GREEN_LED, VALUE_ON);
+            await SendCommandAsync(CMD_WRITE_VARIABLE, onPayload, waitAnswer: true);
+            onPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_RED_LED, VALUE_ON);
+            await SendCommandAsync(CMD_WRITE_VARIABLE, onPayload, waitAnswer: true);
+            passed &= await userConfirm("Entrambi i LED (verde e rosso) sono accesi?");
+
+            // Spegni i LED alla fine del test
+            offPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_RED_LED, VALUE_OFF);
+            await SendCommandAsync(CMD_WRITE_VARIABLE, offPayload, waitAnswer: true);
+            offPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_GREEN_LED, VALUE_OFF);
+            await SendCommandAsync(CMD_WRITE_VARIABLE, offPayload, waitAnswer: true);
+
+            return new ButtonPanelTestResult
+            {
+                PanelType = panelType,
+                TestType = ButtonPanelTestType.Led,
+                Passed = passed,
+                Message = passed ? "LED funziona correttamente" : "LED non rilevato"
+            };
         }
 
         // Esegue il test del buzzer della pulsantiera
