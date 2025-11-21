@@ -30,22 +30,28 @@ namespace STEMPM.Presenters
             _view.ShowProgress($"Collaudo pulsantiera di tipo {panelType}...");
             try
             {
+                // Funzione per vhiamare le messageBoxes per il prompt del collaudo pulsanti
+                Func<string, Task> promptFunc = async (msg) => await _view.ShowPromptAsync(msg);
+
+                // Funzione per chiamare le MessageBoxes di conferma del collaudo LED e buzzer
+                Func<string, Task<bool>> confirmFunc = async msg => await _view.ShowConfirmAsync(msg, testType);
+
                 List<ButtonPanelTestResult> results = new List<ButtonPanelTestResult>();
 
                 // Chiama il servizio per il tipo di collaudo selezionato
                 switch (testType)
                 {
                     case ButtonPanelTestType.Complete:
-                        results = await _service.TestAllAsync(panelType);
+                        results = await _service.TestAllAsync(panelType, confirmFunc, promptFunc);
                         break;
                     case ButtonPanelTestType.Buttons:
-                        results.Add(await _service.TestButtonsAsync(panelType));
+                        results.Add(await _service.TestButtonsAsync(panelType, promptFunc));
                         break;
                     case ButtonPanelTestType.Led:
-                        results.Add(await _service.TestLedAsync(panelType));
+                        results.Add(await _service.TestLedAsync(panelType, confirmFunc));
                         break;
                     case ButtonPanelTestType.Buzzer:
-                        results.Add(await _service.TestBuzzerAsync(panelType));
+                        results.Add(await _service.TestBuzzerAsync(panelType, confirmFunc));
                         break;
                     default:
                         _view.ShowError("Tipo di collaudo sconosciuto.");
