@@ -60,6 +60,22 @@ namespace STEMPM.GUI.Views
             return (ButtonPanelTestType)comboBoxSelectTest.SelectedItem;
         }
 
+        // Mostra un prompt all'utente
+        public async Task ShowPromptAsync(string message, string title = "Istruzione collaudo pulsanti")
+        {
+            await Task.Run(() => MessageBox.Show(message, title, 
+                MessageBoxButtons.OK, MessageBoxIcon.Information));
+        }
+
+        // Chiedi una conferma all'utente
+        public async Task<bool> ShowConfirmAsync(string message, ButtonPanelTestType testType)
+        {
+            string title = $"Conferma collaudo {testType}";
+
+            return await Task.Run(() => MessageBox.Show(message, title, 
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes);
+        }
+
         // Aggiorna la lista dei risultati con il risultato del collaudo eseguito
         public void DisplayResults(List<ButtonPanelTestResult> results)
         {
