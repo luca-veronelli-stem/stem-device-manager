@@ -59,13 +59,13 @@ namespace STEMPM.Presenters
                 }
 
                 _view.DisplayResults(results);
+                _view.ShowProgress("Collaudo completo.");
             }
             catch (Exception ex)
             {
                 _view.ShowError(ex.Message);
+                _view.ShowProgress($"Collaudo fallito");
             }
-
-            _view.ShowProgress("Collaudo completo.");
         }
     }
 }
