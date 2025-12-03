@@ -90,6 +90,8 @@ namespace StemPC
         List<ExcelHandler.VariableData> Dizionario;
         ExcelHandler hExcel;
 
+        private bool isStreamBased;
+
         //**********************************
         //  STEM Protocol variables/classes
         //**********************************
@@ -110,9 +112,6 @@ namespace StemPC
         public Telemetry_Tab TelemetryTabRef { get; private set; }
         public BLEInterfaceTab BLETabRef { get; private set; }
         public TopLiftTelemetry_Tab TLTTabRef { get; private set; }
-
-        public ComboBox ComboBoxMachine => comboBoxMachine;
-        public ComboBox ComboBoxBoard => comboBoxBoard;
 
         //**************************
         //  Events
@@ -328,10 +327,10 @@ namespace StemPC
 
 #if PULSANTIERE
             // For PULSANTIERE, hide unnecessary UI elements, keep only essentials
-            terminalOut.Visible = false;
+            //terminalOut.Visible = false;
             // Rimuovi la riga
-            tableLayoutPanel1.RowStyles.RemoveAt(1);
-            tableLayoutPanel1.RowCount--;
+            //tableLayoutPanel1.RowStyles.RemoveAt(1);
+            //tableLayoutPanel1.RowCount--;
             tabControl.TabPages.Remove(tabPageProtocol);
             //toolStripSplitButton2.Visible = false; // BLE menu?
             BLEStatusLabel.Visible = false;
@@ -423,6 +422,13 @@ namespace StemPC
             Comandi = new List<ExcelHandler.CommandData>();
             Dizionario = new List<ExcelHandler.VariableData>();
             hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, ExcelfilePath);
+
+#if TOPLIFT
+            isStreamBased = true;
+#else
+            isStreamBased = false;
+#endif
+
 #if !PULSANTIERE
             TelemetryTabRef.UpdateDictionary(Dizionario);
 #endif
@@ -540,15 +546,6 @@ namespace StemPC
             tabControl.TabPages.Remove(tabPageProtocol);
             tabControl.TabPages.Remove(tabPageUART);
             tabControl.TabPages.Remove(tabPageCodeGen);
-
-            // Hide terminal
-            terminalOut.Visible = false;
-            tableLayoutPanel1.RowStyles.RemoveAt(1);
-            tableLayoutPanel1.RowCount--;
-
-            // Hide BLE-specific elements (but keep menu for device selection)
-            //toolStripSplitButton2.Visible = false;
-            BLEStatusLabel.Visible = false;
 #endif
         }
 
@@ -564,6 +561,34 @@ namespace StemPC
             buttonPanelTestControl.Dock = DockStyle.Fill;
 
             tabControl.TabPages.Add(tabPage);
+        }
+
+        // Add this public method inside Form1 class
+        public void SetRecipientIdSilently(uint recipientId, string machineName, string boardName)
+        {
+            RecipientId = recipientId;
+
+            // Update label (optional, for debug)
+            //label12.Text = $"Indirizzo\n 0x{recipientId:X8}";
+
+            // Reload dictionary conditionally
+            if (isStreamBased)
+            {
+                hExcel.EstraiDizionario(recipientId, Dizionario);
+            }
+            else
+            {
+                hExcel.EstraiDizionario(recipientId, Dizionario, ExcelfilePath);
+            }
+
+#if !FORNITORE
+            if (TelemetryTabRef != null)
+                TelemetryTabRef.UpdateDictionary(Dizionario);
+#endif
+
+            // Optionally update combos silently (no visual change if tab hidden)
+            //comboBoxMachine.SelectedItem = machineName;
+            //comboBoxBoard.SelectedItem = boardName;
         }
 
         public void UpdateTerminal(string message)
