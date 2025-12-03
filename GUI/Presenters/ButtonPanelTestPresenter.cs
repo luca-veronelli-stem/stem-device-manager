@@ -1,9 +1,8 @@
-﻿using STEMPM.Core.Enums;
+﻿using STEMPM.Core.ButtonPanelEnums;
 using STEMPM.Core.Interfaces;
 using STEMPM.Core.Models;
-using STEMPM.GUI.Views;
 
-namespace STEMPM.Presenters
+namespace STEMPM.GUI.Presenters
 {
     // Presenter che gestisce la comunicazione tra la pagina collaudo e il servizio collaudo pulsantiere
     internal class ButtonPanelTestPresenter
@@ -30,11 +29,11 @@ namespace STEMPM.Presenters
             _view.ShowProgress($"Collaudo pulsantiera di tipo {panelType}...");
             try
             {
-                // Funzione per vhiamare le messageBoxes per il prompt del collaudo pulsanti
-                Func<string, Task> promptFunc = async (msg) => await _view.ShowPromptAsync(msg);
+                // Funzione per chiamare le messageBoxes per il prompt del collaudo pulsanti
+                async Task promptFunc(string msg) => await _view.ShowPromptAsync(msg);
 
                 // Funzione per chiamare le MessageBoxes di conferma del collaudo LED e buzzer
-                Func<string, Task<bool>> confirmFunc = async msg => await _view.ShowConfirmAsync(msg, testType);
+                async Task<bool> confirmFunc(string msg) => await _view.ShowConfirmAsync(msg, testType);
 
                 List<ButtonPanelTestResult> results = new List<ButtonPanelTestResult>();
 
