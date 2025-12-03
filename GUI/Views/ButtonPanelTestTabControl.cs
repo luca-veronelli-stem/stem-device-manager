@@ -1,6 +1,8 @@
-﻿using STEMPM.Core.ButtonPanelEnums;
+﻿using StemPC;
+using STEMPM.Core.ButtonPanelEnums;
 using STEMPM.Core.Interfaces;
 using STEMPM.Core.Models;
+
 using System.Drawing.Drawing2D;
 
 namespace STEMPM.GUI.Views
@@ -52,10 +54,10 @@ namespace STEMPM.GUI.Views
             }
 
             // Seleziona il primo per default
-            if (panelToggleButtons.Controls.Count > 0 && panelToggleButtons.Controls[0] is Button firstBtn)
-            {
-                ButtonToggle_Click(firstBtn, EventArgs.Empty);
-            }
+            //if (panelToggleButtons.Controls.Count > 0 && panelToggleButtons.Controls[0] is Button firstBtn)
+            //{
+            //    ButtonToggle_Click(firstBtn, EventArgs.Empty);
+            //}
         }
 
         // Metodo helper per rendere un button con angoli arrotondati
@@ -96,7 +98,27 @@ namespace STEMPM.GUI.Views
 
                 UpdateTestTypeComboBox(selectedPanelType.Value);
                 UpdateImage(selectedPanelType.Value);
+                SetRecipientIdForPanel(selectedPanelType.Value);
             }
+        }
+
+        // Imposta il recipientId in base alla pulsantiera
+        private void SetRecipientIdForPanel(ButtonPanelType panelType)
+        {
+            // Mapping based on your specification
+            (string machine, string board, uint recipientId) mapping = panelType switch
+            {
+                ButtonPanelType.DIS0023789 => ("Eden", "Tastiera1", 0x00030101), 
+                ButtonPanelType.DIS0025205 => ("Optimus-XP", "Tastiera1", 0x000A0101), 
+                ButtonPanelType.DIS0026166 => ("R3L-XP", "Tastiera1", 0x000B0101), 
+                ButtonPanelType.DIS0026182 => ("Eden BS8", "Tastiera1", 0x000C0101), 
+                _ => ("Unknown", "Tastiera1", 0x00000000)
+            };
+
+            // Use Form1's method to set everything correctly in background
+            Form1.FormRef.SetRecipientIdSilently(mapping.recipientId, mapping.machine, mapping.board);
+
+            Form1.FormRef.UpdateTerminal($"Pulsantiera selezionata: {panelType} → Indirizzo 0x{mapping.recipientId:X8}");
         }
 
         // Metodo helper per aggiornare comboBoxSelectTest filtrando opzioni non supportate
