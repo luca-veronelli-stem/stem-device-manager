@@ -1,4 +1,4 @@
-﻿using STEMPM.Core.Enums;
+﻿using STEMPM.Core.ButtonPanelEnums;
 
 namespace STEMPM.Core.Models
 {

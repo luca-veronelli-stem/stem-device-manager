@@ -1,9 +1,10 @@
-﻿using Stem_Protocol;
-using Stem_Protocol.PacketManager;
-using StemPC;
-using STEMPM.Core.Enums;
+﻿using STEMPM.Core.ButtonPanelEnums;
 using STEMPM.Core.Interfaces;
 using STEMPM.Core.Models;
+
+using Stem_Protocol;
+using Stem_Protocol.PacketManager;
+using StemPC;
 using static StemPC.Form1;
 
 namespace STEMPM.Services
