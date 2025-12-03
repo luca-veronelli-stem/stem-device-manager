@@ -111,6 +111,9 @@ namespace StemPC
         public BLEInterfaceTab BLETabRef { get; private set; }
         public TopLiftTelemetry_Tab TLTTabRef { get; private set; }
 
+        public ComboBox ComboBoxMachine => comboBoxMachine;
+        public ComboBox ComboBoxBoard => comboBoxBoard;
+
         //**************************
         //  Events
         //**************************
