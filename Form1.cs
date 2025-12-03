@@ -162,8 +162,8 @@ namespace StemPC
                 Controls.Add(tabControl);
             }
 
-#if PULSANTIERE
-            Text = "STEM PULSANTIERE Manager " + Software_Version;
+#if BUTTONPANEL
+            Text = "STEM Button Panel Tester " + Software_Version;
 #else
 #if TOPLIFT
             Text = "STEM Toplift A2 Manager " + Software_Version;
@@ -199,9 +199,7 @@ namespace StemPC
 
             //crea e aggiungi il ble manager
             BLETabRef = new BLEInterfaceTab();
-#if !PULSANTIERE
             tabControl.TabPages.Add(BLETabRef);
-#endif
 
             //crea e aggiungi ble
             _BLE_SDL = new SDL("BLE", "ble", 100000, BLETabRef.bleManager);
@@ -226,7 +224,6 @@ namespace StemPC
             RXpacketManager.Add_Serial_Channel(_SDL);
 
             //crea e aggiungi il bootloader manager
-#if !PULSANTIERE
             BootTabRef = new Boot_Interface_Tab();
             BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
 
@@ -237,14 +234,11 @@ namespace StemPC
 #else
             tabControl.TabPages.Add(BootTabRef);
 #endif
-#endif
 
             //crea e aggiungi il bootloader manager smart
-#if !PULSANTIERE
             BootSmartTabRef = new Boot_Smart_Tab(RXpacketManager);
             BootSmartTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
             BootSmartTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
-#endif
 
             //Aggiorna il flag di comunicazione
             if (CommunicationPort == "can")
@@ -254,7 +248,6 @@ namespace StemPC
             }
 
             // Crea la lista dei dispositivi
-#if !PULSANTIERE
             List<DeviceInfo> BootSmartDevices = new List<DeviceInfo>
             {
 #if TOPLIFT
@@ -275,7 +268,6 @@ namespace StemPC
 
             // Popola la tab con la lista dei dispositivi
             BootSmartTabRef.PopulateDevices(BootSmartDevices);
-#endif
 
             //crea e aggiungi tabcan
             // CanTabPageRef = new CANInterfaceTab(_CDL);
@@ -283,11 +275,7 @@ namespace StemPC
             // tabControl.TabPages.Add(CanTabPageRef);
 
             // crea e aggiungi la tab per il collaudo pulsantiere
-#if PULSANTIERE
             AddButtonPanelTestTab();
-#else
-            AddButtonPanelTestTab();
-#endif
 
             //attiva il terminale
             _terminal = new Terminal(); // Inizializza l'istanza di Terminal
@@ -314,27 +302,16 @@ namespace StemPC
             OnPCANConnectionStatusChanged(this, _CDL.IsConnected);
 
             //crea e aggiungi il telemetry manager
-#if !PULSANTIERE
             TelemetryTabRef = new Telemetry_Tab(RXpacketManager);
             TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
             TelemetryTabRef.telemetryManager.UpdateMyAddress(senderId);
-#endif
 
             //Seleziona il tab iniziale
 
             //tabControl.SelectedTab = BootTabRef;
             //tabControl.SelectedTab = CanTabPageRef;
 
-#if PULSANTIERE
-            // For PULSANTIERE, hide unnecessary UI elements, keep only essentials
-            //terminalOut.Visible = false;
-            // Rimuovi la riga
-            //tableLayoutPanel1.RowStyles.RemoveAt(1);
-            //tableLayoutPanel1.RowCount--;
-            tabControl.TabPages.Remove(tabPageProtocol);
-            //toolStripSplitButton2.Visible = false; // BLE menu?
-            BLEStatusLabel.Visible = false;
-#elif TOPLIFT
+#if TOPLIFT
             terminalOut.Visible = false;
             // Rimuovi la riga
             tableLayoutPanel1.RowStyles.RemoveAt(1);
@@ -429,9 +406,7 @@ namespace StemPC
             isStreamBased = false;
 #endif
 
-#if !PULSANTIERE
             TelemetryTabRef.UpdateDictionary(Dizionario);
-#endif
 #endif
 
             _terminal.WriteLog("--------------------------------------------------------------------");
@@ -466,9 +441,7 @@ namespace StemPC
                     label12.Text = ($"Indirizzo\n {item.Indirizzo.ToString()}");
                     RecipientId = Convert.ToUInt32(item.Indirizzo.Substring(2), 16);
                     hExcel.EstraiDizionario(RecipientId, Dizionario, ExcelfilePath);
-#if !PULSANTIERE
                     TelemetryTabRef.UpdateDictionary(Dizionario);
-#endif
                     //aggiorna il combo Macchina
                     int indice = comboBoxMachine.FindStringExact(macchinaSelezionata);
 
@@ -507,9 +480,7 @@ namespace StemPC
                     label12.Text = ($"Indirizzo\n {item.Indirizzo.ToString()}");
                     RecipientId = Convert.ToUInt32(item.Indirizzo.Substring(2), 16);
                     hExcel.EstraiDizionario(RecipientId, Dizionario, ExcelfilePath);
-#if !PULSANTIERE
                     TelemetryTabRef.UpdateDictionary(Dizionario);
-#endif
                     //aggiorna il combo Macchina
                     int indice = comboBoxMachine.FindStringExact(macchinaSelezionata);
 
@@ -537,16 +508,19 @@ namespace StemPC
             }
 #endif
 
+#if BUTTONPANEL
+            tabControl.TabPages.Remove(tabPageUART);
+            tabControl.TabPages.Remove(tabPageCodeGen);
+            tabControl.TabPages.Remove(TelemetryTabRef);
+            tabControl.TabPages.Remove(BLETabRef);
+            tabControl.TabPages.Remove(BootSmartTabRef);
+            tabControl.TabPages.Remove(BootTabRef);
+            //tabControl.TabPages.Remove(tabPageProtocol);
+#endif
+
             //installa l'evento di aggiornamento textbox applayer
             AppLayerCommandDecoded += onAppLayerDecoded;
             AppLayerCommandSended += onAppLayerSended;
-
-#if PULSANTIERE
-            // Remove unnecessary tabs and UI for PULSANTIERE build
-            tabControl.TabPages.Remove(tabPageProtocol);
-            tabControl.TabPages.Remove(tabPageUART);
-            tabControl.TabPages.Remove(tabPageCodeGen);
-#endif
         }
 
         // Aggiungi la tab per il collaudo pulsantiere
@@ -563,15 +537,14 @@ namespace StemPC
             tabControl.TabPages.Add(tabPage);
         }
 
-        // Add this public method inside Form1 class
-        public void SetRecipientIdSilently(uint recipientId, string machineName, string boardName)
+        public void SetRecipientIdSilently(uint recipientId, int machineName, int boardName)
         {
             RecipientId = recipientId;
 
+#if !BUTTONPANEL
             // Update label (optional, for debug)
-            //label12.Text = $"Indirizzo\n 0x{recipientId:X8}";
-
-            // Reload dictionary conditionally
+            label12.Text = $"Indirizzo\n 0x{recipientId:X8}";
+#endif
             if (isStreamBased)
             {
                 hExcel.EstraiDizionario(recipientId, Dizionario);
@@ -581,14 +554,14 @@ namespace StemPC
                 hExcel.EstraiDizionario(recipientId, Dizionario, ExcelfilePath);
             }
 
-#if !FORNITORE
-            if (TelemetryTabRef != null)
-                TelemetryTabRef.UpdateDictionary(Dizionario);
-#endif
+#if !BUTTONPANEL
+            //if (TelemetryTabRef != null)
+            //    TelemetryTabRef.UpdateDictionary(Dizionario);
 
             // Optionally update combos silently (no visual change if tab hidden)
-            //comboBoxMachine.SelectedItem = machineName;
-            //comboBoxBoard.SelectedItem = boardName;
+            comboBoxMachine.SelectedIndex = machineName;
+            comboBoxBoard.SelectedIndex = boardName;
+#endif
         }
 
         public void UpdateTerminal(string message)
@@ -697,13 +670,11 @@ namespace StemPC
                             TLTTabRef.telemetryManager.UpdateSourceAddress(RecipientId);
 #else
                             hExcel.EstraiDizionario(RecipientId, Dizionario, ExcelfilePath);
-#if !PULSANTIERE
                             if (TelemetryTabRef != null)
                             {
                                 TelemetryTabRef.UpdateDictionary(Dizionario);
                                 TelemetryTabRef.telemetryManager.UpdateSourceAddress(RecipientId);
                             }
-#endif
 #endif
                         }
                     }
@@ -1245,10 +1216,8 @@ namespace StemPC
         private void bluetoothLEToolStripMenuItem_Click(object sender, EventArgs e)
         {
             CommunicationPort = "ble";
-#if !PULSANTIERE
             BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
             TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
-#endif
             cANToolStripMenuItem.Checked = false;
             bluetoothLEToolStripMenuItem.Checked = true;
             serialToolStripMenuItem.Checked = false;
@@ -1274,10 +1243,8 @@ namespace StemPC
                     _serialPortManager.Connect(port);
 
                     CommunicationPort = "serial";
-#if !PULSANTIERE
                     BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
                     TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
-#endif
                     cANToolStripMenuItem.Checked = false;
                     bluetoothLEToolStripMenuItem.Checked = false;
                     serialToolStripMenuItem.Checked = true;
@@ -1301,10 +1268,8 @@ namespace StemPC
             _CDL.ChangeBaudrate("pcan", 100000);
 
             CommunicationPort = "can";
-#if !PULSANTIERE
             BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
             TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
-#endif
             cANToolStripMenuItem.Checked = true;
             bluetoothLEToolStripMenuItem.Checked = false;
             serialToolStripMenuItem.Checked = false;
@@ -1315,10 +1280,8 @@ namespace StemPC
             _CDL.ChangeBaudrate("pcan", 250000);
 
             CommunicationPort = "can";
-#if !PULSANTIERE
             BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
             TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
-#endif
             cANToolStripMenuItem.Checked = true;
             bluetoothLEToolStripMenuItem.Checked = false;
             serialToolStripMenuItem.Checked = false;
@@ -1329,10 +1292,8 @@ namespace StemPC
             _CDL.ChangeBaudrate("pcan", 125000);
 
             CommunicationPort = "can";
-#if !PULSANTIERE
             BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
             TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
-#endif
             cANToolStripMenuItem.Checked = true;
             bluetoothLEToolStripMenuItem.Checked = false;
             serialToolStripMenuItem.Checked = false;
@@ -1343,10 +1304,8 @@ namespace StemPC
             _CDL.ChangeBaudrate("pcan", 500000);
 
             CommunicationPort = "can";
-#if !PULSANTIERE
             BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
             TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
-#endif
             cANToolStripMenuItem.Checked = true;
             bluetoothLEToolStripMenuItem.Checked = false;
             serialToolStripMenuItem.Checked = false;

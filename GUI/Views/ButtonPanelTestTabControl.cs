@@ -106,13 +106,13 @@ namespace STEMPM.GUI.Views
         private void SetRecipientIdForPanel(ButtonPanelType panelType)
         {
             // Mapping based on your specification
-            (string machine, string board, uint recipientId) mapping = panelType switch
+            (int machine, int board, uint recipientId) mapping = panelType switch
             {
-                ButtonPanelType.DIS0023789 => ("Eden", "Tastiera1", 0x00030101), 
-                ButtonPanelType.DIS0025205 => ("Optimus-XP", "Tastiera1", 0x000A0101), 
-                ButtonPanelType.DIS0026166 => ("R3L-XP", "Tastiera1", 0x000B0101), 
-                ButtonPanelType.DIS0026182 => ("Eden BS8", "Tastiera1", 0x000C0101), 
-                _ => ("Unknown", "Tastiera1", 0x00000000)
+                ButtonPanelType.DIS0023789 => (3, 1, 0x00030101), 
+                ButtonPanelType.DIS0025205 => (10, 1, 0x000A0101), 
+                ButtonPanelType.DIS0026166 => (11, 2, 0x000B0101), 
+                ButtonPanelType.DIS0026182 => (12, 1, 0x000C0101), 
+                _ => (-1, -1, 0x00000000)
             };
 
             // Use Form1's method to set everything correctly in background
