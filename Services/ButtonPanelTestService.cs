@@ -197,13 +197,13 @@ namespace STEMPM.Services
                 byte[] expectedPayload = new byte[] { 0x00, 0x02, 0x80, 0x00, buttonCode };
 
                 // Prompt utente
-                await userPrompt($"Premi il pulsante {i}");
+                await userPrompt($"Premi il pulsante {panel.Buttons[i - 1]}");
 
                 // Await event con matching payload
                 bool passed = await AwaitButtonPressEventAsync(expectedPayload, BUTTON_PRESS_TIMEOUT_MS);
 
                 allPassed &= passed;
-                message += $"Pulsante {i}: {(passed ? "OK" : "Fallito")};";
+                message += $"Pulsante {panel.Buttons[i - 1]}: {(passed ? "OK" : "Fallito")};";
             }
 
             return new ButtonPanelTestResult
