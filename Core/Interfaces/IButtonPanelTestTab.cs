@@ -1,7 +1,7 @@
-﻿using STEMPM.Core.Enums;
+﻿using STEMPM.Core.ButtonPanelEnums;
 using STEMPM.Core.Models;
 
-namespace STEMPM.GUI.Views
+namespace STEMPM.Core.Interfaces
 {
     // Interfaccia della vista per la pagina di collaudo pulsantiere
     internal interface IButtonPanelTestTab
