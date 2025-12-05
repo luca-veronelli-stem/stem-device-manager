@@ -25,7 +25,7 @@ namespace STEMPM.Core.Interfaces
         public void ResetAllIndicators();
 
         // Metodo per mostrare un prompt all'utente
-        Task ShowPromptAsync(string message, string title = "Istruzione collaudo pulsanti");
+        Task ShowPromptAsync(string message);
 
         // Metodo per chiedere una conferma all'utente
         Task<bool> ShowConfirmAsync(string message, ButtonPanelTestType testType);
@@ -35,6 +35,9 @@ namespace STEMPM.Core.Interfaces
 
         // Metodo per modificare lo stato della vista durante l'esecuzione del collaudo
         void ShowProgress(string message);
+
+        // Metodo per aggiornare il colore dell'ultimo prompt visualizzato
+        void UpdateLastPromptColor(string lastMessage, Color color);
 
         // Metodo per visualizzare eventuali messaggi di errore
         void ShowError(string message);
