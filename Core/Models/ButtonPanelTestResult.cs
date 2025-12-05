@@ -16,5 +16,8 @@ namespace STEMPM.Core.Models
 
         // Messaggio associato al risultato del test
         public required string Message { get; set; }
+
+        // Indica se il test è stato interrotto
+        public bool Interrupted { get; set; } = false;
     }
 }

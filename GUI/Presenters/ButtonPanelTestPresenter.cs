@@ -33,6 +33,8 @@ namespace STEMPM.GUI.Presenters
             _view.ShowProgress($"Avvio collaudo {testType} per pulsantiera {panelType}...");
             _view.ResetAllIndicators();
 
+            List<ButtonPanelTestResult> results = new List<ButtonPanelTestResult>();
+
             try
             {
                 Func<string, Task> promptFunc = async (msg) =>
@@ -51,8 +53,6 @@ namespace STEMPM.GUI.Presenters
                     Color resultColor = passed ? Color.LimeGreen : Color.Red;
                     _view.UpdateLastPromptColor(_lastPromptMessage, resultColor);
                 };
-
-                List<ButtonPanelTestResult> results = new List<ButtonPanelTestResult>();
 
                 switch (testType)
                 {
@@ -78,16 +78,22 @@ namespace STEMPM.GUI.Presenters
                 }
 
                 _view.DisplayResults(results);
-                _view.ShowProgress($"Collaudo {testType} completato." + Environment.NewLine);
+
+                string progressMessage = results.Any(r => r.Interrupted)
+                    ? "Collaudo interrotto dall'utente."
+                    : $"Collaudo {testType} completato." + Environment.NewLine;
+                _view.ShowProgress(progressMessage);
             }
             catch (OperationCanceledException)
             {
                 _view.ShowProgress("Collaudo interrotto dall'utente.");
+                if (results.Any()) _view.DisplayResults(results);
             }
             catch (Exception ex)
             {
                 _view.ShowError($"Errore durante il collaudo: {ex.Message}");
                 _view.ShowProgress("Collaudo interrotto.");
+                if (results.Any()) _view.DisplayResults(results);
             }
             finally
             {
