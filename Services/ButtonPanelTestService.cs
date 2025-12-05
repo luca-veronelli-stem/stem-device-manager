@@ -24,7 +24,10 @@ namespace STEMPM.Services
         private const int BUTTON_PRESS_TIMEOUT_MS = 10000;
 
         // Costruisce payload
-        private byte[] BuildPayload(ushort command, ushort variableId, byte[]? value)
+        private byte[] BuildPayload(
+            ushort command, 
+            ushort variableId, 
+            byte[]? value)
         {
             var payload = new List<byte>
             {
@@ -39,7 +42,11 @@ namespace STEMPM.Services
         }
 
         // Invia comando via protocollo STEM
-        private async Task<byte[]> SendCommandAsync(ushort command, byte[] fullPayload, bool waitAnswer, int timeoutMs = 5000)
+        private async Task<byte[]> SendCommandAsync(
+            ushort command, 
+            byte[] fullPayload, 
+            bool waitAnswer, 
+            int timeoutMs = 5000)
         {
             if (!waitAnswer)
             {
@@ -89,7 +96,10 @@ namespace STEMPM.Services
         }
 
         // Gestisce l'invio del comando
-        private async Task HandleSendCommandInternal(ushort command, byte[] payload, bool waitAnswer)
+        private async Task HandleSendCommandInternal(
+            ushort command, 
+            byte[] payload, 
+            bool waitAnswer)
         {
             byte cmdInit = (byte)(command >> 8);
             byte cmdOpt = (byte)command;
@@ -129,10 +139,14 @@ namespace STEMPM.Services
         }
 
         // Gestisce la rilevazione della prezzione del pulsante
-        public async Task<bool> AwaitButtonPressEventAsync(byte[] expectedPayload, int timeoutMs)
+        public async Task<bool> AwaitButtonPressEventAsync(
+            byte[] expectedPayload, 
+            int timeoutMs, 
+            CancellationToken cancellationToken = default)
         {
             var tcs = new TaskCompletionSource<bool>();
-            var cts = new CancellationTokenSource(timeoutMs);
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            linkedCts.CancelAfter(timeoutMs);
 
             void OnAppLayerDecoded(object? sender, AppLayerDecoderEventArgs e)
             {
@@ -142,65 +156,85 @@ namespace STEMPM.Services
                 }
             }
 
-            Form1.FormRef.AppLayerCommandDecoded += OnAppLayerDecoded;
+            FormRef.AppLayerCommandDecoded += OnAppLayerDecoded;
 
             try
             {
-                var completedTask = await Task.WhenAny(tcs.Task, Task.Delay(timeoutMs, cts.Token));
+                var completedTask = await Task.WhenAny(tcs.Task, Task.Delay(Timeout.Infinite, linkedCts.Token));
                 if (completedTask == tcs.Task)
                 {
-                    return true;
+                    return await tcs.Task;
                 }
+                else
+                {
+                    return false;
+                }
+            }
+            catch (OperationCanceledException)
+            {
                 return false;
             }
             finally
             {
-                Form1.FormRef.AppLayerCommandDecoded -= OnAppLayerDecoded;
-                cts.Dispose();
+                FormRef.AppLayerCommandDecoded -= OnAppLayerDecoded;
             }
         }
 
         // Esegue tutti i test disponibili per una pulsantiera specifica e restituisce i risultati
-        public async Task<List<ButtonPanelTestResult>> TestAllAsync(ButtonPanelType panelType, Func<string, Task<bool>> userConfirm, Func<string, Task> userPrompt)
+        public async Task<List<ButtonPanelTestResult>> TestAllAsync(
+            ButtonPanelType panelType, 
+            Func<string, Task<bool>> userConfirm, 
+            Func<string, Task> userPrompt, 
+            CancellationToken cancellationToken = default)
         {
-            ButtonPanel panel = ButtonPanel.GetByType(panelType);
-
-            List<ButtonPanelTestResult> results = new List<ButtonPanelTestResult>
+            var panel = ButtonPanel.GetByType(panelType);
+            var results = new List<ButtonPanelTestResult>
             {
-                await TestButtonsAsync(panelType, userPrompt)
+                await TestButtonsAsync(panelType, userPrompt, cancellationToken)
             };
+
+            cancellationToken.ThrowIfCancellationRequested();
 
             if (panel.HasLed)
             {
-                results.Add(await TestLedAsync(panelType, userConfirm));
+                results.Add(await TestLedAsync(panelType, userConfirm, cancellationToken));
             }
+
+            cancellationToken.ThrowIfCancellationRequested();
 
             if (panel.HasBuzzer)
             {
-                results.Add(await TestBuzzerAsync(panelType, userConfirm));
+                results.Add(await TestBuzzerAsync(panelType, userConfirm, cancellationToken));
             }
 
             return results;
         }
 
         // Esegue il test dei pulsanti della pulsantiera
-        public async Task<ButtonPanelTestResult> TestButtonsAsync(ButtonPanelType panelType, Func<string, Task> userPrompt)
+        public async Task<ButtonPanelTestResult> TestButtonsAsync(
+            ButtonPanelType panelType, 
+            Func<string, Task> userPrompt, 
+            CancellationToken cancellationToken = default)
         {
             var panel = ButtonPanel.GetByType(panelType);
             bool allPassed = true;
             string message = "";
 
-            for (int i = 0; i <= panel.ButtonCount; i++)
+            for (int i = 0; i < panel.ButtonCount; i++)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 byte buttonCode = panel.ButtonMasks[i];
                 byte[] expectedPayload = [0x00, 0x02, 0x80, 0x00, buttonCode];
 
-                await userPrompt($"Premi il pulsante {panel.Buttons[i - 1]}");
+                await userPrompt($"Premi il pulsante {panel.Buttons[i]}");
 
-                bool passed = await AwaitButtonPressEventAsync(expectedPayload, BUTTON_PRESS_TIMEOUT_MS);
+                cancellationToken.ThrowIfCancellationRequested();
+
+                bool passed = await AwaitButtonPressEventAsync(expectedPayload, BUTTON_PRESS_TIMEOUT_MS, cancellationToken);
 
                 allPassed &= passed;
-                message += $"Pulsante {panel.Buttons[i - 1]}: {(passed ? "PASSATO" : "FALLITO")};" + Environment.NewLine;
+                message += $"Pulsante {panel.Buttons[i]}: {(passed ? "PASSATO" : "FALLITO")};" + Environment.NewLine;
             }
 
             return new ButtonPanelTestResult
@@ -213,28 +247,35 @@ namespace STEMPM.Services
         }
 
         // Esegue il collaudo dei LED della pulsantiera
-        public async Task<ButtonPanelTestResult> TestLedAsync(ButtonPanelType panelType, Func<string, Task<bool>> userConfirm)
+        public async Task<ButtonPanelTestResult> TestLedAsync(
+            ButtonPanelType panelType, 
+            Func<string, Task<bool>> userConfirm, 
+            CancellationToken cancellationToken = default)
         {
             bool passed = true;
 
             // Collaudo accensione LED verde
             var onPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_GREEN_LED, VALUE_ON);
             await SendCommandAsync(CMD_WRITE_VARIABLE, onPayload, waitAnswer: true);
+            cancellationToken.ThrowIfCancellationRequested();
             passed &= await userConfirm("Il LED verde è acceso?");
 
             // Collaudo spegnimento LED verde
             var offPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_GREEN_LED, VALUE_OFF);
             await SendCommandAsync(CMD_WRITE_VARIABLE, offPayload, waitAnswer: true);
+            cancellationToken.ThrowIfCancellationRequested();
             passed &= await userConfirm("Il LED verde è spento?");
 
             // Collaudo accensione LED rosso
             onPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_RED_LED, VALUE_ON);
             await SendCommandAsync(CMD_WRITE_VARIABLE, onPayload, waitAnswer: true);
+            cancellationToken.ThrowIfCancellationRequested();
             passed &= await userConfirm("Il LED rosso è acceso?");
 
             // Collaudo spegnimento LED rosso
             offPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_RED_LED, VALUE_OFF);
             await SendCommandAsync(CMD_WRITE_VARIABLE, offPayload, waitAnswer: true);
+            cancellationToken.ThrowIfCancellationRequested();
             passed &= await userConfirm("Il LED rosso è spento?");
 
             // Collaudo accensione simultanea LED verde e rosso
@@ -242,6 +283,7 @@ namespace STEMPM.Services
             await SendCommandAsync(CMD_WRITE_VARIABLE, onPayload, waitAnswer: true);
             onPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_RED_LED, VALUE_ON);
             await SendCommandAsync(CMD_WRITE_VARIABLE, onPayload, waitAnswer: true);
+            cancellationToken.ThrowIfCancellationRequested();
             passed &= await userConfirm("Entrambi i LED (verde e rosso) sono accesi?");
 
             // Spegni i LED alla fine del test
@@ -260,11 +302,15 @@ namespace STEMPM.Services
         }
 
         // Esegue il test del buzzer della pulsantiera
-        public async Task<ButtonPanelTestResult> TestBuzzerAsync(ButtonPanelType panelType, Func<string, Task<bool>> userConfirm)
+        public async Task<ButtonPanelTestResult> TestBuzzerAsync(
+            ButtonPanelType panelType, 
+            Func<string, Task<bool>> userConfirm, 
+            CancellationToken cancellationToken = default)
         {
             // Attiva buzzer per mezzo secondo
             var onPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_BUZZER, VALUE_SINGLE_BLINK);
             await SendCommandAsync(CMD_WRITE_VARIABLE, onPayload, waitAnswer: true);
+            cancellationToken.ThrowIfCancellationRequested();
             bool passed = await userConfirm("Hai sentito il buzzer suonare?");
 
             return new ButtonPanelTestResult
