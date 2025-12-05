@@ -69,7 +69,7 @@ namespace STEMPM.Services
 
             try
             {
-                Form1.FormRef.AppLayerCommandDecoded += OnAppLayerDecoded;
+                FormRef.AppLayerCommandDecoded += OnAppLayerDecoded;
 
                 await HandleSendCommandInternal(command, fullPayload, true);
 
@@ -84,61 +84,75 @@ namespace STEMPM.Services
                     throw new TimeoutException("Timeout attesa risposta dal dispositivo.");
                 }
             }
+            catch (TimeoutException)
+            {
+                throw;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
-                throw new Exception($"Errore invio comando: {ex.Message}");
+                throw new Exception($"Errore invio comando: {ex.Message}", ex);
             }
             finally
             {
-                Form1.FormRef.AppLayerCommandDecoded -= OnAppLayerDecoded;
+                FormRef.AppLayerCommandDecoded -= OnAppLayerDecoded;
                 cts.Dispose();
             }
         }
 
         // Gestisce l'invio del comando
         private async Task HandleSendCommandInternal(
-            ushort command, 
-            byte[] payload, 
+            ushort command,
+            byte[] payload,
             bool waitAnswer)
         {
             byte cmdInit = (byte)(command >> 8);
             byte cmdOpt = (byte)command;
-            byte cryptFlag = 0x00; // Nessuna crittografia
-            string interfaceType = Form1.FormRef.CommunicationPort; // "can", "ble", "serial"
+            byte cryptFlag = 0x00;
+            string interfaceType = FormRef.CommunicationPort;
             int version = 1;
-            uint recipientId = Form1.FormRef.RecipientId;
-            uint senderId = Form1.FormRef.senderId;
+            uint recipientId = FormRef.RecipientId;
+            uint senderId = FormRef.senderId;
 
-            // Transport data: crypt + sender + len + app (ma usa tuo constructor)
-            var transportData = new byte[] { cryptFlag }
-                .Concat(BitConverter.GetBytes(senderId).Reverse()) // Big-endian?
-                .Concat(new byte[2]) // Placeholder len (NetworkLayer lo calcola)
-                .Concat(new byte[] { cmdInit, cmdOpt })
-                .Concat(payload.Skip(2).ToArray()) // Skip command se già in payload? No, payload include command
-                .ToArray();
-
-            var networkLayer = new NetworkLayer(interfaceType, version, recipientId, transportData, true);
-
-            var packetManager = new PacketManager(senderId);
-            var networkPackets = networkLayer.NetworkPackets;
-
-            // Aggiungi canale CAN
-            packetManager.Add_CAN_Channel(Form1.FormRef._CDL);
-
-            // Validator per ACK (da tuo codice)
-            Func<byte[], bool> responseValidator = data =>
-                data.Length >= 2 && data[0] == (0x80 | cmdInit) && data[1] == cmdOpt;
-
-            bool sent;
-            sent = await packetManager.SendCANAndWaitForResponseAsync(networkPackets, responseValidator, 5000);
-
-            if (!sent)
+            try
             {
-                throw new Exception("Fallito invio comando.");
+                var transportData = new byte[] { cryptFlag }
+                    .Concat(BitConverter.GetBytes(senderId).Reverse())
+                    .Concat(new byte[2])
+                    .Concat(new byte[] { cmdInit, cmdOpt })
+                    .Concat(payload.Skip(2).ToArray())
+                    .ToArray();
+
+                var networkLayer = new NetworkLayer(interfaceType, version, recipientId, transportData, true);
+
+                var packetManager = new PacketManager(senderId);
+                var networkPackets = networkLayer.NetworkPackets;
+
+                // Aggiungi canale CAN
+                packetManager.Add_CAN_Channel(Form1.FormRef._CDL);
+
+                // Validator per ACK
+                Func<byte[], bool> responseValidator = data =>
+                    data.Length >= 2 && data[0] == (0x80 | cmdInit) && data[1] == cmdOpt;
+
+                bool sent;
+                sent = await packetManager.SendCANAndWaitForResponseAsync(networkPackets, responseValidator, 5000);
+
+                if (!sent)
+                {
+                    throw new Exception("Fallito invio comando.");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Errore nell'invio del comando: {ex.Message}", ex);
             }
         }
 
-        // Gestisce la rilevazione della prezzione del pulsante
+        // Gestisce la rilevazione della pressione del pulsante
         public async Task<bool> AwaitButtonPressEventAsync(
             byte[] expectedPayload, 
             int timeoutMs, 
@@ -189,21 +203,36 @@ namespace STEMPM.Services
             Action<int, bool>? onButtonResult = null,
             CancellationToken cancellationToken = default)
         {
-            var results = new List<ButtonPanelTestResult>();
+            List<ButtonPanelTestResult> results = [];
 
-            var buttonsResult = await TestButtonsAsync(panelType, userPrompt, onButtonStart, onButtonResult, cancellationToken);
-            results.Add(buttonsResult);
-            if (buttonsResult.Interrupted) return results;
+            try
+            {
+                ButtonPanelTestResult buttonsResult = await TestButtonsAsync(panelType, userPrompt, onButtonStart, onButtonResult, cancellationToken);
+                results.Add(buttonsResult);
+                if (buttonsResult.Interrupted) return results;
 
-            var ledResult = await TestLedAsync(panelType, userConfirm, cancellationToken);
-            results.Add(ledResult);
-            if (ledResult.Interrupted) return results;
+                ButtonPanelTestResult ledResult = await TestLedAsync(panelType, userConfirm, cancellationToken);
+                results.Add(ledResult);
+                if (ledResult.Interrupted) return results;
 
-            var buzzerResult = await TestBuzzerAsync(panelType, userConfirm, cancellationToken);
-            results.Add(buzzerResult);
-            if (buzzerResult.Interrupted) return results;
+                ButtonPanelTestResult buzzerResult = await TestBuzzerAsync(panelType, userConfirm, cancellationToken);
+                results.Add(buzzerResult);
+                if (buzzerResult.Interrupted) return results;
 
-            return results;
+                return results;
+            }
+            catch (TimeoutException ex)
+            {
+                return [new ButtonPanelTestResult { PanelType = panelType, TestType = ButtonPanelTestType.Complete, Passed = false, Message = $"Timeout: {ex.Message}", Interrupted = false }];
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return [new ButtonPanelTestResult { PanelType = panelType, TestType = ButtonPanelTestType.Complete, Passed = false, Message = $"Errore generale: {ex.Message}", Interrupted = false }];
+            }
         }
 
         // Esegue il test dei pulsanti per una pulsantiera specifica
@@ -242,11 +271,19 @@ namespace STEMPM.Services
                     message += $"- Pulsante {panel.Buttons[i]}: {(passed ? "PASSATO" : "FALLITO")}\n";
                 }
             }
+            catch (TimeoutException ex)
+            {
+                return new ButtonPanelTestResult { PanelType = panelType, TestType = ButtonPanelTestType.Complete, Passed = false, Message = $"Timeout: {ex.Message}", Interrupted = false };
+            }
             catch (OperationCanceledException)
             {
                 interrupted = true;
                 allPassed = false;
                 message += "- Test interrotto dall'utente.\n";
+            }
+            catch (Exception ex)
+            {
+                return new ButtonPanelTestResult { PanelType = panelType, TestType = ButtonPanelTestType.Complete, Passed = false, Message = $"Errore generale: {ex.Message}", Interrupted = false };
             }
 
             return new ButtonPanelTestResult
@@ -265,7 +302,7 @@ namespace STEMPM.Services
             Func<string, Task<bool>> userConfirm,
             CancellationToken cancellationToken = default)
         {
-            bool passed = true;
+            bool allPassed = true;
             string message = "";
             bool interrupted = false;
 
@@ -277,7 +314,7 @@ namespace STEMPM.Services
                 cancellationToken.ThrowIfCancellationRequested();
                 bool conf = await userConfirm("Il LED verde è acceso?");
                 message += $"- LED verde acceso: {(conf ? "PASSATO" : "FALLITO")}\n";
-                passed &= conf;
+                allPassed &= conf;
 
                 // Collaudo spegnimento LED verde
                 var offPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_GREEN_LED, VALUE_OFF);
@@ -285,7 +322,7 @@ namespace STEMPM.Services
                 cancellationToken.ThrowIfCancellationRequested();
                 conf = await userConfirm("Il LED verde è spento?");
                 message += $"- LED verde spento: {(conf ? "PASSATO" : "FALLITO")}\n";
-                passed &= conf;
+                allPassed &= conf;
 
                 // Collaudo accensione LED rosso
                 onPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_RED_LED, VALUE_ON);
@@ -293,7 +330,7 @@ namespace STEMPM.Services
                 cancellationToken.ThrowIfCancellationRequested();
                 conf = await userConfirm("Il LED rosso è acceso?");
                 message += $"- LED rosso acceso: {(conf ? "PASSATO" : "FALLITO")}\n";
-                passed &= conf;
+                allPassed &= conf;
 
                 // Collaudo spegnimento LED rosso
                 offPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_RED_LED, VALUE_OFF);
@@ -301,7 +338,7 @@ namespace STEMPM.Services
                 cancellationToken.ThrowIfCancellationRequested();
                 conf = await userConfirm("Il LED rosso è spento?");
                 message += $"- LED rosso spento: {(conf ? "PASSATO" : "FALLITO")}\n";
-                passed &= conf;
+                allPassed &= conf;
 
                 // Collaudo accensione simultanea LED verde e rosso
                 onPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_GREEN_LED, VALUE_ON);
@@ -311,7 +348,7 @@ namespace STEMPM.Services
                 cancellationToken.ThrowIfCancellationRequested();
                 conf = await userConfirm("Entrambi i LED (verde e rosso) sono accesi?");
                 message += $"- LED verde e rosso accesi: {(conf ? "PASSATO" : "FALLITO")}\n";
-                passed &= conf;
+                allPassed &= conf;
 
                 // Spegni i LED alla fine del test
                 offPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_RED_LED, VALUE_OFF);
@@ -319,18 +356,26 @@ namespace STEMPM.Services
                 offPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_GREEN_LED, VALUE_OFF);
                 await SendCommandAsync(CMD_WRITE_VARIABLE, offPayload, waitAnswer: true);
             }
+            catch (TimeoutException ex)
+            {
+                return new ButtonPanelTestResult { PanelType = panelType, TestType = ButtonPanelTestType.Complete, Passed = false, Message = $"Timeout: {ex.Message}", Interrupted = false };
+            }
             catch (OperationCanceledException)
             {
                 interrupted = true;
-                passed = false;
-                message += "\n- Test interrotto dall'utente.";
+                allPassed = false;
+                message += "- Test interrotto dall'utente.\n";
+            }
+            catch (Exception ex)
+            {
+                return new ButtonPanelTestResult { PanelType = panelType, TestType = ButtonPanelTestType.Complete, Passed = false, Message = $"Errore generale: {ex.Message}", Interrupted = false };
             }
 
             return new ButtonPanelTestResult
             {
                 PanelType = panelType,
                 TestType = ButtonPanelTestType.Led,
-                Passed = passed,
+                Passed = allPassed,
                 Message = message.Trim(),
                 Interrupted = interrupted
             };
@@ -356,11 +401,19 @@ namespace STEMPM.Services
                 passed &= conf;
                 message = $"- Buzzer suonato: {(conf ? "PASSATO" : "FALLITO")}";
             }
+            catch (TimeoutException ex)
+            {
+                return new ButtonPanelTestResult { PanelType = panelType, TestType = ButtonPanelTestType.Complete, Passed = false, Message = $"Timeout: {ex.Message}", Interrupted = false };
+            }
             catch (OperationCanceledException)
             {
                 interrupted = true;
                 passed = false;
-                message += "\n- Test interrotto dall'utente.";
+                message += "- Test interrotto dall'utente.\n";
+            }
+            catch (Exception ex)
+            {
+                return new ButtonPanelTestResult { PanelType = panelType, TestType = ButtonPanelTestType.Complete, Passed = false, Message = $"Errore generale: {ex.Message}", Interrupted = false };
             }
 
             return new ButtonPanelTestResult

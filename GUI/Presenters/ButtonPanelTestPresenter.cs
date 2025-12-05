@@ -35,26 +35,26 @@ namespace STEMPM.GUI.Presenters
             _view.ShowProgress($"Avvio collaudo {testType} per pulsantiera {panelType}...");
             _view.ResetAllIndicators();
 
-            List<ButtonPanelTestResult> results = new List<ButtonPanelTestResult>();
+            List<ButtonPanelTestResult> results = [];
 
             try
             {
-                Func<string, Task> promptFunc = async (msg) =>
+                async Task promptFunc(string msg)
                 {
                     _lastPromptMessage = msg;
                     await _view.ShowPromptAsync(msg);
-                };
+                }
 
-                Func<string, Task<bool>> confirmFunc = (msg) => _view.ShowConfirmAsync(msg, testType);
+                Task<bool> confirmFunc(string msg) => _view.ShowConfirmAsync(msg, testType);
 
-                Action<int> onButtonStart = (i) => _view.SetButtonWaiting(i);
+                void onButtonStart(int i) => _view.SetButtonWaiting(i);
 
-                Action<int, bool> onButtonResult = (i, passed) =>
+                void onButtonResult(int i, bool passed)
                 {
                     _view.SetButtonResult(i, passed);
                     Color resultColor = passed ? Color.LimeGreen : Color.Red;
                     _view.UpdateLastPromptColor(_lastPromptMessage, resultColor);
-                };
+                }
 
                 switch (testType)
                 {
@@ -75,8 +75,7 @@ namespace STEMPM.GUI.Presenters
                         break;
 
                     default:
-                        _view.ShowError("Tipo di collaudo non supportato.");
-                        return;
+                        throw new NotSupportedException("Tipo di collaudo non supportato.");
                 }
 
                 _latestResults = results;
@@ -90,16 +89,24 @@ namespace STEMPM.GUI.Presenters
             catch (OperationCanceledException)
             {
                 _view.ShowProgress("Collaudo interrotto dall'utente.");
-                if (results.Any()) _view.DisplayResults(results);
+            }
+            catch (TimeoutException ex)
+            {
+                _view.ShowError($"Timeout durante il collaudo: {ex.Message}");
+                _view.ShowProgress("Collaudo interrotto a causa di timeout.");
             }
             catch (Exception ex)
             {
                 _view.ShowError($"Errore durante il collaudo: {ex.Message}");
                 _view.ShowProgress("Collaudo interrotto.");
-                if (results.Any()) _view.DisplayResults(results);
             }
             finally
             {
+                if (_latestResults != null && _latestResults.Any())
+                {
+                    _view.DisplayResults(_latestResults);
+                }
+
                 _cts = null;
             }
         }
@@ -123,15 +130,22 @@ namespace STEMPM.GUI.Presenters
                 return;
             }
 
-            string filePath = _view.ShowSaveFileDialog();
+            string? filePath = _view.ShowSaveFileDialog();
             if (string.IsNullOrEmpty(filePath)) return;
 
             try
             {
                 string content = _view.GetResultsText();
-
                 File.WriteAllText(filePath, content);
                 _view.ShowMessage("Risultati salvati con successo.", "Successo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (IOException ex)
+            {
+                _view.ShowMessage($"Errore I/O durante il salvataggio: {ex.Message}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _view.ShowMessage($"Accesso negato durante il salvataggio: {ex.Message}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             catch (Exception ex)
             {
