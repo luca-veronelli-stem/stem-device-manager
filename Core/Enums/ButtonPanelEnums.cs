@@ -18,6 +18,15 @@
         Buzzer
     }
 
+    // Stati indicatore pulsanti
+    public enum IndicatorState
+    {
+        Idle,
+        Waiting,
+        Success,
+        Failed
+    }
+
     // Pulsanti Eden-XP e Eden BS8
     public enum EdenButtons
     {
