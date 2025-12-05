@@ -28,105 +28,119 @@
         /// </summary>
         private void InitializeComponent()
         {
-            buttonRunTests = new Button();
-            listBoxResults = new ListBox();
-            labelStatus = new Label();
-            labelSelectTestType = new Label();
-            comboBoxSelectTest = new ComboBox();
-            panelToggleButtons = new Panel();
+            panelButtonPanelSelection = new Panel();
             pictureBoxImage = new PictureBox();
+            panelTestSelection = new Panel();
+            richTextBoxTestProgress = new RichTextBox();
+            buttonStartTest = new Button();
+            richTextBoxTestResult = new RichTextBox();
+            buttonStopTest = new Button();
+            buttonDownloadResult = new Button();
             ((System.ComponentModel.ISupportInitialize)pictureBoxImage).BeginInit();
             SuspendLayout();
             // 
-            // buttonRunTests
+            // panelButtonPanelSelection
             // 
-            buttonRunTests.Location = new Point(210, 611);
-            buttonRunTests.Name = "buttonRunTests";
-            buttonRunTests.Size = new Size(699, 23);
-            buttonRunTests.TabIndex = 1;
-            buttonRunTests.Text = "Avvia collaudo";
-            buttonRunTests.UseVisualStyleBackColor = true;
-            // 
-            // listBoxResults
-            // 
-            listBoxResults.FormattingEnabled = true;
-            listBoxResults.ItemHeight = 15;
-            listBoxResults.Location = new Point(210, 356);
-            listBoxResults.Name = "listBoxResults";
-            listBoxResults.Size = new Size(699, 244);
-            listBoxResults.TabIndex = 2;
-            // 
-            // labelStatus
-            // 
-            labelStatus.AutoSize = true;
-            labelStatus.Dock = DockStyle.Bottom;
-            labelStatus.Location = new Point(0, 684);
-            labelStatus.Name = "labelStatus";
-            labelStatus.Size = new Size(64, 15);
-            labelStatus.TabIndex = 3;
-            labelStatus.Text = "labelStatus";
-            labelStatus.TextAlign = ContentAlignment.MiddleCenter;
-            // 
-            // labelSelectTestType
-            // 
-            labelSelectTestType.AutoSize = true;
-            labelSelectTestType.Location = new Point(207, 310);
-            labelSelectTestType.Name = "labelSelectTestType";
-            labelSelectTestType.Size = new Size(151, 15);
-            labelSelectTestType.TabIndex = 5;
-            labelSelectTestType.Text = "Seleziona il tipo di collaudo";
-            // 
-            // comboBoxSelectTest
-            // 
-            comboBoxSelectTest.DropDownStyle = ComboBoxStyle.DropDownList;
-            comboBoxSelectTest.FormattingEnabled = true;
-            comboBoxSelectTest.Location = new Point(210, 328);
-            comboBoxSelectTest.Name = "comboBoxSelectTest";
-            comboBoxSelectTest.Size = new Size(699, 23);
-            comboBoxSelectTest.TabIndex = 6;
-            // 
-            // panelToggleButtons
-            // 
-            panelToggleButtons.Location = new Point(3, 3);
-            panelToggleButtons.Name = "panelToggleButtons";
-            panelToggleButtons.Size = new Size(200, 693);
-            panelToggleButtons.TabIndex = 7;
+            panelButtonPanelSelection.Dock = DockStyle.Left;
+            panelButtonPanelSelection.Location = new Point(3, 3);
+            panelButtonPanelSelection.MinimumSize = new Size(200, 0);
+            panelButtonPanelSelection.Name = "panelButtonPanelSelection";
+            panelButtonPanelSelection.Padding = new Padding(3);
+            panelButtonPanelSelection.Size = new Size(200, 794);
+            panelButtonPanelSelection.TabIndex = 7;
             // 
             // pictureBoxImage
             // 
-            pictureBoxImage.Location = new Point(210, 3);
+            pictureBoxImage.Location = new Point(209, 3);
             pictureBoxImage.Name = "pictureBoxImage";
-            pictureBoxImage.Size = new Size(699, 300);
+            pictureBoxImage.Size = new Size(700, 300);
             pictureBoxImage.SizeMode = PictureBoxSizeMode.Zoom;
             pictureBoxImage.TabIndex = 8;
             pictureBoxImage.TabStop = false;
+            // 
+            // panelTestSelection
+            // 
+            panelTestSelection.Location = new Point(209, 309);
+            panelTestSelection.Name = "panelTestSelection";
+            panelTestSelection.Size = new Size(700, 60);
+            panelTestSelection.TabIndex = 0;
+            // 
+            // richTextBoxTestProgress
+            // 
+            richTextBoxTestProgress.BorderStyle = BorderStyle.FixedSingle;
+            richTextBoxTestProgress.Location = new Point(209, 377);
+            richTextBoxTestProgress.Name = "richTextBoxTestProgress";
+            richTextBoxTestProgress.ReadOnly = true;
+            richTextBoxTestProgress.Size = new Size(700, 323);
+            richTextBoxTestProgress.TabIndex = 10;
+            richTextBoxTestProgress.Text = "";
+            // 
+            // buttonStartTest
+            // 
+            buttonStartTest.Location = new Point(209, 735);
+            buttonStartTest.Name = "buttonStartTest";
+            buttonStartTest.Size = new Size(240, 30);
+            buttonStartTest.TabIndex = 0;
+            buttonStartTest.Text = "Avvia collaudo";
+            buttonStartTest.UseVisualStyleBackColor = true;
+            // 
+            // richTextBoxTestResult
+            // 
+            richTextBoxTestResult.Location = new Point(915, 3);
+            richTextBoxTestResult.MinimumSize = new Size(400, 0);
+            richTextBoxTestResult.Name = "richTextBoxTestResult";
+            richTextBoxTestResult.ReadOnly = true;
+            richTextBoxTestResult.Size = new Size(482, 697);
+            richTextBoxTestResult.TabIndex = 11;
+            richTextBoxTestResult.Text = "";
+            // 
+            // buttonStopTest
+            // 
+            buttonStopTest.Location = new Point(669, 735);
+            buttonStopTest.Name = "buttonStopTest";
+            buttonStopTest.Size = new Size(240, 30);
+            buttonStopTest.TabIndex = 12;
+            buttonStopTest.Text = "Arresta collaudo";
+            buttonStopTest.UseVisualStyleBackColor = true;
+            // 
+            // buttonDownloadResult
+            // 
+            buttonDownloadResult.Location = new Point(1048, 735);
+            buttonDownloadResult.Name = "buttonDownloadResult";
+            buttonDownloadResult.Size = new Size(242, 30);
+            buttonDownloadResult.TabIndex = 13;
+            buttonDownloadResult.Text = "Scarica risultato";
+            buttonDownloadResult.UseVisualStyleBackColor = true;
             // 
             // ButtonPanelTestTabControl
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
+            AutoSize = true;
+            Controls.Add(buttonDownloadResult);
+            Controls.Add(buttonStopTest);
+            Controls.Add(richTextBoxTestResult);
+            Controls.Add(buttonStartTest);
+            Controls.Add(richTextBoxTestProgress);
+            Controls.Add(panelTestSelection);
             Controls.Add(pictureBoxImage);
-            Controls.Add(panelToggleButtons);
-            Controls.Add(comboBoxSelectTest);
-            Controls.Add(labelSelectTestType);
-            Controls.Add(labelStatus);
-            Controls.Add(listBoxResults);
-            Controls.Add(buttonRunTests);
+            Controls.Add(panelButtonPanelSelection);
+            MinimumSize = new Size(1400, 800);
             Name = "ButtonPanelTestTabControl";
-            Size = new Size(912, 699);
+            Padding = new Padding(3);
+            Size = new Size(1403, 800);
             ((System.ComponentModel.ISupportInitialize)pictureBoxImage).EndInit();
             ResumeLayout(false);
-            PerformLayout();
         }
 
         #endregion
-
-        private Button buttonRunTests;
-        private ListBox listBoxResults;
-        private Label labelStatus;
-        private Label labelSelectTestType;
-        private ComboBox comboBoxSelectTest;
-        private Panel panelToggleButtons;
+        private Panel panelButtonPanelSelection;
         private PictureBox pictureBoxImage;
+        private Panel panelTestSelection;
+        private RichTextBox richTextBoxTestProgress;
+        private Button buttonStartTest;
+        private RichTextBox richTextBoxTestResult;
+        private Button buttonStopTest;
+        private Button buttonDownloadResult;
     }
 }

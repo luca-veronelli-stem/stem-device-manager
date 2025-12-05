@@ -9,6 +9,8 @@ namespace STEMPM.Core.Interfaces
         // Esegue tutti i test per una pulsantiera specifica e restituisce i risultati
         Task<List<ButtonPanelTestResult>> TestAllAsync(ButtonPanelType panelType, Func<string, Task<bool>> userConfirm, Func<string, Task> userPrompt);
 
+        Task<bool> AwaitButtonPressEventAsync(byte[] expectedPayload, int timeoutMs);
+
         // Esegue il test dei pulsanti per una pulsantiera specifica
         Task<ButtonPanelTestResult> TestButtonsAsync(ButtonPanelType panelType, Func<string, Task> userPrompt);
 

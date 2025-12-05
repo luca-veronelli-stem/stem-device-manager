@@ -129,7 +129,7 @@ namespace STEMPM.Services
         }
 
         // Gestisce la rilevazione della prezzione del pulsante
-        private async Task<bool> AwaitButtonPressEventAsync(byte[] expectedPayload, int timeoutMs)
+        public async Task<bool> AwaitButtonPressEventAsync(byte[] expectedPayload, int timeoutMs)
         {
             var tcs = new TaskCompletionSource<bool>();
             var cts = new CancellationTokenSource(timeoutMs);
@@ -203,7 +203,7 @@ namespace STEMPM.Services
                 bool passed = await AwaitButtonPressEventAsync(expectedPayload, BUTTON_PRESS_TIMEOUT_MS);
 
                 allPassed &= passed;
-                message += $"Pulsante {panel.Buttons[i - 1]}: {(passed ? "OK" : "Fallito")};";
+                message += $"Pulsante {panel.Buttons[i - 1]}: {(passed ? "OK" : "Fallito")};" + Environment.NewLine;
             }
 
             return new ButtonPanelTestResult
@@ -258,7 +258,7 @@ namespace STEMPM.Services
                 PanelType = panelType,
                 TestType = ButtonPanelTestType.Led,
                 Passed = passed,
-                Message = passed ? "LED funziona correttamente" : "LED non rilevato"
+                Message = (passed ? "LED funziona correttamente" : "LED non rilevato") + Environment.NewLine
             };
         }
 
@@ -275,7 +275,7 @@ namespace STEMPM.Services
                 PanelType = panelType,
                 TestType = ButtonPanelTestType.Buzzer,
                 Passed = passed,
-                Message = passed ? "Buzzer funziona correttamente" : "Buzzer non rilevato"
+                Message = (passed ? "Buzzer funziona correttamente" : "Buzzer non rilevato") + Environment.NewLine
             };
         }
     }

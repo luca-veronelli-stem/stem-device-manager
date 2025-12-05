@@ -9,55 +9,147 @@ namespace STEMPM.GUI.Views
 {
     public partial class ButtonPanelTestTabControl : UserControl, IButtonPanelTestTab
     {
-        // Evento pubblico per notificare quando l'utente fa clic sul pulsante di esecuzione dei test
-        public event EventHandler? OnRunTestsClicked;
+        // Gestori eventi invocati quando l'utente avvia o arresta il collaudo
+        public event EventHandler? OnStartTestClicked;
+        public event EventHandler? OnStopTestClicked;
 
         private ButtonPanelType? selectedPanelType;
-        private Button? selectedButton;
+        private ButtonPanelTestType? selectedTestType;
+        private List<ButtonIndicator> _buttonIndicators = [];
+        private readonly Dictionary<ButtonPanelType, List<RectangleF>> _buttonRegions = new()
+        {
+            {
+                ButtonPanelType.DIS0023789, new List<RectangleF>
+                {
+                    RectangleF.FromLTRB(0.17f, 0.10f, 0.23f, 0.15f),
+                    RectangleF.FromLTRB(0.32f, 0.10f, 0.38f, 0.15f),
+                    RectangleF.FromLTRB(0.47f, 0.10f, 0.53f, 0.15f),
+                    RectangleF.FromLTRB(0.62f, 0.10f, 0.68f, 0.15f),
+                    RectangleF.FromLTRB(0.17f, 0.85f, 0.23f, 0.90f),
+                    RectangleF.FromLTRB(0.32f, 0.85f, 0.38f, 0.90f),
+                    RectangleF.FromLTRB(0.47f, 0.85f, 0.53f, 0.90f),
+                    RectangleF.FromLTRB(0.62f, 0.85f, 0.68f, 0.90f)
+                }
+            },
+            {
+                ButtonPanelType.DIS0025205, new List<RectangleF>
+                {
+                    RectangleF.FromLTRB(0.32f, 0.10f, 0.38f, 0.15f),
+                    RectangleF.FromLTRB(0.62f, 0.10f, 0.68f, 0.15f),
+                    RectangleF.FromLTRB(0.32f, 0.85f, 0.38f, 0.90f),
+                    RectangleF.FromLTRB(0.62f, 0.85f, 0.68f, 0.90f)
+                }
+            },
+            {
+                ButtonPanelType.DIS0026166 , new List<RectangleF>
+                {
+                    RectangleF.FromLTRB(0.17f, 0.10f, 0.23f, 0.15f),
+                    RectangleF.FromLTRB(0.32f, 0.10f, 0.38f, 0.15f),
+                    RectangleF.FromLTRB(0.47f, 0.10f, 0.53f, 0.15f),
+                    RectangleF.FromLTRB(0.62f, 0.10f, 0.68f, 0.15f),
+                    RectangleF.FromLTRB(0.17f, 0.85f, 0.23f, 0.90f),
+                    RectangleF.FromLTRB(0.32f, 0.85f, 0.38f, 0.90f),
+                    RectangleF.FromLTRB(0.47f, 0.85f, 0.53f, 0.90f),
+                    RectangleF.FromLTRB(0.62f, 0.85f, 0.68f, 0.90f)
+                }
+            },
+            {
+                ButtonPanelType.DIS0026182, new List<RectangleF>
+                {
+                    RectangleF.FromLTRB(0.17f, 0.10f, 0.23f, 0.15f),
+                    RectangleF.FromLTRB(0.32f, 0.10f, 0.38f, 0.15f),
+                    RectangleF.FromLTRB(0.47f, 0.10f, 0.53f, 0.15f),
+                    RectangleF.FromLTRB(0.62f, 0.10f, 0.68f, 0.15f),
+                    RectangleF.FromLTRB(0.17f, 0.85f, 0.23f, 0.90f),
+                    RectangleF.FromLTRB(0.32f, 0.85f, 0.38f, 0.90f),
+                    RectangleF.FromLTRB(0.47f, 0.85f, 0.53f, 0.90f),
+                    RectangleF.FromLTRB(0.62f, 0.85f, 0.68f, 0.90f)
+                }
+            }
+        };
 
         // Costruttore del controllo
         public ButtonPanelTestTabControl()
         {
+            // Popola la pagina con gli elementi grafici
             InitializeComponent();
 
-            // Crea dinamicamente i toggle buttons basati sull'enum ButtonPanelType
-            CreateToggleButtons();
+            // Popola il pannello con i pulsanti per selezionare il tipo di pulsantiera
+            CreateSelectPanelButtons();
 
-            // Associa l'evento di click del pulsante all'evento pubblico
-            buttonRunTests.Click += (s, e) => OnRunTestsClicked?.Invoke(this, EventArgs.Empty);
+            // Popola il pannello con i pulsanti per selezionare il tipo di collaudo
+            ButtonPanelTestType[] testTypes = [.. Enum.GetValues(typeof(ButtonPanelTestType)).Cast<ButtonPanelTestType>()];
+            CreateSelectTestButtons(testTypes);
+
+            // Associa i gestori agli eventi di click
+            buttonStartTest.Click += (s, e) => OnStartTestClicked?.Invoke(this, EventArgs.Empty);
+            buttonStopTest.Click += (s, e) => OnStopTestClicked?.Invoke(this, EventArgs.Empty);
+
+            // Associa il metodo per colorare gli indicatori
+            pictureBoxImage.Paint += PictureBoxImage_Paint;
+            pictureBoxImage.SizeChanged += (s, e) => pictureBoxImage.Invalidate(); // Refresh on resize
         }
 
-        // Metodo per creare i toggle buttons dinamicamente (rectangular con round corners)
-        private void CreateToggleButtons()
+        // Metodo per creare dinamicamente i toggle buttons di selezione pulsantiera
+        private void CreateSelectPanelButtons()
         {
-            var types = Enum.GetValues(typeof(ButtonPanelType)).Cast<ButtonPanelType>().ToArray();
+            ButtonPanelType[] buttonPaneltypes = [.. Enum.GetValues(typeof(ButtonPanelType)).Cast<ButtonPanelType>()];
             int buttonHeight = 150;
             int spacing = 10;
 
-            for (int i = 0; i < types.Length; i++)
+            for (int i = 0; i < buttonPaneltypes.Length; i++)
             {
                 Button btn = new()
                 {
-                    Text = types[i].ToString(),
-                    Tag = types[i],
+                    Text = buttonPaneltypes[i].ToString(),
+                    Tag = buttonPaneltypes[i],
                     Location = new Point(10, 10 + i * (buttonHeight + spacing)),
                     Size = new Size(180, buttonHeight),
                     FlatStyle = FlatStyle.Flat,
-                    FlatAppearance = { BorderSize = 0 },
+                    FlatAppearance = { BorderSize = 1, BorderColor = Color.LightGray },
                     BackColor = SystemColors.Control,
                     ForeColor = Color.Black,
                     TextAlign = ContentAlignment.MiddleCenter
                 };
-                btn.Click += ButtonToggle_Click;
-                MakeRounded(btn, 20);
-                panelToggleButtons.Controls.Add(btn);
+
+                btn.Click += ButtonSelectPanel_Click;
+                MakeRounded(btn, 10);
+                panelButtonPanelSelection.Controls.Add(btn);
+            }
+        }
+
+        // Metodo per creare dinamicamente i toggle buttons di selezione collaudo
+        private void CreateSelectTestButtons(ButtonPanelTestType[] testTypes)
+        {
+            int buttonWidth = 150;
+            int buttonHeight = 35;
+            int spacing = 10;
+
+            for (int i = 0; i < testTypes.Length; i++)
+            {
+                Button btn = new()
+                {
+                    Text = testTypes[i].ToString(),
+                    Tag = testTypes[i],
+                    Location = new Point(i * (buttonWidth + spacing), 0),
+                    Size = new Size(buttonWidth, buttonHeight),
+                    FlatStyle = FlatStyle.Flat,
+                    FlatAppearance = { BorderSize = 1, BorderColor = Color.Gainsboro },
+                    BackColor = SystemColors.Control,
+                    ForeColor = Color.Black,
+                    TextAlign = ContentAlignment.MiddleCenter
+                };
+
+                btn.Click += ButtonSelectTest_Click;
+                MakeRounded(btn, 10);
+                panelTestSelection.Controls.Add(btn);
             }
 
-            // Seleziona il primo per default
-            //if (panelToggleButtons.Controls.Count > 0 && panelToggleButtons.Controls[0] is Button firstBtn)
-            //{
-            //    ButtonToggle_Click(firstBtn, EventArgs.Empty);
-            //}
+            // Seleziona il primo per default (Complete)
+            if (panelTestSelection.Controls.Count > 0 && panelTestSelection.Controls[0] is Button firstBtn)
+            {
+                ButtonSelectTest_Click(firstBtn, EventArgs.Empty);
+            }
         }
 
         // Metodo helper per rendere un button con angoli arrotondati
@@ -72,8 +164,8 @@ namespace STEMPM.GUI.Views
             btn.Region = new Region(path);
         }
 
-        // Gestore per l'evento Click dei toggle buttons
-        private void ButtonToggle_Click(object? sender, EventArgs e)
+        // Gestore per l'evento click su selezione pulsantiera
+        private void ButtonSelectPanel_Click(object? sender, EventArgs e)
         {
             if (sender is Button btn)
             {
@@ -82,23 +174,61 @@ namespace STEMPM.GUI.Views
                     throw new InvalidOperationException("Tipo di pulsantiera sconosciuto");
                 }
 
-                // Resetta il precedente selezionato
-                if (selectedButton != null && selectedButton != btn)
-                {
-                    selectedButton.BackColor = SystemColors.Control;
-                    selectedButton.ForeColor = Color.Black;
-                }
-
-                // Imposta il nuovo selezionato
-                selectedButton = btn;
-                selectedButton.BackColor = Color.FromArgb(0, 70, 128);
-                selectedButton.ForeColor = Color.White;
-
                 selectedPanelType = (ButtonPanelType)btn.Tag;
 
-                UpdateTestTypeComboBox(selectedPanelType.Value);
+                // Cambia il colore del bottone selezionato
+                btn.BackColor = Color.FromArgb(0, 70, 128);
+                btn.ForeColor = Color.White;
+                btn.FlatAppearance.BorderSize = 0;
+
+                // Resetta gli altri bottoni
+                foreach (Button b in panelButtonPanelSelection.Controls)
+                {
+                    if (b != btn)
+                    {
+                        b.BackColor = SystemColors.Control;
+                        b.ForeColor = Color.Black;
+                        b.FlatAppearance.BorderSize = 1;
+                        b.FlatAppearance.BorderColor = Color.LightGray;
+                    }
+                }
+
+                UpdateRecipientIdForPanel(selectedPanelType.Value);
                 UpdateImage(selectedPanelType.Value);
-                SetRecipientIdForPanel(selectedPanelType.Value);
+                UpdateButtonIndicators(selectedPanelType.Value);
+                UpdateTestButtons(selectedPanelType.Value);
+            }
+        }
+
+        // Gestore per click su selezione collaudo
+        private void ButtonSelectTest_Click(object? sender, EventArgs e)
+        {
+            if (sender is not Button btn)
+                return;
+
+            if (btn.Tag == null)
+            {
+                throw new InvalidOperationException("Tipo di pulsantiera sconosciuto");
+            }
+
+            // Imposta il tipo di test selezionato
+            selectedTestType = (ButtonPanelTestType)btn.Tag;
+
+            // Cambia il colore del bottone selezionato
+            btn.BackColor = Color.FromArgb(0, 70, 128);
+            btn.ForeColor = Color.White;
+            btn.FlatAppearance.BorderSize = 0;
+
+            // Resetta gli altri bottoni
+            foreach (Button b in panelTestSelection.Controls)
+            {
+                if (b != btn)
+                {
+                    b.BackColor = SystemColors.Control;
+                    b.ForeColor = Color.Black;
+                    b.FlatAppearance.BorderSize = 1;
+                    b.FlatAppearance.BorderColor = Color.Gainsboro;
+                }
             }
         }
 
@@ -119,26 +249,98 @@ namespace STEMPM.GUI.Views
             Form1.FormRef.SetRecipientIdSilently(recipientId);
         }
 
-        // Metodo helper per aggiornare comboBoxSelectTest filtrando opzioni non supportate
-        private void UpdateTestTypeComboBox(ButtonPanelType panelType)
+        // Restituisce i test disponibili per un tipo di pulsantiera
+        private static ButtonPanelTestType[] GetAvailableTests(ButtonPanelType panelType)
         {
-            var panel = ButtonPanel.GetByType(panelType);
-            var allTestTypes = Enum.GetValues(typeof(ButtonPanelTestType)).Cast<ButtonPanelTestType>().ToList();
+            ButtonPanel panel = ButtonPanel.GetByType(panelType);
+            List<ButtonPanelTestType> availableTestTypes = [.. Enum.GetValues(typeof(ButtonPanelTestType)).Cast<ButtonPanelTestType>()];
 
             // Rimuovi Led se non supportato
             if (!panel.HasLed)
             {
-                allTestTypes.Remove(ButtonPanelTestType.Led);
+                availableTestTypes.Remove(ButtonPanelTestType.Led);
             }
 
-            comboBoxSelectTest.DataSource = allTestTypes;
-            comboBoxSelectTest.SelectedIndex = 0;
+            return [.. availableTestTypes];
+        }
+
+        // Metodo helper per aggiornare i pulsanti dei test disponibili in base alla pulsantiera
+        private void UpdateTestButtons(ButtonPanelType panelType)
+        {
+            ButtonPanelTestType[] availableTests = GetAvailableTests(panelType);
+            panelTestSelection.Controls.Clear();
+            CreateSelectTestButtons(availableTests);
         }
 
         // Metodo per aggiornare l'immagine basata sul tipo selezionato
         private void UpdateImage(ButtonPanelType panelType)
         {
             pictureBoxImage.Image = Image.FromFile($"..\\..\\..\\..\\images\\ButtonPanels\\{panelType}.jpg") ?? null;
+        }
+
+        // Metodo per aggiornare gli indicatori dei pulsanti
+        private void UpdateButtonIndicators(ButtonPanelType panelType)
+        {
+            if (!_buttonRegions.TryGetValue(panelType, out var regions))
+            {
+                _buttonIndicators.Clear();
+                pictureBoxImage.Invalidate();
+                return;
+            }
+
+
+
+            _buttonIndicators = [.. regions.Select(r => new ButtonIndicator
+            {
+                Bounds = r,
+                State = IndicatorState.Idle
+            })];
+
+            pictureBoxImage.Invalidate();
+        }
+
+        private void PictureBoxImage_Paint(object? sender, PaintEventArgs e)
+        {
+            if (_buttonIndicators.Count == 0) return;
+
+            var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            foreach (var indicator in _buttonIndicators)
+            {
+                var rect = new Rectangle(
+                    (int)(indicator.Bounds.X * pictureBoxImage.Width),
+                    (int)(indicator.Bounds.Y * pictureBoxImage.Height),
+                    (int)(indicator.Bounds.Width * pictureBoxImage.Width),
+                    (int)(indicator.Bounds.Height * pictureBoxImage.Height)
+                );
+
+                Color fillColor = indicator.State switch
+                {
+                    IndicatorState.Waiting => Color.FromArgb(180, Color.Yellow),
+                    IndicatorState.Success => Color.FromArgb(180, Color.LimeGreen),
+                    IndicatorState.Failed => Color.FromArgb(180, Color.Red),
+                    _ => Color.FromArgb(120, Color.White)
+                };
+
+                using (var brush = new SolidBrush(fillColor))
+                {
+                    g.FillRectangle(brush, rect);
+                }
+
+                using (var pen = new Pen(Color.Black, 1))
+                {
+                    g.DrawRectangle(pen, rect);
+                }
+
+                // Optional: add button number
+                //string label = (_buttonIndicators.IndexOf(indicator) + 1).ToString();
+                //using (var font = new Font("Segoe UI", 12, FontStyle.Bold))
+                //using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
+                //{
+                //    g.DrawString(label, font, Brushes.Black, rect, sf);
+                //}
+            }
         }
 
         // Restituisce il tipo di pulsantiera selezionato
@@ -155,12 +357,41 @@ namespace STEMPM.GUI.Views
         // Restituisce il tipo di test selezionato
         public ButtonPanelTestType GetSelectedTestType()
         {
-            if (comboBoxSelectTest.SelectedItem == null)
+            if (selectedTestType.HasValue)
             {
-                throw new InvalidOperationException("Nessun tipo di collaudo selezionato");
+                return selectedTestType.Value;
             }
 
-            return (ButtonPanelTestType)comboBoxSelectTest.SelectedItem;
+            throw new InvalidOperationException("Nessun tipo di collaudo selezionato");
+        }
+
+        // Imposta l'indicatore in attesa
+        public void SetButtonWaiting(int buttonIndex)
+        {
+            if (buttonIndex < _buttonIndicators.Count)
+            {
+                _buttonIndicators[buttonIndex].State = IndicatorState.Waiting;
+                pictureBoxImage.Invalidate();
+            }
+        }
+
+        // Imposta l'indicatore con il risultato
+        public void SetButtonResult(int buttonIndex, bool success)
+        {
+            if (buttonIndex < _buttonIndicators.Count)
+            {
+                _buttonIndicators[buttonIndex].State = success ? IndicatorState.Success : IndicatorState.Failed;
+                pictureBoxImage.Invalidate();
+            }
+        }
+
+        // Reimposta gli indicatori
+        public void ResetAllIndicators()
+        {
+            foreach (var ind in _buttonIndicators)
+                ind.State = IndicatorState.Idle;
+
+            pictureBoxImage.Invalidate();
         }
 
         // Mostra un prompt all'utente
@@ -186,14 +417,14 @@ namespace STEMPM.GUI.Views
             {
                 string status = result.Passed ? "PASSATO" : "FALLITO";
                 // TODO: tornare a capo se il messaggio è troppo lungo
-                listBoxResults.Items.Add($"[{result.PanelType}] {result.TestType}: {status} - {result.Message}");
+                richTextBoxTestResult.AppendText($"[{result.PanelType}] {result.TestType}: {status} - {result.Message}");
             }
         }
 
         // Aggiorna lo stato del collaudo
         public void ShowProgress(string message)
         {
-            labelStatus.Text = message;
+            richTextBoxTestProgress.AppendText(message + Environment.NewLine);
         }
 
         // Mostra eventuali messaggi di errore
