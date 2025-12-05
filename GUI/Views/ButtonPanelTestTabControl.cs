@@ -433,9 +433,20 @@ namespace STEMPM.GUI.Views
             richTextBoxTestProgress.ScrollToCaret();
         }
 
-        // Mostra un messaggio di progresso con colore personalizzato
-        public void ShowColoredProgress(string message, Color color)
+        // Aggiorna il colore dell'ultimo prompt visualizzato
+        public void UpdateLastPromptColor(string lastMessage, Color color)
         {
+            int startIndex = richTextBoxTestProgress.TextLength - lastMessage.Length - 1;
+
+            // Select the text
+            richTextBoxTestProgress.SelectionStart = startIndex;
+            richTextBoxTestProgress.SelectionLength = lastMessage.Length;
+
+            // Apply the new color
+            richTextBoxTestProgress.SelectionColor = color;
+
+            // Deselect to avoid highlighting
+            richTextBoxTestProgress.SelectionLength = 0;
             richTextBoxTestProgress.SelectionStart = richTextBoxTestProgress.TextLength;
             richTextBoxTestProgress.SelectionLength = 0;
             richTextBoxTestProgress.SelectionColor = color;
