@@ -395,7 +395,7 @@ namespace STEMPM.GUI.Views
         }
 
         // Mostra un prompt all'utente in richTextBoxTestProgress
-        public async Task ShowPromptAsync(string message, string title = "Istruzione collaudo pulsanti")
+        public async Task ShowPromptAsync(string message)
         {
             richTextBoxTestProgress.SelectionStart = richTextBoxTestProgress.TextLength;
             richTextBoxTestProgress.SelectionLength = 0;
@@ -421,8 +421,9 @@ namespace STEMPM.GUI.Views
             foreach (var result in results)
             {
                 string status = result.Passed ? "PASSATO" : "FALLITO";
-                // TODO: tornare a capo se il messaggio è troppo lungo
-                richTextBoxTestResult.AppendText($"[{result.PanelType}] {result.TestType}: {status} - {result.Message}");
+                richTextBoxTestResult.AppendText($"Risultati collaudo pulsantiera [{result.PanelType}]" + Environment.NewLine);
+                richTextBoxTestResult.AppendText($"Collaudo {result.TestType}: {status}" + Environment.NewLine);
+                richTextBoxTestResult.AppendText($"{result.Message}");
             }
         }
 
@@ -448,11 +449,6 @@ namespace STEMPM.GUI.Views
             // Deselect to avoid highlighting
             richTextBoxTestProgress.SelectionLength = 0;
             richTextBoxTestProgress.SelectionStart = richTextBoxTestProgress.TextLength;
-            richTextBoxTestProgress.SelectionLength = 0;
-            richTextBoxTestProgress.SelectionColor = color;
-            richTextBoxTestProgress.AppendText(message + Environment.NewLine);
-            richTextBoxTestProgress.SelectionColor = richTextBoxTestProgress.ForeColor; // Reset to default
-            richTextBoxTestProgress.ScrollToCaret();
         }
 
         // Mostra eventuali messaggi di errore
