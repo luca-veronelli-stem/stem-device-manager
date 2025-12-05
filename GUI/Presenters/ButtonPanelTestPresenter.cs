@@ -8,7 +8,8 @@ namespace STEMPM.GUI.Presenters
     internal class ButtonPanelTestPresenter
     {
         private readonly IButtonPanelTestTab _view;
-        private readonly IButtonPanelTestService _service;
+        private readonly IButtonPanelTestService _service; 
+        private CancellationTokenSource? _cts;
 
         // Costruttore che inizializza la vista e il servizio, e si iscrive all'evento di esecuzione dei test
         public ButtonPanelTestPresenter(IButtonPanelTestTab view, IButtonPanelTestService service)
@@ -19,9 +20,10 @@ namespace STEMPM.GUI.Presenters
             _view.OnStopTestClicked += HandleStopTestAsync;
         }
 
-        // Metodo per gestire l'evento di esecuzione dei test
+        // Metodo per gestire l'evento di avvio del collaudo
         private async void HandleStartTestAsync(object? sender, EventArgs e)
         {
+            _cts = new CancellationTokenSource();
             ButtonPanelType panelType = _view.GetSelectedPanelType();
             ButtonPanelTestType testType = _view.GetSelectedTestType();
 
@@ -35,24 +37,24 @@ namespace STEMPM.GUI.Presenters
                 async Task promptFunc(string msg) => await _view.ShowPromptAsync(msg);
                 async Task<bool> confirmFunc(string msg) => await _view.ShowConfirmAsync(msg, testType);
 
-                List<ButtonPanelTestResult> results = new();
+                List<ButtonPanelTestResult> results = [];
 
                 switch (testType)
                 {
                     case ButtonPanelTestType.Complete:
-                        results = await RunCompleteTest(panelType, panel, confirmFunc, promptFunc);
+                        results = await _service.TestAllAsync(panelType, confirmFunc, promptFunc, _cts.Token);
                         break;
 
                     case ButtonPanelTestType.Buttons:
-                        results.Add(await RunButtonsTest(panelType, panel, promptFunc));
+                        results.Add(await _service.TestButtonsAsync(panelType, promptFunc, _cts.Token));
                         break;
 
                     case ButtonPanelTestType.Led:
-                        results.Add(await _service.TestLedAsync(panelType, confirmFunc));
+                        results.Add(await _service.TestLedAsync(panelType, confirmFunc, _cts.Token));
                         break;
 
                     case ButtonPanelTestType.Buzzer:
-                        results.Add(await _service.TestBuzzerAsync(panelType, confirmFunc));
+                        results.Add(await _service.TestBuzzerAsync(panelType, confirmFunc, _cts.Token));
                         break;
 
                     default:
@@ -63,10 +65,28 @@ namespace STEMPM.GUI.Presenters
                 _view.DisplayResults(results);
                 _view.ShowProgress($"Collaudo {testType} completato." + Environment.NewLine);
             }
+            catch (OperationCanceledException)
+            {
+                _view.ShowProgress("Collaudo interrotto dall'utente.");
+            }
             catch (Exception ex)
             {
                 _view.ShowError($"Errore durante il collaudo: {ex.Message}");
                 _view.ShowProgress("Collaudo interrotto.");
+            }
+            finally
+            {
+                _cts = null;
+            }
+        }
+
+        // Metodo per gestire l'evento di arresto del collaudo
+        private void HandleStopTestAsync(object? sender, EventArgs e)
+        {
+            if (_cts != null)
+            {
+                _cts.Cancel();
+                _view.ShowProgress("Richiesta di arresto collaudo...");
             }
         }
 
@@ -127,11 +147,6 @@ namespace STEMPM.GUI.Presenters
                 Passed = allPassed,
                 Message = resultMessage.Trim()
             };
-        }
-
-        private async void HandleStopTestAsync(object? sender, EventArgs e)
-        {
-            throw new NotImplementedException();
         }
     }
 }
