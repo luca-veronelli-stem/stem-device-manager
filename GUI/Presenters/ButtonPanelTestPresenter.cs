@@ -11,6 +11,7 @@ namespace STEMPM.GUI.Presenters
         private readonly IButtonPanelTestService _service; 
         private CancellationTokenSource? _cts;
         private string _lastPromptMessage = string.Empty;
+        private List<ButtonPanelTestResult>? _latestResults;
 
         // Costruttore che inizializza la vista e il servizio, e si iscrive all'evento di esecuzione dei test
         public ButtonPanelTestPresenter(IButtonPanelTestTab view, IButtonPanelTestService service)
@@ -19,6 +20,7 @@ namespace STEMPM.GUI.Presenters
             _service = service;
             _view.OnStartTestClicked += HandleStartTestAsync;
             _view.OnStopTestClicked += HandleStopTestAsync;
+            _view.OnDownloadTestResultClicked += HandleDownloadTestResult;
         }
 
         // Metodo per gestire l'evento di avvio del collaudo
@@ -77,6 +79,7 @@ namespace STEMPM.GUI.Presenters
                         return;
                 }
 
+                _latestResults = results;
                 _view.DisplayResults(results);
 
                 string progressMessage = results.Any(r => r.Interrupted)
@@ -108,6 +111,31 @@ namespace STEMPM.GUI.Presenters
             {
                 _cts.Cancel();
                 _view.ShowProgress("Richiesta di arresto collaudo...");
+            }
+        }
+
+        // Metodo per gestire l'evento di download dei risultati del collaudo
+        private void HandleDownloadTestResult(object? sender, EventArgs e)
+        {
+            if (_latestResults == null || _latestResults.Count == 0)
+            {
+                _view.ShowMessage("Nessun risultato da scaricare.", "Informazione", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            string filePath = _view.ShowSaveFileDialog();
+            if (string.IsNullOrEmpty(filePath)) return;
+
+            try
+            {
+                string content = _view.GetResultsText();
+
+                File.WriteAllText(filePath, content);
+                _view.ShowMessage("Risultati salvati con successo.", "Successo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                _view.ShowMessage($"Errore durante il salvataggio: {ex.Message}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

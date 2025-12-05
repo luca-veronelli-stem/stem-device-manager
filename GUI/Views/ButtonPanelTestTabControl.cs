@@ -12,6 +12,7 @@ namespace STEMPM.GUI.Views
         // Gestori eventi invocati quando l'utente avvia o arresta il collaudo
         public event EventHandler? OnStartTestClicked;
         public event EventHandler? OnStopTestClicked;
+        public event EventHandler? OnDownloadTestResultClicked;
 
         private ButtonPanelType? selectedPanelType;
         private ButtonPanelTestType? selectedTestType;
@@ -84,6 +85,7 @@ namespace STEMPM.GUI.Views
             // Associa i gestori agli eventi di click
             buttonStartTest.Click += (s, e) => OnStartTestClicked?.Invoke(this, EventArgs.Empty);
             buttonStopTest.Click += (s, e) => OnStopTestClicked?.Invoke(this, EventArgs.Empty);
+            buttonDownloadTestResult.Click += (s, e) => OnDownloadTestResultClicked?.Invoke(this, EventArgs.Empty);
 
             // Associa il metodo per colorare gli indicatori
             pictureBoxImage.Paint += PictureBoxImage_Paint;
@@ -231,6 +233,9 @@ namespace STEMPM.GUI.Views
                 }
             }
         }
+
+        // Restituisce il testo dei risultati del collaudo
+        public string GetResultsText() => richTextBoxTestResult.Text;
 
         // Imposta il recipientId in base alla pulsantiera
         private static void UpdateRecipientIdForPanel(ButtonPanelType panelType)
@@ -406,6 +411,25 @@ namespace STEMPM.GUI.Views
             var result = MessageBox.Show(ParentForm, message, title,
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
             return Task.FromResult(result);
+        }
+
+        // Mostra la finestra di dialogo per il salvataggio del file
+        public string? ShowSaveFileDialog()
+        {
+            using (SaveFileDialog sfd = new SaveFileDialog())
+            {
+                sfd.Filter = "File di testo (*.txt)|*.txt|Tutti i file (*.*)|*.*";
+                sfd.DefaultExt = "txt";
+                sfd.Title = "Salva Risultati Collaudo";
+                sfd.FileName = $"Risultati_Collaudo_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+                return sfd.ShowDialog() == DialogResult.OK ? sfd.FileName : null;
+            }
+        }
+
+        // Mostra un messaggio all'utente
+        public void ShowMessage(string message, string title, MessageBoxButtons buttons, MessageBoxIcon icon)
+        {
+            MessageBox.Show(message, title, buttons, icon);
         }
 
         // Aggiorna la lista dei risultati con il risultato del collaudo eseguito

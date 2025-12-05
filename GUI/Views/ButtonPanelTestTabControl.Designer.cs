@@ -35,7 +35,7 @@
             buttonStartTest = new Button();
             richTextBoxTestResult = new RichTextBox();
             buttonStopTest = new Button();
-            buttonDownloadResult = new Button();
+            buttonDownloadTestResult = new Button();
             ((System.ComponentModel.ISupportInitialize)pictureBoxImage).BeginInit();
             SuspendLayout();
             // 
@@ -108,21 +108,21 @@
             buttonStopTest.Text = "Arresta collaudo";
             buttonStopTest.UseVisualStyleBackColor = true;
             // 
-            // buttonDownloadResult
+            // buttonDownloadTestResult
             // 
-            buttonDownloadResult.Location = new Point(1048, 735);
-            buttonDownloadResult.Name = "buttonDownloadResult";
-            buttonDownloadResult.Size = new Size(242, 30);
-            buttonDownloadResult.TabIndex = 13;
-            buttonDownloadResult.Text = "Scarica risultato";
-            buttonDownloadResult.UseVisualStyleBackColor = true;
+            buttonDownloadTestResult.Location = new Point(1048, 735);
+            buttonDownloadTestResult.Name = "buttonDownloadTestResult";
+            buttonDownloadTestResult.Size = new Size(242, 30);
+            buttonDownloadTestResult.TabIndex = 13;
+            buttonDownloadTestResult.Text = "Scarica risultato";
+            buttonDownloadTestResult.UseVisualStyleBackColor = true;
             // 
             // ButtonPanelTestTabControl
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             AutoSize = true;
-            Controls.Add(buttonDownloadResult);
+            Controls.Add(buttonDownloadTestResult);
             Controls.Add(buttonStopTest);
             Controls.Add(richTextBoxTestResult);
             Controls.Add(buttonStartTest);
@@ -146,6 +146,6 @@
         private Button buttonStartTest;
         private RichTextBox richTextBoxTestResult;
         private Button buttonStopTest;
-        private Button buttonDownloadResult;
+        private Button buttonDownloadTestResult;
     }
 }
