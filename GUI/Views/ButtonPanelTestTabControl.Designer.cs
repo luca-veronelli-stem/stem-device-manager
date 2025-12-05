@@ -67,7 +67,7 @@
             // 
             // richTextBoxTestProgress
             // 
-            richTextBoxTestProgress.BackColor = SystemColors.ControlDarkDark;
+            richTextBoxTestProgress.BackColor = SystemColors.Desktop;
             richTextBoxTestProgress.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
             richTextBoxTestProgress.ForeColor = SystemColors.HighlightText;
             richTextBoxTestProgress.Location = new Point(209, 377);
@@ -88,7 +88,7 @@
             // 
             // richTextBoxTestResult
             // 
-            richTextBoxTestResult.BackColor = SystemColors.ControlDarkDark;
+            richTextBoxTestResult.BackColor = SystemColors.Desktop;
             richTextBoxTestResult.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
             richTextBoxTestResult.ForeColor = SystemColors.HighlightText;
             richTextBoxTestResult.Location = new Point(915, 3);
@@ -97,7 +97,7 @@
             richTextBoxTestResult.ReadOnly = true;
             richTextBoxTestResult.Size = new Size(482, 697);
             richTextBoxTestResult.TabIndex = 11;
-            richTextBoxTestResult.Text = "";
+            richTextBoxTestResult.Text = "I risultati verrano visualizzati qui.";
             // 
             // buttonStopTest
             // 

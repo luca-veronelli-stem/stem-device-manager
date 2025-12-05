@@ -418,13 +418,70 @@ namespace STEMPM.GUI.Views
         // Aggiorna la lista dei risultati con il risultato del collaudo eseguito
         public void DisplayResults(List<ButtonPanelTestResult> results)
         {
+            // Pulisci i risultati precedenti
+            richTextBoxTestResult.Clear();
+            // Mostra header comune ai collaudi
+            richTextBoxTestResult.AppendText($"Risultati collaudo pulsantiera [{results[0].PanelType}]" + Environment.NewLine);
+
             foreach (var result in results)
             {
+                // Mostra nome del collaudo
+                richTextBoxTestResult.AppendText($"Collaudo {result.TestType}: ");
+
+                // Mostra stato del collaudo
                 string status = result.Passed ? "PASSATO" : "FALLITO";
-                richTextBoxTestResult.AppendText($"Risultati collaudo pulsantiera [{result.PanelType}]" + Environment.NewLine);
-                richTextBoxTestResult.AppendText($"Collaudo {result.TestType}: {status}" + Environment.NewLine);
-                richTextBoxTestResult.AppendText($"{result.Message}");
+                Color statusColor = result.Passed ? Color.LimeGreen : Color.Red;
+                richTextBoxTestResult.SelectionColor = statusColor;
+                richTextBoxTestResult.AppendText(status);
+                richTextBoxTestResult.SelectionColor = richTextBoxTestResult.ForeColor;
+                richTextBoxTestResult.AppendText(Environment.NewLine);
+
+                // Gestisci il messaggio in base al tipo di collaudo
+                if (result.TestType == ButtonPanelTestType.Buttons)
+                {
+                    // Per i pulsanti, colora ogni sottorisultato
+                    string[] lines = result.Message.Split('\n');
+                    foreach (string line in lines)
+                    {
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+
+                        int colonIndex = line.LastIndexOf(':');
+                        if (colonIndex != -1)
+                        {
+                            string before = line.Substring(0, colonIndex + 1) + " ";
+                            string after = line.Substring(colonIndex + 1).Trim();
+
+                            richTextBoxTestResult.AppendText(before);
+
+                            bool subPassed = after.Contains("PASSATO");
+                            Color subColor = subPassed ? Color.LimeGreen : Color.Red;
+
+                            richTextBoxTestResult.SelectionColor = subColor;
+                            richTextBoxTestResult.AppendText(after);
+                            richTextBoxTestResult.SelectionColor = richTextBoxTestResult.ForeColor;
+                        }
+                        else
+                        {
+                            richTextBoxTestResult.AppendText(line);
+                        }
+
+                        richTextBoxTestResult.AppendText(Environment.NewLine);
+                    }
+                }
+                else
+                {
+                    // Per gli altri test, colora l'intero messaggio
+                    Color messageColor = result.Passed ? Color.LimeGreen : Color.Red;
+                    richTextBoxTestResult.SelectionColor = messageColor;
+                    richTextBoxTestResult.AppendText(result.Message);
+                    richTextBoxTestResult.SelectionColor = richTextBoxTestResult.ForeColor;
+                }
+
+                richTextBoxTestResult.AppendText(Environment.NewLine);
             }
+
+            // Scrolla alla fine
+            richTextBoxTestResult.ScrollToCaret();
         }
 
         // Mostra un messaggio di progresso
