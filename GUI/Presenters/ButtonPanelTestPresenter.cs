@@ -61,7 +61,7 @@ namespace STEMPM.GUI.Presenters
                 }
 
                 _view.DisplayResults(results);
-                _view.ShowProgress("Collaudo completato.");
+                _view.ShowProgress($"Collaudo {testType} completato.");
             }
             catch (Exception ex)
             {
@@ -110,7 +110,7 @@ namespace STEMPM.GUI.Presenters
                 byte buttonCode = (byte)(1 << i);
                 byte[] expectedPayload = { 0x00, 0x02, 0x80, 0x00, buttonCode };
 
-                bool passed = await _service.AwaitButtonPressEventAsync(expectedPayload, 10000);
+                bool passed = await _service.AwaitButtonPressEventAsync(expectedPayload, 5000);
 
                 // Update indicator: green = OK, red = failed
                 _view.SetButtonResult(i, passed);
