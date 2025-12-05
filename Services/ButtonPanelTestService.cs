@@ -203,7 +203,7 @@ namespace STEMPM.Services
                 bool passed = await AwaitButtonPressEventAsync(expectedPayload, BUTTON_PRESS_TIMEOUT_MS);
 
                 allPassed &= passed;
-                message += $"Pulsante {panel.Buttons[i - 1]}: {(passed ? "OK" : "Fallito")};" + Environment.NewLine;
+                message += $"Pulsante {panel.Buttons[i - 1]}: {(passed ? "PASSATO" : "FALLITO")};" + Environment.NewLine;
             }
 
             return new ButtonPanelTestResult
@@ -275,7 +275,7 @@ namespace STEMPM.Services
                 PanelType = panelType,
                 TestType = ButtonPanelTestType.Buzzer,
                 Passed = passed,
-                Message = (passed ? "Buzzer funziona correttamente" : "Buzzer non rilevato") + Environment.NewLine
+                Message = (passed ? "Buzzer funziona correttamente" : "Buzzer non rilevato")
             };
         }
     }
