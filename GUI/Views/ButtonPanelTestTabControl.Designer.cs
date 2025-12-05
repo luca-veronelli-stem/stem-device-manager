@@ -67,14 +67,15 @@
             // 
             // richTextBoxTestProgress
             // 
-            richTextBoxTestProgress.BorderStyle = BorderStyle.FixedSingle;
-            richTextBoxTestProgress.Font = new Font("Segoe UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            richTextBoxTestProgress.BackColor = SystemColors.ControlDarkDark;
+            richTextBoxTestProgress.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            richTextBoxTestProgress.ForeColor = SystemColors.HighlightText;
             richTextBoxTestProgress.Location = new Point(209, 377);
             richTextBoxTestProgress.Name = "richTextBoxTestProgress";
             richTextBoxTestProgress.ReadOnly = true;
             richTextBoxTestProgress.Size = new Size(700, 323);
             richTextBoxTestProgress.TabIndex = 10;
-            richTextBoxTestProgress.Text = "";
+            richTextBoxTestProgress.Text = "Seleziona tipo di Pulsantiera e tipo di collaudo.\nPer Iniziare premere avvia collaudo, se si verificano problemi premere arresta collaudo.\n";
             // 
             // buttonStartTest
             // 
@@ -87,7 +88,9 @@
             // 
             // richTextBoxTestResult
             // 
+            richTextBoxTestResult.BackColor = SystemColors.ControlDarkDark;
             richTextBoxTestResult.Font = new Font("Segoe UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            richTextBoxTestResult.ForeColor = SystemColors.HighlightText;
             richTextBoxTestResult.Location = new Point(915, 3);
             richTextBoxTestResult.MinimumSize = new Size(400, 0);
             richTextBoxTestResult.Name = "richTextBoxTestResult";
