@@ -30,35 +30,35 @@
     // Pulsanti Eden-XP e Eden BS8
     public enum EdenButtons
     {
-        HeadUp,
-        HeadDown,
+        Stop,
         Horizontal,
         Suspension,
         Up,
-        Down,
-        Stop,
-        Lights
+        Lights,
+        HeadDown,
+        HeadUp,
+        Down
     }
 
     // Pulsanti R-3L XP
     public enum R3LXPButtons
     {
-        HeadDown,
-        Down,
+        Stop,
         Up,
         HeadUp,
         FeetUp,
-        FeetDown,
-        Stop,
-        Lights
+        Lights,
+        Down,
+        HeadDown,
+        FeetDown
     }
 
     // Pulsanti Optimus-XP
     public enum OptimusButtons
     {
-        Lights,
         Suspension,
         Up,
+        Lights,
         Down
     }
 }
