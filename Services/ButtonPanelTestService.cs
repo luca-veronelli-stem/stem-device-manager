@@ -190,16 +190,13 @@ namespace STEMPM.Services
             bool allPassed = true;
             string message = "";
 
-            for (int i = 1; i <= panel.ButtonCount; i++)
+            for (int i = 0; i <= panel.ButtonCount; i++)
             {
-                // Calcola expected payload (da tuo esempio: [00 02 80 00 XX] dove XX = 1 << (i-1))
-                byte buttonCode = (byte)(1 << (i - 1)); // 0x01, 0x02, 0x04, 0x08, ...
-                byte[] expectedPayload = new byte[] { 0x00, 0x02, 0x80, 0x00, buttonCode };
+                byte buttonCode = panel.ButtonMasks[i];
+                byte[] expectedPayload = [0x00, 0x02, 0x80, 0x00, buttonCode];
 
-                // Prompt utente
                 await userPrompt($"Premi il pulsante {panel.Buttons[i - 1]}");
 
-                // Await event con matching payload
                 bool passed = await AwaitButtonPressEventAsync(expectedPayload, BUTTON_PRESS_TIMEOUT_MS);
 
                 allPassed &= passed;

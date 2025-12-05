@@ -12,6 +12,7 @@ namespace STEMPM.Core.Models
         // Tutte le pulsantiere hanno il buzzer, questo campo è per estensibilità futura
         public bool HasBuzzer { get; set; } = true;
         public string[] Buttons { get; set; } = [];
+        public List<byte> ButtonMasks { get; set; } = [];
 
         // Metodo factory per creare una pulsantiera in base al tipo
         public static ButtonPanel GetByType(ButtonPanelType type)
@@ -19,11 +20,23 @@ namespace STEMPM.Core.Models
             return type switch
             {
                 // La pulsantiera di tipo DIS0025205 (Optimus-XP) ha 4 pulsanti senza LED
-                ButtonPanelType.DIS0025205 => new ButtonPanel { Type = type, 
-                    ButtonCount = 4, HasLed = false, Buttons = GetButtonsByType(type) },
+                ButtonPanelType.DIS0025205 => new ButtonPanel 
+                { 
+                    Type = type, 
+                    ButtonCount = 4, 
+                    HasLed = false, 
+                    Buttons = GetButtonsByType(type),
+                    ButtonMasks = [0x04, 0x10, 0x02, 0x20]
+                },
                 // Le altre pulsantiere hanno tutte 8 pulsanti con LED
-                _ => new ButtonPanel { Type = type, 
-                    ButtonCount = 8, HasLed = true, Buttons = GetButtonsByType(type) }
+                _ => new ButtonPanel 
+                { 
+                    Type = type, 
+                    ButtonCount = 8, 
+                    HasLed = true, 
+                    Buttons = GetButtonsByType(type),
+                    ButtonMasks = [0x40, 0x04, 0x08, 0x10, 0x80, 0x02, 0x01, 0x20]
+                }
             };
         }
 
