@@ -68,6 +68,7 @@
             // richTextBoxTestProgress
             // 
             richTextBoxTestProgress.BorderStyle = BorderStyle.FixedSingle;
+            richTextBoxTestProgress.Font = new Font("Segoe UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             richTextBoxTestProgress.Location = new Point(209, 377);
             richTextBoxTestProgress.Name = "richTextBoxTestProgress";
             richTextBoxTestProgress.ReadOnly = true;
@@ -86,6 +87,7 @@
             // 
             // richTextBoxTestResult
             // 
+            richTextBoxTestResult.Font = new Font("Segoe UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             richTextBoxTestResult.Location = new Point(915, 3);
             richTextBoxTestResult.MinimumSize = new Size(400, 0);
             richTextBoxTestResult.Name = "richTextBoxTestResult";
