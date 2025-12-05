@@ -332,14 +332,6 @@ namespace STEMPM.GUI.Views
                 {
                     g.DrawRectangle(pen, rect);
                 }
-
-                // Optional: add button number
-                //string label = (_buttonIndicators.IndexOf(indicator) + 1).ToString();
-                //using (var font = new Font("Segoe UI", 12, FontStyle.Bold))
-                //using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
-                //{
-                //    g.DrawString(label, font, Brushes.Black, rect, sf);
-                //}
             }
         }
 
@@ -407,12 +399,12 @@ namespace STEMPM.GUI.Views
         }
 
         // Chiedi una conferma all'utente
-        public async Task<bool> ShowConfirmAsync(string message, ButtonPanelTestType testType)
+        public Task<bool> ShowConfirmAsync(string message, ButtonPanelTestType testType)
         {
             string title = $"Conferma collaudo {testType}";
-
-            return await Task.Run(() => MessageBox.Show(message, title,
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes);
+            var result = MessageBox.Show(ParentForm, message, title,
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+            return Task.FromResult(result);
         }
 
         // Aggiorna la lista dei risultati con il risultato del collaudo eseguito
@@ -511,7 +503,7 @@ namespace STEMPM.GUI.Views
         // Mostra eventuali messaggi di errore
         public void ShowError(string message)
         {
-            MessageBox.Show(message, "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(ParentForm, message, "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 }
