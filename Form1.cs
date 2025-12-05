@@ -1,14 +1,15 @@
-using Microsoft.Extensions.DependencyInjection;
-using STEMPM.Core.Interfaces;
-using STEMPM.Presenters;
-using STEMPM.GUI.Views;
 using CanDataLayer;
+using Microsoft.Extensions.DependencyInjection;
 using SerialDataLayer;
 using SerialPort_Handler;
 using Stem_Protocol;
 using Stem_Protocol.PacketManager;
 using STEMPM;
+using STEMPM.Core.Interfaces;
+using STEMPM.GUI.Presenters;
+using STEMPM.GUI.Views;
 using System.Globalization;
+using System.Windows.Forms;
 using static ExcelHandler;
 using static Stem_Protocol.NetworkLayer;
 
@@ -25,7 +26,7 @@ namespace StemPC
         public string CommunicationPort = "can";
 #else
         public string CommunicationPort = "ble";
- //       public string CommunicationPort = "serial";
+        //       public string CommunicationPort = "serial";
 #endif
 
 
@@ -88,6 +89,8 @@ namespace StemPC
         List<ExcelHandler.CommandData> Comandi;
         List<ExcelHandler.VariableData> Dizionario;
         ExcelHandler hExcel;
+
+        private bool isStreamBased;
 
         //**********************************
         //  STEM Protocol variables/classes
@@ -152,18 +155,16 @@ namespace StemPC
             // Inietta il service provider
             _serviceProvider = serviceProvider;
 
-            // Controlla se il TabControl esiste già e crealo se non esiste
+            // Controlla se il TabControl esiste gi  e crealo se non esiste
             if (tabControl == null)
             {
                 tabControl = new TabControl() { Dock = DockStyle.Fill };
                 Controls.Add(tabControl);
             }
 
-            // Aggiungi la tab per il collaudo pulsantiere
-            AddButtonPanelTestTab();
-
-            labelBytes.Text = "Altri Bytes \r\n (HEX) separati da spazio";
-
+#if BUTTONPANEL
+            Text = "STEM Button Panel Tester " + Software_Version;
+#else
 #if TOPLIFT
             Text = "STEM Toplift A2 Manager " + Software_Version;
 #elif EDEN
@@ -172,6 +173,7 @@ namespace StemPC
             Text = "STEM Spark Manager " + Software_Version;
 #else
             this.Text += Software_Version;
+#endif
 #endif
 
             FormRef = this;
@@ -273,8 +275,7 @@ namespace StemPC
             // tabControl.TabPages.Add(CanTabPageRef);
 
             // crea e aggiungi la tab per il collaudo pulsantiere
-            //ButtonPanelTestTab buttonPanelTestTab = new ButtonPanelTestTab();
-            //tabControl.TabPages.Add(buttonPanelTestTab);
+            AddButtonPanelTestTab();
 
             //attiva il terminale
             _terminal = new Terminal(); // Inizializza l'istanza di Terminal
@@ -360,7 +361,7 @@ namespace StemPC
             //hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, ExcelfilePath);
 
 #if TOPLIFT
-            // Ottieni l’assembly
+            // Ottieni l assembly
             var asm = Assembly.GetExecutingAssembly();
             //// Recupera tutti i nomi delle risorse incorporate
             //var resourceNames = asm.GetManifestResourceNames();
@@ -398,6 +399,13 @@ namespace StemPC
             Comandi = new List<ExcelHandler.CommandData>();
             Dizionario = new List<ExcelHandler.VariableData>();
             hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, ExcelfilePath);
+
+#if TOPLIFT
+            isStreamBased = true;
+#else
+            isStreamBased = false;
+#endif
+
             TelemetryTabRef.UpdateDictionary(Dizionario);
 #endif
 
@@ -500,6 +508,16 @@ namespace StemPC
             }
 #endif
 
+#if BUTTONPANEL
+            tabControl.TabPages.Remove(tabPageUART);
+            tabControl.TabPages.Remove(tabPageCodeGen);
+            tabControl.TabPages.Remove(TelemetryTabRef);
+            tabControl.TabPages.Remove(BLETabRef);
+            tabControl.TabPages.Remove(BootSmartTabRef);
+            tabControl.TabPages.Remove(BootTabRef);
+            //tabControl.TabPages.Remove(tabPageProtocol);
+#endif
+
             //installa l'evento di aggiornamento textbox applayer
             AppLayerCommandDecoded += onAppLayerDecoded;
             AppLayerCommandSended += onAppLayerSended;
@@ -509,7 +527,7 @@ namespace StemPC
         private void AddButtonPanelTestTab()
         {
             var buttonPanelTestControl = new ButtonPanelTestTabControl();
-            var presenter = new ButtonPanelTestPresenter(buttonPanelTestControl, 
+            var presenter = new ButtonPanelTestPresenter(buttonPanelTestControl,
                 _serviceProvider.GetRequiredService<IButtonPanelTestService>());
 
             var tabPage = new TabPage("Collaudo pulsantiere");
@@ -519,12 +537,17 @@ namespace StemPC
             tabControl.TabPages.Add(tabPage);
         }
 
+        public void SetRecipientIdSilently(uint recipientId)
+        {
+            RecipientId = recipientId;
+        }
+
         public void UpdateTerminal(string message)
         {
             terminalOut.Text = _terminal.WriteLog(message);
             // Scorri automaticamente verso l'ultima riga
             terminalOut.SelectionStart = terminalOut.Text.Length; // Posiziona il caret alla fine
-            terminalOut.ScrollToCaret(); // Scorri fino al caret
+            terminalOut.ScrollToCaret(); // Scorri fino all'ultimo
         }
 
         private void timerBaseTime_Tick(object sender, EventArgs e)
@@ -579,7 +602,7 @@ namespace StemPC
             // Verifica che il mittente sia effettivamente un ComboBox
             if (sender is ComboBox comboBoxCorrente)
             {
-                // Verifica se è stato selezionato un elemento valido
+                // Verifica se   stato selezionato un elemento valido
                 if (comboBoxCorrente.SelectedIndex != -1)
                 {
                     // Ottieni la stringa correntemente selezionata
@@ -605,7 +628,7 @@ namespace StemPC
             // Verifica che il mittente sia effettivamente un ComboBox
             if (sender is ComboBox comboBoxCorrente)
             {
-                // Verifica se è stato selezionato un elemento valido
+                // Verifica se   stato selezionato un elemento valido
                 if (comboBoxCorrente.SelectedIndex != -1)
                 {
                     // Ottieni la stringa correntemente selezionata
@@ -701,7 +724,7 @@ namespace StemPC
                     {
                         MessageBox.Show($"Valore non valido nel campo {textBox.Name}. Inserisci un valore esadecimale valido (0-FF).",
                                         "Errore di input", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return; // Esce se c'è un errore di input
+                        return; // Esce se c'  un errore di input
                     }
                 }
             }
@@ -870,7 +893,7 @@ namespace StemPC
 
             ExcelHandler.VariableData CurrentVariable = new ExcelHandler.VariableData("None", "0", "0", "");
 
-            //se il comando è leggi variabile logica lo mostro come è indicato nel dizionario
+            //se il comando   leggi variabile logica lo mostro come   indicato nel dizionario
             if (CurrentCommand.Name == "Leggi variabile logica risposta")
             {
                 // Stampa i risultati (per verifica)
@@ -917,7 +940,7 @@ namespace StemPC
                 //comando riconosciuto
                 richTextBoxTx.AppendText($"RX - {timestamp}: Comando '{e.CurrentCommand.Name} ' da {e.MachineName} per {e.MachineNameRecipient}: ");
 
-                //se il comando è leggi variabile logica lo mostro come è indicato nel dizionario
+                //se il comando   leggi variabile logica lo mostro come   indicato nel dizionario
                 if (e.CurrentCommand.Name == "Leggi variabile logica risposta")
                 {
                     richTextBoxTx.AppendText($" {e.CurrentVariable.Name}= ");
@@ -999,7 +1022,7 @@ namespace StemPC
                         byte[] floatBytes = new byte[4];
                         Array.Copy(e.Payload, 4, floatBytes, 0, 4);
 
-                        // Inverti l'ordine perché BitConverter usa il little-endian
+                        // Inverti l'ordine perch  BitConverter usa il little-endian
                         Array.Reverse(floatBytes);
 
                         // Converte in float

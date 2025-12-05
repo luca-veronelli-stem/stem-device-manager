@@ -1,9 +1,10 @@
-﻿using Stem_Protocol;
-using Stem_Protocol.PacketManager;
-using StemPC;
-using STEMPM.Core.Enums;
+﻿using STEMPM.Core.ButtonPanelEnums;
 using STEMPM.Core.Interfaces;
 using STEMPM.Core.Models;
+
+using Stem_Protocol;
+using Stem_Protocol.PacketManager;
+using StemPC;
 using static StemPC.Form1;
 
 namespace STEMPM.Services
@@ -23,7 +24,10 @@ namespace STEMPM.Services
         private const int BUTTON_PRESS_TIMEOUT_MS = 10000;
 
         // Costruisce payload
-        private byte[] BuildPayload(ushort command, ushort variableId, byte[]? value)
+        private byte[] BuildPayload(
+            ushort command, 
+            ushort variableId, 
+            byte[]? value)
         {
             var payload = new List<byte>
             {
@@ -38,7 +42,11 @@ namespace STEMPM.Services
         }
 
         // Invia comando via protocollo STEM
-        private async Task<byte[]> SendCommandAsync(ushort command, byte[] fullPayload, bool waitAnswer, int timeoutMs = 5000)
+        private async Task<byte[]> SendCommandAsync(
+            ushort command, 
+            byte[] fullPayload, 
+            bool waitAnswer, 
+            int timeoutMs = 5000)
         {
             if (!waitAnswer)
             {
@@ -88,7 +96,10 @@ namespace STEMPM.Services
         }
 
         // Gestisce l'invio del comando
-        private async Task HandleSendCommandInternal(ushort command, byte[] payload, bool waitAnswer)
+        private async Task HandleSendCommandInternal(
+            ushort command, 
+            byte[] payload, 
+            bool waitAnswer)
         {
             byte cmdInit = (byte)(command >> 8);
             byte cmdOpt = (byte)command;
@@ -128,10 +139,14 @@ namespace STEMPM.Services
         }
 
         // Gestisce la rilevazione della prezzione del pulsante
-        private async Task<bool> AwaitButtonPressEventAsync(byte[] expectedPayload, int timeoutMs)
+        public async Task<bool> AwaitButtonPressEventAsync(
+            byte[] expectedPayload, 
+            int timeoutMs, 
+            CancellationToken cancellationToken = default)
         {
             var tcs = new TaskCompletionSource<bool>();
-            var cts = new CancellationTokenSource(timeoutMs);
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            linkedCts.CancelAfter(timeoutMs);
 
             void OnAppLayerDecoded(object? sender, AppLayerDecoderEventArgs e)
             {
@@ -141,68 +156,97 @@ namespace STEMPM.Services
                 }
             }
 
-            Form1.FormRef.AppLayerCommandDecoded += OnAppLayerDecoded;
+            FormRef.AppLayerCommandDecoded += OnAppLayerDecoded;
 
             try
             {
-                var completedTask = await Task.WhenAny(tcs.Task, Task.Delay(timeoutMs, cts.Token));
+                var completedTask = await Task.WhenAny(tcs.Task, Task.Delay(Timeout.Infinite, linkedCts.Token));
                 if (completedTask == tcs.Task)
                 {
-                    return true;
+                    return await tcs.Task;
                 }
+                else
+                {
+                    return false;
+                }
+            }
+            catch (OperationCanceledException)
+            {
                 return false;
             }
             finally
             {
-                Form1.FormRef.AppLayerCommandDecoded -= OnAppLayerDecoded;
-                cts.Dispose();
+                FormRef.AppLayerCommandDecoded -= OnAppLayerDecoded;
             }
         }
 
         // Esegue tutti i test disponibili per una pulsantiera specifica e restituisce i risultati
-        public async Task<List<ButtonPanelTestResult>> TestAllAsync(ButtonPanelType panelType, Func<string, Task<bool>> userConfirm, Func<string, Task> userPrompt)
+        public async Task<List<ButtonPanelTestResult>> TestAllAsync(
+            ButtonPanelType panelType,
+            Func<string, Task<bool>> userConfirm,
+            Func<string, Task> userPrompt,
+            Action<int>? onButtonStart = null,
+            Action<int, bool>? onButtonResult = null,
+            CancellationToken cancellationToken = default)
         {
-            ButtonPanel panel = ButtonPanel.GetByType(panelType);
+            var results = new List<ButtonPanelTestResult>();
 
-            List<ButtonPanelTestResult> results = new List<ButtonPanelTestResult>
-            {
-                await TestButtonsAsync(panelType, userPrompt)
-            };
+            var buttonsResult = await TestButtonsAsync(panelType, userPrompt, onButtonStart, onButtonResult, cancellationToken);
+            results.Add(buttonsResult);
+            if (buttonsResult.Interrupted) return results;
 
-            if (panel.HasLed)
-            {
-                results.Add(await TestLedAsync(panelType, userConfirm));
-            }
+            var ledResult = await TestLedAsync(panelType, userConfirm, cancellationToken);
+            results.Add(ledResult);
+            if (ledResult.Interrupted) return results;
 
-            if (panel.HasBuzzer)
-            {
-                results.Add(await TestBuzzerAsync(panelType, userConfirm));
-            }
+            var buzzerResult = await TestBuzzerAsync(panelType, userConfirm, cancellationToken);
+            results.Add(buzzerResult);
+            if (buzzerResult.Interrupted) return results;
 
             return results;
         }
 
-        // Esegue il test dei pulsanti della pulsantiera
-        public async Task<ButtonPanelTestResult> TestButtonsAsync(ButtonPanelType panelType, Func<string, Task> userPrompt)
+        // Esegue il test dei pulsanti per una pulsantiera specifica
+        public async Task<ButtonPanelTestResult> TestButtonsAsync(
+            ButtonPanelType panelType,
+            Func<string, Task> userPrompt,
+            Action<int>? onButtonStart = null,
+            Action<int, bool>? onButtonResult = null,
+            CancellationToken cancellationToken = default)
         {
             var panel = ButtonPanel.GetByType(panelType);
             bool allPassed = true;
             string message = "";
+            bool interrupted = false;
 
-            for (int i = 1; i <= panel.ButtonCount; i++)
+            try
             {
-                // Calcola expected payload (da tuo esempio: [00 02 80 00 XX] dove XX = 1 << (i-1))
-                byte buttonCode = (byte)(1 << (i - 1)); // 0x01, 0x02, 0x04, 0x08, ...
-                byte[] expectedPayload = new byte[] { 0x00, 0x02, 0x80, 0x00, buttonCode };
+                for (int i = 0; i < panel.ButtonCount; i++)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
 
-                // Prompt utente
-                await userPrompt($"Premi il pulsante {i}");
+                    onButtonStart?.Invoke(i);
 
-                // Await event con matching payload
-                bool passed = await AwaitButtonPressEventAsync(expectedPayload, BUTTON_PRESS_TIMEOUT_MS);
+                    byte buttonCode = panel.ButtonMasks[i];
+                    byte[] expectedPayload = [0x00, 0x02, 0x80, 0x00, buttonCode];
 
-                allPassed &= passed;
-                message += $"Pulsante {i}: {(passed ? "OK" : "Fallito")};";
+                    await userPrompt($"Premi il pulsante {panel.Buttons[i]}");
+
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    bool passed = await AwaitButtonPressEventAsync(expectedPayload, BUTTON_PRESS_TIMEOUT_MS, cancellationToken);
+
+                    onButtonResult?.Invoke(i, passed);
+
+                    allPassed &= passed;
+                    message += $"- Pulsante {panel.Buttons[i]}: {(passed ? "PASSATO" : "FALLITO")}\n";
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                interrupted = true;
+                allPassed = false;
+                message += "- Test interrotto dall'utente.\n";
             }
 
             return new ButtonPanelTestResult
@@ -210,71 +254,122 @@ namespace STEMPM.Services
                 PanelType = panelType,
                 TestType = ButtonPanelTestType.Buttons,
                 Passed = allPassed,
-                Message = message.TrimEnd(';')
+                Message = message.Trim(),
+                Interrupted = interrupted
             };
         }
 
-        // Esegue il collaudo dei LED della pulsantiera
-        public async Task<ButtonPanelTestResult> TestLedAsync(ButtonPanelType panelType, Func<string, Task<bool>> userConfirm)
+        // Esegue il test del LED per una pulsantiera specifica
+        public async Task<ButtonPanelTestResult> TestLedAsync(
+            ButtonPanelType panelType,
+            Func<string, Task<bool>> userConfirm,
+            CancellationToken cancellationToken = default)
         {
             bool passed = true;
+            string message = "";
+            bool interrupted = false;
 
-            // Collaudo accensione LED verde
-            var onPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_GREEN_LED, VALUE_ON);
-            await SendCommandAsync(CMD_WRITE_VARIABLE, onPayload, waitAnswer: true);
-            passed &= await userConfirm("Il LED verde è acceso?");
+            try
+            {
+                // Collaudo accensione LED verde
+                var onPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_GREEN_LED, VALUE_ON);
+                await SendCommandAsync(CMD_WRITE_VARIABLE, onPayload, waitAnswer: true);
+                cancellationToken.ThrowIfCancellationRequested();
+                bool conf = await userConfirm("Il LED verde è acceso?");
+                message += $"- LED verde acceso: {(conf ? "PASSATO" : "FALLITO")}\n";
+                passed &= conf;
 
-            // Collaudo spegnimento LED verde
-            var offPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_GREEN_LED, VALUE_OFF);
-            await SendCommandAsync(CMD_WRITE_VARIABLE, offPayload, waitAnswer: true);
-            passed &= await userConfirm("Il LED verde è spento?");
+                // Collaudo spegnimento LED verde
+                var offPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_GREEN_LED, VALUE_OFF);
+                await SendCommandAsync(CMD_WRITE_VARIABLE, offPayload, waitAnswer: true);
+                cancellationToken.ThrowIfCancellationRequested();
+                conf = await userConfirm("Il LED verde è spento?");
+                message += $"- LED verde spento: {(conf ? "PASSATO" : "FALLITO")}\n";
+                passed &= conf;
 
-            // Collaudo accensione LED rosso
-            onPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_RED_LED, VALUE_ON);
-            await SendCommandAsync(CMD_WRITE_VARIABLE, onPayload, waitAnswer: true);
-            passed &= await userConfirm("Il LED rosso è acceso?");
+                // Collaudo accensione LED rosso
+                onPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_RED_LED, VALUE_ON);
+                await SendCommandAsync(CMD_WRITE_VARIABLE, onPayload, waitAnswer: true);
+                cancellationToken.ThrowIfCancellationRequested();
+                conf = await userConfirm("Il LED rosso è acceso?");
+                message += $"- LED rosso acceso: {(conf ? "PASSATO" : "FALLITO")}\n";
+                passed &= conf;
 
-            // Collaudo spegnimento LED rosso
-            offPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_RED_LED, VALUE_OFF);
-            await SendCommandAsync(CMD_WRITE_VARIABLE, offPayload, waitAnswer: true);
-            passed &= await userConfirm("Il LED rosso è spento?");
+                // Collaudo spegnimento LED rosso
+                offPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_RED_LED, VALUE_OFF);
+                await SendCommandAsync(CMD_WRITE_VARIABLE, offPayload, waitAnswer: true);
+                cancellationToken.ThrowIfCancellationRequested();
+                conf = await userConfirm("Il LED rosso è spento?");
+                message += $"- LED rosso spento: {(conf ? "PASSATO" : "FALLITO")}\n";
+                passed &= conf;
 
-            // Collaudo accensione simultanea LED verde e rosso
-            onPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_GREEN_LED, VALUE_ON);
-            await SendCommandAsync(CMD_WRITE_VARIABLE, onPayload, waitAnswer: true);
-            onPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_RED_LED, VALUE_ON);
-            await SendCommandAsync(CMD_WRITE_VARIABLE, onPayload, waitAnswer: true);
-            passed &= await userConfirm("Entrambi i LED (verde e rosso) sono accesi?");
+                // Collaudo accensione simultanea LED verde e rosso
+                onPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_GREEN_LED, VALUE_ON);
+                await SendCommandAsync(CMD_WRITE_VARIABLE, onPayload, waitAnswer: true);
+                onPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_RED_LED, VALUE_ON);
+                await SendCommandAsync(CMD_WRITE_VARIABLE, onPayload, waitAnswer: true);
+                cancellationToken.ThrowIfCancellationRequested();
+                conf = await userConfirm("Entrambi i LED (verde e rosso) sono accesi?");
+                message += $"- LED verde e rosso accesi: {(conf ? "PASSATO" : "FALLITO")}\n";
+                passed &= conf;
 
-            // Spegni i LED alla fine del test
-            offPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_RED_LED, VALUE_OFF);
-            await SendCommandAsync(CMD_WRITE_VARIABLE, offPayload, waitAnswer: true);
-            offPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_GREEN_LED, VALUE_OFF);
-            await SendCommandAsync(CMD_WRITE_VARIABLE, offPayload, waitAnswer: true);
+                // Spegni i LED alla fine del test
+                offPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_RED_LED, VALUE_OFF);
+                await SendCommandAsync(CMD_WRITE_VARIABLE, offPayload, waitAnswer: true);
+                offPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_GREEN_LED, VALUE_OFF);
+                await SendCommandAsync(CMD_WRITE_VARIABLE, offPayload, waitAnswer: true);
+            }
+            catch (OperationCanceledException)
+            {
+                interrupted = true;
+                passed = false;
+                message += "\n- Test interrotto dall'utente.";
+            }
 
             return new ButtonPanelTestResult
             {
                 PanelType = panelType,
                 TestType = ButtonPanelTestType.Led,
                 Passed = passed,
-                Message = passed ? "LED funziona correttamente" : "LED non rilevato"
+                Message = message.Trim(),
+                Interrupted = interrupted
             };
         }
 
-        // Esegue il test del buzzer della pulsantiera
-        public async Task<ButtonPanelTestResult> TestBuzzerAsync(ButtonPanelType panelType, Func<string, Task<bool>> userConfirm)
+        // Esegue il test del buzzer per una pulsantiera specifica
+        public async Task<ButtonPanelTestResult> TestBuzzerAsync(
+            ButtonPanelType panelType,
+            Func<string, Task<bool>> userConfirm,
+            CancellationToken cancellationToken = default)
         {
-            // Attiva buzzer per mezzo secondo
-            var onPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_BUZZER, VALUE_SINGLE_BLINK);
-            await SendCommandAsync(CMD_WRITE_VARIABLE, onPayload, waitAnswer: true);
-            bool passed = await userConfirm("Hai sentito il buzzer suonare?");
+            bool passed = true;
+            string message = "";
+            bool interrupted = false;
+
+            try
+            {
+                // Attiva buzzer per mezzo secondo
+                var onPayload = BuildPayload(CMD_WRITE_VARIABLE, VAR_BUZZER, VALUE_SINGLE_BLINK);
+                await SendCommandAsync(CMD_WRITE_VARIABLE, onPayload, waitAnswer: true);
+                cancellationToken.ThrowIfCancellationRequested();
+                bool conf = await userConfirm("Hai sentito il buzzer suonare?");
+                passed &= conf;
+                message = $"- Buzzer suonato: {(conf ? "PASSATO" : "FALLITO")}";
+            }
+            catch (OperationCanceledException)
+            {
+                interrupted = true;
+                passed = false;
+                message += "\n- Test interrotto dall'utente.";
+            }
 
             return new ButtonPanelTestResult
             {
                 PanelType = panelType,
                 TestType = ButtonPanelTestType.Buzzer,
                 Passed = passed,
-                Message = passed ? "Buzzer funziona correttamente" : "Buzzer non rilevato"
+                Message = message.Trim(),
+                Interrupted = interrupted
             };
         }
     }

@@ -19,7 +19,9 @@ namespace STEMPM
             InitializeComponent();
             labelVersion.Text = "Version: " + Form1.Software_Version;
 
-#if TOPLIFT
+#if BUTTONPANEL
+            label1.Text = "Button Panel\r\nManager";
+#elif TOPLIFT
             label1.Text = "Top Lift A2 \r\n Manager";
 #elif EDEN
             label1.Text = "Eden XP \r\n Manager";

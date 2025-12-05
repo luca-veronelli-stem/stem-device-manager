@@ -10,7 +10,7 @@
 		<ApplicationIcon>Resources\Ztem.ico</ApplicationIcon>
 		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
 		<PlatformTarget>x64</PlatformTarget>
-		<Configurations>Debug;Release;STEMDM;TOPLIFT-A2-Debug;TOPLIFT-A2-Release;EDEN-Debug;EDEN-Release;EGICON-Debug;EGICON-Release</Configurations>
+		<Configurations>Debug;Release;STEMDM;TOPLIFT-A2-Debug;TOPLIFT-A2-Release;EDEN-Debug;EDEN-Release;EGICON-Debug;EGICON-Release;BUTTONPANEL</Configurations>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='TOPLIFT-A2-Debug|AnyCPU'">
@@ -36,6 +36,8 @@
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='EGICON-Release|AnyCPU'">
 	  <DefineConstants>$(DefineConstants);EGICON</DefineConstants>
 	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BUTTONPANEL|AnyCPU'" />
 
 	<ItemGroup>
 	  <Compile Remove="BLEManager.cs" />
