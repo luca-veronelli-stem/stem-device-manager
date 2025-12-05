@@ -103,22 +103,20 @@ namespace STEMPM.GUI.Views
         }
 
         // Imposta il recipientId in base alla pulsantiera
-        private void SetRecipientIdForPanel(ButtonPanelType panelType)
+        private static void UpdateRecipientIdForPanel(ButtonPanelType panelType)
         {
-            // Mapping based on your specification
-            (int machine, int board, uint recipientId) mapping = panelType switch
+            // Mappa il recipientId in base al tipo di pulsantiera
+            uint recipientId = panelType switch
             {
-                ButtonPanelType.DIS0023789 => (3, 1, 0x00030101), 
-                ButtonPanelType.DIS0025205 => (10, 1, 0x000A0101), 
-                ButtonPanelType.DIS0026166 => (11, 2, 0x000B0101), 
-                ButtonPanelType.DIS0026182 => (12, 1, 0x000C0101), 
-                _ => (-1, -1, 0x00000000)
+                ButtonPanelType.DIS0023789 => 0x00030101,
+                ButtonPanelType.DIS0025205 => 0x000A0101,
+                ButtonPanelType.DIS0026166 => 0x000B0101,
+                ButtonPanelType.DIS0026182 => 0x000C0101,
+                _ => (0x00000000)
             };
 
-            // Use Form1's method to set everything correctly in background
-            Form1.FormRef.SetRecipientIdSilently(mapping.recipientId, mapping.machine, mapping.board);
-
-            Form1.FormRef.UpdateTerminal($"Pulsantiera selezionata: {panelType} → Indirizzo 0x{mapping.recipientId:X8}");
+            // Chiama il metodo nel Form1
+            Form1.FormRef.SetRecipientIdSilently(recipientId);
         }
 
         // Metodo helper per aggiornare comboBoxSelectTest filtrando opzioni non supportate

@@ -537,31 +537,9 @@ namespace StemPC
             tabControl.TabPages.Add(tabPage);
         }
 
-        public void SetRecipientIdSilently(uint recipientId, int machineName, int boardName)
+        public void SetRecipientIdSilently(uint recipientId)
         {
             RecipientId = recipientId;
-
-#if !BUTTONPANEL
-            // Update label (optional, for debug)
-            label12.Text = $"Indirizzo\n 0x{recipientId:X8}";
-#endif
-            if (isStreamBased)
-            {
-                hExcel.EstraiDizionario(recipientId, Dizionario);
-            }
-            else
-            {
-                hExcel.EstraiDizionario(recipientId, Dizionario, ExcelfilePath);
-            }
-
-#if !BUTTONPANEL
-            //if (TelemetryTabRef != null)
-            //    TelemetryTabRef.UpdateDictionary(Dizionario);
-
-            // Optionally update combos silently (no visual change if tab hidden)
-            comboBoxMachine.SelectedIndex = machineName;
-            comboBoxBoard.SelectedIndex = boardName;
-#endif
         }
 
         public void UpdateTerminal(string message)
