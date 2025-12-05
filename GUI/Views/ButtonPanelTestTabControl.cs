@@ -394,11 +394,16 @@ namespace STEMPM.GUI.Views
             pictureBoxImage.Invalidate();
         }
 
-        // Mostra un prompt all'utente
+        // Mostra un prompt all'utente in richTextBoxTestProgress
         public async Task ShowPromptAsync(string message, string title = "Istruzione collaudo pulsanti")
         {
-            await Task.Run(() => MessageBox.Show(message, title,
-                MessageBoxButtons.OK, MessageBoxIcon.Information));
+            richTextBoxTestProgress.SelectionStart = richTextBoxTestProgress.TextLength;
+            richTextBoxTestProgress.SelectionLength = 0;
+            richTextBoxTestProgress.SelectionColor = Color.Yellow;
+            richTextBoxTestProgress.AppendText(message + Environment.NewLine);
+            richTextBoxTestProgress.SelectionColor = richTextBoxTestProgress.ForeColor; // Reset to default
+            richTextBoxTestProgress.ScrollToCaret();
+            await Task.CompletedTask;
         }
 
         // Chiedi una conferma all'utente
@@ -421,10 +426,22 @@ namespace STEMPM.GUI.Views
             }
         }
 
-        // Aggiorna lo stato del collaudo
+        // Mostra un messaggio di progresso
         public void ShowProgress(string message)
         {
             richTextBoxTestProgress.AppendText(message + Environment.NewLine);
+            richTextBoxTestProgress.ScrollToCaret();
+        }
+
+        // Mostra un messaggio di progresso con colore personalizzato
+        public void ShowColoredProgress(string message, Color color)
+        {
+            richTextBoxTestProgress.SelectionStart = richTextBoxTestProgress.TextLength;
+            richTextBoxTestProgress.SelectionLength = 0;
+            richTextBoxTestProgress.SelectionColor = color;
+            richTextBoxTestProgress.AppendText(message + Environment.NewLine);
+            richTextBoxTestProgress.SelectionColor = richTextBoxTestProgress.ForeColor; // Reset to default
+            richTextBoxTestProgress.ScrollToCaret();
         }
 
         // Mostra eventuali messaggi di errore
