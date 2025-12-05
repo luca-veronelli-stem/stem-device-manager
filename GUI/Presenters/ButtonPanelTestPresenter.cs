@@ -61,7 +61,7 @@ namespace STEMPM.GUI.Presenters
                 }
 
                 _view.DisplayResults(results);
-                _view.ShowProgress($"Collaudo {testType} completato.");
+                _view.ShowProgress($"Collaudo {testType} completato." + Environment.NewLine);
             }
             catch (Exception ex)
             {
@@ -96,27 +96,28 @@ namespace STEMPM.GUI.Presenters
             Func<string, Task> promptFunc)
         {
             bool allPassed = true;
-            string message = "";
+            string resultMessage = "";
 
             for (int i = 0; i < panel.ButtonCount; i++)
             {
-                // Highlight current button in yellow
                 _view.SetButtonWaiting(i);
 
                 string buttonName = panel.Buttons[i];
-                await promptFunc($"Premi il pulsante: {buttonName}");
+                string message = $"Premi il pulsante: {buttonName}";
+                await promptFunc(message);
 
-                // Expected payload for this button (1 << i)
                 byte buttonCode = (byte)(1 << i);
                 byte[] expectedPayload = { 0x00, 0x02, 0x80, 0x00, buttonCode };
 
-                bool passed = await _service.AwaitButtonPressEventAsync(expectedPayload, 5000);
+                bool passed = await _service.AwaitButtonPressEventAsync(expectedPayload, 10000);
 
-                // Update indicator: green = OK, red = failed
                 _view.SetButtonResult(i, passed);
 
+                Color resultColor = passed ? Color.LimeGreen : Color.Red;
+                _view.UpdateLastPromptColor(message, resultColor);
+
                 allPassed &= passed;
-                message += $"Pulsante {buttonName}: {(passed ? "OK" : "FALLITO")}\n";
+                resultMessage += $"- Pulsante {buttonName}: {(passed ? "PASSATO" : "FALLITO")}\n";
             }
 
             return new ButtonPanelTestResult
@@ -124,7 +125,7 @@ namespace STEMPM.GUI.Presenters
                 PanelType = panelType,
                 TestType = ButtonPanelTestType.Buttons,
                 Passed = allPassed,
-                Message = message.Trim()
+                Message = resultMessage.Trim()
             };
         }
 
