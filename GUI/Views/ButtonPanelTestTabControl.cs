@@ -72,24 +72,31 @@ namespace STEMPM.GUI.Views
         // Costruttore del controllo
         public ButtonPanelTestTabControl()
         {
-            // Popola la pagina con gli elementi grafici
-            InitializeComponent();
+            try
+            {
+                // Popola la pagina con gli elementi grafici
+                InitializeComponent();
 
-            // Popola il pannello con i pulsanti per selezionare il tipo di pulsantiera
-            CreateSelectPanelButtons();
+                // Popola il pannello con i pulsanti per selezionare il tipo di pulsantiera
+                CreateSelectPanelButtons();
 
-            // Popola il pannello con i pulsanti per selezionare il tipo di collaudo
-            ButtonPanelTestType[] testTypes = [.. Enum.GetValues(typeof(ButtonPanelTestType)).Cast<ButtonPanelTestType>()];
-            CreateSelectTestButtons(testTypes);
+                // Popola il pannello con i pulsanti per selezionare il tipo di collaudo
+                ButtonPanelTestType[] testTypes = [.. Enum.GetValues(typeof(ButtonPanelTestType)).Cast<ButtonPanelTestType>()];
+                CreateSelectTestButtons(testTypes);
 
-            // Associa i gestori agli eventi di click
-            buttonStartTest.Click += (s, e) => OnStartTestClicked?.Invoke(this, EventArgs.Empty);
-            buttonStopTest.Click += (s, e) => OnStopTestClicked?.Invoke(this, EventArgs.Empty);
-            buttonDownloadTestResult.Click += (s, e) => OnDownloadTestResultClicked?.Invoke(this, EventArgs.Empty);
+                // Associa i gestori agli eventi di click
+                buttonStartTest.Click += (s, e) => OnStartTestClicked?.Invoke(this, EventArgs.Empty);
+                buttonStopTest.Click += (s, e) => OnStopTestClicked?.Invoke(this, EventArgs.Empty);
+                buttonDownloadTestResult.Click += (s, e) => OnDownloadTestResultClicked?.Invoke(this, EventArgs.Empty);
 
-            // Associa il metodo per colorare gli indicatori
-            pictureBoxImage.Paint += PictureBoxImage_Paint;
-            pictureBoxImage.SizeChanged += (s, e) => pictureBoxImage.Invalidate();
+                // Associa il metodo per colorare gli indicatori
+                pictureBoxImage.Paint += PictureBoxImage_Paint;
+                pictureBoxImage.SizeChanged += (s, e) => pictureBoxImage.Invalidate(); 
+            }
+            catch (Exception ex)
+            {
+                ShowError($"Errore durante l'inizializzazione del controllo: {ex.Message}");
+            }
         }
 
         // Metodo per creare dinamicamente i toggle buttons di selezione pulsantiera
@@ -246,9 +253,6 @@ namespace STEMPM.GUI.Views
             }
         }
 
-        // Restituisce il testo dei risultati del collaudo
-        public string GetResultsText() => richTextBoxTestResult.Text;
-
         // Imposta il recipientId in base alla pulsantiera
         private static void UpdateRecipientIdForPanel(ButtonPanelType panelType)
         {
@@ -292,7 +296,19 @@ namespace STEMPM.GUI.Views
         // Metodo per aggiornare l'immagine basata sul tipo selezionato
         private void UpdateImage(ButtonPanelType panelType)
         {
-            pictureBoxImage.Image = Image.FromFile($"..\\..\\..\\..\\images\\ButtonPanels\\{panelType}.jpg") ?? null;
+            try
+            {
+                pictureBoxImage.Image = Image.FromFile($"..\\..\\..\\..\\images\\ButtonPanels\\{panelType}.jpg");
+            }
+            catch (FileNotFoundException ex)
+            {
+                ShowError(ex.Message);
+                pictureBoxImage.Image = null;
+            }
+            catch (Exception ex)
+            {
+                ShowError($"Errore durante il caricamento dell'immagine della pulsantiera: {ex.Message}");
+            }
         }
 
         // Metodo per aggiornare gli indicatori dei pulsanti
@@ -304,8 +320,6 @@ namespace STEMPM.GUI.Views
                 pictureBoxImage.Invalidate();
                 return;
             }
-
-
 
             _buttonIndicators = [.. regions.Select(r => new ButtonIndicator
             {
@@ -447,81 +461,88 @@ namespace STEMPM.GUI.Views
         // Aggiorna la lista dei risultati con il risultato del collaudo eseguito
         public void DisplayResults(List<ButtonPanelTestResult> results)
         {
-            // Pulisci i risultati precedenti
-            richTextBoxTestResult.Clear();
-            // Mostra header comune ai collaudi
-            if (results.Count > 0)
+            try
             {
-                richTextBoxTestResult.AppendText($"Risultati collaudo pulsantiera [{results[0].PanelType}]" + Environment.NewLine);
-            }
-
-            foreach (var result in results)
-            {
-                // Mostra nome del collaudo
-                richTextBoxTestResult.AppendText($"Collaudo {result.TestType}: ");
-
-                // Determina stato e colore
-                string status;
-                Color statusColor;
-                if (result.Interrupted)
+                // Pulisci i risultati precedenti
+                richTextBoxTestResult.Clear();
+                // Mostra header comune ai collaudi
+                if (results.Count > 0)
                 {
-                    status = "INTERROTTO";
-                    statusColor = Color.Orange;
-                }
-                else
-                {
-                    status = result.Passed ? "PASSATO" : "FALLITO";
-                    statusColor = result.Passed ? Color.LimeGreen : Color.Red;
+                    richTextBoxTestResult.AppendText($"Risultati collaudo pulsantiera [{results[0].PanelType}]" + Environment.NewLine);
                 }
 
-                richTextBoxTestResult.SelectionColor = statusColor;
-                richTextBoxTestResult.AppendText(status);
-                richTextBoxTestResult.SelectionColor = richTextBoxTestResult.ForeColor;
-                richTextBoxTestResult.AppendText(Environment.NewLine);
-
-                // Gestisci il messaggio
-                string[] lines = result.Message.Split('\n');
-                foreach (string line in lines)
+                foreach (var result in results)
                 {
-                    if (string.IsNullOrWhiteSpace(line)) continue;
+                    // Mostra nome del collaudo
+                    richTextBoxTestResult.AppendText($"Collaudo {result.TestType}: ");
 
-                    if (line.Contains("interrotto"))
+                    // Determina stato e colore
+                    string status;
+                    Color statusColor;
+                    if (result.Interrupted)
                     {
-                        richTextBoxTestResult.SelectionColor = Color.Orange;
-                        richTextBoxTestResult.AppendText(line);
-                        richTextBoxTestResult.SelectionColor = richTextBoxTestResult.ForeColor;
+                        status = "INTERROTTO";
+                        statusColor = Color.Orange;
                     }
                     else
                     {
-                        int colonIndex = line.LastIndexOf(':');
-                        if (colonIndex != -1)
+                        status = result.Passed ? "PASSATO" : "FALLITO";
+                        statusColor = result.Passed ? Color.LimeGreen : Color.Red;
+                    }
+
+                    richTextBoxTestResult.SelectionColor = statusColor;
+                    richTextBoxTestResult.AppendText(status);
+                    richTextBoxTestResult.SelectionColor = richTextBoxTestResult.ForeColor;
+                    richTextBoxTestResult.AppendText(Environment.NewLine);
+
+                    // Gestisci il messaggio
+                    string[] lines = result.Message.Split('\n');
+                    foreach (string line in lines)
+                    {
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+
+                        if (line.Contains("interrotto"))
                         {
-                            string before = line.Substring(0, colonIndex + 1) + " ";
-                            string after = line.Substring(colonIndex + 1).Trim();
-
-                            richTextBoxTestResult.AppendText(before);
-
-                            bool subPassed = after.Contains("PASSATO");
-                            Color subColor = subPassed ? Color.LimeGreen : Color.Red;
-
-                            richTextBoxTestResult.SelectionColor = subColor;
-                            richTextBoxTestResult.AppendText(after);
+                            richTextBoxTestResult.SelectionColor = Color.Orange;
+                            richTextBoxTestResult.AppendText(line);
                             richTextBoxTestResult.SelectionColor = richTextBoxTestResult.ForeColor;
                         }
                         else
                         {
-                            richTextBoxTestResult.AppendText(line);
+                            int colonIndex = line.LastIndexOf(':');
+                            if (colonIndex != -1)
+                            {
+                                string before = line.Substring(0, colonIndex + 1) + " ";
+                                string after = line.Substring(colonIndex + 1).Trim();
+
+                                richTextBoxTestResult.AppendText(before);
+
+                                bool subPassed = after.Contains("PASSATO");
+                                Color subColor = subPassed ? Color.LimeGreen : Color.Red;
+
+                                richTextBoxTestResult.SelectionColor = subColor;
+                                richTextBoxTestResult.AppendText(after);
+                                richTextBoxTestResult.SelectionColor = richTextBoxTestResult.ForeColor;
+                            }
+                            else
+                            {
+                                richTextBoxTestResult.AppendText(line);
+                            }
                         }
+
+                        richTextBoxTestResult.AppendText(Environment.NewLine);
                     }
 
                     richTextBoxTestResult.AppendText(Environment.NewLine);
                 }
 
-                richTextBoxTestResult.AppendText(Environment.NewLine);
+                // Scrolla alla fine
+                richTextBoxTestResult.ScrollToCaret();
             }
-
-            // Scrolla alla fine
-            richTextBoxTestResult.ScrollToCaret();
+            catch (Exception ex)
+            {
+                ShowError($"Errore durante la visualizzazione dei risultati: {ex.Message}");
+            }
         }
 
         // Mostra un messaggio di progresso
@@ -553,5 +574,8 @@ namespace STEMPM.GUI.Views
         {
             MessageBox.Show(ParentForm, message, "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+
+        // Restituisce il testo dei risultati del collaudo
+        public string GetResultsText() => richTextBoxTestResult.Text;
     }
 }
