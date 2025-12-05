@@ -123,18 +123,30 @@ namespace STEMPM.GUI.Views
         // Metodo per creare dinamicamente i toggle buttons di selezione collaudo
         private void CreateSelectTestButtons(ButtonPanelTestType[] testTypes)
         {
-            int buttonWidth = 150;
-            int buttonHeight = 35;
-            int spacing = 10;
+            // Spazio tra i pulsanti e dai bordi
+            int spacing = 10; 
+            int buttonHeight = panelTestSelection.Height - 2 * spacing;
+            // Altezza pulsante con margini simmetrici
+            int buttonWidth = (panelTestSelection.Width - (testTypes.Length + 1) * spacing) / testTypes.Length;
+
+            // Calcola la larghezza totale del gruppo di pulsanti (pulsanti + spazi tra loro)
+            int totalGroupWidth = testTypes.Length * buttonWidth + (testTypes.Length - 1) * spacing;
+
+            // Calcola la posizione X iniziale per centrare orizzontalmente il gruppo
+            int startX = (panelTestSelection.Width - totalGroupWidth) / 2;
+
+            // Calcola la posizione Y per centrare verticalmente ciascun pulsante
+            int startY = (panelTestSelection.Height - buttonHeight) / 2;
 
             for (int i = 0; i < testTypes.Length; i++)
             {
                 Button btn = new()
                 {
                     Text = testTypes[i].ToString(),
+                    Width = buttonWidth,
+                    Height = buttonHeight,
                     Tag = testTypes[i],
-                    Location = new Point(i * (buttonWidth + spacing), 0),
-                    Size = new Size(buttonWidth, buttonHeight),
+                    Location = new Point(startX + i * (buttonWidth + spacing), startY),
                     FlatStyle = FlatStyle.Flat,
                     FlatAppearance = { BorderSize = 1, BorderColor = Color.Gainsboro },
                     BackColor = SystemColors.Control,
