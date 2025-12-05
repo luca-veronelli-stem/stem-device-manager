@@ -182,38 +182,34 @@ namespace STEMPM.Services
 
         // Esegue tutti i test disponibili per una pulsantiera specifica e restituisce i risultati
         public async Task<List<ButtonPanelTestResult>> TestAllAsync(
-            ButtonPanelType panelType, 
-            Func<string, Task<bool>> userConfirm, 
-            Func<string, Task> userPrompt, 
+            ButtonPanelType panelType,
+            Func<string, Task<bool>> userConfirm,
+            Func<string, Task> userPrompt,
+            Action<int>? onButtonStart = null,
+            Action<int, bool>? onButtonResult = null,
             CancellationToken cancellationToken = default)
         {
             var panel = ButtonPanel.GetByType(panelType);
             var results = new List<ButtonPanelTestResult>
             {
-                await TestButtonsAsync(panelType, userPrompt, cancellationToken)
+                await TestButtonsAsync(panelType, userPrompt, onButtonStart, onButtonResult, cancellationToken)
             };
 
-            cancellationToken.ThrowIfCancellationRequested();
-
             if (panel.HasLed)
-            {
                 results.Add(await TestLedAsync(panelType, userConfirm, cancellationToken));
-            }
-
-            cancellationToken.ThrowIfCancellationRequested();
 
             if (panel.HasBuzzer)
-            {
                 results.Add(await TestBuzzerAsync(panelType, userConfirm, cancellationToken));
-            }
 
             return results;
         }
 
-        // Esegue il test dei pulsanti della pulsantiera
+        // Esegue il collaudo dei pulsanti della pulsantiera
         public async Task<ButtonPanelTestResult> TestButtonsAsync(
-            ButtonPanelType panelType, 
-            Func<string, Task> userPrompt, 
+            ButtonPanelType panelType,
+            Func<string, Task> userPrompt,
+            Action<int>? onButtonStart = null,
+            Action<int, bool>? onButtonResult = null,
             CancellationToken cancellationToken = default)
         {
             var panel = ButtonPanel.GetByType(panelType);
@@ -224,6 +220,8 @@ namespace STEMPM.Services
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
+                onButtonStart?.Invoke(i);
+
                 byte buttonCode = panel.ButtonMasks[i];
                 byte[] expectedPayload = [0x00, 0x02, 0x80, 0x00, buttonCode];
 
@@ -233,8 +231,10 @@ namespace STEMPM.Services
 
                 bool passed = await AwaitButtonPressEventAsync(expectedPayload, BUTTON_PRESS_TIMEOUT_MS, cancellationToken);
 
+                onButtonResult?.Invoke(i, passed);
+
                 allPassed &= passed;
-                message += $"Pulsante {panel.Buttons[i]}: {(passed ? "PASSATO" : "FALLITO")};" + Environment.NewLine;
+                message += $"- Pulsante {panel.Buttons[i]}: {(passed ? "PASSATO" : "FALLITO")}\n";
             }
 
             return new ButtonPanelTestResult
@@ -242,14 +242,14 @@ namespace STEMPM.Services
                 PanelType = panelType,
                 TestType = ButtonPanelTestType.Buttons,
                 Passed = allPassed,
-                Message = message.TrimEnd(';')
+                Message = message.Trim()
             };
         }
 
         // Esegue il collaudo dei LED della pulsantiera
         public async Task<ButtonPanelTestResult> TestLedAsync(
-            ButtonPanelType panelType, 
-            Func<string, Task<bool>> userConfirm, 
+            ButtonPanelType panelType,
+            Func<string, Task<bool>> userConfirm,
             CancellationToken cancellationToken = default)
         {
             bool passed = true;
@@ -303,8 +303,8 @@ namespace STEMPM.Services
 
         // Esegue il test del buzzer della pulsantiera
         public async Task<ButtonPanelTestResult> TestBuzzerAsync(
-            ButtonPanelType panelType, 
-            Func<string, Task<bool>> userConfirm, 
+            ButtonPanelType panelType,
+            Func<string, Task<bool>> userConfirm,
             CancellationToken cancellationToken = default)
         {
             // Attiva buzzer per mezzo secondo
