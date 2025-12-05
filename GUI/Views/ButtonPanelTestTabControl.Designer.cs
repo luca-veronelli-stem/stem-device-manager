@@ -89,7 +89,7 @@
             // richTextBoxTestResult
             // 
             richTextBoxTestResult.BackColor = SystemColors.ControlDarkDark;
-            richTextBoxTestResult.Font = new Font("Segoe UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            richTextBoxTestResult.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
             richTextBoxTestResult.ForeColor = SystemColors.HighlightText;
             richTextBoxTestResult.Location = new Point(915, 3);
             richTextBoxTestResult.MinimumSize = new Size(400, 0);
