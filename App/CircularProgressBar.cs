@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.ComponentModel.Design.Serialization;
 using System.Windows.Forms;
 
 namespace App
@@ -13,6 +14,8 @@ namespace App
 
         [Category("Behavior")]
         [Description("Current progress value.")]
+        [DefaultValue(0)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
         public int Value
         {
             get => _value;
@@ -27,6 +30,8 @@ namespace App
 
         [Category("Behavior")]
         [Description("Maximum progress value.")]
+        [DefaultValue(100)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
         public int Maximum
         {
             get => _maximum;
@@ -41,6 +46,8 @@ namespace App
 
         [Category("Appearance")]
         [Description("Width of the progress arc.")]
+        [DefaultValue(10)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
         public int LineWidth
         {
             get => _lineWidth;
