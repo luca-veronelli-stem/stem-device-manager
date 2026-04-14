@@ -43,9 +43,9 @@ namespace Core.Models
         {
             return type switch
             {
-                ButtonPanelType.DIS0025205 => Enum.GetNames(typeof(OptimusButtons)),
-                ButtonPanelType.DIS0026166 => Enum.GetNames(typeof(R3LXPButtons)),
-                _ => Enum.GetNames(typeof(EdenButtons)),
+                ButtonPanelType.DIS0025205 => Enum.GetNames<OptimusButtons>(),
+                ButtonPanelType.DIS0026166 => Enum.GetNames<R3LXPButtons>(),
+                _ => Enum.GetNames<EdenButtons>(),
             };
         }
     }
