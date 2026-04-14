@@ -1,14 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Collections.Concurrent;
-using System.Windows.Forms;
-using DocumentFormat.OpenXml.Drawing;
 using static App.STEMProtocol.NetworkLayer;
-using DocumentFormat.OpenXml.Drawing.Charts;
 
 namespace App.STEMProtocol;
 
@@ -51,7 +41,7 @@ public class TelemetryManager
     public TelemetryManager(PacketManager packetManager)
     {
         protocolManager = new ProtocolManager();
-    //    protocolManager.SendCommandRequest += protocolManager.OnSendCanCommand; //per il momento forzo il can poi dovrò gestirlo coi canali attivi
+        //    protocolManager.SendCommandRequest += protocolManager.OnSendCanCommand; //per il momento forzo il can poi dovrò gestirlo coi canali attivi
         rXPacketManager = packetManager;
         rXPacketManager.OnAppLayerPacketReceived += onAppLayerPacketReady;
         TelemetryOn = false;
@@ -99,10 +89,10 @@ public class TelemetryManager
     public void ResetDictionary()
     {
         int Count = TelemetryDictionary.Count;
-        for (int i=0; i<Count; i++) TelemetryDictionary.RemoveAt(0);
+        for (int i = 0; i < Count; i++) TelemetryDictionary.RemoveAt(0);
 
         Count = TelemetryDictionaryValues.Count;
-        for (int i = 0; i < Count; i++) TelemetryDictionaryValues.RemoveAt(0);     
+        for (int i = 0; i < Count; i++) TelemetryDictionaryValues.RemoveAt(0);
     }
 
     public void UpdateMyAddress(uint address)
@@ -119,15 +109,15 @@ public class TelemetryManager
     {
         if (index < 0 || index >= TelemetryDictionary.Count)
             return "Index out of range";
-        else 
+        else
             return TelemetryDictionary[index].Name;
     }
 
     public int GetVariableIndex(String Name)
     {
-        for (int i= 0; i<TelemetryDictionary.Count; i++)
+        for (int i = 0; i < TelemetryDictionary.Count; i++)
         {
-            if (TelemetryDictionary[i].Name==Name) return i;
+            if (TelemetryDictionary[i].Name == Name) return i;
         }
 
         return -1;
@@ -371,7 +361,7 @@ public class TelemetryManager
             if (int.TryParse(TelemetryDictionaryValues[CurrentIndex], out int valuetest) && valuetest >= 0 && valuetest <= 32767)
             {
                 // Input valido
-              
+
             }
             else
             {
@@ -391,8 +381,8 @@ public class TelemetryManager
             }
 
             //crea un array di byte dove nei primi 2 bytes ci sono i valori Addrh e AddrL della variabile da richiedere dal TelemetryDictionary di indice CurrentIndex
-            List<byte> data = new List<byte> { 
-                Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrH, 16), 
+            List<byte> data = new List<byte> {
+                Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrH, 16),
                 Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrL, 16), };
 
             data.AddRange(bytesVal);

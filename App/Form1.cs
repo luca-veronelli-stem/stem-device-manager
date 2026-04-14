@@ -1,14 +1,12 @@
-using Microsoft.Extensions.DependencyInjection;
-using STEMPM;
+using App;
 using App.GUI.Presenters;
+using App.STEMProtocol;
+using Core.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 using STEMPM.GUI.Views;
 using System.Globalization;
-using System.Windows.Forms;
-using static ExcelHandler;
 using static App.STEMProtocol.NetworkLayer;
-using App.STEMProtocol;
-using App.Core.Interfaces;
-using App;
+using static ExcelHandler;
 
 namespace StemPC
 {
@@ -332,11 +330,11 @@ namespace StemPC
             tabControl.SelectedTab = BLETabRef;
 #else
             tabControl.SelectedTab = BLETabRef;
-           
+
             //tabControl.SelectedTab = tabControl.TabPages["tabPageProtocol"];
 
             tabControl.TabPages.Add(TelemetryTabRef);
-          //  tabControl.TabPages.Add(BootSmartTabRef);
+            //  tabControl.TabPages.Add(BootSmartTabRef);
 #endif
 
             // Nascondi la colonna delle variabili
@@ -368,7 +366,7 @@ namespace StemPC
 
             // Caricamento diretto del file Excel dalle risorse (embedded)
             //var asm = Assembly.GetExecutingAssembly();
-            const string resourceName = "STEMPM.Resources.Dizionari STEM.xlsx";
+            const string resourceName = "App.Resources.Dizionari STEM.xlsx";
             using (var stream = asm.GetManifestResourceStream(resourceName))
             {
                 if (stream == null)

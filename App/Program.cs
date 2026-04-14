@@ -1,3 +1,5 @@
+using App.Services;
+using Core.Interfaces;
 /// <summary>
 ///*****************************************************************************
 /// @file    Program.cs
@@ -23,10 +25,8 @@
 ///
 /// </summary>
 using Microsoft.Extensions.DependencyInjection;
-using STEMPM;
 using StemPC;
-using App.Core.Interfaces;
-using App.Services;
+using STEMPM;
 
 namespace App
 {

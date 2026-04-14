@@ -1,5 +1,5 @@
-using RowData = global::ExcelHandler.RowData;
 using CommandData = global::ExcelHandler.CommandData;
+using RowData = global::ExcelHandler.RowData;
 using VariableData = global::ExcelHandler.VariableData;
 
 namespace Tests.Unit.ExcelHandler;

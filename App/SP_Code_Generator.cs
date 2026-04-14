@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-
-public class SP_Code_Generator
+﻿public class SP_Code_Generator
 {
     public void GeneraFileDiTesto(List<string> configurazioni, string filePath)
     {

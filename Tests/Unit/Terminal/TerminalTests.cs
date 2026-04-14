@@ -75,4 +75,3 @@ public class TerminalTests
         Assert.Equal(Environment.NewLine, result);
     }
 }
- 

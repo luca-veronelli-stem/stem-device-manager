@@ -1,15 +1,6 @@
-﻿using System;
-using System.IO;
-using System.Text;
-using System.Windows.Forms;
-using System.Runtime.InteropServices;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
-
+﻿using App.STEMProtocol;
 using StemPC;
-using App.STEMProtocol;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
-using DocumentFormat.OpenXml.Wordprocessing;
-using App.STEMProtocol;
+using System.Text;
 
 
 // Classe per l'interfaccia grafica del bootloader
@@ -27,7 +18,7 @@ public class Boot_Interface_Tab : TabPage
     //private System.Windows.Forms.ProgressBar progressBar;
     private OpenFileDialog openFileDialog;
     private TableLayoutPanel mainLayout;
-    private string filePath= "";
+    private string filePath = "";
     public BootManager BootHndlr;
 
     public Boot_Interface_Tab()
@@ -79,7 +70,7 @@ public class Boot_Interface_Tab : TabPage
             Width = 100
         };
         btnStartBoot.Click += BtnStartBoot_Click;
-        
+
         // Pulsante per terminare il boot
         btnEndBoot = new System.Windows.Forms.Button
         {
@@ -170,7 +161,7 @@ public class Boot_Interface_Tab : TabPage
         {
             Dock = DockStyle.Fill
         };
-   
+
         // OpenFileDialog per selezionare i file
         openFileDialog = new OpenFileDialog
         {
@@ -227,7 +218,7 @@ public class Boot_Interface_Tab : TabPage
 
     private async void BtnStartProcedure_Click(object sender, EventArgs e)
     {
-      //  Form1.FormRef.RecipientId = 0x00030141; //indirizzo fisso dell'Eden (andrà estratto dal file)
+        //  Form1.FormRef.RecipientId = 0x00030141; //indirizzo fisso dell'Eden (andrà estratto dal file)
 
         if (filePath == "")
         {
@@ -260,10 +251,10 @@ public class Boot_Interface_Tab : TabPage
 
             //Form1.FormRef.RecipientId = BackupAddress;
 
-          //  await BootHndlr.StartBoot();
+            //  await BootHndlr.StartBoot();
 
             //esegui l'upload
-            await BootHndlr.UploadFirmwareOnly();  
+            await BootHndlr.UploadFirmwareOnly();
 
             btnStartProcedure.Enabled = true;
         }
@@ -336,7 +327,7 @@ public class CustomProgressBar : System.Windows.Forms.ProgressBar
 {
     public CustomProgressBar()
     {
-      //  InitializeComponent();
+        //  InitializeComponent();
         // Set default style to owner draw
         this.SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint, true);
     }

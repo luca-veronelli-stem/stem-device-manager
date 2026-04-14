@@ -23,9 +23,12 @@
     <File Path=".copilot/agents/test-agent.md" />
   </Folder>
   <Folder Name="/Docs/">
+    <File Path="Docs/MIGRATION_API.md" />
+  </Folder>
+  <Folder Name="/Docs/Standards/">
     <File Path="Docs/Standards/TEMPLATE_STANDARD.md" />
   </Folder>
-  <Folder Name="/Docs/Templates/">
+  <Folder Name="/Docs/Standards/Templates/">
     <File Path="Docs/Standards/Templates/ISSUES_TEMPLATE.md" />
     <File Path="Docs/Standards/Templates/README_TEMPLATE.md" />
     <File Path="Docs/Standards/Templates/STANDARD_TEMPLATE.md" />
@@ -40,6 +43,36 @@
     <File Path="README.md" />
   </Folder>
   <Project Path="App/App.csproj" />
+  <Project Path="Core/Core.csproj" Id="3557f077-7abe-4f0b-a393-bfdca9acdf43">
+    <BuildType Solution="BUTTONPANEL|*" Project="Release" />
+    <BuildType Solution="EDEN-Debug|*" Project="Release" />
+    <BuildType Solution="EDEN-Release|*" Project="Release" />
+    <BuildType Solution="EGICON-Debug|*" Project="Release" />
+    <BuildType Solution="EGICON-Release|*" Project="Release" />
+    <BuildType Solution="STEMDM|*" Project="Release" />
+    <BuildType Solution="TOPLIFT-A2-Debug|*" Project="Release" />
+    <BuildType Solution="TOPLIFT-A2-Release|*" Project="Release" />
+  </Project>
+  <Project Path="Infrastructure/Infrastructure.csproj" Id="ef04ae12-ec87-4b4f-ba6a-206b085d18ba">
+    <BuildType Solution="BUTTONPANEL|*" Project="Release" />
+    <BuildType Solution="EDEN-Debug|*" Project="Release" />
+    <BuildType Solution="EDEN-Release|*" Project="Release" />
+    <BuildType Solution="EGICON-Debug|*" Project="Release" />
+    <BuildType Solution="EGICON-Release|*" Project="Release" />
+    <BuildType Solution="STEMDM|*" Project="Release" />
+    <BuildType Solution="TOPLIFT-A2-Debug|*" Project="Release" />
+    <BuildType Solution="TOPLIFT-A2-Release|*" Project="Release" />
+  </Project>
+  <Project Path="Services/Services.csproj" Id="33cf0a23-a550-487b-a737-7c4c1c4e2d78">
+    <BuildType Solution="BUTTONPANEL|*" Project="Release" />
+    <BuildType Solution="EDEN-Debug|*" Project="Release" />
+    <BuildType Solution="EDEN-Release|*" Project="Release" />
+    <BuildType Solution="EGICON-Debug|*" Project="Release" />
+    <BuildType Solution="EGICON-Release|*" Project="Release" />
+    <BuildType Solution="STEMDM|*" Project="Release" />
+    <BuildType Solution="TOPLIFT-A2-Debug|*" Project="Release" />
+    <BuildType Solution="TOPLIFT-A2-Release|*" Project="Release" />
+  </Project>
   <Project Path="Tests/Tests.csproj" Id="cb7478b0-2f86-4e05-8ae7-761c5d891286">
     <BuildType Solution="BUTTONPANEL|*" Project="Release" />
     <BuildType Solution="EDEN-Debug|*" Project="Release" />

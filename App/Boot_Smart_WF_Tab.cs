@@ -1,12 +1,7 @@
-﻿using StemPC;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.Reflection;
-using System.Windows.Forms;
+﻿using App; // Per CircularProgressBar
 using App.STEMProtocol;
-using App; // Per CircularProgressBar
+using StemPC;
+using System.Reflection;
 
 public class DeviceInfo
 {
@@ -80,7 +75,7 @@ public class Boot_Smart_Tab : TabPage
 
         // Crea bottone start
         Assembly asm = Assembly.GetExecutingAssembly();
-        string resName = "STEMPM.images.ic_fluent_arrow_download_24_filled.png";
+        string resName = "App.images.ic_fluent_arrow_download_24_filled.png";
         using (Stream s = asm.GetManifestResourceStream(resName))
         {
             if (s == null)
@@ -283,7 +278,7 @@ public class Boot_Smart_Tab : TabPage
     {
         foreach (var sel in binSelections)
         {
-            if ((string.IsNullOrEmpty(sel.FilePath))&&(sel.Device.IsOptional==false))
+            if ((string.IsNullOrEmpty(sel.FilePath)) && (sel.Device.IsOptional == false))
             {
                 MessageBox.Show($"Select firmware file for {sel.Device.DisplayName}");
                 return;
@@ -298,7 +293,8 @@ public class Boot_Smart_Tab : TabPage
 
         foreach (var sel in binSelections)
         {
-            if (!(string.IsNullOrEmpty(sel.FilePath))){
+            if (!(string.IsNullOrEmpty(sel.FilePath)))
+            {
                 BootHndlr.SetFirmwarePath(sel.FilePath);
                 Form1.FormRef.RecipientId = (uint)sel.Device.Address;
                 await BootHndlr.UploadFirmware();
@@ -328,7 +324,7 @@ public class Boot_Smart_Tab : TabPage
         if (InvokeRequired)
         {
             Invoke(new Action(() =>
-            {         
+            {
                 circProgressBarsLarge[1].Value = 100; //aggiorna barra progresso totale
             }));
         }
@@ -393,8 +389,8 @@ public class Boot_Smart_Tab : TabPage
         switch (VarName)
         {
             case "Firmware scheda":
-            uint MajorVersion = ((e.Value) >> 8);
-            uint MinorVersion = ((e.Value) & ((uint)0x000000FF));
+                uint MajorVersion = ((e.Value) >> 8);
+                uint MinorVersion = ((e.Value) & ((uint)0x000000FF));
 
                 if (this.InvokeRequired)
                 {

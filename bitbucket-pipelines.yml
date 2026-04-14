@@ -20,12 +20,14 @@ pipelines:
   # ---------------------------------------------------------------------------
   default:
     - step:
-        name: Build
+        name: Build & Test
         caches:
           - dotnetcore
         script:
           # Build solution (SDK 10 supporta .slnx)
           - dotnet build Stem.Device.Manager.slnx --configuration Release -p:EnableWindowsTargeting=true
-          # NOTA: i test richiedono il runtime Microsoft.WindowsDesktop.App (WinForms)
-          # che non è disponibile su Linux. L'esecuzione test avviene localmente su Windows.
-          # TODO: estrarre Progetti cross-platform per esecuzione test in CI (vedi CI-001)
+          # Test cross-platform (Core models/enums) — target net10.0 gira su Linux
+          - dotnet test Tests/Tests.csproj --framework net10.0 --configuration Release --no-build --logger "trx;LogFileName=test-results.trx"
+          # NOTA: i test WinForms (net10.0-windows) girano solo localmente su Windows (101 test)
+        artifacts:
+          - Tests/TestResults/**

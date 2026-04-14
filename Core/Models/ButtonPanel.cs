@@ -1,7 +1,6 @@
-﻿using App.Core.Enums;
-using DocumentFormat.OpenXml.Office2010.Drawing.Charts;
+using Core.Enums;
 
-namespace App.Core.Models
+namespace Core.Models
 {
     // Modello che rappresenta una pulsantiera con le sue caratteristiche
     internal class ButtonPanel
@@ -20,20 +19,20 @@ namespace App.Core.Models
             return type switch
             {
                 // La pulsantiera di tipo DIS0025205 (Optimus-XP) ha 4 pulsanti senza LED
-                ButtonPanelType.DIS0025205 => new ButtonPanel 
-                { 
-                    Type = type, 
-                    ButtonCount = 4, 
-                    HasLed = false, 
+                ButtonPanelType.DIS0025205 => new ButtonPanel
+                {
+                    Type = type,
+                    ButtonCount = 4,
+                    HasLed = false,
                     Buttons = GetButtonsByType(type),
                     ButtonMasks = [0x04, 0x10, 0x02, 0x20]
                 },
                 // Le altre pulsantiere hanno tutte 8 pulsanti con LED
-                _ => new ButtonPanel 
-                { 
-                    Type = type, 
-                    ButtonCount = 8, 
-                    HasLed = true, 
+                _ => new ButtonPanel
+                {
+                    Type = type,
+                    ButtonCount = 8,
+                    HasLed = true,
                     Buttons = GetButtonsByType(type),
                     ButtonMasks = [0x40, 0x04, 0x08, 0x10, 0x80, 0x02, 0x01, 0x20]
                 }
@@ -44,9 +43,9 @@ namespace App.Core.Models
         {
             return type switch
             {
-                ButtonPanelType.DIS0025205 => Enum.GetNames(typeof(OptimusButtons)),
-                ButtonPanelType.DIS0026166 => Enum.GetNames(typeof(R3LXPButtons)),
-                _ => Enum.GetNames( typeof(EdenButtons)),
+                ButtonPanelType.DIS0025205 => Enum.GetNames<OptimusButtons>(),
+                ButtonPanelType.DIS0026166 => Enum.GetNames<R3LXPButtons>(),
+                _ => Enum.GetNames<EdenButtons>(),
             };
         }
     }

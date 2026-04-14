@@ -1,4 +1,4 @@
-﻿using App.Core.Enums;
+using Core.Enums;
 
 namespace App.Core.Models
 {

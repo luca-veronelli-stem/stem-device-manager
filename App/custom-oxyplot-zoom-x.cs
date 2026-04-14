@@ -1,6 +1,4 @@
 using OxyPlot;
-using OxyPlot.Axes;
-using System;
 
 namespace App
 {
@@ -75,7 +73,7 @@ namespace App
 
             // Converti la posizione del mouse in coordinate di dati
             var dataX = xAxis.InverseTransform(position.X);
-            
+
             // Determina il fattore di zoom basato sulla direzione del movimento della rotella
             var factor = e.Delta > 0 ? this.ZoomFactor : 1 / this.ZoomFactor;
 
@@ -110,13 +108,13 @@ namespace App
             {
                 throw new InvalidOperationException("Il plotView non ha un controller valido.");
             }
-            
+
             // Rimuove il gestore dello zoom standard della rotella del mouse
             controller.UnbindMouseWheel();
-            
+
             // Crea un nuovo manipolatore personalizzato
             var xAxisZoomer = new XAxisMouseWheelZoomManipulator(plotView);
-            
+
             //// Aggiunge il nuovo manipolatore personalizzato
             //controller.BindMouseWheel(OxyModifierKeys.None, xAxisZoomer.HandleMouseWheel);
 

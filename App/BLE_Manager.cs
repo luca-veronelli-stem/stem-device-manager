@@ -1,14 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Plugin.BLE;
 using Plugin.BLE.Abstractions;
 using Plugin.BLE.Abstractions.Contracts;
 using Plugin.BLE.Abstractions.EventArgs;
 using StemPC;
+using System.Diagnostics;
 
 namespace App
 {
@@ -112,8 +107,8 @@ namespace App
         {
             if (ble.State != BluetoothState.On)
             {
-                System.Windows.Forms.MessageBox.Show("Bluetooth non abilitato: abilitalo e riprova.", 
-                    "Errore BLE", System.Windows.Forms.MessageBoxButtons.OK, 
+                System.Windows.Forms.MessageBox.Show("Bluetooth non abilitato: abilitalo e riprova.",
+                    "Errore BLE", System.Windows.Forms.MessageBoxButtons.OK,
                     System.Windows.Forms.MessageBoxIcon.Error);
                 return;
             }
@@ -131,14 +126,14 @@ namespace App
 
                 // Avvia la scansione con timeout
                 // await adapter.StartScanningForDevicesAsync((timeoutMilliseconds: timeoutMilliseconds);
-                
+
                 await adapter.StartScanningForDevicesAsync(options); //scansiona solo i dispositivi con il servizio Nordic UART
                 // await adapter.StartScanningForDevicesAsync(); //scansiona tutti i dispositivi senza filtro
             }
             catch (Exception ex)
             {
-                System.Windows.Forms.MessageBox.Show($"Errore durante la scansione BLE: {ex.Message}", 
-                    "Errore BLE", System.Windows.Forms.MessageBoxButtons.OK, 
+                System.Windows.Forms.MessageBox.Show($"Errore durante la scansione BLE: {ex.Message}",
+                    "Errore BLE", System.Windows.Forms.MessageBoxButtons.OK,
                     System.Windows.Forms.MessageBoxIcon.Error);
             }
         }
@@ -181,7 +176,7 @@ namespace App
 
                 // Ottieni il dispositivo
                 IDevice device = await adapter.ConnectToKnownDeviceAsync(deviceEntry.Key);
-                
+
                 if (device == null || device.State != DeviceState.Connected)
                 {
                     System.Windows.Forms.MessageBox.Show("Impossibile connettersi al dispositivo BLE.",
@@ -191,7 +186,7 @@ namespace App
                 }
 
                 // Registra l'evento di disconnessione
-              //  device.ConnectionStatusChanged += Device_ConnectionStatusChanged;
+                //  device.ConnectionStatusChanged += Device_ConnectionStatusChanged;
 
                 // Cerca il servizio Nordic UART
                 nordicUartService = await device.GetServiceAsync(NordicUartServiceUuid);
@@ -244,7 +239,8 @@ namespace App
                 {
                     // Abilita la scrittura della caratterisitca rx senza risposta per accelerare il flusso
                     rxCharacteristic.WriteType = CharacteristicWriteType.WithoutResponse;
-                }else
+                }
+                else
                     rxCharacteristic.WriteType = CharacteristicWriteType.WithResponse;
 
                 // Memorizza il dispositivo per uso futuro
@@ -341,10 +337,10 @@ namespace App
             {
                 // Invia i dati alla caratteristica RX
                 await rxCharacteristic.WriteAsync(data);
-                
+
                 Debug.WriteLine($"Invio dati riuscito: {data.Length} bytes");
-             //   Debug.WriteLine("Bytes: " + BitConverter.ToString(data)); //debug dati in uscita
-                
+                //   Debug.WriteLine("Bytes: " + BitConverter.ToString(data)); //debug dati in uscita
+
                 return true;
             }
             catch (Exception ex)
@@ -369,16 +365,16 @@ namespace App
                         txCharacteristic.ValueUpdated -= TxCharacteristic_ValueUpdated;
                         await txCharacteristic.StopUpdatesAsync();
                     }
-                    
+
                     // Disconnetti dal dispositivo
                     await adapter.DisconnectDeviceAsync(connectedDevice);
-                    
+
                     // Pulisci i riferimenti
                     connectedDevice = null;
                     nordicUartService = null;
                     rxCharacteristic = null;
                     txCharacteristic = null;
-                    
+
                     ConnectionStatusChanged?.Invoke(this, false);
                     Debug.WriteLine("Dispositivo disconnesso con successo");
                 }

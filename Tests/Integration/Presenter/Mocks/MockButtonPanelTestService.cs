@@ -1,6 +1,6 @@
-using App.Core.Enums;
-using App.Core.Interfaces;
-using App.Core.Models;
+using Core.Enums;
+using Core.Interfaces;
+using Core.Models;
 
 namespace Tests.Integration.Presenter.Mocks;
 
@@ -81,12 +81,12 @@ internal class MockButtonPanelTestService : IButtonPanelTestService
 
     private static ButtonPanelTestResult DefaultResult(
         ButtonPanelType panel, ButtonPanelTestType test) => new()
-    {
-        PanelType = panel,
-        TestType = test,
-        Passed = true,
-        Message = $"{test} OK"
-    };
+        {
+            PanelType = panel,
+            TestType = test,
+            Passed = true,
+            Message = $"{test} OK"
+        };
 
     private static List<ButtonPanelTestResult> DefaultResults(
         ButtonPanelType panel) =>

@@ -1,15 +1,5 @@
-﻿using System;
-using System.Collections;
-using System.Collections.ObjectModel;
-using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using DocumentFormat.OpenXml.Wordprocessing;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
+﻿using App.STEMProtocol;
 using Peak.Can.Basic.BackwardCompatibility;
-using System.Runtime.CompilerServices;
-using App.STEMProtocol;
 
 // Classe per l'interfaccia grafica
 public partial class CANInterfaceTab : TabPage
@@ -18,19 +8,19 @@ public partial class CANInterfaceTab : TabPage
     private ListView _receivedMessagesView;
     private System.Windows.Forms.Label _connectionStatusLabel;
 
-    private ComboBox    baudRatePicker;
-    private Button      sendButton;
-    private TextBox     canIdEntry;
-    private TextBox     dataEntry;
+    private ComboBox baudRatePicker;
+    private Button sendButton;
+    private TextBox canIdEntry;
+    private TextBox dataEntry;
 
-  //  private const TPCANHandle   Channel = 0x51; // PCAN_USB
-  //  private TPCANBaudrate       BaudRate;
+    //  private const TPCANHandle   Channel = 0x51; // PCAN_USB
+    //  private TPCANBaudrate       BaudRate;
 
     int BaudRate;
 
     public static CANInterfaceTab thisRef { get; private set; }
 
-  //  public PacketManager PS_CAN_PacketManager;
+    //  public PacketManager PS_CAN_PacketManager;
 
     public CANInterfaceTab(CANDataLayer canHandler)
     {
@@ -263,7 +253,7 @@ public partial class CANInterfaceTab : TabPage
 
         try
         {
-            CANMessage TxMessage = new CANMessage(CANID, data, false, DateTime.Now);          
+            CANMessage TxMessage = new CANMessage(CANID, data, false, DateTime.Now);
             _canHandler.Send(TxMessage);
         }
         catch (Exception ex)
@@ -274,7 +264,7 @@ public partial class CANInterfaceTab : TabPage
 
     private void OnPacketSended(object sender, TX_CAN_Data TX_Can_Data)
     {
-    
+
         TPCANStatus res = (TPCANStatus)TX_Can_Data.Result;
         if (res == TPCANStatus.PCAN_ERROR_OK)
         {
