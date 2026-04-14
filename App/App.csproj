@@ -17,6 +17,10 @@
 		<InternalsVisibleTo Include="Tests" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="..\Core\Core.csproj" />
+	</ItemGroup>
+
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='TOPLIFT-A2-Debug|AnyCPU'">
 	  <DefineConstants>$(DefineConstants);TOPLIFT</DefineConstants>
 	</PropertyGroup>
