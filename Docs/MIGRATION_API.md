@@ -1,8 +1,8 @@
 # MIGRATION_API.md — Piano migrazione Excel → API Dizionari Azure
 
 **Creato:** 2026-04-14  
-**Branch corrente:** `feature/api-dizionari`  
-**Stato:** Step 3 (Strategy) — piano approvato, implementazione non iniziata
+**Ultimo aggiornamento:** 2026-04-14  
+**Stato:** Branch 1+2 completato, prossimo → Branch 3
 
 ---
 
@@ -57,15 +57,13 @@ Stem.Device.Manager/
       Variable.cs                    Modello dominio (ex ExcelHandler.VariableData)
       Command.cs                     Modello dominio (ex ExcelHandler.CommandData)
       ProtocolAddress.cs             Modello dominio (ex ExcelHandler.RowData)
-      ButtonPanel.cs                 ← da App/Core/Models/
-      ButtonIndicator.cs             ← da App/Core/Models/
-      ButtonPanelTestResult.cs       ← da App/Core/Models/
+      ButtonPanel.cs                 ✅ spostato da App/Core/Models/
+      ButtonPanelTestResult.cs       ✅ spostato da App/Core/Models/
     Enums/
-      ButtonPanelEnums.cs            ← da App/Core/Enums/
+      ButtonPanelEnums.cs            ✅ spostato da App/Core/Enums/
     Interfaces/
       IDictionaryProvider.cs         Astrazione: "dammi variabili/comandi/indirizzi"
-      IButtonPanelTestService.cs     ← da App/Core/Interfaces/
-      IButtonPanelTestTab.cs         ← da App/Core/Interfaces/
+      IButtonPanelTestService.cs     ✅ spostato da App/Core/Interfaces/
 
   Infrastructure/                    net10.0 (cross-platform)
     Infrastructure.csproj            → dipende da Core
@@ -83,24 +81,29 @@ Stem.Device.Manager/
     DependencyInjection.cs           Registra provider (API con fallback Excel)
 
   Services/                          net10.0-windows10.0.19041.0
-    Services.csproj                  → dipende da Core + Infrastructure
-    ButtonPanelTestService.cs        ← da App/Services/
+    Services.csproj                  → dipende da Core (vuoto, pronto per futuro)
 
   App/                               net10.0-windows10.0.19041.0 (WinForms)
-    App.csproj                       → dipende da Services (+ Core transitivo)
+    App.csproj                       → dipende da Core (+ Services futuro)
     Program.cs                       DI: registra tutto
     Form1.cs                         God Object (invariato in questa migrazione)
     ExcelHandler.cs                  Resta (usato da ExcelDictionaryProvider + Form1 diretto)
+    Core/Interfaces/
+      IButtonPanelTestTab.cs         ⚠️ resta in App (dipende da MessageBoxButtons/Icon WinForms)
+    Core/Models/
+      ButtonIndicator.cs             ⚠️ resta in App (dipende da System.Drawing.RectangleF — view model)
+    Services/
+      ButtonPanelTestService.cs      ⚠️ resta in App (dipende da Form1.FormRef, NetworkLayer, PacketManager)
     STEMProtocol/                    Resta (forte accoppiamento con Form1)
     GUI/                             MVP ButtonPanel
     Resources/                       Excel embedded, icone
     ...tutti i *_WF_Tab.cs
 
-  Tests/                             net10.0 + net10.0-windows10.0.19041.0
-    Tests.csproj                     → dipende da Core + Infrastructure + App
+  Tests/                             net10.0-windows10.0.19041.0
+    Tests.csproj                     → dipende da Core + App
     Unit/
-      Core/                          Test modelli, enum (cross-platform, CI Linux!)
-      Infrastructure/                Test DictionaryApiProvider (cross-platform, CI Linux!)
+      Core/                          Test modelli, enum
+      Infrastructure/                Test DictionaryApiProvider
     Integration/                     Test esistenti (Windows-only)
 ```
 
@@ -159,54 +162,34 @@ Ogni branch è **funzionalmente chiuso**: compila, i test passano, il comportame
 
 ---
 
-### Branch 1: `refactor/crea-progetti-core-infrastructure`
+### Branch 1+2: `refactor/core-infrastructure` ✅ COMPLETATO
 
-**Scopo:** Creare lo scheletro multi-progetto (Core + Infrastructure) senza cambiare comportamento.
+**Scopo:** Creare lo scheletro multi-progetto (Core + Infrastructure + Services) e spostare i tipi puri.
 
-**Azioni:**
-1. Creare `Core/Core.csproj` (`net10.0`, zero dipendenze)
-2. Creare `Infrastructure/Infrastructure.csproj` (`net10.0`, ref → Core)
-3. Aggiungere entrambi al `.slnx`
-4. **Spostare** da `App/Core/` a `Core/`:
-   - `Models/ButtonPanel.cs`, `ButtonIndicator.cs`, `ButtonPanelTestResult.cs`
-   - `Enums/ButtonPanelEnums.cs`
-   - `Interfaces/IButtonPanelTestService.cs`, `IButtonPanelTestTab.cs`
-5. Aggiornare namespace: `App.Core.*` → `Core.*`
-6. Aggiornare `App.csproj`: aggiungere `ProjectReference → Core`
-7. Aggiornare `Tests.csproj`: aggiungere `ProjectReference → Core`
-8. Fix tutti i `using` in App, Services, GUI, Tests
-9. Build + test (101/101 devono passare)
+**Risultato:**
+- Creati 3 progetti: `Core/` (net10.0), `Infrastructure/` (net10.0), `Services/` (net10.0-windows)
+- Spostati in `Core/`: `ButtonPanelEnums.cs`, `ButtonPanel.cs`, `ButtonPanelTestResult.cs`,
+  `IButtonPanelTestService.cs`
+- Namespace rinominati: `App.Core.*` → `Core.*`
+- Using aggiornati in 14 file (App, GUI, Services, Tests)
+- `Core.csproj`: `InternalsVisibleTo` per `Tests` e `App`
 
-**File creati:** 2 (.csproj)
-**File spostati:** 6 (da App/Core/ a Core/)
-**File modificati:** ~15 (using updates)
-**Rischio:** Basso (solo spostamento + rinomina namespace)
+**⚠️ Scoperte durante implementazione (deviazioni dal piano originale):**
+1. **`IButtonPanelTestTab`** resta in `App/Core/Interfaces/` — usa `MessageBoxButtons`, `MessageBoxIcon`
+   (tipi WinForms non disponibili in `net10.0` puro)
+2. **`ButtonIndicator`** resta in `App/Core/Models/` (namespace `App.Core.Models`) — è un view model
+   GUI (`RectangleF` per coordinate disegno su PictureBox), non un modello di dominio.
+   Inizialmente spostato in `Core/`, poi riportato in `App/` per mantenere Core privo di dipendenze GUI.
+3. **`ButtonPanelTestService`** resta in `App/Services/` — dipende direttamente da `Form1.FormRef` (static),
+   `PacketManager`, `NetworkLayer`. Spostarlo richiederebbe estrarre interfacce per il protocollo (Fase 4)
+4. **Progetto `Services/`** creato e nel `.slnx` ma vuoto — pronto per codice futuro che non ha
+   dipendenze WinForms/Form1
 
----
-
-### Branch 2: `refactor/sposta-services`
-
-**Scopo:** Spostare `ButtonPanelTestService` nel progetto `Services/`.
-
-**Azioni:**
-1. Creare `Services/Services.csproj` (`net10.0-windows10.0.19041.0`, ref → Core)
-2. Aggiungere al `.slnx`
-3. **Spostare** `App/Services/ButtonPanelTestService.cs` → `Services/`
-4. Aggiornare namespace: `App.Services` → `Services`
-5. Aggiornare `App.csproj`: aggiungere `ProjectReference → Services`, rimuovere ref Core diretto
-   (transitivo via Services)
-6. Aggiornare `Tests.csproj`: aggiungere `ProjectReference → Services`
-7. Fix `using` in App (`Program.cs`, mock nei test)
-8. Build + test
-
-**File creati:** 1 (.csproj)
-**File spostati:** 1
-**File modificati:** ~6
-**Rischio:** Basso
+**Build:** ✅ | **Test:** 101/101 ✅
 
 ---
 
-### Branch 3: `refactor/modelli-dizionario-core`
+### Branch 2: `refactor/modelli-dizionario-core`
 
 **Scopo:** Creare i modelli dominio per dizionario in Core e l'interfaccia `IDictionaryProvider`.
 
@@ -226,7 +209,7 @@ Ogni branch è **funzionalmente chiuso**: compila, i test passano, il comportame
 
 ---
 
-### Branch 4: `feature/excel-dictionary-provider`
+### Branch 3: `feature/excel-dictionary-provider`
 
 **Scopo:** Implementare `ExcelDictionaryProvider` che wrappa `ExcelHandler` dietro `IDictionaryProvider`.
 
@@ -255,7 +238,7 @@ Le chiamate dirette di Form1 a `ExcelHandler` continuano a funzionare via ref In
 
 ---
 
-### Branch 5: `feature/api-dictionary-provider`
+### Branch 4: `feature/api-dictionary-provider`
 
 **Scopo:** Implementare `DictionaryApiProvider` che chiama l'API Azure.
 
@@ -279,7 +262,7 @@ Le chiamate dirette di Form1 a `ExcelHandler` continuano a funzionare via ref In
 
 ---
 
-### Branch 6: `feature/fallback-e-di-registration`
+### Branch 5: `feature/fallback-e-di-registration`
 
 **Scopo:** Creare il `DependencyInjection.cs` che registra il provider giusto con fallback.
 
@@ -310,7 +293,7 @@ Le chiamate dirette di Form1 a `ExcelHandler` continuano a funzionare via ref In
 
 ---
 
-### Branch 7: `feature/integra-provider-in-app`
+### Branch 6: `feature/integra-provider-in-app`
 
 **Scopo:** Far usare `IDictionaryProvider` ai primi consumer (non Form1).
 
@@ -331,18 +314,25 @@ La migrazione di Form1 è un lavoro separato (Fase 3-4 del piano di modernizzazi
 
 ## Riepilogo branch
 
-| # | Branch | Scopo | Rischio | CI Linux |
-|---|--------|-------|---------|----------|
-| 1 | `refactor/crea-progetti-core-infrastructure` | Scheletro multi-progetto | Basso | ✅ Core |
-| 2 | `refactor/sposta-services` | Sposta ButtonPanelTestService | Basso | — |
-| 3 | `refactor/modelli-dizionario-core` | Modelli dominio + IDictionaryProvider | Zero | ✅ test |
-| 4 | `feature/excel-dictionary-provider` | ExcelHandler dietro astrazione | Medio | — |
-| 5 | `feature/api-dictionary-provider` | HttpClient → API Azure | Basso | ✅ test |
-| 6 | `feature/fallback-e-di-registration` | DI + fallback + appsettings | Basso-medio | — |
-| 7 | `feature/integra-provider-in-app` | Primi consumer usano provider | Medio | — |
+| # | Branch | Scopo | Rischio | Stato |
+|---|--------|-------|---------|-------|
+| 1+2 | `refactor/core-infrastructure` | Scheletro multi-progetto + spostamento tipi | Basso | ✅ Completato |
+| 2 | `refactor/modelli-dizionario-core` | Modelli dominio + IDictionaryProvider | Zero | ⬜ Prossimo |
+| 3 | `feature/excel-dictionary-provider` | ExcelHandler dietro astrazione | Medio | ⬜ |
+| 4 | `feature/api-dictionary-provider` | HttpClient → API Azure | Basso | ⬜ |
+| 5 | `feature/fallback-e-di-registration` | DI + fallback + appsettings | Basso-medio | ⬜ |
+| 6 | `feature/integra-provider-in-app` | Primi consumer usano provider | Medio | ⬜ |
 
-**Dopo branch 7:** L'app funziona con API Azure (se configurata) o Excel (fallback).
+**Dopo branch 6:** L'app funziona con API Azure (se configurata) o Excel (fallback).
 Form1.cs continua a usare ExcelHandler direttamente — la sua migrazione è un lavoro separato.
+
+### Tipi rimasti in App/ (da spostare in fasi future)
+
+| Tipo | Motivo | Quando spostare |
+|------|--------|-----------------|
+| `IButtonPanelTestTab` | Usa `MessageBoxButtons`, `MessageBoxIcon` (WinForms) | Fase 4: astrarre con tipi propri |
+| `ButtonIndicator` | View model GUI (`RectangleF` per coordinate disegno) | Fase 5: migrazione UI |
+| `ButtonPanelTestService` | Dipende da `Form1.FormRef`, `NetworkLayer`, `PacketManager` | Fase 4: estrarre interfacce protocollo |
 
 ---
 
