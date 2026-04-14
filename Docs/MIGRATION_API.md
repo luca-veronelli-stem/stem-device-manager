@@ -2,7 +2,7 @@
 
 **Creato:** 2026-04-14  
 **Ultimo aggiornamento:** 2026-04-14  
-**Stato:** Branch 1+2 completato, prossimo → Branch 3
+**Stato:** Branch 2 completato, prossimo → Branch 3
 
 ---
 
@@ -189,23 +189,20 @@ Ogni branch è **funzionalmente chiuso**: compila, i test passano, il comportame
 
 ---
 
-### Branch 2: `refactor/modelli-dizionario-core`
+### Branch 2: `refactor/modelli-dizionario-core` ✅ COMPLETATO
 
 **Scopo:** Creare i modelli dominio per dizionario in Core e l'interfaccia `IDictionaryProvider`.
 
-**Azioni:**
-1. Creare modelli in `Core/Models/`:
-   - `Variable.cs` — record con `Name`, `AddressHigh`, `AddressLow`, `DataType`
-   - `Command.cs` — record con `Name`, `CodeHigh`, `CodeLow`
-   - `ProtocolAddress.cs` — record con `DeviceName`, `BoardName`, `Address`
-   - `DictionaryData.cs` — record aggregato con `Addresses`, `Commands`
-2. Creare `Core/Interfaces/IDictionaryProvider.cs`
-3. Scrivere **test unitari** per i modelli (in `Tests/Unit/Core/`)
-4. Build + test
+**Risultato:**
+- Creati 4 record in `Core/Models/`: `Variable`, `Command`, `ProtocolAddress`, `DictionaryData`
+- Creata interfaccia `Core/Interfaces/IDictionaryProvider` (2 metodi async)
+- Scritti 12 test unitari (4 file) — tutti cross-platform, girano in CI su Linux
+- Mappatura campi: `RowData` → `ProtocolAddress`, `CommandData` → `Command`, `VariableData` → `Variable`
 
-**File creati:** 5 (modelli) + 1 (interfaccia) + test
-**File modificati:** 0 (nessun impatto su codice legacy)
-**Rischio:** Zero (solo aggiunta, niente tocca il codice esistente)
+**Nota:** `DictionaryData` usa `IReadOnlyList<T>` — record equality confronta per reference,
+non per contenuto. Test adattati di conseguenza.
+
+**Build:** ✅ | **Test:** 164/164 ✅ (51 cross-platform + 113 Windows)
 
 ---
 
@@ -317,7 +314,7 @@ La migrazione di Form1 è un lavoro separato (Fase 3-4 del piano di modernizzazi
 | # | Branch | Scopo | Rischio | Stato |
 |---|--------|-------|---------|-------|
 | 1+2 | `refactor/core-infrastructure` | Scheletro multi-progetto + spostamento tipi | Basso | ✅ Completato |
-| 2 | `refactor/modelli-dizionario-core` | Modelli dominio + IDictionaryProvider | Zero | ⬜ Prossimo |
+| 2 | `refactor/modelli-dizionario-core` | Modelli dominio + IDictionaryProvider | Zero | ✅ Completato |
 | 3 | `feature/excel-dictionary-provider` | ExcelHandler dietro astrazione | Medio | ⬜ |
 | 4 | `feature/api-dictionary-provider` | HttpClient → API Azure | Basso | ⬜ |
 | 5 | `feature/fallback-e-di-registration` | DI + fallback + appsettings | Basso-medio | ⬜ |
