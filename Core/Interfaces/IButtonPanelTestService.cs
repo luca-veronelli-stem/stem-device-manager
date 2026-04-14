@@ -1,7 +1,7 @@
-﻿using App.Core.Enums;
-using App.Core.Models;
+using Core.Enums;
+using Core.Models;
 
-namespace App.Core.Interfaces
+namespace Core.Interfaces
 {
     // Interfaccia per il servizio di test delle pulsantiere
     internal interface IButtonPanelTestService

@@ -1,7 +1,6 @@
-﻿using App.Core.Enums;
-using DocumentFormat.OpenXml.Office2010.Drawing.Charts;
+using Core.Enums;
 
-namespace App.Core.Models
+namespace Core.Models
 {
     // Modello che rappresenta una pulsantiera con le sue caratteristiche
     internal class ButtonPanel

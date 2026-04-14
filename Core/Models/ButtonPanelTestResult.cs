@@ -1,6 +1,6 @@
-﻿using App.Core.Enums;
+using Core.Enums;
 
-namespace App.Core.Models
+namespace Core.Models
 {
     // Modello che rappresenta il risultato di un test su una pulsantiera
     public class ButtonPanelTestResult
