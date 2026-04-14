@@ -1,0 +1,662 @@
+﻿namespace StemPC
+{ 
+    partial class Form1
+    {
+        /// <summary>
+        ///  Required designer variable.
+        /// </summary>
+        private System.ComponentModel.IContainer components = null;
+
+        /// <summary>
+        ///  Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        #region Windows Form Designer generated code
+
+        /// <summary>
+        ///  Required method for Designer support - do not modify
+        ///  the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent()
+        {
+            components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+            timerBaseTime = new System.Windows.Forms.Timer(components);
+            tableLayoutPanel1 = new TableLayoutPanel();
+            terminalOut = new RichTextBox();
+            tabControl = new TabControl();
+            tabPageProtocol = new TabPage();
+            tableLayoutPanelProtocol = new TableLayoutPanel();
+            comboBoxVariables = new ComboBox();
+            labelDictionary = new Label();
+            richTextBoxTx = new RichTextBox();
+            textBox3 = new TextBox();
+            textBox2 = new TextBox();
+            comboBoxBoard = new ComboBox();
+            labelBytes = new Label();
+            labelByte2 = new Label();
+            labelByte1 = new Label();
+            label4 = new Label();
+            label2 = new Label();
+            comboBoxMachine = new ComboBox();
+            comboBoxCommand = new ComboBox();
+            textBox1 = new TextBox();
+            label3 = new Label();
+            buttonSendPS = new Button();
+            label12 = new Label();
+            tabPageCodeGen = new TabPage();
+            tableLayoutPanel2 = new TableLayoutPanel();
+            button1 = new Button();
+            tabPageUART = new TabPage();
+            label1 = new Label();
+            listBoxSerialPorts = new ListBox();
+            statusStrip1 = new StatusStrip();
+            toolStripSplitButton3 = new ToolStripSplitButton();
+            toolStripMenuItem1 = new ToolStripMenuItem();
+            cANToolStripMenuItem = new ToolStripMenuItem();
+            toolStripMenuItem2 = new ToolStripMenuItem();
+            kbpsToolStripMenuItem1 = new ToolStripMenuItem();
+            toolStripMenuItem3 = new ToolStripMenuItem();
+            kbpsToolStripMenuItem = new ToolStripMenuItem();
+            bluetoothLEToolStripMenuItem = new ToolStripMenuItem();
+            serialToolStripMenuItem = new ToolStripMenuItem();
+            toolStripStatusLabel2 = new ToolStripStatusLabel();
+            PCanLabel = new ToolStripStatusLabel();
+            toolStripStatusLabel1 = new ToolStripStatusLabel();
+            BLEStatusLabel = new ToolStripStatusLabel();
+            toolStripStatusLabel3 = new ToolStripStatusLabel();
+            COMStatusLabel = new ToolStripStatusLabel();
+            tableLayoutPanel1.SuspendLayout();
+            tabControl.SuspendLayout();
+            tabPageProtocol.SuspendLayout();
+            tableLayoutPanelProtocol.SuspendLayout();
+            tabPageCodeGen.SuspendLayout();
+            tableLayoutPanel2.SuspendLayout();
+            tabPageUART.SuspendLayout();
+            statusStrip1.SuspendLayout();
+            SuspendLayout();
+            // 
+            // timerBaseTime
+            // 
+            timerBaseTime.Tick += timerBaseTime_Tick;
+            // 
+            // tableLayoutPanel1
+            // 
+            tableLayoutPanel1.ColumnCount = 1;
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tableLayoutPanel1.Controls.Add(terminalOut, 0, 1);
+            tableLayoutPanel1.Controls.Add(tabControl, 0, 0);
+            tableLayoutPanel1.Dock = DockStyle.Fill;
+            tableLayoutPanel1.Location = new Point(0, 0);
+            tableLayoutPanel1.Name = "tableLayoutPanel1";
+            tableLayoutPanel1.RowCount = 3;
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 80F));
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
+            tableLayoutPanel1.Size = new Size(1384, 1161);
+            tableLayoutPanel1.TabIndex = 2;
+            // 
+            // terminalOut
+            // 
+            terminalOut.BackColor = SystemColors.WindowFrame;
+            terminalOut.Dock = DockStyle.Fill;
+            terminalOut.ForeColor = SystemColors.Info;
+            terminalOut.Location = new Point(3, 915);
+            terminalOut.Name = "terminalOut";
+            terminalOut.Size = new Size(1378, 222);
+            terminalOut.TabIndex = 6;
+            terminalOut.Text = "";
+            // 
+            // tabControl
+            // 
+            tabControl.Controls.Add(tabPageProtocol);
+            tabControl.Controls.Add(tabPageCodeGen);
+            tabControl.Controls.Add(tabPageUART);
+            tabControl.Dock = DockStyle.Fill;
+            tabControl.Location = new Point(3, 3);
+            tabControl.Name = "tabControl";
+            tabControl.SelectedIndex = 0;
+            tabControl.Size = new Size(1378, 906);
+            tabControl.TabIndex = 5;
+            // 
+            // tabPageProtocol
+            // 
+            tabPageProtocol.Controls.Add(tableLayoutPanelProtocol);
+            tabPageProtocol.Location = new Point(4, 24);
+            tabPageProtocol.Name = "tabPageProtocol";
+            tabPageProtocol.Size = new Size(1370, 878);
+            tabPageProtocol.TabIndex = 3;
+            tabPageProtocol.Text = "Application Layer";
+            tabPageProtocol.UseVisualStyleBackColor = true;
+            // 
+            // tableLayoutPanelProtocol
+            // 
+            tableLayoutPanelProtocol.ColumnCount = 8;
+            tableLayoutPanelProtocol.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 9.003696F));
+            tableLayoutPanelProtocol.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 9.003696F));
+            tableLayoutPanelProtocol.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 9.003696F));
+            tableLayoutPanelProtocol.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 9.003696F));
+            tableLayoutPanelProtocol.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 9.003696F));
+            tableLayoutPanelProtocol.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 9.003696F));
+            tableLayoutPanelProtocol.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 36.9741173F));
+            tableLayoutPanelProtocol.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 9.003696F));
+            tableLayoutPanelProtocol.Controls.Add(comboBoxVariables, 3, 1);
+            tableLayoutPanelProtocol.Controls.Add(labelDictionary, 3, 0);
+            tableLayoutPanelProtocol.Controls.Add(richTextBoxTx, 0, 2);
+            tableLayoutPanelProtocol.Controls.Add(textBox3, 6, 1);
+            tableLayoutPanelProtocol.Controls.Add(textBox2, 5, 1);
+            tableLayoutPanelProtocol.Controls.Add(comboBoxBoard, 1, 1);
+            tableLayoutPanelProtocol.Controls.Add(labelBytes, 6, 0);
+            tableLayoutPanelProtocol.Controls.Add(labelByte2, 5, 0);
+            tableLayoutPanelProtocol.Controls.Add(labelByte1, 4, 0);
+            tableLayoutPanelProtocol.Controls.Add(label4, 2, 0);
+            tableLayoutPanelProtocol.Controls.Add(label2, 1, 0);
+            tableLayoutPanelProtocol.Controls.Add(comboBoxMachine, 0, 1);
+            tableLayoutPanelProtocol.Controls.Add(comboBoxCommand, 2, 1);
+            tableLayoutPanelProtocol.Controls.Add(textBox1, 4, 1);
+            tableLayoutPanelProtocol.Controls.Add(label3, 0, 0);
+            tableLayoutPanelProtocol.Controls.Add(buttonSendPS, 7, 3);
+            tableLayoutPanelProtocol.Controls.Add(label12, 7, 2);
+            tableLayoutPanelProtocol.Dock = DockStyle.Fill;
+            tableLayoutPanelProtocol.Location = new Point(0, 0);
+            tableLayoutPanelProtocol.Name = "tableLayoutPanelProtocol";
+            tableLayoutPanelProtocol.RowCount = 4;
+            tableLayoutPanelProtocol.RowStyles.Add(new RowStyle(SizeType.Percent, 16.1987019F));
+            tableLayoutPanelProtocol.RowStyles.Add(new RowStyle(SizeType.Percent, 8.207344F));
+            tableLayoutPanelProtocol.RowStyles.Add(new RowStyle(SizeType.Percent, 53.9956856F));
+            tableLayoutPanelProtocol.RowStyles.Add(new RowStyle(SizeType.Percent, 21.5982742F));
+            tableLayoutPanelProtocol.Size = new Size(1370, 878);
+            tableLayoutPanelProtocol.TabIndex = 2;
+            // 
+            // comboBoxVariables
+            // 
+            comboBoxVariables.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            comboBoxVariables.FormattingEnabled = true;
+            comboBoxVariables.Location = new Point(372, 145);
+            comboBoxVariables.Name = "comboBoxVariables";
+            comboBoxVariables.Size = new Size(117, 23);
+            comboBoxVariables.TabIndex = 30;
+            // 
+            // labelDictionary
+            // 
+            labelDictionary.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            labelDictionary.AutoSize = true;
+            labelDictionary.BackColor = Color.FromArgb(8, 72, 133);
+            labelDictionary.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold);
+            labelDictionary.ForeColor = SystemColors.ControlLightLight;
+            labelDictionary.Location = new Point(374, 7);
+            labelDictionary.Margin = new Padding(5, 7, 5, 7);
+            labelDictionary.Name = "labelDictionary";
+            labelDictionary.Size = new Size(113, 128);
+            labelDictionary.TabIndex = 29;
+            labelDictionary.Text = "Variable Name";
+            labelDictionary.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // richTextBoxTx
+            // 
+            richTextBoxTx.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            richTextBoxTx.BackColor = SystemColors.Window;
+            tableLayoutPanelProtocol.SetColumnSpan(richTextBoxTx, 7);
+            richTextBoxTx.ForeColor = SystemColors.WindowText;
+            richTextBoxTx.Location = new Point(3, 217);
+            richTextBoxTx.Name = "richTextBoxTx";
+            tableLayoutPanelProtocol.SetRowSpan(richTextBoxTx, 2);
+            richTextBoxTx.Size = new Size(1238, 658);
+            richTextBoxTx.TabIndex = 28;
+            richTextBoxTx.Text = "";
+            // 
+            // textBox3
+            // 
+            textBox3.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            tableLayoutPanelProtocol.SetColumnSpan(textBox3, 2);
+            textBox3.Location = new Point(741, 145);
+            textBox3.MaxLength = 300;
+            textBox3.Name = "textBox3";
+            textBox3.Size = new Size(626, 21);
+            textBox3.TabIndex = 18;
+            textBox3.WordWrap = false;
+            textBox3.KeyPress += MaskedTextBox_KeyPress;
+            // 
+            // textBox2
+            // 
+            textBox2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            textBox2.Location = new Point(618, 145);
+            textBox2.MaxLength = 2;
+            textBox2.Name = "textBox2";
+            textBox2.Size = new Size(117, 21);
+            textBox2.TabIndex = 17;
+            textBox2.KeyPress += MaskedTextBox_KeyPress;
+            // 
+            // comboBoxBoard
+            // 
+            comboBoxBoard.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            comboBoxBoard.FormattingEnabled = true;
+            comboBoxBoard.Location = new Point(126, 145);
+            comboBoxBoard.Name = "comboBoxBoard";
+            comboBoxBoard.Size = new Size(117, 23);
+            comboBoxBoard.TabIndex = 15;
+            comboBoxBoard.SelectedIndexChanged += comboBoxBoard_SelectedIndexChanged;
+            // 
+            // labelBytes
+            // 
+            labelBytes.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            labelBytes.AutoSize = true;
+            labelBytes.BackColor = Color.FromArgb(8, 72, 133);
+            tableLayoutPanelProtocol.SetColumnSpan(labelBytes, 2);
+            labelBytes.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold);
+            labelBytes.ForeColor = SystemColors.ControlLightLight;
+            labelBytes.Location = new Point(743, 7);
+            labelBytes.Margin = new Padding(5, 7, 5, 7);
+            labelBytes.Name = "labelBytes";
+            labelBytes.Size = new Size(622, 128);
+            labelBytes.TabIndex = 9;
+            labelBytes.Text = "Byte3 (HEX)";
+            labelBytes.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // labelByte2
+            // 
+            labelByte2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            labelByte2.AutoSize = true;
+            labelByte2.BackColor = Color.FromArgb(8, 72, 133);
+            labelByte2.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold);
+            labelByte2.ForeColor = SystemColors.ControlLightLight;
+            labelByte2.Location = new Point(620, 7);
+            labelByte2.Margin = new Padding(5, 7, 5, 7);
+            labelByte2.Name = "labelByte2";
+            labelByte2.Size = new Size(113, 128);
+            labelByte2.TabIndex = 8;
+            labelByte2.Text = "Byte2 (HEX)";
+            labelByte2.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // labelByte1
+            // 
+            labelByte1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            labelByte1.AutoSize = true;
+            labelByte1.BackColor = Color.FromArgb(8, 72, 133);
+            labelByte1.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold);
+            labelByte1.ForeColor = SystemColors.ControlLightLight;
+            labelByte1.Location = new Point(497, 7);
+            labelByte1.Margin = new Padding(5, 7, 5, 7);
+            labelByte1.Name = "labelByte1";
+            labelByte1.Size = new Size(113, 128);
+            labelByte1.TabIndex = 7;
+            labelByte1.Text = "Byte1 (HEX)";
+            labelByte1.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // label4
+            // 
+            label4.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            label4.AutoSize = true;
+            label4.BackColor = Color.FromArgb(8, 72, 133);
+            label4.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold);
+            label4.ForeColor = SystemColors.ControlLightLight;
+            label4.Location = new Point(251, 7);
+            label4.Margin = new Padding(5, 7, 5, 7);
+            label4.Name = "label4";
+            label4.Size = new Size(113, 128);
+            label4.TabIndex = 6;
+            label4.Text = "Comando";
+            label4.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // label2
+            // 
+            label2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            label2.AutoSize = true;
+            label2.BackColor = Color.FromArgb(8, 72, 133);
+            label2.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold);
+            label2.ForeColor = SystemColors.ControlLightLight;
+            label2.Location = new Point(128, 7);
+            label2.Margin = new Padding(5, 7, 5, 7);
+            label2.Name = "label2";
+            label2.Size = new Size(113, 128);
+            label2.TabIndex = 3;
+            label2.Text = "Scheda";
+            label2.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // comboBoxMachine
+            // 
+            comboBoxMachine.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            comboBoxMachine.FormattingEnabled = true;
+            comboBoxMachine.Location = new Point(3, 145);
+            comboBoxMachine.Name = "comboBoxMachine";
+            comboBoxMachine.Size = new Size(117, 23);
+            comboBoxMachine.TabIndex = 5;
+            comboBoxMachine.SelectedIndexChanged += comboBoxMachine_SelectedIndexChanged;
+            // 
+            // comboBoxCommand
+            // 
+            comboBoxCommand.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            comboBoxCommand.FormattingEnabled = true;
+            comboBoxCommand.Location = new Point(249, 145);
+            comboBoxCommand.Name = "comboBoxCommand";
+            comboBoxCommand.Size = new Size(117, 23);
+            comboBoxCommand.TabIndex = 14;
+            comboBoxCommand.SelectedIndexChanged += comboBoxCommand_SelectedIndexChanged;
+            // 
+            // textBox1
+            // 
+            textBox1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            textBox1.Location = new Point(495, 145);
+            textBox1.MaxLength = 2;
+            textBox1.Name = "textBox1";
+            textBox1.Size = new Size(117, 21);
+            textBox1.TabIndex = 16;
+            textBox1.KeyPress += MaskedTextBox_KeyPress;
+            // 
+            // label3
+            // 
+            label3.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            label3.AutoSize = true;
+            label3.BackColor = Color.FromArgb(8, 72, 133);
+            label3.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold);
+            label3.ForeColor = SystemColors.ControlLightLight;
+            label3.Location = new Point(5, 7);
+            label3.Margin = new Padding(5, 7, 5, 7);
+            label3.Name = "label3";
+            label3.Size = new Size(113, 128);
+            label3.TabIndex = 4;
+            label3.Text = "Macchina";
+            label3.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // buttonSendPS
+            // 
+            buttonSendPS.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            buttonSendPS.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold);
+            buttonSendPS.Location = new Point(1247, 691);
+            buttonSendPS.Name = "buttonSendPS";
+            buttonSendPS.Size = new Size(120, 184);
+            buttonSendPS.TabIndex = 27;
+            buttonSendPS.Text = "Invia";
+            buttonSendPS.UseVisualStyleBackColor = true;
+            buttonSendPS.Click += buttonSendPS_Click;
+            // 
+            // label12
+            // 
+            label12.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            label12.AutoSize = true;
+            label12.BackColor = Color.FromArgb(8, 72, 133);
+            label12.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold);
+            label12.ForeColor = SystemColors.ControlLightLight;
+            label12.Location = new Point(1249, 221);
+            label12.Margin = new Padding(5, 7, 5, 7);
+            label12.Name = "label12";
+            label12.Size = new Size(116, 460);
+            label12.TabIndex = 23;
+            label12.Text = "Indirizzo";
+            label12.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // tabPageCodeGen
+            // 
+            tabPageCodeGen.Controls.Add(tableLayoutPanel2);
+            tabPageCodeGen.Location = new Point(4, 24);
+            tabPageCodeGen.Name = "tabPageCodeGen";
+            tabPageCodeGen.Padding = new Padding(3);
+            tabPageCodeGen.Size = new Size(1370, 878);
+            tabPageCodeGen.TabIndex = 1;
+            tabPageCodeGen.Text = "Code Gen";
+            tabPageCodeGen.UseVisualStyleBackColor = true;
+            // 
+            // tableLayoutPanel2
+            // 
+            tableLayoutPanel2.ColumnCount = 4;
+            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 27F));
+            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 27F));
+            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 27F));
+            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 19F));
+            tableLayoutPanel2.Controls.Add(button1, 3, 3);
+            tableLayoutPanel2.Dock = DockStyle.Fill;
+            tableLayoutPanel2.Location = new Point(3, 3);
+            tableLayoutPanel2.Name = "tableLayoutPanel2";
+            tableLayoutPanel2.RowCount = 4;
+            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            tableLayoutPanel2.Size = new Size(1364, 872);
+            tableLayoutPanel2.TabIndex = 0;
+            // 
+            // button1
+            // 
+            button1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            button1.Image = (Image)resources.GetObject("button1.Image");
+            button1.ImageAlign = ContentAlignment.MiddleLeft;
+            button1.Location = new Point(1107, 657);
+            button1.Name = "button1";
+            button1.Size = new Size(254, 212);
+            button1.TabIndex = 0;
+            button1.Text = "Generate code";
+            button1.TextImageRelation = TextImageRelation.ImageBeforeText;
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += button1_Click;
+            // 
+            // tabPageUART
+            // 
+            tabPageUART.Controls.Add(label1);
+            tabPageUART.Controls.Add(listBoxSerialPorts);
+            tabPageUART.Location = new Point(4, 24);
+            tabPageUART.Name = "tabPageUART";
+            tabPageUART.Padding = new Padding(3);
+            tabPageUART.Size = new Size(1370, 878);
+            tabPageUART.TabIndex = 2;
+            tabPageUART.Text = "UART";
+            tabPageUART.UseVisualStyleBackColor = true;
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label1.Location = new Point(590, 9);
+            label1.Name = "label1";
+            label1.Size = new Size(150, 15);
+            label1.TabIndex = 1;
+            label1.Text = "SERIAL PORTS AVAILABLE";
+            // 
+            // listBoxSerialPorts
+            // 
+            listBoxSerialPorts.FormattingEnabled = true;
+            listBoxSerialPorts.ItemHeight = 15;
+            listBoxSerialPorts.Location = new Point(556, 31);
+            listBoxSerialPorts.Name = "listBoxSerialPorts";
+            listBoxSerialPorts.Size = new Size(197, 169);
+            listBoxSerialPorts.TabIndex = 0;
+            // 
+            // statusStrip1
+            // 
+            statusStrip1.Items.AddRange(new ToolStripItem[] { toolStripSplitButton3, toolStripStatusLabel2, PCanLabel, toolStripStatusLabel1, BLEStatusLabel, toolStripStatusLabel3, COMStatusLabel });
+            statusStrip1.Location = new Point(0, 1139);
+            statusStrip1.Name = "statusStrip1";
+            statusStrip1.Size = new Size(1384, 22);
+            statusStrip1.TabIndex = 3;
+            statusStrip1.Text = "statusStrip2";
+            // 
+            // toolStripSplitButton3
+            // 
+            toolStripSplitButton3.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripSplitButton3.DropDownItems.AddRange(new ToolStripItem[] { toolStripMenuItem1 });
+            toolStripSplitButton3.Image = App.Properties.Resources.ic_fluent_serial_port_24_filled;
+            toolStripSplitButton3.ImageTransparentColor = Color.Magenta;
+            toolStripSplitButton3.Name = "toolStripSplitButton3";
+            toolStripSplitButton3.Size = new Size(32, 20);
+            toolStripSplitButton3.Text = "toolStripSplitButton2";
+            // 
+            // toolStripMenuItem1
+            // 
+            toolStripMenuItem1.DropDownItems.AddRange(new ToolStripItem[] { cANToolStripMenuItem, bluetoothLEToolStripMenuItem, serialToolStripMenuItem });
+            toolStripMenuItem1.Name = "toolStripMenuItem1";
+            toolStripMenuItem1.Size = new Size(139, 22);
+            toolStripMenuItem1.Text = "Comm Type";
+            // 
+            // cANToolStripMenuItem
+            // 
+            cANToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { toolStripMenuItem2, kbpsToolStripMenuItem1, toolStripMenuItem3, kbpsToolStripMenuItem });
+            cANToolStripMenuItem.Name = "cANToolStripMenuItem";
+            cANToolStripMenuItem.Size = new Size(141, 22);
+            cANToolStripMenuItem.Text = "CAN";
+            // 
+            // toolStripMenuItem2
+            // 
+            toolStripMenuItem2.Name = "toolStripMenuItem2";
+            toolStripMenuItem2.Size = new Size(121, 22);
+            toolStripMenuItem2.Text = "100 Kbps";
+            toolStripMenuItem2.Click += toolStripMenuItem2_Click;
+            // 
+            // kbpsToolStripMenuItem1
+            // 
+            kbpsToolStripMenuItem1.Name = "kbpsToolStripMenuItem1";
+            kbpsToolStripMenuItem1.Size = new Size(121, 22);
+            kbpsToolStripMenuItem1.Text = "125 Kbps";
+            kbpsToolStripMenuItem1.Click += kbpsToolStripMenuItem1_Click;
+            // 
+            // toolStripMenuItem3
+            // 
+            toolStripMenuItem3.Name = "toolStripMenuItem3";
+            toolStripMenuItem3.Size = new Size(121, 22);
+            toolStripMenuItem3.Text = "250Kbps";
+            toolStripMenuItem3.Click += toolStripMenuItem3_Click;
+            // 
+            // kbpsToolStripMenuItem
+            // 
+            kbpsToolStripMenuItem.Name = "kbpsToolStripMenuItem";
+            kbpsToolStripMenuItem.Size = new Size(121, 22);
+            kbpsToolStripMenuItem.Text = "500Kbps";
+            kbpsToolStripMenuItem.Click += kbpsToolStripMenuItem_Click;
+            // 
+            // bluetoothLEToolStripMenuItem
+            // 
+            bluetoothLEToolStripMenuItem.Name = "bluetoothLEToolStripMenuItem";
+            bluetoothLEToolStripMenuItem.Size = new Size(141, 22);
+            bluetoothLEToolStripMenuItem.Text = "Bluetooth LE";
+            bluetoothLEToolStripMenuItem.Click += bluetoothLEToolStripMenuItem_Click;
+            // 
+            // serialToolStripMenuItem
+            // 
+            serialToolStripMenuItem.Name = "serialToolStripMenuItem";
+            serialToolStripMenuItem.Size = new Size(141, 22);
+            serialToolStripMenuItem.Text = "Serial";
+            serialToolStripMenuItem.DropDownOpening += serialToolStripMenuItem_DropDownOpening;
+            // 
+            // toolStripStatusLabel2
+            // 
+            toolStripStatusLabel2.AutoSize = false;
+            toolStripStatusLabel2.Name = "toolStripStatusLabel2";
+            toolStripStatusLabel2.Size = new Size(5, 17);
+            // 
+            // PCanLabel
+            // 
+            PCanLabel.BackColor = Color.Salmon;
+            PCanLabel.Name = "PCanLabel";
+            PCanLabel.Size = new Size(126, 17);
+            PCanLabel.Text = "PCAN: Not Connected";
+            // 
+            // toolStripStatusLabel1
+            // 
+            toolStripStatusLabel1.AutoSize = false;
+            toolStripStatusLabel1.Name = "toolStripStatusLabel1";
+            toolStripStatusLabel1.Size = new Size(5, 17);
+            // 
+            // BLEStatusLabel
+            // 
+            BLEStatusLabel.BackColor = Color.Salmon;
+            BLEStatusLabel.Name = "BLEStatusLabel";
+            BLEStatusLabel.Size = new Size(113, 17);
+            BLEStatusLabel.Text = "BLE: Not Connected";
+            // 
+            // toolStripStatusLabel3
+            // 
+            toolStripStatusLabel3.AutoSize = false;
+            toolStripStatusLabel3.Name = "toolStripStatusLabel3";
+            toolStripStatusLabel3.Size = new Size(5, 17);
+            // 
+            // COMStatusLabel
+            // 
+            COMStatusLabel.BackColor = Color.Salmon;
+            COMStatusLabel.Name = "COMStatusLabel";
+            COMStatusLabel.Size = new Size(122, 17);
+            COMStatusLabel.Text = "COM: Not Connected";
+            // 
+            // Form1
+            // 
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(1384, 1161);
+            Controls.Add(statusStrip1);
+            Controls.Add(tableLayoutPanel1);
+            Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            Icon = (Icon)resources.GetObject("$this.Icon");
+            MinimumSize = new Size(1400, 1200);
+            Name = "Form1";
+            Text = "STEM Device Manager ";
+            WindowState = FormWindowState.Maximized;
+            tableLayoutPanel1.ResumeLayout(false);
+            tabControl.ResumeLayout(false);
+            tabPageProtocol.ResumeLayout(false);
+            tableLayoutPanelProtocol.ResumeLayout(false);
+            tableLayoutPanelProtocol.PerformLayout();
+            tabPageCodeGen.ResumeLayout(false);
+            tableLayoutPanel2.ResumeLayout(false);
+            tabPageUART.ResumeLayout(false);
+            tabPageUART.PerformLayout();
+            statusStrip1.ResumeLayout(false);
+            statusStrip1.PerformLayout();
+            ResumeLayout(false);
+            PerformLayout();
+        }
+
+        #endregion
+        private System.Windows.Forms.Timer timerBaseTime;
+        private TableLayoutPanel tableLayoutPanel1;
+        private TabControl tabControl;
+        private TabPage tabPageCodeGen;
+        private TabPage tabPageUART;
+        private Label label1;
+        private ListBox listBoxSerialPorts;
+        private TabPage tabPageProtocol;
+        private TableLayoutPanel tableLayoutPanel2;
+        private Button button1;
+        private TableLayoutPanel tableLayoutPanelProtocol;
+        private Label label3;
+        private Label label2;
+        private ComboBox comboBoxMachine;
+        private ComboBox comboBoxBoard;
+        private Label labelByte2;
+        private Label labelByte1;
+        private Label label4;
+        private ComboBox comboBoxCommand;
+        private TextBox textBox1;
+        private TextBox textBox2;
+        private Label label12;
+        private Button buttonSendPS;
+        private RichTextBox richTextBoxTx;
+        private ComboBox comboBoxVariables;
+        private Label labelDictionary;
+        private TextBox textBox3;
+        private Label labelBytes;
+        private ToolStripSplitButton toolStripSplitButton1;
+        private RichTextBox terminalOut;
+        private StatusStrip statusStrip1;
+        private ToolStripStatusLabel BLEStatusLabel;
+        private ToolStripStatusLabel PCanLabel;
+        private ToolStripSplitButton toolStripSplitButton3;
+        private ToolStripMenuItem toolStripMenuItem1;
+        private ToolStripMenuItem cANToolStripMenuItem;
+        private ToolStripMenuItem bluetoothLEToolStripMenuItem;
+        private ToolStripStatusLabel toolStripStatusLabel1;
+        private ToolStripStatusLabel toolStripStatusLabel2;
+        private ToolStripMenuItem serialToolStripMenuItem;
+        private ToolStripStatusLabel toolStripStatusLabel3;
+        private ToolStripStatusLabel COMStatusLabel;
+        private ToolStripMenuItem toolStripMenuItem2;
+        private ToolStripMenuItem toolStripMenuItem3;
+        private ToolStripMenuItem kbpsToolStripMenuItem1;
+        private ToolStripMenuItem kbpsToolStripMenuItem;
+    }
+}

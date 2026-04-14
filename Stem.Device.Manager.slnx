@@ -21,7 +21,5 @@
     <File Path=".copilot/agents/issues-agent.md" />
     <File Path=".copilot/agents/test-agent.md" />
   </Folder>
-  <Project Path="STEMPM/App.csproj">
-    <BuildType Solution="EDEN-Release|*" Project="EDEN-Debug" />
-  </Project>
+  <Project Path="App/App.csproj" />
 </Solution>
