@@ -23,9 +23,12 @@
     <File Path=".copilot/agents/test-agent.md" />
   </Folder>
   <Folder Name="/Docs/">
+    <File Path="Docs/MIGRATION_API.md" />
+  </Folder>
+  <Folder Name="/Docs/Standards/">
     <File Path="Docs/Standards/TEMPLATE_STANDARD.md" />
   </Folder>
-  <Folder Name="/Docs/Templates/">
+  <Folder Name="/Docs/Standards/Templates/">
     <File Path="Docs/Standards/Templates/ISSUES_TEMPLATE.md" />
     <File Path="Docs/Standards/Templates/README_TEMPLATE.md" />
     <File Path="Docs/Standards/Templates/STANDARD_TEMPLATE.md" />
