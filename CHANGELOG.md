@@ -19,7 +19,7 @@ Il formato si basa su [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Modernizzazione: documentazione, standard, riorganizzazione progetto.
+Modernizzazione: documentazione, standard, riorganizzazione progetto, test coverage.
 
 ### Added
 
@@ -29,12 +29,21 @@ Modernizzazione: documentazione, standard, riorganizzazione progetto.
 - `CHANGELOG.md` — Questo file
 - `LICENSE` — Licenza proprietaria
 - `Stem.Device.Manager.slnx` — Solution file migrato a formato XML moderno (da `.sln`)
+- `Tests/` — Progetto test xUnit con 101 test (76 unit + 25 integration)
+  - **Unit test** (76): Terminal, Core Models/Enums, RollingCodeGenerator, SP_Code_Generator, ExcelHandler, CircularProgressBar
+  - **Integration test** (25): ExcelHandler con Excel embedded reale, DI wiring, ButtonPanelTestPresenter (MVP), SP_Code_Generator E2E
+  - **Manual mocks**: MockButtonPanelTestTab, MockButtonPanelTestService
+- `App/README.md` — Documentazione progetto App
+- `Tests/README.md` — Documentazione progetto Tests
+- `InternalsVisibleTo("Tests")` in `App.csproj` per testare tipi `internal`
 
 ### Changed
 
 - Rinominato progetto da `STEMPM` ad `App` (cartella `App/`, file `App.csproj`)
 - Migrato solution file da `.sln` (legacy) a `.slnx` (XML moderno, ~58% riduzione righe)
 - Build configurations ridotte da 10 a 9 (rimossa `STEMDM`)
+- `bitbucket-pipelines.yml` — aggiunto step Test dopo Build
+- `README.md` — aggiornato badge test (0 → 101), struttura soluzione, link documentazione
 
 ### Removed
 
