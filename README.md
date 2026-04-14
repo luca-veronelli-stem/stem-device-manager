@@ -1,8 +1,8 @@
 # Stem.Device.Manager
 
-[![Version](https://img.shields.io/badge/version-2.15-blue)](#)
+[![Version](https://img.shields.io/badge/version-2.15-blue)](./CHANGELOG.md)
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
-[![Tests](https://img.shields.io/badge/tests-0-lightgrey)](./Tests/)
+[![Tests](https://img.shields.io/badge/tests-101-brightgreen)](./Tests/)
 [![License](https://img.shields.io/badge/license-Proprietary-red)](#licenza)
 
 > **Applicativo desktop per la gestione, diagnostica e test dei dispositivi STEM via protocollo proprietario multi-canale (CAN, BLE, Serial).**
@@ -27,7 +27,7 @@ STEMPM è un tool Windows desktop utilizzato dal team firmware STEM per:
 Il progetto è un **monolite legacy** attualmente in fase di modernizzazione:
 - ~56k LOC di codice produzione in un singolo progetto
 - `Form1.cs` è un God Object (~55k LOC con Designer)
-- 0 test automatizzati (obiettivo: copertura incrementale)
+- **101 test automatizzati** (76 unit + 25 integration) — xUnit
 - Unico modulo con architettura pulita: test pulsantiere (DI + MVP)
 
 ---
@@ -45,7 +45,7 @@ Il progetto è un **monolite legacy** attualmente in fase di modernizzazione:
 | **Telemetria** | ✅ | Lettura variabili + grafici OxyPlot (lenta + veloce) |
 | **Test Pulsantiere** | ✅ | Collaudo automatizzato con DI + MVP |
 | **Code Generator** | ✅ | Genera sp_config.h |
-| **Test Automatizzati** | ❌ | Da implementare (Fase 1 modernizzazione) |
+| **Test Automatizzati** | ✅ | 101 test (76 unit + 25 integration) — xUnit |
 
 ---
 
@@ -77,6 +77,9 @@ git clone https://bitbucket.org/stem-fw/win10-stem-dev-man
 
 # Build
 dotnet build
+
+# Test
+dotnet test Tests/Tests.csproj
 
 # Esegui
 dotnet run --project App/App.csproj
@@ -138,7 +141,9 @@ Stem.Device.Manager/
 ├── Docs/                           Documentazione
 │   └── Standards/                  Standard e template
 │
-├── Tests/                          [Da creare] Unit & integration tests
+├── Tests/                          Unit & integration tests (xUnit)
+│   ├── Unit/                       76 test unitari
+│   └── Integration/                25 test di integrazione
 │
 └── .copilot/                       Istruzioni Copilot + agents
 ```
@@ -147,6 +152,8 @@ Stem.Device.Manager/
 
 ## Documentazione
 
+- [App — Progetto principale](./App/README.md)
+- [Tests — Test automatizzati](./Tests/README.md)
 - [Standards e Templates](./Docs/Standards/)
 - [CHANGELOG](./CHANGELOG.md)
 - [LICENSE](./LICENSE)

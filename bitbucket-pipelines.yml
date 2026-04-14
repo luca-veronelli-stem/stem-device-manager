@@ -24,4 +24,11 @@ pipelines:
         caches:
           - dotnetcore
         script:
+          # Build App (.slnx non supportato da SDK 8, build esplicito per progetto)
           - dotnet build App/App.csproj --configuration Release -p:EnableWindowsTargeting=true
+          # Build Tests (verifica compilazione test)
+          - dotnet build Tests/Tests.csproj --configuration Release -p:EnableWindowsTargeting=true
+          # NOTA: i test richiedono il runtime Microsoft.WindowsDesktop.App (WinForms)
+          # che non è disponibile su Linux. L'esecuzione test avviene localmente su Windows.
+          # TODO: valutare self-hosted Windows runner per esecuzione test in CI  
+          # o refactor multi progetto per esecuzione condizionale

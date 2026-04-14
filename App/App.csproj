@@ -13,6 +13,10 @@
 		<Configurations>Debug;Release;TOPLIFT-A2-Debug;TOPLIFT-A2-Release;EDEN-Debug;EDEN-Release;EGICON-Debug;EGICON-Release;BUTTONPANEL</Configurations>
 	</PropertyGroup>
 
+	<ItemGroup>
+		<InternalsVisibleTo Include="Tests" />
+	</ItemGroup>
+
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='TOPLIFT-A2-Debug|AnyCPU'">
 	  <DefineConstants>$(DefineConstants);TOPLIFT</DefineConstants>
 	</PropertyGroup>
