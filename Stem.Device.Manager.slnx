@@ -32,4 +32,14 @@
     <File Path="README.md" />
   </Folder>
   <Project Path="App/App.csproj" />
+  <Project Path="Tests/Tests.csproj" Id="cb7478b0-2f86-4e05-8ae7-761c5d891286">
+    <BuildType Solution="BUTTONPANEL|*" Project="Release" />
+    <BuildType Solution="EDEN-Debug|*" Project="Release" />
+    <BuildType Solution="EDEN-Release|*" Project="Release" />
+    <BuildType Solution="EGICON-Debug|*" Project="Release" />
+    <BuildType Solution="EGICON-Release|*" Project="Release" />
+    <BuildType Solution="STEMDM|*" Project="Release" />
+    <BuildType Solution="TOPLIFT-A2-Debug|*" Project="Release" />
+    <BuildType Solution="TOPLIFT-A2-Release|*" Project="Release" />
+  </Project>
 </Solution>
