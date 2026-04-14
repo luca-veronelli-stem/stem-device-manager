@@ -24,8 +24,10 @@ pipelines:
         caches:
           - dotnetcore
         script:
-          # Build solution completa (App + Tests) per abilitare --no-build nel test
-          - dotnet build Stem.Device.Manager.slnx --configuration Release -p:EnableWindowsTargeting=true
+          # Build App (.slnx non supportato da SDK 8, build esplicito per progetto)
+          - dotnet build App/App.csproj --configuration Release -p:EnableWindowsTargeting=true
+          # Build Tests (App già compilata, riusa via ProjectReference)
+          - dotnet build Tests/Tests.csproj --configuration Release -p:EnableWindowsTargeting=true
           # Test (--no-build: usa gli assembly già compilati)
           - dotnet test Tests/Tests.csproj --no-build --configuration Release -p:EnableWindowsTargeting=true --logger "trx;LogFileName=results.trx" --results-directory ./test-reports
         artifacts:
