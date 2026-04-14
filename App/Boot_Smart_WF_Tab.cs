@@ -75,7 +75,7 @@ public class Boot_Smart_Tab : TabPage
 
         // Crea bottone start
         Assembly asm = Assembly.GetExecutingAssembly();
-        string resName = "STEMPM.images.ic_fluent_arrow_download_24_filled.png";
+        string resName = "App.images.ic_fluent_arrow_download_24_filled.png";
         using (Stream s = asm.GetManifestResourceStream(resName))
         {
             if (s == null)

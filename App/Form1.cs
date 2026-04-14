@@ -366,7 +366,7 @@ namespace StemPC
 
             // Caricamento diretto del file Excel dalle risorse (embedded)
             //var asm = Assembly.GetExecutingAssembly();
-            const string resourceName = "STEMPM.Resources.Dizionari STEM.xlsx";
+            const string resourceName = "App.Resources.Dizionari STEM.xlsx";
             using (var stream = asm.GetManifestResourceStream(resourceName))
             {
                 if (stream == null)
