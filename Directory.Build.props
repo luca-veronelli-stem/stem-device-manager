@@ -1,0 +1,18 @@
+<Project>
+  <PropertyGroup>
+	<!-- Versione centralizzata -->
+	<Version>0.2.15</Version>
+	<FileVersion>0.2.15.0</FileVersion>
+	<AssemblyVersion>0.2.15.0</AssemblyVersion>
+
+	<!-- Metadati autore/azienda -->
+	<Authors>Michele Pignedoli, Luca Veronelli</Authors>
+	<Company>STEM E.m.s.</Company>
+	<Copyright>Copyright © 2025-2026 STEM E.m.s. Tutti i diritti riservati.</Copyright>
+
+	<!-- Build settings comuni -->
+	<Nullable>enable</Nullable>
+	<ImplicitUsings>enable</ImplicitUsings>
+	<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>
