@@ -19,7 +19,7 @@ Il formato si basa su [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Inizio modernizzazione: documentazione, standard, preparazione test coverage.
+Modernizzazione: documentazione, standard, riorganizzazione progetto.
 
 ### Added
 
@@ -28,6 +28,18 @@ Inizio modernizzazione: documentazione, standard, preparazione test coverage.
 - `README.md` — Documentazione root del progetto
 - `CHANGELOG.md` — Questo file
 - `LICENSE` — Licenza proprietaria
+- `Stem.Device.Manager.slnx` — Solution file migrato a formato XML moderno (da `.sln`)
+
+### Changed
+
+- Rinominato progetto da `STEMPM` ad `App` (cartella `App/`, file `App.csproj`)
+- Migrato solution file da `.sln` (legacy) a `.slnx` (XML moderno, ~58% riduzione righe)
+- Build configurations ridotte da 10 a 9 (rimossa `STEMDM`)
+
+### Removed
+
+- Configurazione `STEMDM` — mai usata, nessun `#if STEMDM` nel codice, nessun `DefineConstants` nel `.csproj`
+- `Stem.Device.Manager.sln` — sostituito da `.slnx`
 
 ---
 
@@ -97,7 +109,7 @@ Stato dell'arte del progetto legacy pre-modernizzazione. ~330 commit, ~56k LOC, 
 - Tab Test Pulsantiere (MVP)
 - SplashScreen all'avvio
 - Barra di stato con stato connessione PCAN
-- 10 build configurations: Debug, Release, STEMDM, TOPLIFT-A2-Debug/Release, EDEN-Debug/Release, EGICON-Debug/Release, BUTTONPANEL
+- 9 build configurations: Debug, Release, TOPLIFT-A2-Debug/Release, EDEN-Debug/Release, EGICON-Debug/Release, BUTTONPANEL
 - Configurazioni device via `#if` preprocessor (TOPLIFT, EDEN, EGICON, BUTTONPANEL)
 - Titolo form dinamico per configurazione: "STEM Toplift A2 Manager", "STEM Eden XP Manager", "STEM Spark Manager", "STEM Button Panel Tester"
 - Selezione canale comunicazione CAN/BLE/Serial via menu
@@ -123,7 +135,7 @@ Stato dell'arte del progetto legacy pre-modernizzazione. ~330 commit, ~56k LOC, 
 
 ### Note
 
-- Progetto monolitico: singolo `STEMPM.csproj`, nessuna separazione in librerie
+- Progetto monolitico: singolo `App.csproj` (ex `STEMPM.csproj`), nessuna separazione in librerie
 - `Form1.cs` è un God Object (~55k LOC con Designer) — contiene GUI + logica protocollo + telemetria
 - 0 test automatizzati
 - 0 documentazione formale (README vuoti fino a v2.15)
