@@ -1,4 +1,4 @@
-using App.Core.Enums;
+using Core.Enums;
 
 namespace Tests.Unit.Core.Enums;
 
@@ -65,7 +65,7 @@ public class ButtonPanelEnumsTests
     public void ButtonCounts_MatchPanelFactory(
         ButtonPanelType type, int expectedCount)
     {
-        var panel = App.Core.Models.ButtonPanel.GetByType(type);
+        var panel = global::Core.Models.ButtonPanel.GetByType(type);
 
         Assert.Equal(expectedCount, panel.ButtonCount);
     }

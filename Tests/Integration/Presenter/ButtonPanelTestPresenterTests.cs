@@ -1,4 +1,4 @@
-using App.Core.Enums;
+using Core.Enums;
 using App.GUI.Presenters;
 using Tests.Integration.Presenter.Mocks;
 

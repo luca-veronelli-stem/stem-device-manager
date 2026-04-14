@@ -25,7 +25,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using STEMPM;
 using StemPC;
-using App.Core.Interfaces;
+using Core.Interfaces;
 using App.Services;
 
 namespace App

@@ -1,5 +1,5 @@
-﻿using App.Core.Enums;
-using App.Core.Models;
+﻿using Core.Enums;
+using Core.Models;
 
 namespace App.Core.Interfaces
 {

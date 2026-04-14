@@ -1,9 +1,9 @@
 ﻿using App.STEMProtocol;
 using StemPC;
 using static StemPC.Form1;
-using App.Core.Interfaces;
-using App.Core.Enums;
-using App.Core.Models;
+using Core.Interfaces;
+using Core.Enums;
+using Core.Models;
 
 namespace App.Services
 {

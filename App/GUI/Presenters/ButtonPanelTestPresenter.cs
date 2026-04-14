@@ -1,6 +1,7 @@
-﻿using App.Core.Enums;
+﻿using Core.Enums;
+using Core.Interfaces;
 using App.Core.Interfaces;
-using App.Core.Models;
+using Core.Models;
 
 namespace App.GUI.Presenters
 {

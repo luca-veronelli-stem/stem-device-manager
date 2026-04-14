@@ -1,4 +1,4 @@
-using App.Core.Enums;
+using Core.Enums;
 using App.Core.Models;
 
 namespace Tests.Unit.Core.Models;

@@ -7,7 +7,7 @@ using System.Windows.Forms;
 using static ExcelHandler;
 using static App.STEMProtocol.NetworkLayer;
 using App.STEMProtocol;
-using App.Core.Interfaces;
+using Core.Interfaces;
 using App;
 
 namespace StemPC

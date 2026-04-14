@@ -1,6 +1,7 @@
-﻿using App.Core.Enums;
+﻿using Core.Enums;
 using App.Core.Interfaces;
 using App.Core.Models;
+using Core.Models;
 using StemPC;
 
 using System.Drawing.Drawing2D;

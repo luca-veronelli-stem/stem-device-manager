@@ -1,6 +1,6 @@
-using App.Core.Enums;
+using Core.Enums;
 using App.Core.Interfaces;
-using App.Core.Models;
+using Core.Models;
 
 namespace Tests.Integration.Presenter.Mocks;
 
