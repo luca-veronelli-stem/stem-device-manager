@@ -1,0 +1,44 @@
+# =============================================================================
+# .gitattributes - Stem.Device.Manager
+# =============================================================================
+
+# === Line endings ===
+# Default: auto-detect, normalize to LF in repo, checkout as OS-native
+* text=auto
+
+# Force CRLF for Windows-specific files
+*.cs text eol=crlf
+*.csproj text eol=crlf
+*.sln text eol=crlf
+*.slnx text eol=crlf
+*.resx text eol=crlf
+*.config text eol=crlf
+*.settings text eol=crlf
+*.xaml text eol=crlf
+
+# Force LF for scripts e CI
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Markdown: LF (cross-platform)
+*.md text eol=lf
+
+# === Binary files (no diff, no merge) ===
+*.xlsx binary
+*.xls binary
+*.ico binary
+*.png binary
+*.gif binary
+*.jpg binary
+*.jpeg binary
+*.bmp binary
+*.dll binary
+*.exe binary
+*.pdb binary
+
+# === Generated files (no manual merge) ===
+*.Designer.cs linguist-generated=true
+*.g.cs linguist-generated=true
+*AssemblyInfo.cs linguist-generated=true
+*GlobalUsings.g.cs linguist-generated=true
