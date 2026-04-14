@@ -20,8 +20,13 @@ pipelines:
   # ---------------------------------------------------------------------------
   default:
     - step:
-        name: Build
+        name: Build & Test
         caches:
           - dotnetcore
         script:
-          - dotnet build App/App.csproj --configuration Release -p:EnableWindowsTargeting=true
+          # Build solution completa (App + Tests) per abilitare --no-build nel test
+          - dotnet build Stem.Device.Manager.slnx --configuration Release -p:EnableWindowsTargeting=true
+          # Test (--no-build: usa gli assembly già compilati)
+          - dotnet test Tests/Tests.csproj --no-build --configuration Release -p:EnableWindowsTargeting=true --logger "trx;LogFileName=results.trx" --results-directory ./test-reports
+        artifacts:
+          - test-reports/**
