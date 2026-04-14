@@ -7,6 +7,7 @@
     <BuildType Name="EGICON-Debug" />
     <BuildType Name="EGICON-Release" />
     <BuildType Name="Release" />
+    <BuildType Name="STEMDM" />
     <BuildType Name="TOPLIFT-A2-Debug" />
     <BuildType Name="TOPLIFT-A2-Release" />
   </Configurations>
@@ -20,6 +21,15 @@
     <File Path=".copilot/agents/formal-spec-agent.md" />
     <File Path=".copilot/agents/issues-agent.md" />
     <File Path=".copilot/agents/test-agent.md" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="bitbucket-pipelines.yml" />
+    <File Path="CHANGELOG.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
   </Folder>
   <Project Path="App/App.csproj" />
 </Solution>
