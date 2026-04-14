@@ -1,7 +1,7 @@
-using Microsoft.Extensions.DependencyInjection;
-using Core.Interfaces;
 using App.Core.Interfaces;
 using App.Services;
+using Core.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Tests.Integration.DependencyInjection;
 

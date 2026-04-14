@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
 
 public class Terminal
 {
@@ -25,6 +24,6 @@ public class Terminal
     public string WriteLog(string message)
     {
         WriteLine(message);
-        return _log.ToString(); 
+        return _log.ToString();
     }
 }

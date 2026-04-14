@@ -1,9 +1,9 @@
 ﻿using App.STEMProtocol;
+using Core.Enums;
+using Core.Interfaces;
+using Core.Models;
 using StemPC;
 using static StemPC.Form1;
-using Core.Interfaces;
-using Core.Enums;
-using Core.Models;
 
 namespace App.Services
 {
@@ -23,8 +23,8 @@ namespace App.Services
 
         // Costruisce payload
         private byte[] BuildPayload(
-            ushort command, 
-            ushort variableId, 
+            ushort command,
+            ushort variableId,
             byte[]? value)
         {
             var payload = new List<byte>
@@ -41,9 +41,9 @@ namespace App.Services
 
         // Invia comando via protocollo STEM
         private async Task<byte[]> SendCommandAsync(
-            ushort command, 
-            byte[] fullPayload, 
-            bool waitAnswer, 
+            ushort command,
+            byte[] fullPayload,
+            bool waitAnswer,
             int timeoutMs = 5000)
         {
             if (!waitAnswer)
@@ -152,8 +152,8 @@ namespace App.Services
 
         // Gestisce la rilevazione della pressione del pulsante
         public async Task<bool> AwaitButtonPressEventAsync(
-            byte[] expectedPayload, 
-            int timeoutMs, 
+            byte[] expectedPayload,
+            int timeoutMs,
             CancellationToken cancellationToken = default)
         {
             var tcs = new TaskCompletionSource<bool>();

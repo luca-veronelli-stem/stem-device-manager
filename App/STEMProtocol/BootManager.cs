@@ -1,13 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Collections.Concurrent;
-using System.Windows.Forms;
 using StemPC;
-using DocumentFormat.OpenXml.Drawing;
 
 namespace App.STEMProtocol
 {
@@ -27,7 +18,7 @@ namespace App.STEMProtocol
         //private const int FIRMWARE_BLOCK_SIZE = 128;
 
         //Path del firmware
-        private string firmwareName="";
+        private string firmwareName = "";
         public int currentOffset;
         public int totalLength;
         private byte[] firmwareData;
@@ -43,7 +34,7 @@ namespace App.STEMProtocol
         public BootManager()
         {
             protocolManager = new ProtocolManager();
-      //      protocolManager.SendCommandRequest += protocolManager.OnSendCanCommand; //per il momento forzo il can poi dovrò gestirlo coi canali attivi
+            //      protocolManager.SendCommandRequest += protocolManager.OnSendCanCommand; //per il momento forzo il can poi dovrò gestirlo coi canali attivi
         }
 
         public void SetHardwareChannel(string channel)
@@ -58,7 +49,8 @@ namespace App.STEMProtocol
             if (BootHardwareChannel == "can")
             {
                 protocolManager.SendCommandRequest += protocolManager.OnSendCanCommand;
-            }else if (BootHardwareChannel == "ble")
+            }
+            else if (BootHardwareChannel == "ble")
             {
                 protocolManager.SendCommandRequest += protocolManager.OnSendBleCommand;
             }
@@ -84,7 +76,7 @@ namespace App.STEMProtocol
 
         public async Task StartBoot()
         {
-            bool Answer=false;
+            bool Answer = false;
 
             // 1. Avvio procedura
             for (int i = 0; i < 1; i++)
@@ -135,7 +127,7 @@ namespace App.STEMProtocol
                 byte[] currentBlock = new byte[FIRMWARE_BLOCK_SIZE];
 
                 // Riempimento iniziale di currentBlock con 0xFF
-                Array.Fill(currentBlock, (byte) 0xFF);
+                Array.Fill(currentBlock, (byte)0xFF);
 
                 byte[] currentBlockShrinked = GetCurrentBlock(firmwareData, offset);
 
@@ -167,7 +159,8 @@ namespace App.STEMProtocol
             // Aggiorna progress bar
             OnProgressChanged(totalLength, totalLength); //100%
 
-            if (UpdateSuccesful) {
+            if (UpdateSuccesful)
+            {
                 for (int i = 0; i < 5; i++)
                 {
                     Answer = false;
@@ -183,8 +176,8 @@ namespace App.STEMProtocol
                     await Task.Delay(1000); // attesa tra un comando e il successivo
                 }
 
-         //       MessageBox.Show("Firmware update completed!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }        
+                //       MessageBox.Show("Firmware update completed!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
 
         public async Task UploadFirmwareOnly()

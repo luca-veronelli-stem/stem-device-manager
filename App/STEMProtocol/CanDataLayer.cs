@@ -1,16 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Collections.Concurrent;
-using App.STEMProtocol;
 
 //PCAN support
-using Peak.Can.Basic;
-using DocumentFormat.OpenXml.InkML;
-using System.Windows.Forms;
 using Peak.Can.Basic.BackwardCompatibility;
 
 namespace App.STEMProtocol;
@@ -41,10 +30,10 @@ public class CANDataLayer : IDisposable
 {
     public string Channel { get; }
     public string CanInterface { get; }
-    public int    Bitrate { get; }
-    public bool   IsConnected;
+    public int Bitrate { get; }
+    public bool IsConnected;
 
-    private PCANManager _pcanManager=null;
+    private PCANManager _pcanManager = null;
 
     // Eventi
     public event EventHandler<bool> ConnectionStatusChanged;
@@ -67,7 +56,7 @@ public class CANDataLayer : IDisposable
             {
                 default:
                 case 100000:
-                    baudrate=TPCANBaudrate.PCAN_BAUD_100K;
+                    baudrate = TPCANBaudrate.PCAN_BAUD_100K;
                     break;
                 case 125000:
                     baudrate = TPCANBaudrate.PCAN_BAUD_100K;
@@ -109,16 +98,16 @@ public class CANDataLayer : IDisposable
 
     public async void Send(CANMessage message)
     {
-        int result=0;
+        int result = 0;
 
         //Implementation to send message through CAN
         if (_pcanManager != null)
         {
             if (_pcanManager.IsConnected)
             {
-                result=(int) await _pcanManager.SendMessageAsync(message.ArbitrationId, message.Data, true);
+                result = (int)await _pcanManager.SendMessageAsync(message.ArbitrationId, message.Data, true);
                 TX_CAN_Data TX_Can_Data = new TX_CAN_Data();
-                TX_Can_Data.Result=result;
+                TX_Can_Data.Result = result;
                 TX_Can_Data.Message = message;
                 PacketSended?.Invoke(this, TX_Can_Data);
             }

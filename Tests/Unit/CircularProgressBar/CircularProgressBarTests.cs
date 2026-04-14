@@ -1,5 +1,3 @@
-using App;
-
 namespace Tests.Unit.CircularProgressBar;
 
 /// <summary>

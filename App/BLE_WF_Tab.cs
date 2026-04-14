@@ -1,8 +1,4 @@
-﻿using System;
-using System.Drawing;
-using System.Windows.Forms;
-using App;
-using DocumentFormat.OpenXml.CustomProperties;
+﻿using App;
 
 using App.Properties;
 
@@ -39,7 +35,7 @@ public partial class BLEInterfaceTab : TabPage
         btnScan.Click += BtnScan_Click;
 
         // Spinner animato vicino al pulsante
-       
+
         loadingSpinner = new PictureBox();
         //carica l'immagine dal file GIF 
         // loadingSpinner.Image = Image.FromFile("loading.gif"); // Assicurati di avere un file GIF di caricamento

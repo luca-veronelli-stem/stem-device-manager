@@ -1,22 +1,10 @@
-﻿using System;
-using System.Drawing;
-//using System.Reflection.Emit;
-using System.Windows.Forms;
+﻿//using System.Reflection.Emit;
 using App.Properties;
-
+using App.STEMProtocol;
 using OxyPlot;
+using OxyPlot.Axes;
 using OxyPlot.Series;
 using OxyPlot.WindowsForms;
-using DocumentFormat.OpenXml.EMMA;
-using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
-using OxyPlot.Axes;
-using App;
-using DocumentFormat.OpenXml.Spreadsheet;
-using Windows.ApplicationModel.Background;
-using System.Threading.Tasks;
-using System.Reflection.Emit;
-using App.STEMProtocol;
 
 public class TopLiftTelemetry_Tab : TabPage
 {
@@ -144,7 +132,7 @@ public class TopLiftTelemetry_Tab : TabPage
         // Aggiungo i due pannelli per gli elementi grafici
         panel1 = new Panel();
         panel1.Dock = DockStyle.Fill;
-      //  panel1.BackColor = Color.LightBlue;
+        //  panel1.BackColor = Color.LightBlue;
         panel1.BorderStyle = BorderStyle.FixedSingle;
         topRow.Controls.Add(panel1, 0, 0);
 
@@ -194,7 +182,7 @@ public class TopLiftTelemetry_Tab : TabPage
 
         panel2 = new Panel();
         panel2.Dock = DockStyle.Fill;
-//        panel2.BackColor = Color.LightGreen;
+        //        panel2.BackColor = Color.LightGreen;
         panel2.BorderStyle = BorderStyle.FixedSingle;
         topRow.Controls.Add(panel2, 1, 0);
 
@@ -233,7 +221,7 @@ public class TopLiftTelemetry_Tab : TabPage
         };
 
         plotModel2.Series.Add(pointSeries2);
-        
+
         plotView2 = new PlotView
         {
             Dock = DockStyle.Fill, // Occupa tutto il Panel
@@ -266,9 +254,9 @@ public class TopLiftTelemetry_Tab : TabPage
         // SECONDA RIGA: 7 contenitori di immagini con label sotto
         TableLayoutPanel imageRow = new TableLayoutPanel();
         imageRow.Dock = DockStyle.Fill;
-        imageRow.ColumnCount = 7; 
+        imageRow.ColumnCount = 7;
         imageRow.RowCount = 2;
-        for (int i = 0; i < 7; i++) 
+        for (int i = 0; i < 7; i++)
         {
             imageRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F / 7F)); // Distribuiti equamente
         }
@@ -277,11 +265,11 @@ public class TopLiftTelemetry_Tab : TabPage
         mainLayout.Controls.Add(imageRow, 0, 2); // Ora è alla riga 2 invece che 1
 
         // Creo i contenitori di immagini e le relative label
-        imageContainers = new PictureBox[7]; 
-        imageLabels = new System.Windows.Forms.Label[7]; 
-        imageStates = new bool[7]; 
+        imageContainers = new PictureBox[7];
+        imageLabels = new System.Windows.Forms.Label[7];
+        imageStates = new bool[7];
 
-        for (int i = 0; i < 7; i++) 
+        for (int i = 0; i < 7; i++)
         {
             // Contenitore immagine
             imageContainers[i] = new PictureBox();
@@ -289,7 +277,7 @@ public class TopLiftTelemetry_Tab : TabPage
             imageContainers[i].SizeMode = PictureBoxSizeMode.Zoom;
             //         imageContainers[i].BorderStyle = BorderStyle.FixedSingle;
             imageContainers[i].BorderStyle = BorderStyle.None;
-         //   imageContainers[i].BackColor = Color.White;
+            //   imageContainers[i].BackColor = Color.White;
             imageContainers[i].Margin = new Padding(5);
             imageContainers[i].Tag = i;  // Salva l'indice per identificarlo
             if (i == 0) imageContainers[i].Image = Resources.ValvolaOff;
@@ -369,7 +357,7 @@ public class TopLiftTelemetry_Tab : TabPage
             else if (i == 1) labelsRow4[i].Text = "Min Height";
             else if (i == 2) labelsRow4[i].Text = "Max Slope";
             else if (i == 3) labelsRow4[i].Text = "Min Slope";
-            else if (i == 4) labelsRow4[i].Text = "Height 1"; 
+            else if (i == 4) labelsRow4[i].Text = "Height 1";
             else if (i == 5) labelsRow4[i].Text = "Height 2";
             else if (i == 6) labelsRow4[i].Text = "Height 3";
             else if (i == 7) labelsRow4[i].Text = "Loading height";
@@ -466,7 +454,7 @@ public class TopLiftTelemetry_Tab : TabPage
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato pompa")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato finecorsa ")]);
         telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Valore RAW del potenzio inclinazione")]);
-    
+
         await telemetryManager.TelemetryStart();
     }
 
@@ -580,7 +568,8 @@ public class TopLiftTelemetry_Tab : TabPage
     {
         if (index > 6) return;
 
-        if (index < 4) { 
+        if (index < 4)
+        {
             // Cambia l'immagine in base allo stato
             if (imageStates[index])
             {
@@ -631,7 +620,7 @@ public class TopLiftTelemetry_Tab : TabPage
 
     private void UpdatePlot(uint newValue, LineSeries pointSeries, LinearAxis xAxis, PlotView plotView)
     {
-       // return;
+        // return;
         // Simulo un segnale: qui puoi inserire il tuo dato in tempo reale
         //   double newValue = Math.Sin(2 * Math.PI * 0.5 * time);
 
@@ -660,7 +649,7 @@ public class TopLiftTelemetry_Tab : TabPage
         switch (VarName)
         {
             case "Stato EVA":
-                if (e.Value!=0)  imageStates[0] = true;
+                if (e.Value != 0) imageStates[0] = true;
                 else imageStates[0] = false;
                 UpdateImageDisplay(0);
                 break;
@@ -696,8 +685,8 @@ public class TopLiftTelemetry_Tab : TabPage
             case "Valore RAW del potenzio altezza":
                 {
                     time += 1;
-                    if (e.Value!=0)
-                    UpdatePlot(e.Value, pointSeries1, xAxis1, plotView1);
+                    if (e.Value != 0)
+                        UpdatePlot(e.Value, pointSeries1, xAxis1, plotView1);
                 }
                 break;
             case "Valore RAW del potenzio inclinazione":
@@ -712,7 +701,7 @@ public class TopLiftTelemetry_Tab : TabPage
                     string FaultString = null;
                     uint FaultValue = e.Value;
 
-                   // FaultValue = 0xFFFFFFFF;
+                    // FaultValue = 0xFFFFFFFF;
 
                     if (FaultValue != 0)
                     {
@@ -778,7 +767,7 @@ public class TopLiftTelemetry_Tab : TabPage
                     else
                     {
                         textBoxRow3.Text = FaultString;
-                    }     
+                    }
                 }
                 break;
             case "Potenzio inclinazione giu'":
@@ -789,7 +778,7 @@ public class TopLiftTelemetry_Tab : TabPage
                 else
                 {
                     textBoxesRow4[3].Text = e.Value.ToString();
-                }           
+                }
                 break;
             case "Potenzio inclinazione orizz.":
                 if (this.InvokeRequired)

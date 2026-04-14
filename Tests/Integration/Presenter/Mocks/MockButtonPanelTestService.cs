@@ -81,12 +81,12 @@ internal class MockButtonPanelTestService : IButtonPanelTestService
 
     private static ButtonPanelTestResult DefaultResult(
         ButtonPanelType panel, ButtonPanelTestType test) => new()
-    {
-        PanelType = panel,
-        TestType = test,
-        Passed = true,
-        Message = $"{test} OK"
-    };
+        {
+            PanelType = panel,
+            TestType = test,
+            Passed = true,
+            Message = $"{test} OK"
+        };
 
     private static List<ButtonPanelTestResult> DefaultResults(
         ButtonPanelType panel) =>

@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Windows.Forms;
+﻿using App.Properties;
 using App.STEMProtocol;
-using App.Properties;
 
 public class Telemetry_Tab : TabPage
 {
@@ -118,7 +115,7 @@ public class Telemetry_Tab : TabPage
     {
         // Aggiorna la ComboBox con i nomi delle variabili
         comboBox.Items.Clear();
-        
+
         if (MachineDictionary == null) return;
 
         comboBox.SelectedIndex = -1;
@@ -127,7 +124,7 @@ public class Telemetry_Tab : TabPage
         {
             comboBox.Items.Add(variable.Name);
             comboBox.SelectedIndex = 0;
-        }     
+        }
     }
 
     private async void onDataReady(object sender, DataReadyEventArgs e)
@@ -251,10 +248,10 @@ public class Telemetry_Tab : TabPage
 
     private async void ButtonStart_Click(object sender, EventArgs e)
     {
-        #if TOPLIFT
+#if TOPLIFT
         // Aggiorno la lista dei dispositivi da interrogare
         telemetryManager.AddToDictionary(MachineDictionary[1]);
-        #endif
+#endif
         await telemetryManager.TelemetryStart();
     }
 

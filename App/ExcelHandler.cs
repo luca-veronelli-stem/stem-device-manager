@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Spreadsheet;
-using static ExcelHandler;
+﻿using ClosedXML.Excel;
 
 public class ExcelHandler
 {
     // Internal stream for embedded resources
- //   private readonly Stream _excelStream;
+    //   private readonly Stream _excelStream;
 
     //**************************
     // Buffer interno per stream
@@ -199,7 +194,8 @@ public class ExcelHandler
                         int CellValue;
                         string CellValueString = cell.GetString();
 
-                        if (CellValueString.Length > 2){ 
+                        if (CellValueString.Length > 2)
+                        {
 
                             int.TryParse(CellValueString.Substring(2), System.Globalization.NumberStyles.HexNumber, null, out CellValue);
 
@@ -213,7 +209,7 @@ public class ExcelHandler
                                 {
                                     // Ottieni il colore di sfondo della cella
                                     XLColor fillColor = rowtemp.Cell("A").Style.Fill.BackgroundColor;
-                                    if (fillColor.ColorType!= XLColorType.Theme)
+                                    if (fillColor.ColorType != XLColorType.Theme)
                                     {
                                         var rgb = fillColor.Color.ToArgb();
                                         //if (rgb == System.Drawing.Color.LightGreen.ToArgb())
@@ -228,7 +224,7 @@ public class ExcelHandler
                                             // Aggiungi alla lista solo se tutti i campi hanno un valore
                                             if (!string.IsNullOrWhiteSpace(name) &&
                                                 !string.IsNullOrWhiteSpace(addrH) &&
-                                                !string.IsNullOrWhiteSpace(addrL)) 
+                                                !string.IsNullOrWhiteSpace(addrL))
                                             {
                                                 // Aggiungi un oggetto RowData alla lista
                                                 Variabili.Add(new VariableData(name, addrH, addrL, dataType));
@@ -236,7 +232,7 @@ public class ExcelHandler
                                         }
                                     }
                                 }
-                            //    MessageBox.Show($"Indirizzo trovato nel foglio: {worksheet.Name}, cella: {cell.Address}", "", MessageBoxButtons.OK);
+                                //    MessageBox.Show($"Indirizzo trovato nel foglio: {worksheet.Name}, cella: {cell.Address}", "", MessageBoxButtons.OK);
                             }
                             else
                             {

@@ -1,6 +1,6 @@
-﻿using Core.Enums;
+﻿using App.Core.Interfaces;
+using Core.Enums;
 using Core.Interfaces;
-using App.Core.Interfaces;
 using Core.Models;
 
 namespace App.GUI.Presenters
@@ -9,7 +9,7 @@ namespace App.GUI.Presenters
     internal class ButtonPanelTestPresenter
     {
         private readonly IButtonPanelTestTab _view;
-        private readonly IButtonPanelTestService _service; 
+        private readonly IButtonPanelTestService _service;
         private CancellationTokenSource? _cts;
         private string _lastPromptMessage = string.Empty;
         private List<ButtonPanelTestResult>? _latestResults;

@@ -1,12 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Collections.Concurrent;
-using App.STEMProtocol;
-
 //BLE support
 
 //COM support
@@ -39,11 +30,11 @@ public class SDL : IDisposable
 {
     public string Channel { get; }
     public string SerialInterface { get; }
-    public int    Bitrate { get; }
-    public bool   IsConnected;
+    public int Bitrate { get; }
+    public bool IsConnected;
 
-    private BLEManager          _bleManager = null;
-    private SerialPortManager   _serialManager = null;
+    private BLEManager _bleManager = null;
+    private SerialPortManager _serialManager = null;
 
     // Eventi
     public event EventHandler<bool> ConnectionStatusChanged;
@@ -59,7 +50,7 @@ public class SDL : IDisposable
         if (SerialInterface == "ble")
         {
             //BLE
-            _bleManager = (BLEManager) Manager;
+            _bleManager = (BLEManager)Manager;
 
             // Sottoscrizione agli eventi
             _bleManager.PacketReceived += OnBLEPacketReceived;
@@ -69,7 +60,7 @@ public class SDL : IDisposable
         else if (SerialInterface == "serial")
         {
             //Serial
-            _serialManager = (SerialPortManager) Manager;
+            _serialManager = (SerialPortManager)Manager;
 
             // Sottoscrizione agli eventi
             _serialManager.PacketReceived += OnSerialPacketReceived;
@@ -81,27 +72,27 @@ public class SDL : IDisposable
 
     public async void Send(SerialMessage message)
     {
-        int result=0;
+        int result = 0;
 
         //Implementation to send message through BLE or Serial
         if ((_bleManager != null) && (SerialInterface == "ble"))
         {
             //if (_bleManager.IsConnected)
             //{
-                if (await _bleManager.SendMessageAsync(message.Data)== true)
-                {
-                    result = 1;
-                }
-                else
-                {
-                    result = 0;
-                }
+            if (await _bleManager.SendMessageAsync(message.Data) == true)
+            {
+                result = 1;
+            }
+            else
+            {
+                result = 0;
+            }
 
-                TX_Serial_Data TX_serial_Data = new TX_Serial_Data();
-                TX_serial_Data.Result = result;
-                TX_serial_Data.Message = message;
-                PacketSended?.Invoke(this, TX_serial_Data);
-//            }
+            TX_Serial_Data TX_serial_Data = new TX_Serial_Data();
+            TX_serial_Data.Result = result;
+            TX_serial_Data.Message = message;
+            PacketSended?.Invoke(this, TX_serial_Data);
+            //            }
         }
         else if ((_serialManager != null) && (SerialInterface == "serial"))
         {

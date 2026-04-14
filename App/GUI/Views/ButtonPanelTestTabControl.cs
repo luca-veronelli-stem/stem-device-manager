@@ -1,9 +1,8 @@
-﻿using Core.Enums;
-using App.Core.Interfaces;
+﻿using App.Core.Interfaces;
 using App.Core.Models;
+using Core.Enums;
 using Core.Models;
 using StemPC;
-
 using System.Drawing.Drawing2D;
 
 namespace STEMPM.GUI.Views
@@ -92,7 +91,7 @@ namespace STEMPM.GUI.Views
 
                 // Associa il metodo per colorare gli indicatori
                 pictureBoxImage.Paint += PictureBoxImage_Paint;
-                pictureBoxImage.SizeChanged += (s, e) => pictureBoxImage.Invalidate(); 
+                pictureBoxImage.SizeChanged += (s, e) => pictureBoxImage.Invalidate();
             }
             catch (Exception ex)
             {
@@ -132,7 +131,7 @@ namespace STEMPM.GUI.Views
         private void CreateSelectTestButtons(ButtonPanelTestType[] testTypes)
         {
             // Spazio tra i pulsanti e dai bordi
-            int spacing = 10; 
+            int spacing = 10;
             int buttonHeight = panelTestSelection.Height - 2 * spacing;
             // Altezza pulsante con margini simmetrici
             int buttonWidth = (panelTestSelection.Width - (testTypes.Length + 1) * spacing) / testTypes.Length;

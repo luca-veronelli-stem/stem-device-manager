@@ -1,12 +1,4 @@
-using App;
 using StemPC;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Runtime.CompilerServices;
-using DocumentFormat.OpenXml.Bibliography;
-using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace App.STEMProtocol
 {
@@ -81,7 +73,7 @@ namespace App.STEMProtocol
 
         public void CleanApplicationBuffer()
         {
-            Array.Clear(_applicationPacket,0, _applicationPacket.Length);
+            Array.Clear(_applicationPacket, 0, _applicationPacket.Length);
         }
 
         public byte CmdInit
@@ -149,12 +141,12 @@ namespace App.STEMProtocol
                    data != null && data.Length > 2 ? data.Skip(2).ToArray() : Array.Empty<byte>(),
                    pack)
         {
-                if (data == null || data.Length < 2)
-                {
-                    IsValid = false;
-                    return;
-                }
-             _cryptFlag = cryptFlag;
+            if (data == null || data.Length < 2)
+            {
+                IsValid = false;
+                return;
+            }
+            _cryptFlag = cryptFlag;
             _senderId = senderId;
             _lPack = (ushort)data.Length;
             if (pack)
@@ -643,7 +635,7 @@ namespace App.STEMProtocol
         //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         //                  BLE related functions
         //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
+
         // Gestore dell'evento send command da instradare tramite ble
         public async void OnSendBleCommand(object sender, SendCommandEventArgs e)
         {

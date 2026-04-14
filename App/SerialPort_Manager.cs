@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Diagnostics;
 using System.IO.Ports;
-using System.Diagnostics;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace App
 {
@@ -75,11 +71,11 @@ namespace App
         /// <param name="dataBits">Numero di bit di dati (es. 8).</param>
         /// <param name="stopBits">Bit di stop (One, Two, ecc.).</param>
         /// <param name="handshake">Handshaking (None, XOnXOff, ecc.).</param>
-        public void Connect(string portName, 
+        public void Connect(string portName,
                             int baudRate = 115200,
-                            Parity parity = Parity.None, 
+                            Parity parity = Parity.None,
                             int dataBits = 8,
-                            StopBits stopBits = StopBits.One, 
+                            StopBits stopBits = StopBits.One,
                             Handshake handshake = Handshake.None)
         {
             try

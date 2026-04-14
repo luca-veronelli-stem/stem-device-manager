@@ -1,14 +1,5 @@
-﻿using System;
-using System.Collections;
-using System.Collections.ObjectModel;
-using System.Reflection.Emit;
+﻿using Peak.Can.Basic.BackwardCompatibility;
 using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using DocumentFormat.OpenXml.Bibliography;
-using DocumentFormat.OpenXml.Wordprocessing;
-using Peak.Can.Basic;
-using Peak.Can.Basic.BackwardCompatibility;
 using TPCANHandle = System.Byte;
 
 namespace App;
@@ -46,20 +37,20 @@ public class CANPacketEventArgs : EventArgs
 
 public class PCANManager
 {
-    private const   TPCANHandle Channel = 0x51; // PCAN_USB
-    private         TPCANBaudrate _currentBaudRate;
-    private bool    _isConnected;
+    private const TPCANHandle Channel = 0x51; // PCAN_USB
+    private TPCANBaudrate _currentBaudRate;
+    private bool _isConnected;
 
     // Evento per lo stato della connessione
     /// <summary>
     /// Si verifica quando cambia lo stato della connessione al dispositivo PCAN.
     /// </summary>
-    public event EventHandler<bool>                 ConnectionStatusChanged;
+    public event EventHandler<bool> ConnectionStatusChanged;
     /// <summary>
     /// Si verifica quando viene ricevuto un nuovo pacchetto CAN.
     /// </summary>
-    public event EventHandler<CANPacketEventArgs>   PacketReceived;
-    public event EventHandler<string>               ErrorOccurred;
+    public event EventHandler<CANPacketEventArgs> PacketReceived;
+    public event EventHandler<string> ErrorOccurred;
 
     public bool IsConnected
     {
@@ -94,7 +85,7 @@ public class PCANManager
 
     private void StartConnectionMonitoring()
     {
-        Task.Run( async () =>
+        Task.Run(async () =>
         {
             while (true)
             {
@@ -112,7 +103,7 @@ public class PCANManager
                             PCANBasic.GetErrorText(status, 0, errorTextB);
                             ErrorOccurred?.Invoke(this, errorTextB.ToString());
                             Disconnect();
-                        //    ErrorOccurred?.Invoke(this, "Connessione persa. Tentativo di riconnessione...");
+                            //    ErrorOccurred?.Invoke(this, "Connessione persa. Tentativo di riconnessione...");
                         }
 
                         // Tentativo di riconnessione
