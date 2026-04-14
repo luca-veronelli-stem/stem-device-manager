@@ -9,8 +9,8 @@
 
 | Aspetto | Valore |
 |---------|--------|
-| **Tipo** | Windows Forms (.NET 8) |
-| **TFM** | `net8.0-windows10.0.19041.0` |
+| **Tipo** | Windows Forms (.NET 10) |
+| **TFM** | `net10.0-windows10.0.19041.0` |
 | **Target** | `win-x64` (Windows 10+) |
 | **LOC** | ~56,000 |
 | **Entry point** | `Program.cs` |

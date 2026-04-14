@@ -39,6 +39,8 @@ Modernizzazione: documentazione, standard, riorganizzazione progetto, test cover
 
 ### Changed
 
+- **Migrazione .NET 8 → .NET 10** — TFM `net10.0-windows10.0.19041.0` per App e Tests
+- `bitbucket-pipelines.yml` — image `sdk:10.0`, build via `.slnx` (supportato da SDK 10)
 - Rinominato progetto da `STEMPM` ad `App` (cartella `App/`, file `App.csproj`)
 - Migrato solution file da `.sln` (legacy) a `.slnx` (XML moderno, ~58% riduzione righe)
 - Build configurations ridotte da 10 a 9 (rimossa `STEMDM`)

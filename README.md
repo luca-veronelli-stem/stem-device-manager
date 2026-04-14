@@ -1,19 +1,18 @@
 # Stem.Device.Manager
 
 [![Version](https://img.shields.io/badge/version-2.15-blue)](./CHANGELOG.md)
-[![.NET](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![Tests](https://img.shields.io/badge/tests-101-brightgreen)](./Tests/)
 [![License](https://img.shields.io/badge/license-Proprietary-red)](#licenza)
 
-> **Applicativo desktop per la gestione, diagnostica e test dei dispositivi STEM via protocollo proprietario multi-canale (CAN, BLE, Serial).**
-
+> **Applicativo desktop per la gestione, diagnostica e test dei dispositivi STEM via protocollo proprietario multi-canale (CAN, BLE, Serial).**  
 > **Ultimo aggiornamento:** 2026-04-14
 
 ---
 
 ## Panoramica
 
-STEMPM è un tool Windows desktop utilizzato dal team firmware STEM per:
+Stem Device Manager è un tool Windows desktop utilizzato per:
 
 - **Comunicare** con i dispositivi via protocollo proprietario (CAN, BLE, Serial)
 - **Leggere/scrivere** variabili e comandi tramite dizionari Excel embedded
@@ -24,11 +23,11 @@ STEMPM è un tool Windows desktop utilizzato dal team firmware STEM per:
 
 ### Stato Attuale
 
-Il progetto è un **monolite legacy** attualmente in fase di modernizzazione:
-- ~56k LOC di codice produzione in un singolo progetto
-- `Form1.cs` è un God Object (~55k LOC con Designer)
-- **101 test automatizzati** (76 unit + 25 integration) — xUnit
-- Unico modulo con architettura pulita: test pulsantiere (DI + MVP)
+Il progetto è un **monolite legacy** attualmente in fase di modernizzazione:  
+- ~56k LOC di codice produzione in un singolo progetto  
+- `Form1.cs` è un God Object (~55k LOC con Designer)  
+- **101 test automatizzati** (76 unit + 25 integration) — xUnit  
+- Unico modulo con architettura pulita: test pulsantiere (DI + MVP)  
 
 ---
 
@@ -51,7 +50,7 @@ Il progetto è un **monolite legacy** attualmente in fase di modernizzazione:
 
 ## Requisiti
 
-- **.NET 8.0** (Windows 10+ x64)
+- **.NET 10.0** (Windows 10+ x64)
 - **Visual Studio 2022/2026** con workload Desktop Development
 - **PCAN USB** (opzionale, per comunicazione CAN)
 
