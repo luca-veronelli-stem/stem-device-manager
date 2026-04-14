@@ -10,7 +10,7 @@
 | Aspetto | Valore |
 |---------|--------|
 | **Framework** | xUnit 2.5.3 |
-| **TFM** | `net8.0-windows10.0.19041.0` |
+| **TFM** | `net10.0-windows10.0.19041.0` |
 | **Test totali** | 101 |
 | **Unit test** | 76 |
 | **Integration test** | 25 |
@@ -20,7 +20,7 @@
 
 ## Requisiti
 
-- **.NET 8.0** (Windows 10+ x64)
+- **.NET 10.0** (Windows 10+ x64)
 - **xUnit 2.5.3** (incluso via NuGet)
 - Progetto `App` compilabile (riferimento via `ProjectReference`)
 
