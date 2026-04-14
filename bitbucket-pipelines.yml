@@ -24,4 +24,4 @@ pipelines:
         caches:
           - dotnetcore
         script:
-          - dotnet build STEMPM/STEMPM.csproj --configuration Release -p:EnableWindowsTargeting=true
+          - dotnet build App/App.csproj --configuration Release -p:EnableWindowsTargeting=true
