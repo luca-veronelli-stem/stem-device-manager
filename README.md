@@ -1,4 +1,4 @@
-# Stem.Device.Manager (STEMPM)
+# Stem.Device.Manager
 
 [![Version](https://img.shields.io/badge/version-2.15-blue)](#)
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
@@ -79,7 +79,7 @@ git clone https://bitbucket.org/stem-fw/win10-stem-dev-man
 dotnet build
 
 # Esegui
-dotnet run --project STEMPM.csproj
+dotnet run --project App/App.csproj
 ```
 
 ### Build Configurations
@@ -92,7 +92,6 @@ dotnet run --project STEMPM.csproj
 | `EDEN-Debug/Release` | Solo funzionalità Eden XP |
 | `EGICON-Debug/Release` | Solo funzionalità Spark |
 | `BUTTONPANEL` | Solo test pulsantiere |
-| `STEMDM` | Configurazione speciale |
 
 ---
 
@@ -100,39 +99,41 @@ dotnet run --project STEMPM.csproj
 
 ```
 Stem.Device.Manager/
-├── STEMPM.csproj                   Progetto Windows Forms (.NET 8)
-├── Program.cs                      Entry point + DI
-├── Form1.cs                        Main form (God Object ~55k LOC)
-│
-├── STEMProtocol/                   Protocollo comunicazione proprietario
-│   ├── STEM_protocol.cs            Layer stack (Application, Network, Transport)
-│   ├── PacketManager.cs            Gestione pacchetti multi-canale
-│   ├── CanDataLayer.cs             Data layer CAN (PCAN)
-│   ├── SerialDataLayer.cs          Data layer Serial + BLE
-│   ├── BootManager.cs              Firmware bootloader
-│   ├── TelemetryManager.cs         Telemetria lenta + veloce
-│   └── SPRollingCode.cs            Codice rolling
-│
-├── Core/                           Modelli e interfacce (ButtonPanel)
-│   ├── Enums/                      5 enums
-│   ├── Models/                     3 modelli
-│   └── Interfaces/                 2 interfacce
-│
-├── Services/                       Logica business
-│   └── ButtonPanelTestService.cs   Test pulsantiere
-│
-├── GUI/                            Views + Presenters (MVP)
-│   ├── Views/                      ButtonPanelTestTabControl
-│   └── Presenters/                 ButtonPanelTestPresenter
-│
-├── Resources/                      Risorse embedded
-│   ├── Dizionari STEM.xlsx         Excel dizionari (~187k)
-│   └── Ztem.ico                    Icona applicazione
-│
-├── *_WF_Tab.cs                     Tab pages WinForms (BLE, CAN, Boot, Telemetry)
-├── ExcelHandler.cs                 Lettura dizionari Excel
-├── Terminal.cs                     Logger basico
-├── SP_Code_Generator.cs            Generatore sp_config.h
+├── Stem.Device.Manager.slnx        Solution file (XML moderno)
+├── App/                            Progetto Windows Forms (.NET 8)
+│   ├── App.csproj                  Progetto principale
+│   ├── Program.cs                  Entry point + DI
+│   ├── Form1.cs                    Main form (God Object ~55k LOC)
+│   │
+│   ├── STEMProtocol/               Protocollo comunicazione proprietario
+│   │   ├── STEM_protocol.cs        Layer stack (Application, Network, Transport)
+│   │   ├── PacketManager.cs        Gestione pacchetti multi-canale
+│   │   ├── CanDataLayer.cs         Data layer CAN (PCAN)
+│   │   ├── SerialDataLayer.cs      Data layer Serial + BLE
+│   │   ├── BootManager.cs          Firmware bootloader
+│   │   ├── TelemetryManager.cs     Telemetria lenta + veloce
+│   │   └── SPRollingCode.cs        Codice rolling
+│   │
+│   ├── Core/                       Modelli e interfacce (ButtonPanel)
+│   │   ├── Enums/                  5 enums
+│   │   ├── Models/                 3 modelli
+│   │   └── Interfaces/             2 interfacce
+│   │
+│   ├── Services/                   Logica business
+│   │   └── ButtonPanelTestService.cs Test pulsantiere
+│   │
+│   ├── GUI/                        Views + Presenters (MVP)
+│   │   ├── Views/                  ButtonPanelTestTabControl
+│   │   └── Presenters/             ButtonPanelTestPresenter
+│   │
+│   ├── Resources/                  Risorse embedded
+│   │   ├── Dizionari STEM.xlsx     Excel dizionari (~187k)
+│   │   └── Ztem.ico                Icona applicazione
+│   │
+│   ├── *_WF_Tab.cs                 Tab pages WinForms (BLE, CAN, Boot, Telemetry)
+│   ├── ExcelHandler.cs             Lettura dizionari Excel
+│   ├── Terminal.cs                 Logger basico
+│   └── SP_Code_Generator.cs        Generatore sp_config.h
 │
 ├── Docs/                           Documentazione
 │   └── Standards/                  Standard e template
@@ -147,7 +148,8 @@ Stem.Device.Manager/
 ## Documentazione
 
 - [Standards e Templates](./Docs/Standards/)
-- [Copilot Instructions](./.copilot/copilot-instructions.md)
+- [CHANGELOG](./CHANGELOG.md)
+- [LICENSE](./LICENSE)
 
 ---
 
