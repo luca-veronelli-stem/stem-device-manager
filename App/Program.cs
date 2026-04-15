@@ -1,5 +1,7 @@
 using App.Services;
 using Core.Interfaces;
+using Infrastructure;
+using Microsoft.Extensions.Configuration;
 /// <summary>
 ///*****************************************************************************
 /// @file    Program.cs
@@ -38,11 +40,21 @@ namespace App
         [STAThread]
         static void Main()
         {
+            // Configurazione
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(AppContext.BaseDirectory)
+                .AddJsonFile("appsettings.json", optional: true)
+                .AddEnvironmentVariables()
+                .Build();
+
             // Configurazione della dependency injection
             var services = new ServiceCollection();
 
             // Modulo di test per pulsantiera
             services.AddTransient<IButtonPanelTestService, ButtonPanelTestService>();
+
+            // Provider dizionari (API Azure con fallback Excel, o solo Excel)
+            services.AddDictionaryProvider(configuration);
 
             // Provider di servizi per dependency injection
             var serviceProvider = services.BuildServiceProvider();
@@ -52,12 +64,12 @@ namespace App
             ApplicationConfiguration.Initialize();
 
             // Mostra la schermata di avvio
-            SplashScreen splash = new SplashScreen();
+            SplashScreen splash = new();
             splash.Show();
             Application.DoEvents();
 
             // Crea il main form
-            Form1 mainForm = new Form1(serviceProvider);
+            Form1 mainForm = new(serviceProvider);
             mainForm.Load += (sender, e) => splash.Close(); // Chiude la splash screen all'avvio del MainForm
 
             Application.Run(mainForm);
