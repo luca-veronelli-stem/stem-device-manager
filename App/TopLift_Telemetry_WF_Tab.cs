@@ -1,6 +1,7 @@
 ﻿//using System.Reflection.Emit;
 using App.Properties;
 using App.STEMProtocol;
+using Core.Models;
 using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
@@ -9,7 +10,7 @@ using OxyPlot.WindowsForms;
 public class TopLiftTelemetry_Tab : TabPage
 {
     //Lista variabili della macchina
-    private List<ExcelHandler.VariableData> MachineDictionary;
+    private IReadOnlyList<Variable> MachineDictionary;
 
     // Classe per il backend
     public TelemetryManager telemetryManager;
@@ -63,9 +64,9 @@ public class TopLiftTelemetry_Tab : TabPage
         telemetryManager.DataReady += onDataReady;
     }
 
-    public void UpdateDictionary(List<ExcelHandler.VariableData> Dictionary)
+    public void UpdateDictionary(IReadOnlyList<Variable> dictionary)
     {
-        MachineDictionary = Dictionary;
+        MachineDictionary = dictionary;
     }
 
     private void InitializeComponent()

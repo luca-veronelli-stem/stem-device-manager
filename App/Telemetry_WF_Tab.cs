@@ -1,10 +1,11 @@
 ﻿using App.Properties;
 using App.STEMProtocol;
+using Core.Models;
 
 public class Telemetry_Tab : TabPage
 {
     //Lista variabili della macchina
-    private List<ExcelHandler.VariableData> MachineDictionary;
+    private IReadOnlyList<Variable> MachineDictionary;
 
     // Classe per il backend
     public TelemetryManager telemetryManager;
@@ -146,9 +147,9 @@ public class Telemetry_Tab : TabPage
         }
     }
 
-    public void UpdateDictionary(List<ExcelHandler.VariableData> Dictionary)
+    public void UpdateDictionary(IReadOnlyList<Variable> dictionary)
     {
-        MachineDictionary = Dictionary;
+        MachineDictionary = dictionary;
         UpdateComboBox();
     }
 
