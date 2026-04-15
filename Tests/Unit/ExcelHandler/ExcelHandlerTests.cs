@@ -1,11 +1,9 @@
-using CommandData = global::ExcelHandler.CommandData;
-using RowData = global::ExcelHandler.RowData;
-using VariableData = global::ExcelHandler.VariableData;
+using Core.Models;
 
 namespace Tests.Unit.ExcelHandler;
 
 /// <summary>
-/// Test per ExcelHandler: guard clauses dei costruttori e DTO inner classes.
+/// Test per ExcelHandler: guard clauses dei costruttori.
 /// Non testa lettura Excel reale (riservato a Integration/).
 /// </summary>
 public class ExcelHandlerTests
@@ -33,9 +31,9 @@ public class ExcelHandlerTests
     public void EstraiDatiProtocollo_DefaultConstructor_ThrowsInvalidOperation()
     {
         var handler = new global::ExcelHandler();
-        var indirizzi = new List<RowData>();
-        var comandi = new List<CommandData>();
-        var dizionario = new List<VariableData>();
+        var indirizzi = new List<ProtocolAddress>();
+        var comandi = new List<Command>();
+        var dizionario = new List<Variable>();
 
         Assert.Throws<InvalidOperationException>(
             () => handler.EstraiDatiProtocollo(
@@ -46,41 +44,9 @@ public class ExcelHandlerTests
     public void EstraiDizionario_DefaultConstructor_ThrowsInvalidOperation()
     {
         var handler = new global::ExcelHandler();
-        var variabili = new List<VariableData>();
+        var variabili = new List<Variable>();
 
         Assert.Throws<InvalidOperationException>(
             () => handler.EstraiDizionario(0x01, variabili));
-    }
-
-    // --- DTO inner classes ---
-
-    [Fact]
-    public void RowData_ToTerminal_FormatsCorrectly()
-    {
-        var row = new RowData("Eden", "MainBoard", "0x10");
-
-        Assert.Equal(
-            "Macchina: Eden, Scheda: MainBoard, Indirizzo: 0x10",
-            row.ToTerminal());
-    }
-
-    [Fact]
-    public void CommandData_ToTerminal_FormatsCorrectly()
-    {
-        var cmd = new CommandData("MotorUp", "0x01", "0x02");
-
-        Assert.Equal(
-            "Comando: MotorUp, codeH: 0x01, codeL: 0x02",
-            cmd.ToTerminal());
-    }
-
-    [Fact]
-    public void VariableData_ToTerminal_FormatsCorrectly()
-    {
-        var v = new VariableData("Speed", "0xA0", "0x01", "uint16");
-
-        Assert.Equal(
-            "Variabile logica: Speed, addrH: 0xA0, addrL: 0x01",
-            v.ToTerminal());
     }
 }
