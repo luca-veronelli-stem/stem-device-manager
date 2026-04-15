@@ -24,6 +24,7 @@
   </Folder>
   <Folder Name="/Docs/">
     <File Path="Docs/MIGRATION_API.md" />
+    <File Path="Docs/REFACTOR_ANALYSIS.md" />
   </Folder>
   <Folder Name="/Docs/Standards/">
     <File Path="Docs/Standards/TEMPLATE_STANDARD.md" />
@@ -38,6 +39,7 @@
     <File Path=".gitignore" />
     <File Path="bitbucket-pipelines.yml" />
     <File Path="CHANGELOG.md" />
+    <File Path="CLAUDE.md" />
     <File Path="Directory.Build.props" />
     <File Path="LICENSE" />
     <File Path="README.md" />

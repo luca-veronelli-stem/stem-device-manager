@@ -1,3 +1,4 @@
+using Core.Models;
 using static App.STEMProtocol.NetworkLayer;
 
 namespace App.STEMProtocol;
@@ -18,7 +19,7 @@ public class TelemetryManager
     private ProtocolManager protocolManager;
 
     //Lista variabili da richiedere
-    private List<ExcelHandler.VariableData> TelemetryDictionary;
+    private List<Variable> TelemetryDictionary;
     private List<string> TelemetryDictionaryValues;
 
     //global rx packet manager
@@ -41,11 +42,11 @@ public class TelemetryManager
     public TelemetryManager(PacketManager packetManager)
     {
         protocolManager = new ProtocolManager();
-        //    protocolManager.SendCommandRequest += protocolManager.OnSendCanCommand; //per il momento forzo il can poi dovrò gestirlo coi canali attivi
+        //    protocolManager.SendCommandRequest += protocolManager.OnSendCanCommand; //per il momento forzo il can poi dovrï¿½ gestirlo coi canali attivi
         rXPacketManager = packetManager;
         rXPacketManager.OnAppLayerPacketReceived += onAppLayerPacketReady;
         TelemetryOn = false;
-        TelemetryDictionary = new List<ExcelHandler.VariableData>();
+        TelemetryDictionary = new List<Variable>();
         TelemetryDictionaryValues = new List<string>();
     }
 
@@ -70,12 +71,12 @@ public class TelemetryManager
         }
     }
 
-    public void AddToDictionary(ExcelHandler.VariableData data)
+    public void AddToDictionary(Variable data)
     {
         TelemetryDictionary.Add(data);
     }
 
-    public void AddToDictionaryForWrite(ExcelHandler.VariableData data, string value)
+    public void AddToDictionaryForWrite(Variable data, string value)
     {
         TelemetryDictionary.Add(data);
         TelemetryDictionaryValues.Add(value);
@@ -137,11 +138,11 @@ public class TelemetryManager
         //prosegui solo se ricevi una risposta a lettura dalla sorgente per me
         if ((payload[0] == 0x80) && (payload[1] == 0x01) && (payload.Length > 4))
         {
-            //Cerca nella lista TelemetryDictionary se esiste un elemento il cui corridpondente numerico della stringa addrH e addrL è uguale al payload[2] e payload[3]
-            foreach (ExcelHandler.VariableData data in TelemetryDictionary)
+            //Cerca nella lista TelemetryDictionary se esiste un elemento il cui corridpondente numerico della stringa addrH e addrL ï¿½ uguale al payload[2] e payload[3]
+            foreach (Variable data in TelemetryDictionary)
             {
-                if ((int.Parse(data.AddrH, System.Globalization.NumberStyles.HexNumber) == payload[2]) &&
-                    (int.Parse(data.AddrL, System.Globalization.NumberStyles.HexNumber) == payload[3]))
+                if ((int.Parse(data.AddressHigh, System.Globalization.NumberStyles.HexNumber) == payload[2]) &&
+                    (int.Parse(data.AddressLow, System.Globalization.NumberStyles.HexNumber) == payload[3]))
                 {
                     if (payload.Length == 5)
                     {
@@ -167,12 +168,12 @@ public class TelemetryManager
         //prosegui solo se ricevi un pacchetto di telemetria
         if ((payload[0] == 0x00) && (payload[1] == 0x18) && (payload.Length > 6))
         {
-            //Prosegui solo se il tipo di telemetria è zero
+            //Prosegui solo se il tipo di telemetria ï¿½ zero
             if ((payload[2] == 0x00) && (payload[3] == 0x00) && (payload[4] == 0x00) && (payload[5] == 0x00))
             {
                 int dataPosition = 6;
                 //Cerca nella lista TelemetryDictionary come interpretare la coda dei dati del payload
-                foreach (ExcelHandler.VariableData data in TelemetryDictionary)
+                foreach (Variable data in TelemetryDictionary)
                 {
                     //      //calcola l'indirizzo logico della variabile
                     //       int addrLogical = (int.Parse(data.AddrH, System.Globalization.NumberStyles.HexNumber) << 8) | (int.Parse(data.AddrL, System.Globalization.NumberStyles.HexNumber));
@@ -215,20 +216,20 @@ public class TelemetryManager
 
         //configura il dizionario nella telemetria veloce
 
-        //Il comando di configurazione è così composto:
+        //Il comando di configurazione ï¿½ cosï¿½ composto:
         //byte 0->3 Tipo telemetria HH Tipo telemetria HL Tipo telemetria LH	Tipo telemetria LL
-        //Il tipo è un codice univoco deciso dall'amministratore tramite portale all'atto del configurare la telemetria e viene usato per la decodifica dei dati binari"		
+        //Il tipo ï¿½ un codice univoco deciso dall'amministratore tramite portale all'atto del configurare la telemetria e viene usato per la decodifica dei dati binari"		
         //byte 4->7 Indirizzo Destinazione HH Indirizzo Destinazione HL	Indirizzo Destinazione LH	Indirizzo Destinazione LL
-        //Indirizzo del protocollo Stem a cui inviare i messaggi di telemetria (è il mio indirizzo myAddress)
-        //byte 8 Istanza Telemetria: è il numero del task in cui faccio girare questa configurazione di telemetria	(normalemnte è 0)
+        //Indirizzo del protocollo Stem a cui inviare i messaggi di telemetria (ï¿½ il mio indirizzo myAddress)
+        //byte 8 Istanza Telemetria: ï¿½ il numero del task in cui faccio girare questa configurazione di telemetria	(normalemnte ï¿½ 0)
         //byte 9->10 Periodo ms H	Periodo ms L
         //byte 11->14	"Indirizzo Scheda HH Indirizzo Scheda HL	Indirizzo Scheda LH	Indirizzo Scheda LL
-        //(normalmente è l'indirizzo della scheda da cui prelevi,  ma potrebbe essere anche quello di un'altra)
+        //(normalmente ï¿½ l'indirizzo della scheda da cui prelevi,  ma potrebbe essere anche quello di un'altra)
         //byte 15->16
         //Indirizzo Logico Data1 H Indirizzo Logico Data1 L
-        // …	
+        // ï¿½	
         //Indirizzo Logico Data16 H Indirizzo Logico Data16 L
-        //(Il numero di variabili è dinamico e al massimo vale SP_TEL_N_VARS che viene configurato nel firmware. Normalmente vale 16)
+        //(Il numero di variabili ï¿½ dinamico e al massimo vale SP_TEL_N_VARS che viene configurato nel firmware. Normalmente vale 16)
         //Gli indirizzi che vengono spediti sono quelli del TelemetryDictionary	
 
         //costruisci il payload del comando di configurazione come da descrizione precedente
@@ -257,8 +258,8 @@ public class TelemetryManager
         //indirizzi logici delle variabili del TelemetryDictionary
         for (int i = 0; i < TelemetryDictionary.Count; i++)
         {
-            Payload[15 + (i * 2)] = Convert.ToByte(TelemetryDictionary[i].AddrH, 16);
-            Payload[16 + (i * 2)] = Convert.ToByte(TelemetryDictionary[i].AddrL, 16);
+            Payload[15 + (i * 2)] = Convert.ToByte(TelemetryDictionary[i].AddressHigh, 16);
+            Payload[16 + (i * 2)] = Convert.ToByte(TelemetryDictionary[i].AddressLow, 16);
         }
         await protocolManager.SendCommand(CMD_CONFIGURE_TELEMETRY, Payload, false);
         await Task.Delay(150);
@@ -303,7 +304,7 @@ public class TelemetryManager
             }
 
             //crea un array di byte dove nei primi 2 bytes ci sono i valori Addrh e AddrL della variabile da richiedere dal TelemetryDictionary di indice CurrentIndex
-            byte[] Data = new byte[] { Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrH, 16), Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrL, 16) };
+            byte[] Data = new byte[] { Convert.ToByte(TelemetryDictionary[CurrentIndex].AddressHigh, 16), Convert.ToByte(TelemetryDictionary[CurrentIndex].AddressLow, 16) };
 
             await protocolManager.SendCommand(CMD_READ_VARIABLE, Data, false);
             await Task.Delay(250);
@@ -326,7 +327,7 @@ public class TelemetryManager
             }
 
             //crea un array di byte dove nei primi 2 bytes ci sono i valori Addrh e AddrL della variabile da richiedere dal TelemetryDictionary di indice CurrentIndex
-            byte[] Data = new byte[] { Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrH, 16), Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrL, 16) };
+            byte[] Data = new byte[] { Convert.ToByte(TelemetryDictionary[CurrentIndex].AddressHigh, 16), Convert.ToByte(TelemetryDictionary[CurrentIndex].AddressLow, 16) };
 
             await protocolManager.SendCommand(CMD_READ_VARIABLE, Data, false);
             await Task.Delay(150);
@@ -348,7 +349,7 @@ public class TelemetryManager
                 TelemetryOn = false;
             }
 
-            //e poi c'è il valore della variabile con la dimensione ricavata dal dizionario stem
+            //e poi c'ï¿½ il valore della variabile con la dimensione ricavata dal dizionario stem
             //switch (TelemetryDictionary[CurrentIndex].DataType)
             //{
             //    case "uint16_t":
@@ -369,12 +370,12 @@ public class TelemetryManager
                 continue;
             }
 
-            // Converte la stringa in ushort (valore 0–65535)
+            // Converte la stringa in ushort (valore 0ï¿½65535)
             ushort value = Convert.ToUInt16(TelemetryDictionaryValues[CurrentIndex], 10);
 
             // Converte in array di byte in little-endian (default)
             byte[] bytesVal = BitConverter.GetBytes(value);
-            // Se l'architettura è little-endian, inverti l’ordine per ottenere big-endian
+            // Se l'architettura ï¿½ little-endian, inverti lï¿½ordine per ottenere big-endian
             if (BitConverter.IsLittleEndian)
             {
                 Array.Reverse(bytesVal);
@@ -382,8 +383,8 @@ public class TelemetryManager
 
             //crea un array di byte dove nei primi 2 bytes ci sono i valori Addrh e AddrL della variabile da richiedere dal TelemetryDictionary di indice CurrentIndex
             List<byte> data = new List<byte> {
-                Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrH, 16),
-                Convert.ToByte(TelemetryDictionary[CurrentIndex].AddrL, 16), };
+                Convert.ToByte(TelemetryDictionary[CurrentIndex].AddressHigh, 16),
+                Convert.ToByte(TelemetryDictionary[CurrentIndex].AddressLow, 16), };
 
             data.AddRange(bytesVal);
 

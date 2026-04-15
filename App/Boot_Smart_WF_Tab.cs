@@ -1,5 +1,6 @@
 ﻿using App; // Per CircularProgressBar
 using App.STEMProtocol;
+using Core.Models;
 using StemPC;
 using System.Reflection;
 
@@ -33,7 +34,7 @@ public class Boot_Smart_Tab : TabPage
     public BootManager BootHndlr;
     public TelemetryManager telemetryManager;
     //Lista variabili della macchina
-    private List<ExcelHandler.VariableData> MachineDictionary;
+    private IReadOnlyList<Variable> MachineDictionary;
 
     public Boot_Smart_Tab(PacketManager packetManagerRX)
     {
@@ -217,9 +218,9 @@ public class Boot_Smart_Tab : TabPage
         telemetryManager.DataReady += onDataReady;
     }
 
-    public void UpdateDictionary(List<ExcelHandler.VariableData> Dictionary)
+    public void UpdateDictionary(IReadOnlyList<Variable> dictionary)
     {
-        MachineDictionary = Dictionary;
+        MachineDictionary = dictionary;
     }
 
     public void PopulateDevices(List<DeviceInfo> devices)

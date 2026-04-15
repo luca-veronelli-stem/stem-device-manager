@@ -1,5 +1,5 @@
 using System.Reflection;
-using static global::ExcelHandler;
+using Core.Models;
 
 namespace Tests.Integration.ExcelHandler;
 
@@ -44,9 +44,9 @@ public class ExcelHandlerIntegrationTests : IDisposable
     [Fact]
     public void EstraiDatiProtocollo_FromEmbeddedStream_ReturnsNonEmpty()
     {
-        var indirizzi = new List<RowData>();
-        var comandi = new List<CommandData>();
-        var dizionario = new List<VariableData>();
+        var indirizzi = new List<ProtocolAddress>();
+        var comandi = new List<Command>();
+        var dizionario = new List<Variable>();
 
         _handler.EstraiDatiProtocollo(indirizzi, comandi, dizionario);
 
@@ -57,43 +57,43 @@ public class ExcelHandlerIntegrationTests : IDisposable
     [Fact]
     public void EstraiDatiProtocollo_Addresses_HaveRequiredFields()
     {
-        var indirizzi = new List<RowData>();
-        var comandi = new List<CommandData>();
-        var dizionario = new List<VariableData>();
+        var indirizzi = new List<ProtocolAddress>();
+        var comandi = new List<Command>();
+        var dizionario = new List<Variable>();
 
         _handler.EstraiDatiProtocollo(indirizzi, comandi, dizionario);
 
         Assert.All(indirizzi, row =>
         {
-            Assert.False(string.IsNullOrWhiteSpace(row.Macchina));
-            Assert.False(string.IsNullOrWhiteSpace(row.Scheda));
-            Assert.False(string.IsNullOrWhiteSpace(row.Indirizzo));
+            Assert.False(string.IsNullOrWhiteSpace(row.DeviceName));
+            Assert.False(string.IsNullOrWhiteSpace(row.BoardName));
+            Assert.False(string.IsNullOrWhiteSpace(row.Address));
         });
     }
 
     [Fact]
     public void EstraiDatiProtocollo_Commands_HaveRequiredFields()
     {
-        var indirizzi = new List<RowData>();
-        var comandi = new List<CommandData>();
-        var dizionario = new List<VariableData>();
+        var indirizzi = new List<ProtocolAddress>();
+        var comandi = new List<Command>();
+        var dizionario = new List<Variable>();
 
         _handler.EstraiDatiProtocollo(indirizzi, comandi, dizionario);
 
         Assert.All(comandi, cmd =>
         {
             Assert.False(string.IsNullOrWhiteSpace(cmd.Name));
-            Assert.False(string.IsNullOrWhiteSpace(cmd.CmdH));
-            Assert.False(string.IsNullOrWhiteSpace(cmd.CmdL));
+            Assert.False(string.IsNullOrWhiteSpace(cmd.CodeHigh));
+            Assert.False(string.IsNullOrWhiteSpace(cmd.CodeLow));
         });
     }
 
     [Fact]
     public void EstraiDatiProtocollo_CommandNames_DoNotContainWhitespaceOnly()
     {
-        var indirizzi = new List<RowData>();
-        var comandi = new List<CommandData>();
-        var dizionario = new List<VariableData>();
+        var indirizzi = new List<ProtocolAddress>();
+        var comandi = new List<Command>();
+        var dizionario = new List<Variable>();
 
         _handler.EstraiDatiProtocollo(indirizzi, comandi, dizionario);
 
@@ -108,7 +108,7 @@ public class ExcelHandlerIntegrationTests : IDisposable
     {
         // RecipientId TopLift A2 scheda madre (usato in produzione)
         uint recipientId = 0x00080381;
-        var variabili = new List<VariableData>();
+        var variabili = new List<Variable>();
 
         _handler.EstraiDizionario(recipientId, variabili);
 
@@ -119,7 +119,7 @@ public class ExcelHandlerIntegrationTests : IDisposable
     public void EstraiDizionario_UnknownRecipientId_ReturnsEmpty()
     {
         uint recipientId = 0xDEADBEEF;
-        var variabili = new List<VariableData>();
+        var variabili = new List<Variable>();
 
         _handler.EstraiDizionario(recipientId, variabili);
 
@@ -131,14 +131,14 @@ public class ExcelHandlerIntegrationTests : IDisposable
     [Fact]
     public void EstraiDatiProtocollo_CalledTwice_ReturnsSameData()
     {
-        var indirizzi1 = new List<RowData>();
-        var comandi1 = new List<CommandData>();
-        var diz1 = new List<VariableData>();
+        var indirizzi1 = new List<ProtocolAddress>();
+        var comandi1 = new List<Command>();
+        var diz1 = new List<Variable>();
         _handler.EstraiDatiProtocollo(indirizzi1, comandi1, diz1);
 
-        var indirizzi2 = new List<RowData>();
-        var comandi2 = new List<CommandData>();
-        var diz2 = new List<VariableData>();
+        var indirizzi2 = new List<ProtocolAddress>();
+        var comandi2 = new List<Command>();
+        var diz2 = new List<Variable>();
         _handler.EstraiDatiProtocollo(indirizzi2, comandi2, diz2);
 
         Assert.Equal(indirizzi1.Count, indirizzi2.Count);

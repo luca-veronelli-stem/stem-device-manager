@@ -1,12 +1,12 @@
 using System.Reflection;
+using Core.Models;
 using Infrastructure.Excel;
-using static global::ExcelHandler;
 
 namespace Tests.Integration.Infrastructure;
 
 /// <summary>
 /// Test di correttezza: confronta l'output di ExcelDictionaryProvider (nuovo, Core.Models)
-/// con quello di ExcelHandler (legacy, tipi inner) sullo stesso file Excel embedded.
+/// con quello di ExcelHandler (legacy) sullo stesso file Excel embedded.
 /// Se producono gli stessi dati, il nuovo provider è una replica fedele.
 /// Windows-only: ExcelHandler dipende da WinForms.
 /// </summary>
@@ -43,9 +43,9 @@ public class ExcelDictionaryProviderCrossReferenceTests : IDisposable
     [Fact]
     public async Task Addresses_Count_MatchesLegacy()
     {
-        var legacyAddresses = new List<RowData>();
-        var legacyCommands = new List<CommandData>();
-        var legacyDiz = new List<VariableData>();
+        var legacyAddresses = new List<ProtocolAddress>();
+        var legacyCommands = new List<Command>();
+        var legacyDiz = new List<Variable>();
         _legacy.EstraiDatiProtocollo(legacyAddresses, legacyCommands, legacyDiz);
 
         var newData = await _provider.LoadProtocolDataAsync();
@@ -56,9 +56,9 @@ public class ExcelDictionaryProviderCrossReferenceTests : IDisposable
     [Fact]
     public async Task Addresses_Values_MatchLegacyFieldByField()
     {
-        var legacyAddresses = new List<RowData>();
-        var legacyCommands = new List<CommandData>();
-        var legacyDiz = new List<VariableData>();
+        var legacyAddresses = new List<ProtocolAddress>();
+        var legacyCommands = new List<Command>();
+        var legacyDiz = new List<Variable>();
         _legacy.EstraiDatiProtocollo(legacyAddresses, legacyCommands, legacyDiz);
 
         var newData = await _provider.LoadProtocolDataAsync();
@@ -68,18 +68,18 @@ public class ExcelDictionaryProviderCrossReferenceTests : IDisposable
             var legacy = legacyAddresses[i];
             var current = newData.Addresses[i];
 
-            Assert.Equal(legacy.Macchina, current.DeviceName);
-            Assert.Equal(legacy.Scheda, current.BoardName);
-            Assert.Equal(legacy.Indirizzo, current.Address);
+            Assert.Equal(legacy.DeviceName, current.DeviceName);
+            Assert.Equal(legacy.BoardName, current.BoardName);
+            Assert.Equal(legacy.Address, current.Address);
         }
     }
 
     [Fact]
     public async Task Commands_Count_MatchesLegacy()
     {
-        var legacyAddresses = new List<RowData>();
-        var legacyCommands = new List<CommandData>();
-        var legacyDiz = new List<VariableData>();
+        var legacyAddresses = new List<ProtocolAddress>();
+        var legacyCommands = new List<Command>();
+        var legacyDiz = new List<Variable>();
         _legacy.EstraiDatiProtocollo(legacyAddresses, legacyCommands, legacyDiz);
 
         var newData = await _provider.LoadProtocolDataAsync();
@@ -90,9 +90,9 @@ public class ExcelDictionaryProviderCrossReferenceTests : IDisposable
     [Fact]
     public async Task Commands_Values_MatchLegacyFieldByField()
     {
-        var legacyAddresses = new List<RowData>();
-        var legacyCommands = new List<CommandData>();
-        var legacyDiz = new List<VariableData>();
+        var legacyAddresses = new List<ProtocolAddress>();
+        var legacyCommands = new List<Command>();
+        var legacyDiz = new List<Variable>();
         _legacy.EstraiDatiProtocollo(legacyAddresses, legacyCommands, legacyDiz);
 
         var newData = await _provider.LoadProtocolDataAsync();
@@ -103,8 +103,8 @@ public class ExcelDictionaryProviderCrossReferenceTests : IDisposable
             var current = newData.Commands[i];
 
             Assert.Equal(legacy.Name, current.Name);
-            Assert.Equal(legacy.CmdH, current.CodeHigh);
-            Assert.Equal(legacy.CmdL, current.CodeLow);
+            Assert.Equal(legacy.CodeHigh, current.CodeHigh);
+            Assert.Equal(legacy.CodeLow, current.CodeLow);
         }
     }
 
@@ -113,7 +113,7 @@ public class ExcelDictionaryProviderCrossReferenceTests : IDisposable
     {
         uint recipientId = 0x00080381;
 
-        var legacyVars = new List<VariableData>();
+        var legacyVars = new List<Variable>();
         _legacy.EstraiDizionario(recipientId, legacyVars);
 
         var newVars = await _provider.LoadVariablesAsync(recipientId);
@@ -126,7 +126,7 @@ public class ExcelDictionaryProviderCrossReferenceTests : IDisposable
     {
         uint recipientId = 0x00080381;
 
-        var legacyVars = new List<VariableData>();
+        var legacyVars = new List<Variable>();
         _legacy.EstraiDizionario(recipientId, legacyVars);
 
         var newVars = await _provider.LoadVariablesAsync(recipientId);
@@ -137,8 +137,8 @@ public class ExcelDictionaryProviderCrossReferenceTests : IDisposable
             var current = newVars[i];
 
             Assert.Equal(legacy.Name, current.Name);
-            Assert.Equal(legacy.AddrH, current.AddressHigh);
-            Assert.Equal(legacy.AddrL, current.AddressLow);
+            Assert.Equal(legacy.AddressHigh, current.AddressHigh);
+            Assert.Equal(legacy.AddressLow, current.AddressLow);
             Assert.Equal(legacy.DataType, current.DataType);
         }
     }
