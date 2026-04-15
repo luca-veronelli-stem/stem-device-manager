@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using STEMPM.GUI.Views;
 using System.Globalization;
 using static App.STEMProtocol.NetworkLayer;
-using static ExcelHandler;
+using Core.Models;
 
 namespace StemPC
 {
@@ -80,9 +80,9 @@ namespace StemPC
         //**************************
         string ExcelfilePath = "Dizionari STEM.xlsx";
         // Lista per contenere le righe lette
-        List<ExcelHandler.RowData> IndirizziProtocollo;
-        List<ExcelHandler.CommandData> Comandi;
-        List<ExcelHandler.VariableData> Dizionario;
+        List<ProtocolAddress> IndirizziProtocollo;
+        List<Command> Comandi;
+        List<Variable> Dizionario;
         ExcelHandler hExcel;
 
         private bool isStreamBased;
@@ -115,12 +115,12 @@ namespace StemPC
         public class AppLayerDecoderEventArgs : EventArgs
         {
             public byte[] Payload { get; }
-            public ExcelHandler.CommandData CurrentCommand { get; }
+            public Command CurrentCommand { get; }
             public string MachineName { get; }
             public string MachineNameRecipient { get; }
-            public ExcelHandler.VariableData CurrentVariable { get; }
+            public Variable CurrentVariable { get; }
 
-            public AppLayerDecoderEventArgs(byte[] payload, ExcelHandler.CommandData currentCommand, string machineName, string machineNameRecipient, VariableData currentVariable)
+            public AppLayerDecoderEventArgs(byte[] payload, Command currentCommand, string machineName, string machineNameRecipient, Variable currentVariable)
             {
                 Payload = payload;
                 CurrentCommand = currentCommand;
@@ -374,9 +374,9 @@ namespace StemPC
                 // Usa un overload di ExcelHandler che accetta uno Stream
                 hExcel = new ExcelHandler(stream);
                 // Estrai i dati direttamente dal flusso
-                IndirizziProtocollo = new List<ExcelHandler.RowData>();
-                Comandi            = new List<ExcelHandler.CommandData>();
-                Dizionario         = new List<ExcelHandler.VariableData>();
+                IndirizziProtocollo = new List<ProtocolAddress>();
+                Comandi            = new List<Command>();
+                Dizionario         = new List<Variable>();
                 hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, Dizionario);
             }
 //fissa l'indirizzo toplift ed estrai i dati relativi
@@ -390,9 +390,9 @@ namespace StemPC
             // Uso del file esterno per configurazioni diverse da client
             ExcelfilePath = Path.Combine(Application.StartupPath, "Dizionari STEM.xlsx");
             hExcel = new ExcelHandler();
-            IndirizziProtocollo = new List<ExcelHandler.RowData>();
-            Comandi = new List<ExcelHandler.CommandData>();
-            Dizionario = new List<ExcelHandler.VariableData>();
+            IndirizziProtocollo = new List<ProtocolAddress>();
+            Comandi = new List<Command>();
+            Dizionario = new List<Variable>();
             hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, ExcelfilePath);
 
 #if TOPLIFT
@@ -406,19 +406,19 @@ namespace StemPC
 
             _terminal.WriteLog("--------------------------------------------------------------------");
             // Stampa i risultati (per verifica)
-            foreach (ExcelHandler.RowData item in IndirizziProtocollo)
+            foreach (ProtocolAddress item in IndirizziProtocollo)
             {
-                UpdateTerminal(item.ToTerminal());
+                UpdateTerminal($"Macchina: {item.DeviceName}, Scheda: {item.BoardName}, Indirizzo: {item.Address}");
                 //popola il combo macchine
-                if (!comboBoxMachine.Items.Contains(item.Macchina)) comboBoxMachine.Items.Add(item.Macchina);
+                if (!comboBoxMachine.Items.Contains(item.DeviceName)) comboBoxMachine.Items.Add(item.DeviceName);
             }
 
             _terminal.WriteLog("--------------------------------------------------------------------");
             comboBoxCommand.Items.Clear();
             // Stampa i risultati (per verifica)
-            foreach (ExcelHandler.CommandData item in Comandi)
+            foreach (Command item in Comandi)
             {
-                UpdateTerminal(item.ToTerminal());
+                UpdateTerminal($"Comando: {item.Name}, codeH: {item.CodeHigh}, codeL: {item.CodeLow}");
                 //popola il combo comandi
                 if ((!comboBoxCommand.Items.Contains(item.Name)) && (!item.Name.Contains("risposta")) && (!item.Name.Contains("Risposta"))) comboBoxCommand.Items.Add(item.Name);
             }
@@ -428,13 +428,13 @@ namespace StemPC
             string macchinaSelezionata = "EDEN";
             string schedaSelezionata = "Madre";
             // Cerca i nomi della macchina
-            foreach (ExcelHandler.RowData item in IndirizziProtocollo)
+            foreach (ProtocolAddress item in IndirizziProtocollo)
             {
                 //popola il combo delle schede
-                if ((item.Scheda == schedaSelezionata) && (item.Macchina == macchinaSelezionata))
+                if ((item.BoardName == schedaSelezionata) && (item.DeviceName == macchinaSelezionata))
                 {
-                    label12.Text = ($"Indirizzo\n {item.Indirizzo.ToString()}");
-                    RecipientId = Convert.ToUInt32(item.Indirizzo.Substring(2), 16);
+                    label12.Text = ($"Indirizzo\n {item.Address}");
+                    RecipientId = Convert.ToUInt32(item.Address.Substring(2), 16);
                     hExcel.EstraiDizionario(RecipientId, Dizionario, ExcelfilePath);
                     TelemetryTabRef.UpdateDictionary(Dizionario);
                     //aggiorna il combo Macchina
@@ -467,13 +467,13 @@ namespace StemPC
             string macchinaSelezionata = "SPARK";
             string schedaSelezionata = "HMI";
             // Cerca i nomi della macchina
-            foreach (ExcelHandler.RowData item in IndirizziProtocollo)
+            foreach (ProtocolAddress item in IndirizziProtocollo)
             {
                 //popola il combo delle schede
-                if ((item.Scheda == schedaSelezionata) && (item.Macchina == macchinaSelezionata))
+                if ((item.BoardName == schedaSelezionata) && (item.DeviceName == macchinaSelezionata))
                 {
-                    label12.Text = ($"Indirizzo\n {item.Indirizzo.ToString()}");
-                    RecipientId = Convert.ToUInt32(item.Indirizzo.Substring(2), 16);
+                    label12.Text = ($"Indirizzo\n {item.Address}");
+                    RecipientId = Convert.ToUInt32(item.Address.Substring(2), 16);
                     hExcel.EstraiDizionario(RecipientId, Dizionario, ExcelfilePath);
                     TelemetryTabRef.UpdateDictionary(Dizionario);
                     //aggiorna il combo Macchina
@@ -606,11 +606,11 @@ namespace StemPC
                     comboBoxBoard.Items.Clear(); //azzera i nomi delle schede
 
                     // Cerca i nomi della macchina
-                    foreach (ExcelHandler.RowData item in IndirizziProtocollo)
+                    foreach (ProtocolAddress item in IndirizziProtocollo)
                     {
                         //popola il combo delle schede
-                        if (item.Macchina == macchinaSelezionata)
-                            comboBoxBoard.Items.Add(item.Scheda);
+                        if (item.DeviceName == macchinaSelezionata)
+                            comboBoxBoard.Items.Add(item.BoardName);
                         // comboBoxCommand.Items.Add(item.)
                     }
                 }
@@ -630,13 +630,13 @@ namespace StemPC
                     string schedaSelezionata = comboBoxCorrente.SelectedItem.ToString();
 
                     // Cerca i nomi della macchina
-                    foreach (ExcelHandler.RowData item in IndirizziProtocollo)
+                    foreach (ProtocolAddress item in IndirizziProtocollo)
                     {
                         //popola il combo delle schede
-                        if ((item.Scheda == schedaSelezionata) && (item.Macchina == comboBoxMachine.SelectedItem.ToString()))
+                        if ((item.BoardName == schedaSelezionata) && (item.DeviceName == comboBoxMachine.SelectedItem.ToString()))
                         {
-                            label12.Text = ($"Indirizzo\n {item.Indirizzo.ToString()}");
-                            RecipientId = Convert.ToUInt32(item.Indirizzo.Substring(2), 16);
+                            label12.Text = ($"Indirizzo\n {item.Address}");
+                            RecipientId = Convert.ToUInt32(item.Address.Substring(2), 16);
 #if TOPLIFT
                             hExcel.EstraiDizionario(RecipientId, Dizionario);
                             TLTTabRef.UpdateDictionary(Dizionario);
@@ -690,8 +690,8 @@ namespace StemPC
                 Form1.FormRef.textBox1.Text = "";
                 Form1.FormRef.textBox2.Text = "";
 
-                byte AddrL = Convert.FromHexString(Dizionario.ElementAt(comboBoxVariables.SelectedIndex).AddrL.PadLeft(2, '0'))[0];
-                byte AddrH = Convert.FromHexString(Dizionario.ElementAt(comboBoxVariables.SelectedIndex).AddrH.PadLeft(2, '0'))[0];
+                byte AddrL = Convert.FromHexString(Dizionario.ElementAt(comboBoxVariables.SelectedIndex).AddressLow.PadLeft(2, '0'))[0];
+                byte AddrH = Convert.FromHexString(Dizionario.ElementAt(comboBoxVariables.SelectedIndex).AddressHigh.PadLeft(2, '0'))[0];
                 if (byteList.Count() < 1)
                 {
                     byteList.Add(AddrH);
@@ -801,9 +801,9 @@ namespace StemPC
 
                 _terminal.WriteLog("--------------------------------------------------------------------");
                 // Stampa i risultati (per verifica)
-                foreach (ExcelHandler.VariableData itemtemp in Dizionario)
+                foreach (Variable itemtemp in Dizionario)
                 {
-                    UpdateTerminal(itemtemp.ToTerminal());
+                    UpdateTerminal($"Variabile logica: {itemtemp.Name}, addrH: {itemtemp.AddressHigh}, addrL: {itemtemp.AddressLow}");
 
                     //popola il combo variabili
                     if ((!comboBoxVariables.Items.Contains(itemtemp.Name)))
@@ -853,19 +853,19 @@ namespace StemPC
             string MachineName = new string("Non in tabella");
             string MachineNameRecipient = new string("Non in tabella");
 
-            foreach (ExcelHandler.RowData Item in IndirizziProtocollo)
+            foreach (ProtocolAddress Item in IndirizziProtocollo)
             {
-                if (Item.Indirizzo == "0x" + sourceAddress.ToString("X8"))
+                if (Item.Address == "0x" + sourceAddress.ToString("X8"))
                 {
-                    MachineName = Item.Macchina + "->" + Item.Scheda;
+                    MachineName = Item.DeviceName + "->" + Item.BoardName;
                 }
             }
 
-            foreach (ExcelHandler.RowData Item in IndirizziProtocollo)
+            foreach (ProtocolAddress Item in IndirizziProtocollo)
             {
-                if (Item.Indirizzo == "0x" + destinationAddress.ToString("X8"))
+                if (Item.Address == "0x" + destinationAddress.ToString("X8"))
                 {
-                    MachineNameRecipient = Item.Macchina + "->" + Item.Scheda;
+                    MachineNameRecipient = Item.DeviceName + "->" + Item.BoardName;
                 }
             }
 
@@ -873,12 +873,12 @@ namespace StemPC
             if (MachineNameRecipient == "Non in tabella") MachineNameRecipient = "0x" + destinationAddress.ToString("X8");
 
             //Decodifica l'application layer
-            ExcelHandler.CommandData CurrentCommand = new ExcelHandler.CommandData("None", "0", "0");
+            Command CurrentCommand = new Command("None", "0", "0");
 
-            foreach (ExcelHandler.CommandData Item in Comandi)
+            foreach (Command Item in Comandi)
             {
-                byte CmdL = Convert.FromHexString(Item.CmdL.PadLeft(2, '0'))[0];
-                byte CmdH = Convert.FromHexString(Item.CmdH.PadLeft(2, '0'))[0];
+                byte CmdL = Convert.FromHexString(Item.CodeLow.PadLeft(2, '0'))[0];
+                byte CmdH = Convert.FromHexString(Item.CodeHigh.PadLeft(2, '0'))[0];
                 if ((payload[0] == CmdH) && (payload[1] == CmdL))
                 {
                     CurrentCommand = Item;
@@ -886,16 +886,15 @@ namespace StemPC
                 }
             }
 
-            ExcelHandler.VariableData CurrentVariable = new ExcelHandler.VariableData("None", "0", "0", "");
+            Variable CurrentVariable = new Variable("None", "0", "0", "");
 
-            //se il comando   leggi variabile logica lo mostro come   indicato nel dizionario
+            //se il comando è leggi variabile logica lo mostro come indicato nel dizionario
             if (CurrentCommand.Name == "Leggi variabile logica risposta")
             {
-                // Stampa i risultati (per verifica)
-                foreach (ExcelHandler.VariableData itemtemp in Dizionario)
+                foreach (Variable itemtemp in Dizionario)
                 {
-                    byte AddrL = Convert.FromHexString(itemtemp.AddrL.PadLeft(2, '0'))[0];
-                    byte AddrH = Convert.FromHexString(itemtemp.AddrH.PadLeft(2, '0'))[0];
+                    byte AddrL = Convert.FromHexString(itemtemp.AddressLow.PadLeft(2, '0'))[0];
+                    byte AddrH = Convert.FromHexString(itemtemp.AddressHigh.PadLeft(2, '0'))[0];
                     if ((payload[2] == AddrH) && (payload[3] == AddrL))
                     {
                         CurrentVariable = itemtemp;
