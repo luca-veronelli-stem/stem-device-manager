@@ -19,6 +19,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Core\Core.csproj" />
+		<ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
 	</ItemGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='TOPLIFT-A2-Debug|AnyCPU'">
@@ -53,10 +54,16 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	<PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.5" />
+	<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.5" />
 	<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />
 	<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1721" />
-    <Content Include="Resources\Ztem.ico" />
+	<Content Include="Resources\Ztem.ico" />
   </ItemGroup>
+
+	<ItemGroup>
+	  <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
 
 	<ItemGroup>
 	  <EmbeddedResource Include="images\ic_fluent_arrow_download_24_filled.png" />
