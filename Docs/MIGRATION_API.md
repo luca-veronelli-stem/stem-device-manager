@@ -2,7 +2,7 @@
 
 **Creato:** 2026-04-14  
 **Ultimo aggiornamento:** 2026-04-14  
-**Stato:** Branch 2 completato, prossimo → Branch 3
+**Stato:** Branch 3 completato (con test correttezza), prossimo → Branch 4
 
 ---
 
@@ -87,7 +87,7 @@ Stem.Device.Manager/
     App.csproj                       → dipende da Core (+ Services futuro)
     Program.cs                       DI: registra tutto
     Form1.cs                         God Object (invariato in questa migrazione)
-    ExcelHandler.cs                  Resta (usato da ExcelDictionaryProvider + Form1 diretto)
+    ExcelHandler.cs                  Resta in App (dipende da WinForms, usato direttamente da Form1)
     Core/Interfaces/
       IButtonPanelTestTab.cs         ⚠️ resta in App (dipende da MessageBoxButtons/Icon WinForms)
     Core/Models/
@@ -206,36 +206,49 @@ non per contenuto. Test adattati di conseguenza.
 
 ---
 
-### Branch 3: `feature/excel-dictionary-provider`
+### Branch 3: `feature/excel-dictionary-provider` ✅ COMPLETATO
 
-**Scopo:** Implementare `ExcelDictionaryProvider` che wrappa `ExcelHandler` dietro `IDictionaryProvider`.
+**Scopo:** Implementare `ExcelDictionaryProvider` che implementa `IDictionaryProvider` leggendo da Excel.
 
-**Azioni:**
-1. Creare `Infrastructure/Excel/ExcelDictionaryProvider.cs`
-   - Usa `ExcelHandler` internamente
-   - Converte `ExcelHandler.VariableData` → `Core.Models.Variable`
-   - Converte `ExcelHandler.CommandData` → `Core.Models.Command`
-   - Converte `ExcelHandler.RowData` → `Core.Models.ProtocolAddress`
-2. Spostare `ExcelHandler.cs` da `App/` a `Infrastructure/Excel/`
-   - Rimuovere dipendenze da `MessageBox` (UI) → throw exception
-   - `App/` mantiene un `using Infrastructure.Excel` (o proxy se serve)
-3. Aggiornare `Infrastructure.csproj`: aggiungere `ClosedXML`, `DocumentFormat.OpenXml`
-4. Scrivere **test unitari** per `ExcelDictionaryProvider` (in `Tests/Unit/Infrastructure/`)
-5. Scrivere **test integrazione** con Excel embedded reale
-6. Build + test
+**⚠️ Deviazione dal piano originale:**
+Il piano prevedeva di spostare `ExcelHandler.cs` in `Infrastructure/Excel/`. Analisi ha rivelato che:
+- `ExcelHandler` usa `MessageBox.Show` (3 punti) + `Application.Exit()` → dipendenze WinForms
+- Infrastructure è `net10.0` puro → non può referenziare WinForms
+- `ExcelHandler` è consumato direttamente da Form1 in 30+ punti via `using static ExcelHandler`
+  (tipi inner: `RowData`, `CommandData`, `VariableData` usati ovunque)
+- Spostarlo e pulirlo richiederebbe toccare ~40 righe in Form1 — troppo rischioso
 
-**File creati:** 1 (provider) + test
-**File spostati:** 1 (`ExcelHandler.cs` → Infrastructure)
-**File modificati:** `App.csproj` (ref Infrastructure), ~5 (fix using per ExcelHandler)
-**Rischio:** Medio (ExcelHandler usato in 40+ punti — il file si sposta ma `using static ExcelHandler`
-va aggiornato ovunque)
+**Strategia rivista:** `ExcelHandler` **resta in App/**. `ExcelDictionaryProvider` in Infrastructure
+replica la logica di lettura Excel usando ClosedXML direttamente, producendo `Core.Models.*`.
+La duplicazione temporanea di logica ClosedXML è accettabile — quando Form1 migrerà a
+`IDictionaryProvider` (Fase 3-4), `ExcelHandler` verrà eliminato.
 
-**Nota:** `ExcelHandler` va pulito dai `MessageBox.Show` (violazione layer separation).
-Le chiamate dirette di Form1 a `ExcelHandler` continuano a funzionare via ref Infrastructure.
+**Risultato:**
+- Creato `Infrastructure/Excel/ExcelDictionaryProvider.cs`
+  - Implementa `IDictionaryProvider`, accetta `Stream` nel costruttore
+  - Legge con ClosedXML → produce `ProtocolAddress`, `Command`, `Variable`
+  - Stessa logica di ExcelHandler ma senza dipendenze WinForms
+- `Dizionari STEM.xlsx` embedded in `Infrastructure.csproj` (self-contained per fallback Branch 5)
+- Aggiornati `Infrastructure.csproj` (ClosedXML + InternalsVisibleTo) e `Tests.csproj` (ProjectReference)
+- **20 test** per ExcelDictionaryProvider (2 file):
+  - `ExcelDictionaryProviderTests.cs` (14 test, cross-platform net10.0 + Windows):
+    struttura, cancellation token, idempotenza, interleaving, DataType, edge case
+  - `ExcelDictionaryProviderCrossReferenceTests.cs` (6 test, Windows-only):
+    confronto **campo per campo** con legacy ExcelHandler (addresses, commands, variables TopLift)
+    — prova equivalenza al 100% tra nuovo provider e codice legacy
+
+**File creati:** 3 (`ExcelDictionaryProvider.cs`, 2 file test)
+**File NON spostati:** `ExcelHandler.cs` resta in App (invariato)
+**File modificati:** `Infrastructure.csproj`, `Tests.csproj`
+**Rischio:** Basso (solo additive — Form1 e codice legacy non toccati)
+**CI:** I 14 test unit del provider girano su Linux (net10.0, ClosedXML cross-platform);
+  i 6 test cross-reference girano solo su Windows (dipendono da ExcelHandler/WinForms)
+
+**Build:** ✅ | **Test:** 198/198 ✅ (65 cross-platform + 133 Windows)
 
 ---
 
-### Branch 4: `feature/api-dictionary-provider`
+### Branch 4:
 
 **Scopo:** Implementare `DictionaryApiProvider` che chiama l'API Azure.
 
@@ -315,7 +328,7 @@ La migrazione di Form1 è un lavoro separato (Fase 3-4 del piano di modernizzazi
 |---|--------|-------|---------|-------|
 | 1+2 | `refactor/core-infrastructure` | Scheletro multi-progetto + spostamento tipi | Basso | ✅ Completato |
 | 2 | `refactor/modelli-dizionario-core` | Modelli dominio + IDictionaryProvider | Zero | ✅ Completato |
-| 3 | `feature/excel-dictionary-provider` | ExcelHandler dietro astrazione | Medio | ⬜ |
+| 3 | `feature/excel-dictionary-provider` | ExcelHandler dietro astrazione + test correttezza | Basso | ✅ Completato |
 | 4 | `feature/api-dictionary-provider` | HttpClient → API Azure | Basso | ⬜ |
 | 5 | `feature/fallback-e-di-registration` | DI + fallback + appsettings | Basso-medio | ⬜ |
 | 6 | `feature/integra-provider-in-app` | Primi consumer usano provider | Medio | ⬜ |
