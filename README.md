@@ -2,7 +2,7 @@
 
 [![Version](https://img.shields.io/badge/version-2.15-blue)](./CHANGELOG.md)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
-[![Tests](https://img.shields.io/badge/tests-101-brightgreen)](./Tests/)
+[![Tests](https://img.shields.io/badge/tests-258-brightgreen)](./Tests/)
 [![License](https://img.shields.io/badge/license-Proprietary-red)](#licenza)
 
 > **Applicativo desktop per la gestione, diagnostica e test dei dispositivi STEM via protocollo proprietario multi-canale (CAN, BLE, Serial).**  
@@ -26,8 +26,10 @@ Stem Device Manager è un tool Windows desktop utilizzato per:
 Il progetto è un **monolite legacy** attualmente in fase di modernizzazione:  
 - ~56k LOC di codice produzione in un singolo progetto  
 - `Form1.cs` è un God Object (~55k LOC con Designer)  
-- **101 test automatizzati** (76 unit + 25 integration) — xUnit  
-- Unico modulo con architettura pulita: test pulsantiere (DI + MVP)  
+- **258 test automatizzati** (129 unit + 129 per 2 TFM) — xUnit  
+- Architettura multi-progetto: **Core** (net10.0) + **Infrastructure** (net10.0) + **App** (WinForms)  
+- Infrastruttura API Azure pronta con fallback Excel via DI  
+- Unico modulo con architettura pulita: test pulsantiere (DI + MVP)
 
 ---
 
@@ -40,11 +42,12 @@ Il progetto è un **monolite legacy** attualmente in fase di modernizzazione:
 | **BLE** | ✅ | Bluetooth Low Energy via Plugin.BLE |
 | **Seriale** | ✅ | Comunicazione via porta COM |
 | **Dizionari Excel** | ✅ | Lettura variabili/comandi da Excel embedded |
+| **API Dizionari Azure** | ✅ | Provider API REST con fallback Excel (DI) |
 | **Bootloader** | ✅ | Aggiornamento firmware (classico + smart) |
 | **Telemetria** | ✅ | Lettura variabili + grafici OxyPlot (lenta + veloce) |
 | **Test Pulsantiere** | ✅ | Collaudo automatizzato con DI + MVP |
 | **Code Generator** | ✅ | Genera sp_config.h |
-| **Test Automatizzati** | ✅ | 101 test (76 unit + 25 integration) — xUnit |
+| **Test Automatizzati** | ✅ | 258 test (unit + integration) — xUnit |
 
 ---
 
@@ -102,49 +105,27 @@ dotnet run --project App/App.csproj
 ```
 Stem.Device.Manager/
 ├── Stem.Device.Manager.slnx        Solution file (XML moderno)
-├── App/                            Progetto Windows Forms (.NET 8)
-│   ├── App.csproj                  Progetto principale
-│   ├── Program.cs                  Entry point + DI
-│   ├── Form1.cs                    Main form (God Object ~55k LOC)
-│   │
-│   ├── STEMProtocol/               Protocollo comunicazione proprietario
-│   │   ├── STEM_protocol.cs        Layer stack (Application, Network, Transport)
-│   │   ├── PacketManager.cs        Gestione pacchetti multi-canale
-│   │   ├── CanDataLayer.cs         Data layer CAN (PCAN)
-│   │   ├── SerialDataLayer.cs      Data layer Serial + BLE
-│   │   ├── BootManager.cs          Firmware bootloader
-│   │   ├── TelemetryManager.cs     Telemetria lenta + veloce
-│   │   └── SPRollingCode.cs        Codice rolling
-│   │
-│   ├── Core/                       Modelli e interfacce (ButtonPanel)
-│   │   ├── Enums/                  5 enums
-│   │   ├── Models/                 3 modelli
-│   │   └── Interfaces/             2 interfacce
-│   │
-│   ├── Services/                   Logica business
-│   │   └── ButtonPanelTestService.cs Test pulsantiere
-│   │
-│   ├── GUI/                        Views + Presenters (MVP)
-│   │   ├── Views/                  ButtonPanelTestTabControl
-│   │   └── Presenters/             ButtonPanelTestPresenter
-│   │
-│   ├── Resources/                  Risorse embedded
-│   │   ├── Dizionari STEM.xlsx     Excel dizionari (~187k)
-│   │   └── Ztem.ico                Icona applicazione
-│   │
-│   ├── *_WF_Tab.cs                 Tab pages WinForms (BLE, CAN, Boot, Telemetry)
-│   ├── ExcelHandler.cs             Lettura dizionari Excel
-│   ├── Terminal.cs                 Logger basico
-│   └── SP_Code_Generator.cs        Generatore sp_config.h
-│
-├── Docs/                           Documentazione
-│   └── Standards/                  Standard e template
-│
-├── Tests/                          Unit & integration tests (xUnit)
-│   ├── Unit/                       76 test unitari
-│   └── Integration/                25 test di integrazione
-│
-└── .copilot/                       Istruzioni Copilot + agents
+├── Core/                            Modelli dominio, interfacce (net10.0)
+│   ├── Models/                      Variable, Command, ProtocolAddress, ButtonPanel
+│   ├── Enums/                       ButtonPanelEnums
+│   └── Interfaces/                  IDictionaryProvider, IButtonPanelTestService
+├── Infrastructure/                   Provider dati (net10.0)
+│   ├── Api/                         DictionaryApiProvider + DTO
+│   ├── Excel/                       ExcelDictionaryProvider
+│   ├── FallbackDictionaryProvider   Decorator API→Excel
+│   └── DependencyInjection.cs       Registrazione DI
+├── Services/                        Logica business (net10.0-windows, vuoto)
+├── App/                             Windows Forms (.NET 10)
+│   ├── Program.cs                   Entry point + DI + IConfiguration
+│   ├── Form1.cs                     Main form (God Object ~55k LOC)
+│   ├── ExcelHandler.cs              Legacy Excel (usato da Form1)
+│   ├── STEMProtocol/                Protocollo comunicazione proprietario
+│   ├── GUI/                         Views + Presenters (MVP)
+│   └── Resources/                   Excel embedded, icone
+├── Tests/                           258 test (xUnit, dual TFM)
+│   ├── Unit/                        Core, Infrastructure, ExcelHandler, Protocol
+│   └── Integration/                 DI, Presenter, ExcelHandler, CodeGenerator
+└── Docs/                            Documentazione + Standards
 ```
 
 ---
@@ -152,6 +133,8 @@ Stem.Device.Manager/
 ## Documentazione
 
 - [App — Progetto principale](./App/README.md)
+- [Core — Modelli dominio e interfacce](./Core/README.md)
+- [Infrastructure — Provider dati (API + Excel)](./Infrastructure/README.md)
 - [Tests — Test automatizzati](./Tests/README.md)
 - [Standards e Templates](./Docs/Standards/)
 - [CHANGELOG](./CHANGELOG.md)
@@ -169,5 +152,5 @@ Stem.Device.Manager/
 
 - **Proprietario:** STEM E.m.s.
 - **Autore:** Michele Pignedoli, Luca Veronelli
-- **Data di Creazione:** 2026-04-14
+- **Data di Creazione:** 2024-06-27
 - **Licenza:** Proprietaria - Tutti i diritti riservati
