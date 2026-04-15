@@ -2,7 +2,7 @@
 
 **Creato:** 2026-04-14  
 **Ultimo aggiornamento:** 2026-04-14  
-**Stato:** Branch 3 completato (con test correttezza), prossimo → Branch 4
+**Stato:** Branch 4 completato, prossimo → Branch 5
 
 ---
 
@@ -248,27 +248,35 @@ La duplicazione temporanea di logica ClosedXML è accettabile — quando Form1 m
 
 ---
 
-### Branch 4:
+### Branch 4: `feature/api-dictionary-provider` ✅ COMPLETATO
 
 **Scopo:** Implementare `DictionaryApiProvider` che chiama l'API Azure.
 
-**Azioni:**
-1. Creare DTO in `Infrastructure/Api/Dtos/`:
-   - `DeviceSummaryDto.cs`, `BoardSummaryDto.cs`
-   - `DictionaryResolvedDto.cs`, `ResolvedVariableDto.cs`
-   - `CommandDto.cs`
-2. Creare `Infrastructure/Api/DictionaryApiOptions.cs` (BaseUrl, ApiKey, Timeout)
-3. Creare `Infrastructure/Api/DictionaryApiProvider.cs`
-   - `HttpClient` con header `X-Api-Key`
-   - `LoadProtocolDataAsync`: GET devices → boards → match indirizzi + GET commands
-   - `LoadVariablesAsync(recipientId)`: trova board per ProtocolAddress → GET resolved
-4. Scrivere **test unitari** con `HttpClient` mockato (`MockHttpMessageHandler`)
-5. Build + test
+**Risultato:**
+- Creati 5 DTO in `Infrastructure/Api/Dtos/`:
+  `DeviceSummaryDto`, `BoardSummaryDto`, `DictionaryResolvedDto`, `ResolvedVariableDto`, `CommandDto`
+- Creato `Infrastructure/Api/DictionaryApiOptions.cs` (BaseUrl, ApiKey, TimeoutSeconds)
+- Creato `Infrastructure/Api/DictionaryApiProvider.cs`:
+  - Implementa `IDictionaryProvider`, accetta `HttpClient` nel costruttore
+  - `LoadProtocolDataAsync`: GET devices → per ogni device GET boards → raccoglie indirizzi + GET commands
+  - `LoadVariablesAsync(recipientId)`: cerca board con ProtocolAddress matching (hex, case-insensitive)
+    → GET dictionaries/{id}/resolved → mappa a `Variable`
+  - Board senza `ProtocolAddress` o con `DictionaryId` null: gestite gracefully (escluse/empty)
+- Aggiornato `Infrastructure.csproj`: aggiunta `System.Net.Http.Json`
+- **26 test** per DictionaryApiProvider (2 file, cross-platform net10.0 + Windows):
+  - `MockHttpMessageHandler.cs`: handler HTTP fittizio con matching per URL (longest-first),
+    crea risposte fresche per ogni chiamata (evita ObjectDisposedException su content riusato)
+  - `DictionaryApiProviderTests.cs` (13 test × 2 TFM):
+    constructor, addresses da multi-device, valori corretti, commands mappati,
+    empty devices, cancellation token, variables con recipientId noto/sconosciuto,
+    board senza dictionary, case-insensitive matching, board senza address
 
-**File creati:** ~8 (DTO + provider + options) + test
-**File modificati:** `Infrastructure.csproj` (aggiunta `System.Net.Http.Json`)
-**Rischio:** Basso (solo aggiunta, niente tocca il codice legacy)
-**CI:** Questi test girano su Linux! (net10.0, no WinForms)
+**File creati:** 9 (5 DTO + options + provider + mock + test)
+**File modificati:** `Infrastructure.csproj`
+**Rischio:** Zero (solo additive — nessun file legacy toccato)
+**CI:** Tutti i 26 test girano su Linux (net10.0, zero dipendenze WinForms)
+
+**Build:** ✅ | **Test:** 224/224 ✅ (91 cross-platform + 133 Windows)
 
 ---
 
@@ -329,7 +337,7 @@ La migrazione di Form1 è un lavoro separato (Fase 3-4 del piano di modernizzazi
 | 1+2 | `refactor/core-infrastructure` | Scheletro multi-progetto + spostamento tipi | Basso | ✅ Completato |
 | 2 | `refactor/modelli-dizionario-core` | Modelli dominio + IDictionaryProvider | Zero | ✅ Completato |
 | 3 | `feature/excel-dictionary-provider` | ExcelHandler dietro astrazione + test correttezza | Basso | ✅ Completato |
-| 4 | `feature/api-dictionary-provider` | HttpClient → API Azure | Basso | ⬜ |
+| 4 | `feature/api-dictionary-provider` | HttpClient → API Azure | Zero | ✅ Completato |
 | 5 | `feature/fallback-e-di-registration` | DI + fallback + appsettings | Basso-medio | ⬜ |
 | 6 | `feature/integra-provider-in-app` | Primi consumer usano provider | Medio | ⬜ |
 
