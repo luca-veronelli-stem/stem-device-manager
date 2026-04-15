@@ -1,6 +1,6 @@
 # Tests
 
-> Test automatizzati per Stem.Device.Manager — xUnit, 101 test (76 unit + 25 integration).  
+> Test automatizzati per Stem.Device.Manager — xUnit, 258 test (dual TFM: net10.0 + net10.0-windows).  
 > **Ultimo aggiornamento:** 2026-04-14
 
 ---
@@ -10,10 +10,10 @@
 | Aspetto | Valore |
 |---------|--------|
 | **Framework** | xUnit 2.5.3 |
-| **TFM** | `net10.0-windows10.0.19041.0` |
-| **Test totali** | 101 |
-| **Unit test** | 76 |
-| **Integration test** | 25 |
+| **TFM** | `net10.0` + `net10.0-windows10.0.19041.0` (dual target) |
+| **Test totali** | 258 (129 × 2 TFM) |
+| **Unit test** | 95 (modelli, enum, provider, fallback, protocol, etc.) |
+| **Integration test** | 34 (DI wiring, Excel cross-reference, presenter, codegen) |
 | **Mock** | Manual (nessuna libreria esterna) |
 
 ---
@@ -47,14 +47,24 @@ dotnet test Tests/Tests.csproj --filter "FullyQualifiedName~Tests.Integration"
 Tests/
 ├── Tests.csproj
 │
-├── Unit/                                   76 test unitari
+├── Unit/                                   95 test unitari
 │   ├── Core/
 │   │   ├── Enums/
 │   │   │   └── ButtonPanelEnumsTests.cs        Contratti enum (7 test)
 │   │   └── Models/
 │   │       ├── ButtonPanelTests.cs             Factory + coerenza (11 test)
 │   │       ├── ButtonIndicatorTests.cs         Stato default (2 test)
-│   │       └── ButtonPanelTestResultTests.cs   Default values (3 test)
+│   │       ├── ButtonPanelTestResultTests.cs   Default values (3 test)
+│   │       ├── VariableTests.cs                Record equality (3 test)
+│   │       ├── CommandTests.cs                 Record equality (3 test)
+│   │       ├── ProtocolAddressTests.cs         Record equality (3 test)
+│   │       └── DictionaryDataTests.cs          Constructor + order (3 test)
+│   │
+│   ├── Infrastructure/
+│   │   ├── MockHttpMessageHandler.cs       Mock HTTP per API provider
+│   │   ├── DictionaryApiProviderTests.cs   API provider (18 test)
+│   │   ├── ExcelDictionaryProviderTests.cs Excel provider (14 test)
+│   │   └── FallbackDictionaryProviderTests.cs Fallback decorator (9 test)
 │   │
 │   ├── Terminal/
 │   │   └── TerminalTests.cs                    Append, get, write (6 test)
@@ -71,12 +81,15 @@ Tests/
 │   └── CircularProgressBar/
 │       └── CircularProgressBarTests.cs         Clamping, validazione (5 test)
 │
-└── Integration/                            25 test di integrazione
+└── Integration/                            34 test di integrazione
     ├── ExcelHandler/
     │   └── ExcelHandlerIntegrationTests.cs     Excel embedded reale (8 test)
     │
+    ├── Infrastructure/
+    │   └── ExcelDictionaryProviderCrossReferenceTests.cs  Confronto campo per campo (6 test)
+    │
     ├── DependencyInjection/
-    │   └── ServiceRegistrationTests.cs         DI wiring (3 test)
+    │   └── ServiceRegistrationTests.cs         DI wiring + IDictionaryProvider (9 test)
     │
     ├── Presenter/
     │   ├── ButtonPanelTestPresenterTests.cs    Orchestrazione MVP (11 test)
@@ -94,17 +107,22 @@ Tests/
 
 | Modulo | File test | Test | Tipo |
 |--------|-----------|------|------|
-| **Core Models** | `ButtonPanelTests.cs` | 11 | Unit |
+| **Core Models (Dictionary)** | `VariableTests.cs`, `CommandTests.cs`, `ProtocolAddressTests.cs`, `DictionaryDataTests.cs` | 12 | Unit |
+| **Core Models (ButtonPanel)** | `ButtonPanelTests.cs` | 11 | Unit |
 | **Core Enums** | `ButtonPanelEnumsTests.cs` | 7 | Unit |
 | **Core Models** | `ButtonIndicatorTests.cs` | 2 | Unit |
 | **Core Models** | `ButtonPanelTestResultTests.cs` | 3 | Unit |
+| **Infrastructure API** | `DictionaryApiProviderTests.cs` | 18 | Unit |
+| **Infrastructure Excel** | `ExcelDictionaryProviderTests.cs` | 14 | Unit |
+| **Infrastructure Fallback** | `FallbackDictionaryProviderTests.cs` | 9 | Unit |
 | **Terminal** | `TerminalTests.cs` | 6 | Unit |
 | **SPRollingCode** | `RollingCodeGeneratorTests.cs` | 4 | Unit |
 | **SP_Code_Generator** | `SP_Code_GeneratorTests.cs` | 7 | Unit |
 | **ExcelHandler** | `ExcelHandlerTests.cs` | 7 | Unit |
 | **CircularProgressBar** | `CircularProgressBarTests.cs` | 5 | Unit |
 | **ExcelHandler** | `ExcelHandlerIntegrationTests.cs` | 8 | Integration |
-| **DI Container** | `ServiceRegistrationTests.cs` | 3 | Integration |
+| **Infrastructure Excel** | `ExcelDictionaryProviderCrossReferenceTests.cs` | 6 | Integration |
+| **DI Container** | `ServiceRegistrationTests.cs` | 9 | Integration |
 | **Presenter (MVP)** | `ButtonPanelTestPresenterTests.cs` | 11 | Integration |
 | **SP_Code_Generator** | `SP_Code_GeneratorIntegrationTests.cs` | 4 | Integration |
 
@@ -140,7 +158,7 @@ Tests/
 I test vengono eseguiti automaticamente nella pipeline Bitbucket (`bitbucket-pipelines.yml`):
 
 ```
-Build → Test (101 test) → ✅/❌
+Build → Test (258 test) → ✅/❌
 ```
 
 ---

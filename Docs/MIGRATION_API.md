@@ -2,7 +2,7 @@
 
 **Creato:** 2026-04-14  
 **Ultimo aggiornamento:** 2026-04-14  
-**Stato:** Branch 5 completato, prossimo → Branch 6
+**Stato:** Migrazione Fase 2 completata — tutti i branch chiusi
 
 ---
 
@@ -320,22 +320,38 @@ Più pulito, testabile, riusabile.
 
 ---
 
-### Branch 6: `feature/integra-provider-in-app`
+### Branch 6: `feature/integra-provider-in-app` ✅ CHIUSO (nessuna modifica codice)
 
-**Scopo:** Far usare `IDictionaryProvider` ai primi consumer (non Form1).
+**Scopo originale:** Far usare `IDictionaryProvider` ai primi consumer (tab WinForms).
 
-**Azioni:**
-1. Identificare consumer più semplici (es. `Boot_Smart_WF_Tab`, `Telemetry_WF_Tab`)
-2. Iniettare `IDictionaryProvider` tramite DI o property injection
-3. Sostituire le chiamate dirette a `ExcelHandler` con `IDictionaryProvider`
-4. Verificare che il fallback Excel funzioni quando API non è configurata
-5. Build + test
+**⚠️ Decisione architetturale: Strategia B — rimandare a Fase 3-4**
 
-**File modificati:** 2-4 (tab WinForms + Program.cs DI wiring)
-**Rischio:** Medio (tocca codice legacy, ma tab isolati)
+Analisi dei consumer candidati ha rivelato che:
+- I tipi `ExcelHandler.VariableData`/`RowData`/`CommandData` **attraversano il confine** tab↔Form1
+- Migrare un tab a `Core.Models.Variable` senza migrare Form1 richiede un layer di conversione
+  a ogni confine, oppure migrare anche Form1 (∼15 punti)
+- Form1.cs è un God Object (~55k LOC) — toccarlo ora è troppo rischioso
 
-**Nota:** Form1.cs NON viene modificato in questo branch. È troppo rischioso.
-La migrazione di Form1 è un lavoro separato (Fase 3-4 del piano di modernizzazione).
+**Perché rimandare è la scelta giusta:**
+1. Il refactor di Fase 3-4 (estrarre interfacce per NetworkLayer/PacketManager, spezzare Form1)
+   disaccoppia i componenti → ogni componente riceve `IDictionaryProvider` via DI
+2. A quel punto la sostituzione `ExcelHandler` → `IDictionaryProvider` diventa **meccanica**
+3. Il lavoro dei branch 1-5 non è sprecato — è esattamente l'infrastruttura che il refactor userà
+4. Zero rischio ora: 258/258 test verdi, nessun file legacy toccato
+
+**Stato infrastruttura pronta:**
+- `IDictionaryProvider` → interfaccia nel DI container
+- `DictionaryApiProvider` → pronto per API Azure
+- `ExcelDictionaryProvider` → equivalente al 100% a ExcelHandler (provato campo per campo)
+- `FallbackDictionaryProvider` → decorator API→Excel
+- `appsettings.json` → `BaseUrl`/`ApiKey` vuoti = Excel, popolati = API con fallback
+- Per attivare: basta popolare `DictionaryApi__BaseUrl` + `DictionaryApi__ApiKey`
+
+**File creati:** 0
+**File modificati:** 0 (solo `MIGRATION_API.md`)
+**Rischio:** Zero
+
+**Build:** ✅ | **Test:** 258/258 ✅
 
 ---
 
@@ -348,10 +364,12 @@ La migrazione di Form1 è un lavoro separato (Fase 3-4 del piano di modernizzazi
 | 3 | `feature/excel-dictionary-provider` | ExcelHandler dietro astrazione + test correttezza | Basso | ✅ Completato |
 | 4 | `feature/api-dictionary-provider` | HttpClient → API Azure | Zero | ✅ Completato |
 | 5 | `feature/fallback-e-di-registration` | DI + fallback decorator + appsettings | Basso | ✅ Completato |
-| 6 | `feature/integra-provider-in-app` | Primi consumer usano provider | Medio | ⬜ |
+| 6 | `feature/integra-provider-in-app` | Consumer migration (rimandato a Fase 3-4) | Zero | ✅ Chiuso |
 
-**Dopo branch 6:** L'app funziona con API Azure (se configurata) o Excel (fallback).
-Form1.cs continua a usare ExcelHandler direttamente — la sua migrazione è un lavoro separato.
+**Migrazione Fase 2 completata.** L'infrastruttura API+fallback è pronta nel DI container.
+Form1 e i tab continuano a usare ExcelHandler direttamente.
+La sostituzione effettiva avverrà durante il refactor di Fase 3-4, quando Form1 verrà spezzato
+e ogni componente riceverà `IDictionaryProvider` via DI.
 
 ### Tipi rimasti in App/ (da spostare in fasi future)
 

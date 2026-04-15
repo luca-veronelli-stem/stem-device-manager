@@ -68,6 +68,11 @@ Configurazione minimale in `Program.cs`:
 | Servizio | Implementazione | Lifetime |
 |----------|----------------|----------|
 | `IButtonPanelTestService` | `ButtonPanelTestService` | Transient |
+| `IDictionaryProvider` | `ExcelDictionaryProvider` o `FallbackDictionaryProvider` | Singleton |
+
+`IDictionaryProvider` viene registrato da `Infrastructure.DependencyInjection.AddDictionaryProvider()`.
+Se `DictionaryApi:BaseUrl` + `ApiKey` sono configurati in `appsettings.json` o environment variables,
+viene usato `FallbackDictionaryProvider(API, Excel)`. Altrimenti solo `ExcelDictionaryProvider`.
 
 ---
 
@@ -93,6 +98,8 @@ Configurazione minimale in `Program.cs`:
 | Peak.PCANBasic.NET | 5.0.1 | Interfaccia CAN |
 | Plugin.BLE | 3.2.0 | Bluetooth Low Energy |
 | System.IO.Ports | 10.0.5 | Comunicazione seriale |
+| Microsoft.Extensions.Configuration.EnvironmentVariables | 10.0.5 | Configurazione env vars |
+| Microsoft.Extensions.Configuration.Json | 10.0.5 | Configurazione appsettings.json |
 | Microsoft.Extensions.DependencyInjection | 10.0.5 | DI container |
 
 ---
@@ -126,6 +133,7 @@ dotnet build App/App.csproj -c TOPLIFT-A2-Release
 - Le configurazioni device usano `#if` preprocessor (`TOPLIFT`, `EDEN`, `EGICON`, `BUTTONPANEL`)
 - Il file Excel dei dizionari è embedded come risorsa (`App.Resources.Dizionari STEM.xlsx`)
 - `InternalsVisibleTo("Tests")` abilitato per permettere test su tipi `internal`
+- `ProjectReference` a `Core` e `Infrastructure` per accesso a IDictionaryProvider
 
 ---
 

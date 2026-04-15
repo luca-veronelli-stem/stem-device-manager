@@ -19,7 +19,8 @@ Il formato si basa su [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Modernizzazione: documentazione, standard, riorganizzazione progetto, test coverage.
+Modernizzazione: documentazione, standard, riorganizzazione progetto, test coverage,
+architettura multi-progetto, migrazione dizionari Excel → API Azure.
 
 ### Added
 
@@ -29,13 +30,34 @@ Modernizzazione: documentazione, standard, riorganizzazione progetto, test cover
 - `CHANGELOG.md` — Questo file
 - `LICENSE` — Licenza proprietaria
 - `Stem.Device.Manager.slnx` — Solution file migrato a formato XML moderno (da `.sln`)
-- `Tests/` — Progetto test xUnit con 101 test (76 unit + 25 integration)
-  - **Unit test** (76): Terminal, Core Models/Enums, RollingCodeGenerator, SP_Code_Generator, ExcelHandler, CircularProgressBar
-  - **Integration test** (25): ExcelHandler con Excel embedded reale, DI wiring, ButtonPanelTestPresenter (MVP), SP_Code_Generator E2E
-  - **Manual mocks**: MockButtonPanelTestTab, MockButtonPanelTestService
+- `Tests/` — Progetto test xUnit con 258 test (dual TFM: net10.0 + net10.0-windows)
+  - **Unit test** (95): Terminal, Core Models/Enums, RollingCodeGenerator, SP_Code_Generator,
+    ExcelHandler, CircularProgressBar, DictionaryApiProvider, ExcelDictionaryProvider,
+    FallbackDictionaryProvider
+  - **Integration test** (34): ExcelHandler con Excel embedded reale, DI wiring con IDictionaryProvider,
+    ButtonPanelTestPresenter (MVP), SP_Code_Generator E2E, ExcelDictionaryProvider cross-reference
+  - **Manual mocks**: MockButtonPanelTestTab, MockButtonPanelTestService, MockHttpMessageHandler
 - `App/README.md` — Documentazione progetto App
 - `Tests/README.md` — Documentazione progetto Tests
+- `Core/README.md` — Documentazione progetto Core
+- `Infrastructure/README.md` — Documentazione progetto Infrastructure
 - `InternalsVisibleTo("Tests")` in `App.csproj` per testare tipi `internal`
+- **Architettura multi-progetto** — Migrazione da monolite a 4 progetti separati:
+  - `Core/` (net10.0) — Modelli dominio, interfacce (`IDictionaryProvider`, `IButtonPanelTestService`)
+  - `Infrastructure/` (net10.0) — Provider dati (API Azure + Excel + Fallback decorator)
+  - `Services/` (net10.0-windows) — Pronto per logica business futura
+  - `App/` (net10.0-windows) — Windows Forms, DI configurato con `IConfiguration`
+- **Migrazione dizionari Excel → API Azure** (Fase 2 completata):
+  - `Core/Models/` — 4 record dominio: `Variable`, `Command`, `ProtocolAddress`, `DictionaryData`
+  - `Core/Interfaces/IDictionaryProvider` — Astrazione async con `CancellationToken`
+  - `Infrastructure/Excel/ExcelDictionaryProvider` — Legge da Excel embedded, 100% equivalente a ExcelHandler
+  - `Infrastructure/Api/DictionaryApiProvider` — Chiama API REST Stem.Dictionaries.Manager
+  - `Infrastructure/Api/Dtos/` — 5 DTO deserializzazione (struttura JSON reale dell'API)
+  - `Infrastructure/Api/DictionaryApiOptions` — Configurazione: BaseUrl, ApiKey, TimeoutSeconds
+  - `Infrastructure/FallbackDictionaryProvider` — Decorator: API → catch HttpRequestException → Excel
+  - `Infrastructure/DependencyInjection.cs` — Extension method `AddDictionaryProvider(IConfiguration)`
+  - `App/appsettings.json` — Sezione `DictionaryApi` (vuota = Excel, popolata = API con fallback)
+  - `Docs/MIGRATION_API.md` — Piano migrazione completo con 6 branch documentati
 
 ### Changed
 
@@ -45,7 +67,10 @@ Modernizzazione: documentazione, standard, riorganizzazione progetto, test cover
 - Migrato solution file da `.sln` (legacy) a `.slnx` (XML moderno, ~58% riduzione righe)
 - Build configurations ridotte da 10 a 9 (rimossa `STEMDM`)
 - `bitbucket-pipelines.yml` — aggiunto step Test dopo Build
-- `README.md` — aggiornato badge test (0 → 101), struttura soluzione, link documentazione
+- `README.md` — aggiornato badge test (0 → 258), struttura soluzione multi-progetto
+- `App/Program.cs` — Aggiunto `IConfiguration` (appsettings.json + env vars) e `AddDictionaryProvider()`
+- `App/App.csproj` — Aggiunto `ProjectReference` a Core e Infrastructure, pacchetti Configuration
+- Namespace `App.Core.*` → `Core.*` per modelli e interfacce spostati in Core/
 
 ### Removed
 
