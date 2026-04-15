@@ -39,6 +39,7 @@
     <File Path=".gitignore" />
     <File Path="bitbucket-pipelines.yml" />
     <File Path="CHANGELOG.md" />
+    <File Path="CLAUDE.md" />
     <File Path="Directory.Build.props" />
     <File Path="LICENSE" />
     <File Path="README.md" />

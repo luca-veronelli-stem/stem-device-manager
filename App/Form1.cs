@@ -7,6 +7,7 @@ using STEMPM.GUI.Views;
 using System.Globalization;
 using static App.STEMProtocol.NetworkLayer;
 using Core.Models;
+using System.Reflection;
 
 namespace StemPC
 {
@@ -314,7 +315,7 @@ namespace StemPC
             tabControl.TabPages.Remove(tabPageProtocol);
             tabControl.TabPages.Remove(BLETabRef);
             BLEStatusLabel.Visible = false;
-            toolStripSplitButton2.Visible = false;
+            toolStripSplitButton3.Visible = false;
 
             //crea e aggiungi il telemetry per Toplift
 
