@@ -2,7 +2,7 @@
 
 **Creato:** 2026-04-14  
 **Ultimo aggiornamento:** 2026-04-14  
-**Stato:** Branch 4 completato, prossimo → Branch 5
+**Stato:** Branch 5 completato, prossimo → Branch 6
 
 ---
 
@@ -280,34 +280,43 @@ La duplicazione temporanea di logica ClosedXML è accettabile — quando Form1 m
 
 ---
 
-### Branch 5: `feature/fallback-e-di-registration`
+### Branch 5: `feature/fallback-e-di-registration` ✅ COMPLETATO
 
-**Scopo:** Creare il `DependencyInjection.cs` che registra il provider giusto con fallback.
+**Scopo:** Creare DI registration, fallback decorator e configurazione.
 
-**Azioni:**
-1. Creare `Infrastructure/DependencyInjection.cs`:
-   - Extension method `AddDictionaryProvider(this IServiceCollection, IConfiguration)`
-   - Se `DictionaryApi:BaseUrl` e `DictionaryApi:ApiKey` configurati → `DictionaryApiProvider`
-   - Altrimenti → `ExcelDictionaryProvider`
-   - Fallback runtime: `DictionaryApiProvider` cattura `HttpRequestException` → delega a Excel
-2. Creare `appsettings.json` in `App/`:
-   ```json
-   {
-     "DictionaryApi": {
-       "BaseUrl": "",
-       "ApiKey": ""
-     }
-   }
-   ```
-3. Aggiornare `App/Program.cs`:
-   - Aggiungere `IConfiguration` (da `appsettings.json` + environment variables)
-   - Chiamare `services.AddDictionaryProvider(configuration)`
-4. Scrivere **test integrazione** per DI registration
-5. Build + test
+**⚠️ Deviazione dal piano originale:**
+Il piano prevedeva il fallback dentro `DictionaryApiProvider`. Analisi ha rivelato che viola SRP:
+il provider API dovrebbe solo parlare con l'API. Creato invece `FallbackDictionaryProvider`
+(decorator pattern) che wrappa primary (API) e delega a fallback (Excel) su `HttpRequestException`.
+Più pulito, testabile, riusabile.
 
-**File creati:** 2 (`DependencyInjection.cs`, `appsettings.json`) + test
-**File modificati:** `Program.cs`, `App.csproj`
-**Rischio:** Basso-medio (tocca Program.cs, ma è piccolo)
+**Risultato:**
+- Creato `Infrastructure/FallbackDictionaryProvider.cs`:
+  - Decorator: tenta primary, su `HttpRequestException` delega a fallback
+  - Eccezioni non-HTTP propagate normalmente
+- Creato `Infrastructure/DependencyInjection.cs`:
+  - Extension method `AddDictionaryProvider(IServiceCollection, IConfiguration)`
+  - Se `DictionaryApi:BaseUrl` + `ApiKey` configurati → `FallbackDictionaryProvider(API, Excel)`
+  - Altrimenti → solo `ExcelDictionaryProvider`
+  - HttpClient configurato con `BaseAddress`, `X-Api-Key`, `Timeout` tramite `AddHttpClient<T>`
+- Creato `App/appsettings.json` (sezione `DictionaryApi` vuota → default Excel)
+- Aggiornato `App/Program.cs`:
+  - `IConfiguration` da `appsettings.json` + environment variables
+  - `services.AddDictionaryProvider(configuration)` → IDictionaryProvider disponibile via DI
+- Aggiornato `App/App.csproj`: ref Infrastructure + pacchetti Configuration
+- Aggiornato `Infrastructure.csproj`: pacchetti DI/Configuration/Http abstractions
+- **21 test** nuovi (2 file):
+  - `FallbackDictionaryProviderTests.cs` (7 test × 2 TFM): primary OK, primary HTTP fail → fallback,
+    non-HTTP propagata, constructor null checks
+  - `ServiceRegistrationTests.cs` aggiornati (7 test): resolve Excel senza config,
+    resolve Fallback con config, singleton, empty API key → Excel
+
+**File creati:** 3 (`FallbackDictionaryProvider.cs`, `DependencyInjection.cs`, `appsettings.json`)
+**File modificati:** `Program.cs`, `App.csproj`, `Infrastructure.csproj`, `ServiceRegistrationTests.cs`
+**Rischio:** Basso (Program.cs: 6 righe aggiunte, Form1 non toccato)
+**CI:** 7 test Fallback girano su Linux (net10.0); test DI sono Windows-only (App reference)
+
+**Build:** ✅ | **Test:** 252/252 ✅ (105 cross-platform + 147 Windows)
 
 ---
 
@@ -338,7 +347,7 @@ La migrazione di Form1 è un lavoro separato (Fase 3-4 del piano di modernizzazi
 | 2 | `refactor/modelli-dizionario-core` | Modelli dominio + IDictionaryProvider | Zero | ✅ Completato |
 | 3 | `feature/excel-dictionary-provider` | ExcelHandler dietro astrazione + test correttezza | Basso | ✅ Completato |
 | 4 | `feature/api-dictionary-provider` | HttpClient → API Azure | Zero | ✅ Completato |
-| 5 | `feature/fallback-e-di-registration` | DI + fallback + appsettings | Basso-medio | ⬜ |
+| 5 | `feature/fallback-e-di-registration` | DI + fallback decorator + appsettings | Basso | ✅ Completato |
 | 6 | `feature/integra-provider-in-app` | Primi consumer usano provider | Medio | ⬜ |
 
 **Dopo branch 6:** L'app funziona con API Azure (se configurata) o Excel (fallback).
