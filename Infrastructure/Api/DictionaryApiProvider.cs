@@ -50,8 +50,8 @@ public class DictionaryApiProvider : IDictionaryProvider
         var commands = commandDtos
             .Select(c => new Command(
                 c.Name,
-                c.CodeHigh.ToString(),
-                c.CodeLow.ToString()))
+                c.CodeHigh.ToString("X2"),
+                c.CodeLow.ToString("X2")))
             .ToList();
 
         return new DictionaryData(addresses, commands);
@@ -75,8 +75,8 @@ public class DictionaryApiProvider : IDictionaryProvider
         return [.. resolved.Variables
             .Select(v => new Variable(
                 v.Name,
-                v.AddressHigh.ToString(),
-                v.AddressLow.ToString(),
+                v.AddressHigh.ToString("X2"),
+                v.AddressLow.ToString("X2"),
                 v.DataType))];
     }
 
