@@ -1,4 +1,3 @@
-using App.Services;
 using Core.Interfaces;
 using Infrastructure;
 using Microsoft.Extensions.Configuration;
@@ -49,9 +48,6 @@ namespace App
 
             // Configurazione della dependency injection
             var services = new ServiceCollection();
-
-            // Modulo di test per pulsantiera
-            services.AddTransient<IButtonPanelTestService, ButtonPanelTestService>();
 
             // Provider dizionari (API Azure con fallback Excel, o solo Excel)
             services.AddDictionaryProvider(configuration);

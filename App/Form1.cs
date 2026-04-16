@@ -1,9 +1,7 @@
 using App;
-using App.GUI.Presenters;
 using App.STEMProtocol;
 using Core.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
-using STEMPM.GUI.Views;
 using System.Globalization;
 using static App.STEMProtocol.NetworkLayer;
 using Core.Models;
@@ -155,9 +153,6 @@ namespace StemPC
                 Controls.Add(tabControl);
             }
 
-#if BUTTONPANEL
-            Text = "STEM Button Panel Tester " + Software_Version;
-#else
 #if TOPLIFT
             Text = "STEM Toplift A2 Manager " + Software_Version;
 #elif EDEN
@@ -166,7 +161,6 @@ namespace StemPC
             Text = "STEM Spark Manager " + Software_Version;
 #else
             this.Text += Software_Version;
-#endif
 #endif
 
             FormRef = this;
@@ -267,9 +261,6 @@ namespace StemPC
             // CanTabPageRef.ActivateEvents();
             // tabControl.TabPages.Add(CanTabPageRef);
 
-            // crea e aggiungi la tab per il collaudo pulsantiere
-            AddButtonPanelTestTab();
-
             //attiva il terminale
             _terminal = new Terminal(); // Inizializza l'istanza di Terminal
 
@@ -345,39 +336,9 @@ namespace StemPC
             //tableLayoutPanelProtocol.ColumnStyles[5].SizeType = SizeType.Absolute;
             //tableLayoutPanelProtocol.ColumnStyles[5].Width = 0;
 
-
-#if BUTTONPANEL
-            tabControl.TabPages.Remove(tabPageUART);
-            tabControl.TabPages.Remove(tabPageCodeGen);
-            tabControl.TabPages.Remove(TelemetryTabRef);
-            tabControl.TabPages.Remove(BLETabRef);
-            tabControl.TabPages.Remove(BootSmartTabRef);
-            tabControl.TabPages.Remove(BootTabRef);
-            //tabControl.TabPages.Remove(tabPageProtocol);
-#endif
-
             //installa l'evento di aggiornamento textbox applayer
             AppLayerCommandDecoded += onAppLayerDecoded;
             AppLayerCommandSended += onAppLayerSended;
-        }
-
-        // Aggiungi la tab per il collaudo pulsantiere
-        private void AddButtonPanelTestTab()
-        {
-            var buttonPanelTestControl = new ButtonPanelTestTabControl();
-            var presenter = new ButtonPanelTestPresenter(buttonPanelTestControl,
-                _serviceProvider.GetRequiredService<IButtonPanelTestService>());
-
-            var tabPage = new TabPage("Collaudo pulsantiere");
-            tabPage.Controls.Add(buttonPanelTestControl);
-            buttonPanelTestControl.Dock = DockStyle.Fill;
-
-            tabControl.TabPages.Add(tabPage);
-        }
-
-        public void SetRecipientIdSilently(uint recipientId)
-        {
-            RecipientId = recipientId;
         }
 
         public void UpdateTerminal(string message)
@@ -460,7 +421,7 @@ namespace StemPC
 
             }
         }
-
+        
         private async void comboBoxBoard_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (sender is not ComboBox comboBoxCorrente) return;
@@ -1015,7 +976,7 @@ namespace StemPC
             //// stampa i pacchetti del network layer
             //Form1.FormRef.richTextBoxTx.AppendText("-- NETWORK --\n");
             //foreach (var item in networkLayer.NetworkPackets)
-            //{
+           //{
             //    // _netInfo, _recipientId, chunk
             //    Form1.FormRef.richTextBoxTx.AppendText($"NetInfo: {string.Join(" ", item.Item1.Select(b => b.ToString("X2")))} ");
             //    Form1.FormRef.richTextBoxTx.AppendText($"Id: {item.Item2.ToString("X2")} ");

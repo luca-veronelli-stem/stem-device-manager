@@ -10,7 +10,7 @@
 		<ApplicationIcon>Resources\Ztem.ico</ApplicationIcon>
 		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
 		<PlatformTarget>x64</PlatformTarget>
-		<Configurations>Debug;Release;TOPLIFT-A2-Debug;TOPLIFT-A2-Release;EDEN-Debug;EDEN-Release;EGICON-Debug;EGICON-Release;BUTTONPANEL</Configurations>
+		<Configurations>Debug;Release;TOPLIFT-A2-Debug;TOPLIFT-A2-Release;EDEN-Debug;EDEN-Release;EGICON-Debug;EGICON-Release</Configurations>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -45,8 +45,6 @@
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='EGICON-Release|AnyCPU'">
 	  <DefineConstants>$(DefineConstants);EGICON</DefineConstants>
 	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='BUTTONPANEL|AnyCPU'" />
 
 	<ItemGroup>
 	  <None Remove="Dizionari STEM.xlsx" />
@@ -104,6 +102,10 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Core\Models\" />
   </ItemGroup>
 
 </Project>
