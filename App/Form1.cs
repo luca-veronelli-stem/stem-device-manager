@@ -498,6 +498,27 @@ namespace StemPC
         private async Task LoadDictionaryDataAsync(CancellationToken ct)
         {
             var data = await _dictionaryProvider.LoadProtocolDataAsync(ct);
+
+            // TEMP: indicatore provider attivo — rimuovere dopo testing
+            (string text, Color color) providerTag = _dictionaryProvider switch
+            {
+                Infrastructure.FallbackDictionaryProvider f => f.LastUsedSource switch
+                {
+                    Infrastructure.FallbackDictionaryProvider.ProviderSource.Primary  => ("API", Color.MediumSeaGreen),
+                    Infrastructure.FallbackDictionaryProvider.ProviderSource.Fallback => ($"Excel (fallback: {f.LastFallbackReason})", Color.Goldenrod),
+                    _ => ("API+Excel?", Color.SteelBlue)
+                },
+                Infrastructure.Api.DictionaryApiProvider => ("API", Color.MediumSeaGreen),
+                _ => ("Excel", Color.Goldenrod)
+            };
+            var lblProvider = new ToolStripStatusLabel(providerTag.text)
+            {
+                BackColor = providerTag.color,
+                ForeColor = Color.White,
+                Font = new Font(Font.FontFamily, 8.25f, FontStyle.Bold)
+            };
+            statusStrip1.Items.Add(lblProvider);
+            // TEMP END
             IndirizziProtocollo = data.Addresses.ToList();
             Comandi = data.Commands.ToList();
             Dizionario = new List<Variable>();
