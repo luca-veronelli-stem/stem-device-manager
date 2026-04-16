@@ -12,6 +12,12 @@ public class FallbackDictionaryProvider : IDictionaryProvider
     private readonly IDictionaryProvider _primary;
     private readonly IDictionaryProvider _fallback;
 
+    // TEMP: espone quale provider ha risposto per ultimo — rimuovere dopo testing
+    public enum ProviderSource { Unknown, Primary, Fallback }
+    public ProviderSource LastUsedSource { get; private set; } = ProviderSource.Unknown;
+    public string? LastFallbackReason { get; private set; }
+    // TEMP END
+
     public FallbackDictionaryProvider(
         IDictionaryProvider primary,
         IDictionaryProvider fallback)
@@ -27,10 +33,14 @@ public class FallbackDictionaryProvider : IDictionaryProvider
     {
         try
         {
-            return await _primary.LoadProtocolDataAsync(ct);
+            var result = await _primary.LoadProtocolDataAsync(ct);
+            LastUsedSource = ProviderSource.Primary; // TEMP
+            return result;
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex)
         {
+            LastUsedSource = ProviderSource.Fallback; // TEMP
+            LastFallbackReason = ex.Message;          // TEMP
             return await _fallback.LoadProtocolDataAsync(ct);
         }
     }
@@ -40,10 +50,13 @@ public class FallbackDictionaryProvider : IDictionaryProvider
     {
         try
         {
-            return await _primary.LoadVariablesAsync(recipientId, ct);
+            var result = await _primary.LoadVariablesAsync(recipientId, ct);
+            LastUsedSource = ProviderSource.Primary; // TEMP
+            return result;
         }
         catch (HttpRequestException)
         {
+            LastUsedSource = ProviderSource.Fallback; // TEMP
             return await _fallback.LoadVariablesAsync(recipientId, ct);
         }
     }

@@ -1,7 +1,7 @@
 # Tests
 
-> Test automatizzati per Stem.Device.Manager — xUnit, 258 test (dual TFM: net10.0 + net10.0-windows).  
-> **Ultimo aggiornamento:** 2026-04-14
+> Test automatizzati per Stem.Device.Manager — xUnit, 272 test (92 net10.0 + 180 net10.0-windows).  
+> **Ultimo aggiornamento:** 2026-04-16
 
 ---
 
@@ -11,9 +11,9 @@
 |---------|--------|
 | **Framework** | xUnit 2.5.3 |
 | **TFM** | `net10.0` + `net10.0-windows10.0.19041.0` (dual target) |
-| **Test totali** | 258 (129 × 2 TFM) |
+| **Test totali** | 272 (92 net10.0 + 180 net10.0-windows) |
 | **Unit test** | 95 (modelli, enum, provider, fallback, protocol, etc.) |
-| **Integration test** | 34 (DI wiring, Excel cross-reference, presenter, codegen) |
+| **Integration test** | 43 (DI wiring, Excel cross-reference, presenter, codegen, IDictionaryProvider) |
 | **Mock** | Manual (nessuna libreria esterna) |
 
 ---
@@ -97,8 +97,13 @@ Tests/
     │       ├── MockButtonPanelTestTab.cs       Mock manuale IButtonPanelTestTab
     │       └── MockButtonPanelTestService.cs   Mock manuale IButtonPanelTestService
     │
-    └── CodeGenerator/
-        └── SP_Code_GeneratorIntegrationTests.cs  Multi-config E2E (4 test)
+    ├── CodeGenerator/
+    │   └── SP_Code_GeneratorIntegrationTests.cs  Multi-config E2E (4 test)
+    │
+    └── Form1/
+        ├── Form1DictionaryLoadingTests.cs         Contratto IDictionaryProvider + flusso (9 test)
+        └── Mocks/
+            └── MockDictionaryProvider.cs          Mock manuale IDictionaryProvider
 ```
 
 ---
@@ -125,6 +130,7 @@ Tests/
 | **DI Container** | `ServiceRegistrationTests.cs` | 9 | Integration |
 | **Presenter (MVP)** | `ButtonPanelTestPresenterTests.cs` | 11 | Integration |
 | **SP_Code_Generator** | `SP_Code_GeneratorIntegrationTests.cs` | 4 | Integration |
+| **IDictionaryProvider (Form1)** | `Form1DictionaryLoadingTests.cs` | 9 | Integration |
 
 ---
 
@@ -136,7 +142,7 @@ Tests/
 | **Naming metodi** | `{Method}_{Scenario}_{ExpectedResult}` |
 | **Pattern** | Arrange-Act-Assert (implicito) |
 | **Attributi** | `[Fact]` singoli, `[Theory]` + `[InlineData]` parametrici |
-| **Mock** | Manual — classi in `Integration/Presenter/Mocks/` |
+| **Mock** | Manual — classi in `Integration/*/Mocks/` |
 | **File temporanei** | `Path.GetTempPath()` + cleanup via `IDisposable` |
 | **Nomenclatura** | Inglese (nomi), italiano (commenti XML) |
 
@@ -158,7 +164,7 @@ Tests/
 I test vengono eseguiti automaticamente nella pipeline Bitbucket (`bitbucket-pipelines.yml`):
 
 ```
-Build → Test (258 test) → ✅/❌
+Build → Test (272 test) → ✅/❌
 ```
 
 ---

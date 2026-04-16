@@ -116,8 +116,8 @@ public class DictionaryApiProviderTests
 
         Assert.Equal(2, data.Commands.Count);
         Assert.Equal("Leggi variabile logica", data.Commands[0].Name);
-        Assert.Equal("0", data.Commands[0].CodeHigh);
-        Assert.Equal("1", data.Commands[0].CodeLow);
+        Assert.Equal("00", data.Commands[0].CodeHigh);
+        Assert.Equal("01", data.Commands[0].CodeLow);
     }
 
     [Fact]
@@ -168,8 +168,8 @@ public class DictionaryApiProviderTests
         var variables = await provider.LoadVariablesAsync(0x00080381);
 
         Assert.Equal("Firmware macchina", variables[0].Name);
-        Assert.Equal("0", variables[0].AddressHigh);
-        Assert.Equal("0", variables[0].AddressLow);
+        Assert.Equal("00", variables[0].AddressHigh);
+        Assert.Equal("00", variables[0].AddressLow);
         Assert.Equal("UInt16", variables[0].DataType);
     }
 
@@ -229,8 +229,8 @@ public class DictionaryApiProviderTests
 
         Assert.Single(variables);
         Assert.Equal("Var1", variables[0].Name);
-        Assert.Equal("1", variables[0].AddressHigh);
-        Assert.Equal("2", variables[0].AddressLow);
+        Assert.Equal("01", variables[0].AddressHigh);
+        Assert.Equal("02", variables[0].AddressLow);
     }
 
     // --- LoadProtocolDataAsync: board senza ProtocolAddress viene esclusa ---

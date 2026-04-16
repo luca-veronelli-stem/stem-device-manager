@@ -1,7 +1,7 @@
 # REFACTOR_ANALYSIS.md — Analisi per Fase 3: Disaccoppiamento Form1 e migrazione a IDictionaryProvider
 
 **Creato:** 2026-04-14  
-**Stato:** Step 3.5 — Formalize (in corso)
+**Stato:** Step 4 completato — Branch 2 (`refactor/source-swap-idictionary-provider`) implementato e testato.
 
 ---
 

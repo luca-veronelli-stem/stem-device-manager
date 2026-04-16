@@ -7,7 +7,6 @@ using STEMPM.GUI.Views;
 using System.Globalization;
 using static App.STEMProtocol.NetworkLayer;
 using Core.Models;
-using System.Reflection;
 
 namespace StemPC
 {
@@ -15,6 +14,7 @@ namespace StemPC
     {
         // Dependency Injection Service Provider
         private readonly IServiceProvider _serviceProvider;
+        private readonly IDictionaryProvider _dictionaryProvider;
 
         public const string Software_Version = "2.15";
 
@@ -77,16 +77,11 @@ namespace StemPC
         SP_Code_Generator configGenerator;
 
         //**************************
-        //  Excel variables
+        //  Variabili dizionario (popolate da IDictionaryProvider)
         //**************************
-        string ExcelfilePath = "Dizionari STEM.xlsx";
-        // Lista per contenere le righe lette
-        List<ProtocolAddress> IndirizziProtocollo;
-        List<Command> Comandi;
-        List<Variable> Dizionario;
-        ExcelHandler hExcel;
-
-        private bool isStreamBased;
+        List<ProtocolAddress> IndirizziProtocollo = new();
+        List<Command> Comandi = new();
+        List<Variable> Dizionario = new();
 
         //**********************************
         //  STEM Protocol variables/classes
@@ -148,8 +143,10 @@ namespace StemPC
         public Form1(IServiceProvider serviceProvider)
         {
             InitializeComponent();
-            // Inietta il service provider
+            // Inietta il service provider e il provider dizionari
             _serviceProvider = serviceProvider;
+            _dictionaryProvider = serviceProvider.GetRequiredService<IDictionaryProvider>();
+            Load += async (_, _) => await LoadDictionaryDataAsync(CancellationToken.None);
 
             // Controlla se il TabControl esiste gi  e crealo se non esiste
             if (tabControl == null)
@@ -348,161 +345,6 @@ namespace StemPC
             //tableLayoutPanelProtocol.ColumnStyles[5].SizeType = SizeType.Absolute;
             //tableLayoutPanelProtocol.ColumnStyles[5].Width = 0;
 
-            //Estrai i dati dal dizionario stem
-
-            //hExcel = new ExcelHandler();
-            //IndirizziProtocollo = new List<ExcelHandler.RowData>();
-            //Comandi = new List<ExcelHandler.CommandData>();
-            //Dizionario = new List<ExcelHandler.VariableData>();
-            //hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, ExcelfilePath);
-
-#if TOPLIFT
-            // Ottieni l assembly
-            var asm = Assembly.GetExecutingAssembly();
-            //// Recupera tutti i nomi delle risorse incorporate
-            //var resourceNames = asm.GetManifestResourceNames();
-            //// Mostrali in un MessageBox o nel Output di Debug
-            //string elenco = string.Join("\n", resourceNames);
-            //MessageBox.Show("Risorse incorporate trovate:\n" + elenco, "Debug risorse");
-
-            // Caricamento diretto del file Excel dalle risorse (embedded)
-            //var asm = Assembly.GetExecutingAssembly();
-            const string resourceName = "App.Resources.Dizionari STEM.xlsx";
-            using (var stream = asm.GetManifestResourceStream(resourceName))
-            {
-                if (stream == null)
-                    throw new FileNotFoundException("Risorsa non trovata: " + resourceName);
-                // Usa un overload di ExcelHandler che accetta uno Stream
-                hExcel = new ExcelHandler(stream);
-                // Estrai i dati direttamente dal flusso
-                IndirizziProtocollo = new List<ProtocolAddress>();
-                Comandi            = new List<Command>();
-                Dizionario         = new List<Variable>();
-                hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, Dizionario);
-            }
-//fissa l'indirizzo toplift ed estrai i dati relativi
-            RecipientId = 0x00080381; //indirizzo fisso scheda madre Toplift A2
-        //    RecipientId = 0x00030141; //indirizzo fisso scheda madre Eden
-            label12.Text = ($"Indirizzo\n 0x{RecipientId.ToString("X8")}");
-            hExcel.EstraiDizionario(RecipientId, Dizionario);
-            TLTTabRef.UpdateDictionary(Dizionario);
-            BootSmartTabRef.UpdateDictionary(Dizionario);
-#else
-            // Uso del file esterno per configurazioni diverse da client
-            ExcelfilePath = Path.Combine(Application.StartupPath, "Dizionari STEM.xlsx");
-            hExcel = new ExcelHandler();
-            IndirizziProtocollo = new List<ProtocolAddress>();
-            Comandi = new List<Command>();
-            Dizionario = new List<Variable>();
-            hExcel.EstraiDatiProtocollo(IndirizziProtocollo, Comandi, ExcelfilePath);
-
-#if TOPLIFT
-            isStreamBased = true;
-#else
-            isStreamBased = false;
-#endif
-
-            TelemetryTabRef.UpdateDictionary(Dizionario);
-#endif
-
-            _terminal.WriteLog("--------------------------------------------------------------------");
-            // Stampa i risultati (per verifica)
-            foreach (ProtocolAddress item in IndirizziProtocollo)
-            {
-                UpdateTerminal($"Macchina: {item.DeviceName}, Scheda: {item.BoardName}, Indirizzo: {item.Address}");
-                //popola il combo macchine
-                if (!comboBoxMachine.Items.Contains(item.DeviceName)) comboBoxMachine.Items.Add(item.DeviceName);
-            }
-
-            _terminal.WriteLog("--------------------------------------------------------------------");
-            comboBoxCommand.Items.Clear();
-            // Stampa i risultati (per verifica)
-            foreach (Command item in Comandi)
-            {
-                UpdateTerminal($"Comando: {item.Name}, codeH: {item.CodeHigh}, codeL: {item.CodeLow}");
-                //popola il combo comandi
-                if ((!comboBoxCommand.Items.Contains(item.Name)) && (!item.Name.Contains("risposta")) && (!item.Name.Contains("Risposta"))) comboBoxCommand.Items.Add(item.Name);
-            }
-
-#if EDEN
-            // Ottieni la stringa correntemente selezionata
-            string macchinaSelezionata = "EDEN";
-            string schedaSelezionata = "Madre";
-            // Cerca i nomi della macchina
-            foreach (ProtocolAddress item in IndirizziProtocollo)
-            {
-                //popola il combo delle schede
-                if ((item.BoardName == schedaSelezionata) && (item.DeviceName == macchinaSelezionata))
-                {
-                    label12.Text = ($"Indirizzo\n {item.Address}");
-                    RecipientId = Convert.ToUInt32(item.Address.Substring(2), 16);
-                    hExcel.EstraiDizionario(RecipientId, Dizionario, ExcelfilePath);
-                    TelemetryTabRef.UpdateDictionary(Dizionario);
-                    //aggiorna il combo Macchina
-                    int indice = comboBoxMachine.FindStringExact(macchinaSelezionata);
-
-                    if (indice != -1)
-                    {
-                        comboBoxMachine.SelectedIndex = indice;
-                    }
-                    else
-                    {
-                        //    MessageBox.Show($"Elemento \"{elementoDaCercare}\" non trovato nel ComboBox.");
-                    }
-
-                    //aggiorna il combo Scheda
-                    indice = comboBoxBoard.FindStringExact(schedaSelezionata);
-
-                    if (indice != -1)
-                    {
-                        comboBoxBoard.SelectedIndex = indice;
-                    }
-                    else
-                    {
-                        //    MessageBox.Show($"Elemento \"{elementoDaCercare}\" non trovato nel ComboBox.");
-                    }
-                }
-            }
-#elif EGICON
-            // Ottieni la stringa correntemente selezionata
-            string macchinaSelezionata = "SPARK";
-            string schedaSelezionata = "HMI";
-            // Cerca i nomi della macchina
-            foreach (ProtocolAddress item in IndirizziProtocollo)
-            {
-                //popola il combo delle schede
-                if ((item.BoardName == schedaSelezionata) && (item.DeviceName == macchinaSelezionata))
-                {
-                    label12.Text = ($"Indirizzo\n {item.Address}");
-                    RecipientId = Convert.ToUInt32(item.Address.Substring(2), 16);
-                    hExcel.EstraiDizionario(RecipientId, Dizionario, ExcelfilePath);
-                    TelemetryTabRef.UpdateDictionary(Dizionario);
-                    //aggiorna il combo Macchina
-                    int indice = comboBoxMachine.FindStringExact(macchinaSelezionata);
-
-                    if (indice != -1)
-                    {
-                        comboBoxMachine.SelectedIndex = indice;
-                    }
-                    else
-                    {
-                        //    MessageBox.Show($"Elemento \"{elementoDaCercare}\" non trovato nel ComboBox.");
-                    }
-
-                    //aggiorna il combo Scheda
-                    indice = comboBoxBoard.FindStringExact(schedaSelezionata);
-
-                    if (indice != -1)
-                    {
-                        comboBoxBoard.SelectedIndex = indice;
-                    }
-                    else
-                    {
-                        //    MessageBox.Show($"Elemento \"{elementoDaCercare}\" non trovato nel ComboBox.");
-                    }
-                }
-            }
-#endif
 
 #if BUTTONPANEL
             tabControl.TabPages.Remove(tabPageUART);
@@ -619,42 +461,136 @@ namespace StemPC
             }
         }
 
-        private void comboBoxBoard_SelectedIndexChanged(object sender, EventArgs e)
+        private async void comboBoxBoard_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // Verifica che il mittente sia effettivamente un ComboBox
-            if (sender is ComboBox comboBoxCorrente)
-            {
-                // Verifica se   stato selezionato un elemento valido
-                if (comboBoxCorrente.SelectedIndex != -1)
-                {
-                    // Ottieni la stringa correntemente selezionata
-                    string schedaSelezionata = comboBoxCorrente.SelectedItem.ToString();
+            if (sender is not ComboBox comboBoxCorrente) return;
+            if (comboBoxCorrente.SelectedIndex == -1) return;
 
-                    // Cerca i nomi della macchina
-                    foreach (ProtocolAddress item in IndirizziProtocollo)
-                    {
-                        //popola il combo delle schede
-                        if ((item.BoardName == schedaSelezionata) && (item.DeviceName == comboBoxMachine.SelectedItem.ToString()))
-                        {
-                            label12.Text = ($"Indirizzo\n {item.Address}");
-                            RecipientId = Convert.ToUInt32(item.Address.Substring(2), 16);
+            string schedaSelezionata = comboBoxCorrente.SelectedItem!.ToString()!;
+
+            foreach (ProtocolAddress item in IndirizziProtocollo)
+            {
+                if (item.BoardName == schedaSelezionata
+                    && item.DeviceName == comboBoxMachine.SelectedItem?.ToString())
+                {
+                    label12.Text = $"Indirizzo\n {item.Address}";
+                    RecipientId = Convert.ToUInt32(item.Address.Substring(2), 16);
+                    Dizionario = (await _dictionaryProvider.LoadVariablesAsync(RecipientId)).ToList();
 #if TOPLIFT
-                            hExcel.EstraiDizionario(RecipientId, Dizionario);
-                            TLTTabRef.UpdateDictionary(Dizionario);
-                            TLTTabRef.telemetryManager.UpdateSourceAddress(RecipientId);
+                    TLTTabRef.UpdateDictionary(Dizionario);
+                    TLTTabRef.telemetryManager.UpdateSourceAddress(RecipientId);
 #else
-                            hExcel.EstraiDizionario(RecipientId, Dizionario, ExcelfilePath);
-                            if (TelemetryTabRef != null)
-                            {
-                                TelemetryTabRef.UpdateDictionary(Dizionario);
-                                TelemetryTabRef.telemetryManager.UpdateSourceAddress(RecipientId);
-                            }
-#endif
-                        }
+                    if (TelemetryTabRef != null)
+                    {
+                        TelemetryTabRef.UpdateDictionary(Dizionario);
+                        TelemetryTabRef.telemetryManager.UpdateSourceAddress(RecipientId);
                     }
-                    comboBoxCommand.SelectedIndex = 0;
+#endif
                 }
             }
+            comboBoxCommand.SelectedIndex = 0;
+        }
+
+        /// <summary>
+        /// Carica indirizzi protocollo, comandi e variabili tramite IDictionaryProvider.
+        /// Chiamato nell'evento Load (async void è accettabile in WinForms).
+        /// </summary>
+        private async Task LoadDictionaryDataAsync(CancellationToken ct)
+        {
+            var data = await _dictionaryProvider.LoadProtocolDataAsync(ct);
+
+            // TEMP: indicatore provider attivo — rimuovere dopo testing
+            (string text, Color color) providerTag = _dictionaryProvider switch
+            {
+                Infrastructure.FallbackDictionaryProvider f => f.LastUsedSource switch
+                {
+                    Infrastructure.FallbackDictionaryProvider.ProviderSource.Primary  => ("API", Color.MediumSeaGreen),
+                    Infrastructure.FallbackDictionaryProvider.ProviderSource.Fallback => ($"Excel (fallback: {f.LastFallbackReason})", Color.Goldenrod),
+                    _ => ("API+Excel?", Color.SteelBlue)
+                },
+                Infrastructure.Api.DictionaryApiProvider => ("API", Color.MediumSeaGreen),
+                _ => ("Excel", Color.Goldenrod)
+            };
+            var lblProvider = new ToolStripStatusLabel(providerTag.text)
+            {
+                BackColor = providerTag.color,
+                ForeColor = Color.White,
+                Font = new Font(Font.FontFamily, 8.25f, FontStyle.Bold)
+            };
+            statusStrip1.Items.Add(lblProvider);
+            // TEMP END
+            IndirizziProtocollo = data.Addresses.ToList();
+            Comandi = data.Commands.ToList();
+            Dizionario = new List<Variable>();
+
+            _terminal.WriteLog("--------------------------------------------------------------------");
+            foreach (ProtocolAddress item in IndirizziProtocollo)
+            {
+                UpdateTerminal($"Macchina: {item.DeviceName}, Scheda: {item.BoardName}, Indirizzo: {item.Address}");
+                if (!comboBoxMachine.Items.Contains(item.DeviceName))
+                    comboBoxMachine.Items.Add(item.DeviceName);
+            }
+
+            _terminal.WriteLog("--------------------------------------------------------------------");
+            comboBoxCommand.Items.Clear();
+            foreach (Command item in Comandi)
+            {
+                UpdateTerminal($"Comando: {item.Name}, codeH: {item.CodeHigh}, codeL: {item.CodeLow}");
+                if (!comboBoxCommand.Items.Contains(item.Name)
+                    && !item.Name.Contains("risposta")
+                    && !item.Name.Contains("Risposta"))
+                    comboBoxCommand.Items.Add(item.Name);
+            }
+
+#if TOPLIFT
+            RecipientId = 0x00080381;
+            label12.Text = $"Indirizzo\n 0x{RecipientId:X8}";
+            Dizionario = (await _dictionaryProvider.LoadVariablesAsync(RecipientId, ct)).ToList();
+            TLTTabRef.UpdateDictionary(Dizionario);
+            BootSmartTabRef.UpdateDictionary(Dizionario);
+#elif EDEN
+            const string macchinaEden = "EDEN";
+            const string schedaEden = "Madre";
+            foreach (ProtocolAddress item in IndirizziProtocollo)
+            {
+                if (item.BoardName == schedaEden && item.DeviceName == macchinaEden)
+                {
+                    label12.Text = $"Indirizzo\n {item.Address}";
+                    RecipientId = Convert.ToUInt32(item.Address.Substring(2), 16);
+                    Dizionario = (await _dictionaryProvider.LoadVariablesAsync(RecipientId, ct)).ToList();
+                    TelemetryTabRef.UpdateDictionary(Dizionario);
+
+                    int indice = comboBoxMachine.FindStringExact(macchinaEden);
+                    if (indice != -1) comboBoxMachine.SelectedIndex = indice;
+
+                    indice = comboBoxBoard.FindStringExact(schedaEden);
+                    if (indice != -1) comboBoxBoard.SelectedIndex = indice;
+                    break;
+                }
+            }
+#elif EGICON
+            const string macchinaEgicon = "SPARK";
+            const string schedaEgicon = "HMI";
+            foreach (ProtocolAddress item in IndirizziProtocollo)
+            {
+                if (item.BoardName == schedaEgicon && item.DeviceName == macchinaEgicon)
+                {
+                    label12.Text = $"Indirizzo\n {item.Address}";
+                    RecipientId = Convert.ToUInt32(item.Address.Substring(2), 16);
+                    Dizionario = (await _dictionaryProvider.LoadVariablesAsync(RecipientId, ct)).ToList();
+                    TelemetryTabRef.UpdateDictionary(Dizionario);
+
+                    int indice = comboBoxMachine.FindStringExact(macchinaEgicon);
+                    if (indice != -1) comboBoxMachine.SelectedIndex = indice;
+
+                    indice = comboBoxBoard.FindStringExact(schedaEgicon);
+                    if (indice != -1) comboBoxBoard.SelectedIndex = indice;
+                    break;
+                }
+            }
+#else
+            TelemetryTabRef.UpdateDictionary(Dizionario);
+#endif
         }
 
         private async void buttonSendPS_Click(object sender, EventArgs e)
