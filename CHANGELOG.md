@@ -20,7 +20,8 @@ Il formato si basa su [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 Modernizzazione: documentazione, standard, riorganizzazione progetto, test coverage,
-architettura multi-progetto, migrazione dizionari Excel → API Azure.
+architettura multi-progetto, migrazione dizionari Excel → API Azure,
+Fase 3 disaccoppiamento Form1 (Branch 1+2 completati).
 
 ### Added
 
@@ -58,6 +59,17 @@ architettura multi-progetto, migrazione dizionari Excel → API Azure.
   - `Infrastructure/DependencyInjection.cs` — Extension method `AddDictionaryProvider(IConfiguration)`
   - `App/appsettings.json` — Sezione `DictionaryApi` (vuota = Excel, popolata = API con fallback)
   - `Docs/MIGRATION_API.md` — Piano migrazione completo con 6 branch documentati
+- **Fase 3 Branch 1: `refactor/type-swap-core-models`** — Sostituzione tipi ExcelHandler con Core.Models
+  - `App/ExcelHandler.cs` — Restituisce direttamente `List<ProtocolAddress>`, `List<Command>`, `List<Variable>`
+  - `App/Form1.cs`, `App/TelemetryManager.cs`, `App/*_WF_Tab.cs` — Rinominate proprietà (es. `AddrH→AddressHigh`)
+  - Test aggiornati: `ExcelHandlerTests`, `TelemetryManagerTests`
+- **Fase 3 Branch 2: `refactor/source-swap-idictionary-provider`** — Sostituzione ExcelHandler come sorgente dati
+  - `App/Form1.cs` — Iniettato `IDictionaryProvider`, estratto `LoadDictionaryDataAsync(CancellationToken)`,
+    `comboBoxBoard_SelectedIndexChanged` reso `async void`, eliminati `hExcel`/`ExcelfilePath`/`isStreamBased`
+  - Eliminati 6 blocchi `#if TOPLIFT/#else` relativi al caricamento (unificati da `LoadProtocolDataAsync`/`LoadVariablesAsync`)
+  - `Docs/PREPROCESSOR_DIRECTIVES.md` — Documentati 9 blocchi `#if` rimasti con strategia di refactoring
+  - `Tests/Integration/Form1/` — 9 test di integrazione + `MockDictionaryProvider` per il contratto IDictionaryProvider
+  - Test totali: 258 → 272 (dual TFM: 92 net10.0 + 180 net10.0-windows)
 
 ### Changed
 

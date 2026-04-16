@@ -1,7 +1,7 @@
 # App
 
 > Progetto Windows Forms principale — gestione, diagnostica e test dispositivi STEM.  
-> **Ultimo aggiornamento:** 2026-04-14
+> **Ultimo aggiornamento:** 2026-04-16
 
 ---
 
@@ -50,7 +50,7 @@ App/
 │   ├── Dizionari STEM.xlsx         Excel dizionari embedded (~187k)
 │   └── Ztem.ico                    Icona applicazione
 │
-├── ExcelHandler.cs                 Lettura dizionari da Excel (ClosedXML)
+├── ExcelHandler.cs                 Lettura dizionari da Excel (ClosedXML) — legacy, non più usato da Form1
 ├── Terminal.cs                     Logger basico (StringBuilder)
 ├── SP_Code_Generator.cs            Generatore sp_config.h
 ├── CircularProgressBar.cs          Custom control progresso circolare
@@ -73,6 +73,9 @@ Configurazione minimale in `Program.cs`:
 `IDictionaryProvider` viene registrato da `Infrastructure.DependencyInjection.AddDictionaryProvider()`.
 Se `DictionaryApi:BaseUrl` + `ApiKey` sono configurati in `appsettings.json` o environment variables,
 viene usato `FallbackDictionaryProvider(API, Excel)`. Altrimenti solo `ExcelDictionaryProvider`.
+
+`Form1` riceve `IDictionaryProvider` via `IServiceProvider` nel constructor e chiama
+`LoadDictionaryDataAsync(CancellationToken)` nell'evento `Load` per caricare protocollo e variabili.
 
 ---
 
@@ -106,7 +109,7 @@ viene usato `FallbackDictionaryProvider(API, Excel)`. Altrimenti solo `ExcelDict
 
 ## Requisiti
 
-- **.NET 8.0** (Windows 10+ x64)
+- **.NET 10.0** (Windows 10+ x64)
 - **Visual Studio 2022/2026** con workload Desktop Development
 - **PCAN USB** (opzionale, per comunicazione CAN)
 
@@ -130,10 +133,12 @@ dotnet build App/App.csproj -c TOPLIFT-A2-Release
 ## Note Legacy
 
 - `Form1.cs` è un God Object (~55k LOC con Designer) — contiene GUI + logica protocollo + telemetria
-- Le configurazioni device usano `#if` preprocessor (`TOPLIFT`, `EDEN`, `EGICON`, `BUTTONPANEL`)
-- Il file Excel dei dizionari è embedded come risorsa (`App.Resources.Dizionari STEM.xlsx`)
+- Il caricamento dizionari avviene tramite `IDictionaryProvider` (async, event `Load`) — non più via `ExcelHandler`
+- `ExcelHandler.cs` è ancora presente ma non ha consumer attivi — candidato alla rimozione nella Fase 3
+- Le configurazioni device usano `#if` preprocessor (`TOPLIFT`, `EDEN`, `EGICON`, `BUTTONPANEL`) — documentate in `Docs/PREPROCESSOR_DIRECTIVES.md`
+- Il file Excel dei dizionari è embedded in `Infrastructure` (usato come fallback da `ExcelDictionaryProvider`)
 - `InternalsVisibleTo("Tests")` abilitato per permettere test su tipi `internal`
-- `ProjectReference` a `Core` e `Infrastructure` per accesso a IDictionaryProvider
+- `ProjectReference` a `Core` e `Infrastructure` per accesso a `IDictionaryProvider`
 
 ---
 
