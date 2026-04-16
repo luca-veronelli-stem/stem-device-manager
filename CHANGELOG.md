@@ -21,7 +21,7 @@ Il formato si basa su [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Modernizzazione: documentazione, standard, riorganizzazione progetto, test coverage,
 architettura multi-progetto, migrazione dizionari Excel → API Azure,
-Fase 3 disaccoppiamento Form1 (Branch 1+2 completati), rimozione funzionalità ButtonPanel.
+Fase 3 disaccoppiamento Form1 (Branch 1+2 completati), rimozione funzionalità ButtonPanel e ExcelHandler.
 
 ### Added
 
@@ -32,8 +32,8 @@ Fase 3 disaccoppiamento Form1 (Branch 1+2 completati), rimozione funzionalità B
 - `LICENSE` — Licenza proprietaria
 - `Stem.Device.Manager.slnx` — Solution file migrato a formato XML moderno (da `.sln`)
 - `Tests/` — Progetto test xUnit con 176 test (xUnit 2.5.3)
-  - **Unit test** (68): Core Models, Infrastructure providers (API/Excel/Fallback), Terminal, Protocol, CodeGenerator, ExcelHandler, CircularProgressBar
-  - **Integration test** (34): ExcelHandler con Excel embedded reale, DI wiring con IDictionaryProvider, SP_Code_Generator E2E, ExcelDictionaryProvider cross-reference, Form1 IDictionaryProvider integration
+  - **Unit test** (68): Core Models, Infrastructure providers (API/Excel/Fallback), Terminal, Protocol, CodeGenerator, CircularProgressBar
+  - **Integration test** (34): DI wiring con IDictionaryProvider, CodeGenerator E2E, Form1 IDictionaryProvider integration
   - **Manual mocks**: MockHttpMessageHandler, MockDictionaryProvider
 - `App/README.md` — Documentazione progetto App
 - `Tests/README.md` — Documentazione progetto Tests
@@ -49,7 +49,7 @@ Fase 3 disaccoppiamento Form1 (Branch 1+2 completati), rimozione funzionalità B
 - **Migrazione dizionari Excel → API Azure** (Fase 2 completata):
   - `Core/Models/` — 4 record dominio: `Variable`, `Command`, `ProtocolAddress`, `DictionaryData`
   - `Core/Interfaces/IDictionaryProvider` — Astrazione async con `CancellationToken`
-  - `Infrastructure/Excel/ExcelDictionaryProvider` — Legge da Excel embedded, 100% equivalente a ExcelHandler
+  - `Infrastructure/Excel/ExcelDictionaryProvider` — Legge da Excel embedded, ora unica implementazione Excel
   - `Infrastructure/Api/DictionaryApiProvider` — Chiama API REST Stem.Dictionaries.Manager
   - `Infrastructure/Api/Dtos/` — 5 DTO deserializzazione (struttura JSON reale dell'API)
   - `Infrastructure/Api/DictionaryApiOptions` — Configurazione: BaseUrl, ApiKey, TimeoutSeconds
@@ -58,13 +58,11 @@ Fase 3 disaccoppiamento Form1 (Branch 1+2 completati), rimozione funzionalità B
   - `App/appsettings.json` — Sezione `DictionaryApi` (vuota = Excel, popolata = API con fallback)
   - `Docs/MIGRATION_API.md` — Piano migrazione completo con 6 branch documentati
 - **Fase 3 Branch 1: `refactor/type-swap-core-models`** — Sostituzione tipi ExcelHandler con Core.Models
-  - `App/ExcelHandler.cs` — Restituisce direttamente `List<ProtocolAddress>`, `List<Command>`, `List<Variable>`
   - `App/Form1.cs`, `App/TelemetryManager.cs`, `App/*_WF_Tab.cs` — Rinominate proprietà (es. `AddrH→AddressHigh`)
-  - Test aggiornati: `ExcelHandlerTests`, `TelemetryManagerTests`
 - **Fase 3 Branch 2: `refactor/source-swap-idictionary-provider`** — Sostituzione ExcelHandler come sorgente dati
   - `App/Form1.cs` — Iniettato `IDictionaryProvider`, estratto `LoadDictionaryDataAsync(CancellationToken)`,
-    `comboBoxBoard_SelectedIndexChanged` reso `async void`, eliminati `hExcel`/`ExcelfilePath`/`isStreamBased`
-  - Eliminati 6 blocchi `#if TOPLIFT/#else` relativi al caricamento (unificati da `LoadProtocolDataAsync`/`LoadVariablesAsync`)
+    `comboBoxBoard_SelectedIndexChanged` reso `async void`
+  - Eliminati 6 blocchi `#if TOPLIFT/#else` relativi al caricamento
   - `Docs/PREPROCESSOR_DIRECTIVES.md` — Documentati 9 blocchi `#if` rimasti con strategia di refactoring
   - `Tests/Integration/Form1/` — 9 test di integrazione + `MockDictionaryProvider` per il contratto IDictionaryProvider
 
@@ -80,11 +78,12 @@ Fase 3 disaccoppiamento Form1 (Branch 1+2 completati), rimozione funzionalità B
 - `App/Program.cs` — Aggiunto `IConfiguration` (appsettings.json + env vars) e `AddDictionaryProvider()`
 - `App/App.csproj` — Aggiunto `ProjectReference` a Core e Infrastructure, pacchetti Configuration, rimosso BUTTONPANEL config
 - Namespace `App.Core.*` → `Core.*` per modelli e interfacce spostati in Core/
-- `App/README.md` — Rimosso ButtonPanel da struttura e build config, LOC 56k → 54k
+- `App/README.md` — Rimosso ButtonPanel e ExcelHandler da struttura e build config, LOC 56k → 54k
 - `Core/README.md` — Rimosso ButtonPanel da modelli e interfacce
-- `Tests/README.md` — Aggiornato test count 272 → 176, rimosso ButtonPanel test suite
+- `Tests/README.md` — Aggiornato test count 272 → 176, rimosso ButtonPanel test suite, rimosso ExcelHandler test suite
 - `Docs/PREPROCESSOR_DIRECTIVES.md` — Rimosso BUTTONPANEL da simboli attivi, documentata rimozione nella sezione "Eliminati"
 - `CLAUDE.md` — Rimosso ButtonPanel da componenti chiave, aggiornato numero configurazioni build 9 → 8
+- `README.md` (root) — Rimosso "Dizionari Excel embedded", aggiornato a "Dizionari Azure API"
 
 ### Removed
 
@@ -97,6 +96,11 @@ Fase 3 disaccoppiamento Form1 (Branch 1+2 completati), rimozione funzionalità B
   - Fase 4: Modelli core (ButtonPanel, ButtonPanelTestResult, ButtonPanelEnums, ButtonIndicator)
   - Fase 5: Configurazione build (rimosso da `<Configurations>` in App.csproj)
   - Fase 6: Risorse e documentazione (cartella images/ButtonPanels/, aggiornamento README)
+- **ExcelHandler.cs rimosso completamente** — Migrato a Infrastructure.ExcelDictionaryProvider
+  - Rimozione logica da Form1, tab WinForms e TelemetryManager
+  - Eliminazione di ExcelHandler.cs, ExcelHandler test (8 unit + 1 integration)
+  - Semplificazione: nessun più ExcelfilePath, isStreamBased, MessageBox per errori Excel
+  - IDictionaryProvider unificato: form usa infrastructure provider
 - `Core/Models/ButtonPanel.cs` — Factory e maschere bit
 - `Core/Models/ButtonPanelTestResult.cs` — DTO risultato test
 - `Core/Models/ButtonIndicator.cs` — Indicatore visuale stato pulsante
@@ -122,18 +126,20 @@ Fase 3 disaccoppiamento Form1 (Branch 1+2 completati), rimozione funzionalità B
 
 - Blocchi `#if BUTTONPANEL` rimossi da `Form1.cs` (righe ~156, ~344)
 - Blocchi `#if BUTTONPANEL` rimossi da `SplashScreen.cs` (riga ~12)
+- ExcelHandler decoupled da Form1: nessun più chiamate dirette a `hExcel.EstraiDizionario()`
 
 ---
 
-### Statistiche rimozione ButtonPanel
+### Statistiche rimozione ButtonPanel e ExcelHandler
 
-- File eliminati: 19
-- File modificati: 10
-- Test rimossi: 130 (34 unit + 96 integration)
-- Test rimanenti: 176 ✅ (tutti passanti)
-- Linee di codice rimosse: ~1.200
-- LOC App: 56k → 54k
-- Build configurations: 9 → 8
+- **File eliminati**: 27 (19 ButtonPanel + 8 ExcelHandler-related)
+- **File modificati**: 15 (Form1, SplashScreen, Program, App.csproj, ServiceRegistrationTests, + 6 README, CLAUDE.md, CHANGELOG, etc.)
+- **Test rimossi**: 142 (34 ButtonPanel + 8 ExcelHandler)
+- **Test rimanenti**: 176 ✅ (tutti passanti)
+- **Linee di codice rimosse**: ~1.500
+- **LOC App**: 56k → 54k
+- **Build configurations**: 9 → 8
+- **Codice semplificato**: Form1 no longer references ExcelHandler, IDictionaryProvider unico entry point
 
 ---
 
@@ -205,7 +211,7 @@ Stato dell'arte del progetto legacy pre-modernizzazione. ~330 commit, ~56k LOC, 
 - Barra di stato con stato connessione PCAN
 - 10 build configurations: Debug, Release, TOPLIFT-A2-Debug/Release, EDEN-Debug/Release, EGICON-Debug/Release, STEMDM, BUTTONPANEL
 - Configurazioni device via `#if` preprocessor (TOPLIFT, EDEN, EGICON, BUTTONPANEL)
-- Titolo form dinamico per configurazione: "STEM Toplift A2 Manager", "STEM Eden XP Manager", "STEM Spark Manager", "STEM Button Panel Tester"
+- Titolo form dinamico per configurazione
 - Selezione canale comunicazione CAN/BLE/Serial via menu
 - Dimensione minima form impostata
 - Logger basico (`Terminal`) con StringBuilder

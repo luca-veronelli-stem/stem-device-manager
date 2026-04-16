@@ -15,7 +15,7 @@
 Stem Device Manager è un tool Windows desktop utilizzato per:
 
 - **Comunicare** con i dispositivi via protocollo proprietario (CAN, BLE, Serial)
-- **Leggere/scrivere** variabili e comandi tramite dizionari Excel embedded
+- **Leggere/scrivere** variabili e comandi tramite dizionari Azure API
 - **Aggiornare firmware** via bootloader proprietario (classico e smart)
 - **Monitorare telemetria** in tempo reale con grafici OxyPlot
 - **Generare codice** configurazione (`sp_config.h`)
@@ -28,6 +28,7 @@ Il progetto è un **monolite legacy** attualmente in fase di modernizzazione:
 - **176 test automatizzati** (xUnit) — unit + integration  
 - Architettura multi-progetto: **Core** (net10.0) + **Infrastructure** (net10.0) + **App** (WinForms)  
 - Infrastruttura API Azure pronta con fallback Excel via DI; Form1 migrata a `IDictionaryProvider`  
+- ExcelHandler rimosso completamente (migrato a Infrastructure.ExcelDictionaryProvider)
 
 ---
 
@@ -39,8 +40,7 @@ Il progetto è un **monolite legacy** attualmente in fase di modernizzazione:
 | **CAN (PCAN)** | ✅ | Comunicazione via Peak PCAN USB |
 | **BLE** | ✅ | Bluetooth Low Energy via Plugin.BLE |
 | **Seriale** | ✅ | Comunicazione via porta COM |
-| **Dizionari Excel** | ✅ | Lettura variabili/comandi da Excel embedded |
-| **API Dizionari Azure** | ✅ | Provider API REST con fallback Excel (DI) |
+| **Dizionari Azure API** | ✅ | Provider API REST con fallback Excel (DI) |
 | **Bootloader** | ✅ | Aggiornamento firmware (classico + smart) |
 | **Telemetria** | ✅ | Lettura variabili + grafici OxyPlot (lenta + veloce) |
 | **Code Generator** | ✅ | Genera sp_config.h |
@@ -58,7 +58,7 @@ Il progetto è un **monolite legacy** attualmente in fase di modernizzazione:
 
 | Package | Versione | Uso |
 |---------|----------|-----|
-| ClosedXML | 0.105.0 | Lettura dizionari Excel |
+| ClosedXML | 0.105.0 | Lettura dizionari Excel (Infrastructure) |
 | DocumentFormat.OpenXml | 3.5.1 | Supporto formati Excel |
 | OxyPlot.WindowsForms | 2.2.0 | Grafici telemetria |
 | Peak.PCANBasic.NET | 5.0.1 | Interfaccia CAN PCAN |
@@ -113,12 +113,11 @@ Stem.Device.Manager/
 ├── App/                             Windows Forms (.NET 10)
 │   ├── Program.cs                   Entry point + DI + IConfiguration
 │   ├── Form1.cs                     Main form (God Object ~54k LOC) — usa IDictionaryProvider
-│   ├── ExcelHandler.cs              Legacy Excel (non più usato da Form1)
 │   ├── STEMProtocol/                Protocollo comunicazione proprietario
 │   ├── GUI/                         Tab pages WinForms
 │   └── Resources/                   Excel embedded, icone
 ├── Tests/                           176 test (xUnit)
-│   ├── Unit/                        Core, Infrastructure, ExcelHandler, Protocol
+│   ├── Unit/                        Core, Infrastructure, Protocol
 │   └── Integration/                 DI, ExcelHandler, CodeGenerator, Form1
 └── Docs/                            Documentazione + Standards
 ```

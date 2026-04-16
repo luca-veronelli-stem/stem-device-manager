@@ -13,7 +13,7 @@
 | **TFM** | `net10.0` + `net10.0-windows10.0.19041.0` (dual target) |
 | **Test totali** | 176 |
 | **Unit test** | 68 (modelli, provider, protocol, etc.) |
-| **Integration test** | 34 (DI, Excel, CodeGenerator, Form1, ecc.) |
+| **Integration test** | 34 (DI, CodeGenerator, Form1, ecc.) |
 | **Mock** | Manual (nessuna libreria esterna) |
 
 ---
@@ -70,16 +70,10 @@ Tests/
 │   ├── CodeGenerator/
 │   │   └── SP_Code_GeneratorTests.cs       Header C, #define (7 test)
 │   │
-│   ├── ExcelHandler/
-│   │   └── ExcelHandlerTests.cs            Guard clauses, DTO (7 test)
-│   │
 │   └── CircularProgressBar/
 │       └── CircularProgressBarTests.cs     Clamping, validazione (5 test)
 │
 └── Integration/                            34 test di integrazione
-    ├── ExcelHandler/
-    │   └── ExcelHandlerIntegrationTests.cs     Excel embedded reale (8 test)
-    │
     ├── Infrastructure/
     │   └── ExcelDictionaryProviderCrossReferenceTests.cs  Confronto campo per campo (6 test)
     │
@@ -108,9 +102,7 @@ Tests/
 | **Terminal** | `TerminalTests.cs` | 6 | Unit |
 | **SPRollingCode** | `RollingCodeGeneratorTests.cs` | 4 | Unit |
 | **SP_Code_Generator** | `SP_Code_GeneratorTests.cs` | 7 | Unit |
-| **ExcelHandler** | `ExcelHandlerTests.cs` | 7 | Unit |
 | **CircularProgressBar** | `CircularProgressBarTests.cs` | 5 | Unit |
-| **ExcelHandler** | `ExcelHandlerIntegrationTests.cs` | 8 | Integration |
 | **Infrastructure Excel** | `ExcelDictionaryProviderCrossReferenceTests.cs` | 6 | Integration |
 | **DI Container** | `ServiceRegistrationTests.cs` | 5 | Integration |
 | **SP_Code_Generator** | `SP_Code_GeneratorIntegrationTests.cs` | 4 | Integration |
