@@ -1,6 +1,6 @@
 # Tests
 
-> Test automatizzati per Stem.Device.Manager — xUnit, 272 test (92 net10.0 + 180 net10.0-windows).  
+> Test automatizzati per Stem.Device.Manager — xUnit, 176 test.  
 > **Ultimo aggiornamento:** 2026-04-16
 
 ---
@@ -11,9 +11,9 @@
 |---------|--------|
 | **Framework** | xUnit 2.5.3 |
 | **TFM** | `net10.0` + `net10.0-windows10.0.19041.0` (dual target) |
-| **Test totali** | 272 (92 net10.0 + 180 net10.0-windows) |
-| **Unit test** | 95 (modelli, enum, provider, fallback, protocol, etc.) |
-| **Integration test** | 43 (DI wiring, Excel cross-reference, presenter, codegen, IDictionaryProvider) |
+| **Test totali** | 176 |
+| **Unit test** | 68 (modelli, provider, protocol, etc.) |
+| **Integration test** | 34 (DI, Excel, CodeGenerator, Form1, ecc.) |
 | **Mock** | Manual (nessuna libreria esterna) |
 
 ---
@@ -47,18 +47,13 @@ dotnet test Tests/Tests.csproj --filter "FullyQualifiedName~Tests.Integration"
 Tests/
 ├── Tests.csproj
 │
-├── Unit/                                   95 test unitari
+├── Unit/                                   68 test unitari
 │   ├── Core/
-│   │   ├── Enums/
-│   │   │   └── ButtonPanelEnumsTests.cs        Contratti enum (7 test)
 │   │   └── Models/
-│   │       ├── ButtonPanelTests.cs             Factory + coerenza (11 test)
-│   │       ├── ButtonIndicatorTests.cs         Stato default (2 test)
-│   │       ├── ButtonPanelTestResultTests.cs   Default values (3 test)
-│   │       ├── VariableTests.cs                Record equality (3 test)
-│   │       ├── CommandTests.cs                 Record equality (3 test)
-│   │       ├── ProtocolAddressTests.cs         Record equality (3 test)
-│   │       └── DictionaryDataTests.cs          Constructor + order (3 test)
+│   │       ├── VariableTests.cs            Record equality (3 test)
+│   │       ├── CommandTests.cs             Record equality (3 test)
+│   │       ├── ProtocolAddressTests.cs     Record equality (3 test)
+│   │       └── DictionaryDataTests.cs      Constructor + order (3 test)
 │   │
 │   ├── Infrastructure/
 │   │   ├── MockHttpMessageHandler.cs       Mock HTTP per API provider
@@ -67,19 +62,19 @@ Tests/
 │   │   └── FallbackDictionaryProviderTests.cs Fallback decorator (9 test)
 │   │
 │   ├── Terminal/
-│   │   └── TerminalTests.cs                    Append, get, write (6 test)
+│   │   └── TerminalTests.cs                Append, get, write (6 test)
 │   │
 │   ├── Protocol/
-│   │   └── RollingCodeGeneratorTests.cs        Range, ciclo, thread-safety (4 test)
+│   │   └── RollingCodeGeneratorTests.cs    Range, ciclo, thread-safety (4 test)
 │   │
 │   ├── CodeGenerator/
-│   │   └── SP_Code_GeneratorTests.cs           Header C, #define (7 test)
+│   │   └── SP_Code_GeneratorTests.cs       Header C, #define (7 test)
 │   │
 │   ├── ExcelHandler/
-│   │   └── ExcelHandlerTests.cs                Guard clauses, DTO (7 test)
+│   │   └── ExcelHandlerTests.cs            Guard clauses, DTO (7 test)
 │   │
 │   └── CircularProgressBar/
-│       └── CircularProgressBarTests.cs         Clamping, validazione (5 test)
+│       └── CircularProgressBarTests.cs     Clamping, validazione (5 test)
 │
 └── Integration/                            34 test di integrazione
     ├── ExcelHandler/
@@ -89,13 +84,7 @@ Tests/
     │   └── ExcelDictionaryProviderCrossReferenceTests.cs  Confronto campo per campo (6 test)
     │
     ├── DependencyInjection/
-    │   └── ServiceRegistrationTests.cs         DI wiring + IDictionaryProvider (9 test)
-    │
-    ├── Presenter/
-    │   ├── ButtonPanelTestPresenterTests.cs    Orchestrazione MVP (11 test)
-    │   └── Mocks/
-    │       ├── MockButtonPanelTestTab.cs       Mock manuale IButtonPanelTestTab
-    │       └── MockButtonPanelTestService.cs   Mock manuale IButtonPanelTestService
+    │   └── ServiceRegistrationTests.cs         DI wiring + IDictionaryProvider (5 test)
     │
     ├── CodeGenerator/
     │   └── SP_Code_GeneratorIntegrationTests.cs  Multi-config E2E (4 test)
@@ -113,10 +102,6 @@ Tests/
 | Modulo | File test | Test | Tipo |
 |--------|-----------|------|------|
 | **Core Models (Dictionary)** | `VariableTests.cs`, `CommandTests.cs`, `ProtocolAddressTests.cs`, `DictionaryDataTests.cs` | 12 | Unit |
-| **Core Models (ButtonPanel)** | `ButtonPanelTests.cs` | 11 | Unit |
-| **Core Enums** | `ButtonPanelEnumsTests.cs` | 7 | Unit |
-| **Core Models** | `ButtonIndicatorTests.cs` | 2 | Unit |
-| **Core Models** | `ButtonPanelTestResultTests.cs` | 3 | Unit |
 | **Infrastructure API** | `DictionaryApiProviderTests.cs` | 18 | Unit |
 | **Infrastructure Excel** | `ExcelDictionaryProviderTests.cs` | 14 | Unit |
 | **Infrastructure Fallback** | `FallbackDictionaryProviderTests.cs` | 9 | Unit |
@@ -127,8 +112,7 @@ Tests/
 | **CircularProgressBar** | `CircularProgressBarTests.cs` | 5 | Unit |
 | **ExcelHandler** | `ExcelHandlerIntegrationTests.cs` | 8 | Integration |
 | **Infrastructure Excel** | `ExcelDictionaryProviderCrossReferenceTests.cs` | 6 | Integration |
-| **DI Container** | `ServiceRegistrationTests.cs` | 9 | Integration |
-| **Presenter (MVP)** | `ButtonPanelTestPresenterTests.cs` | 11 | Integration |
+| **DI Container** | `ServiceRegistrationTests.cs` | 5 | Integration |
 | **SP_Code_Generator** | `SP_Code_GeneratorIntegrationTests.cs` | 4 | Integration |
 | **IDictionaryProvider (Form1)** | `Form1DictionaryLoadingTests.cs` | 9 | Integration |
 
@@ -164,14 +148,8 @@ Tests/
 I test vengono eseguiti automaticamente nella pipeline Bitbucket (`bitbucket-pipelines.yml`):
 
 ```
-Build → Test (272 test) → ✅/❌
+Build → Test (176 test) → ✅/❌
 ```
-
----
-
-## Issue Correlate
-
-→ [ISSUES.md](../ISSUES.md) (da creare)
 
 ---
 

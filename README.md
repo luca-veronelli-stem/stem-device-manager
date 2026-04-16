@@ -2,10 +2,10 @@
 
 [![Version](https://img.shields.io/badge/version-2.15-blue)](./CHANGELOG.md)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
-[![Tests](https://img.shields.io/badge/tests-272-brightgreen)](./Tests/)
+[![Tests](https://img.shields.io/badge/tests-176-brightgreen)](./Tests/)
 [![License](https://img.shields.io/badge/license-Proprietary-red)](#licenza)
 
-> **Applicativo desktop per la gestione, diagnostica e test dei dispositivi STEM via protocollo proprietario multi-canale (CAN, BLE, Serial).**  
+> **Applicativo desktop per la gestione, diagnostica e comunicazione dei dispositivi STEM via protocollo proprietario multi-canale (CAN, BLE, Serial).**  
 > **Ultimo aggiornamento:** 2026-04-16
 
 ---
@@ -18,18 +18,16 @@ Stem Device Manager è un tool Windows desktop utilizzato per:
 - **Leggere/scrivere** variabili e comandi tramite dizionari Excel embedded
 - **Aggiornare firmware** via bootloader proprietario (classico e smart)
 - **Monitorare telemetria** in tempo reale con grafici OxyPlot
-- **Collaudare pulsantiere** con test automatizzati (DI + MVP)
 - **Generare codice** configurazione (`sp_config.h`)
 
 ### Stato Attuale
 
 Il progetto è un **monolite legacy** attualmente in fase di modernizzazione:  
-- ~56k LOC di codice produzione in un singolo progetto  
-- `Form1.cs` è un God Object (~55k LOC con Designer) — ora usa `IDictionaryProvider` per i dizionari  
-- **272 test automatizzati** (92 net10.0 + 180 net10.0-windows) — xUnit  
+- ~54k LOC di codice produzione in un singolo progetto  
+- `Form1.cs` è un God Object (~54k LOC con Designer) — ora usa `IDictionaryProvider` per i dizionari  
+- **176 test automatizzati** (xUnit) — unit + integration  
 - Architettura multi-progetto: **Core** (net10.0) + **Infrastructure** (net10.0) + **App** (WinForms)  
 - Infrastruttura API Azure pronta con fallback Excel via DI; Form1 migrata a `IDictionaryProvider`  
-- Unico modulo con architettura pulita: test pulsantiere (DI + MVP)
 
 ---
 
@@ -45,9 +43,8 @@ Il progetto è un **monolite legacy** attualmente in fase di modernizzazione:
 | **API Dizionari Azure** | ✅ | Provider API REST con fallback Excel (DI) |
 | **Bootloader** | ✅ | Aggiornamento firmware (classico + smart) |
 | **Telemetria** | ✅ | Lettura variabili + grafici OxyPlot (lenta + veloce) |
-| **Test Pulsantiere** | ✅ | Collaudo automatizzato con DI + MVP |
 | **Code Generator** | ✅ | Genera sp_config.h |
-| **Test Automatizzati** | ✅ | 272 test (unit + integration) — xUnit |
+| **Test Automatizzati** | ✅ | 176 test (unit + integration) — xUnit |
 
 ---
 
@@ -75,7 +72,7 @@ Il progetto è un **monolite legacy** attualmente in fase di modernizzazione:
 
 ```bash
 # Clona il repository
-git clone https://bitbucket.org/stem-fw/win10-stem-dev-man
+git clone https://bitbucket.org/stem-fw/stem-device-manager
 
 # Build
 dotnet build
@@ -96,7 +93,6 @@ dotnet run --project App/App.csproj
 | `TOPLIFT-A2-Debug/Release` | Solo funzionalità TopLift A2 |
 | `EDEN-Debug/Release` | Solo funzionalità Eden XP |
 | `EGICON-Debug/Release` | Solo funzionalità Spark |
-| `BUTTONPANEL` | Solo test pulsantiere |
 
 ---
 
@@ -106,9 +102,8 @@ dotnet run --project App/App.csproj
 Stem.Device.Manager/
 ├── Stem.Device.Manager.slnx        Solution file (XML moderno)
 ├── Core/                            Modelli dominio, interfacce (net10.0)
-│   ├── Models/                      Variable, Command, ProtocolAddress, ButtonPanel
-│   ├── Enums/                       ButtonPanelEnums
-│   └── Interfaces/                  IDictionaryProvider, IButtonPanelTestService
+│   ├── Models/                      Variable, Command, ProtocolAddress
+│   └── Interfaces/                  IDictionaryProvider
 ├── Infrastructure/                   Provider dati (net10.0)
 │   ├── Api/                         DictionaryApiProvider + DTO
 │   ├── Excel/                       ExcelDictionaryProvider
@@ -117,14 +112,14 @@ Stem.Device.Manager/
 ├── Services/                        Logica business (net10.0-windows, vuoto)
 ├── App/                             Windows Forms (.NET 10)
 │   ├── Program.cs                   Entry point + DI + IConfiguration
-│   ├── Form1.cs                     Main form (God Object ~55k LOC) — usa IDictionaryProvider
+│   ├── Form1.cs                     Main form (God Object ~54k LOC) — usa IDictionaryProvider
 │   ├── ExcelHandler.cs              Legacy Excel (non più usato da Form1)
 │   ├── STEMProtocol/                Protocollo comunicazione proprietario
-│   ├── GUI/                         Views + Presenters (MVP)
+│   ├── GUI/                         Tab pages WinForms
 │   └── Resources/                   Excel embedded, icone
-├── Tests/                           272 test (xUnit, dual TFM)
+├── Tests/                           176 test (xUnit)
 │   ├── Unit/                        Core, Infrastructure, ExcelHandler, Protocol
-│   └── Integration/                 DI, Presenter, ExcelHandler, CodeGenerator
+│   └── Integration/                 DI, ExcelHandler, CodeGenerator, Form1
 └── Docs/                            Documentazione + Standards
 ```
 
@@ -141,12 +136,6 @@ Stem.Device.Manager/
 - [Direttive preprocessore (#if)](./Docs/PREPROCESSOR_DIRECTIVES.md)
 - [CHANGELOG](./CHANGELOG.md)
 - [LICENSE](./LICENSE)
-
----
-
-## Issue Correlate
-
-→ [ISSUES.md](./ISSUES.md) (da creare)
 
 ---
 

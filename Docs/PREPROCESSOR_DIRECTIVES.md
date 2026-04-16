@@ -1,9 +1,9 @@
 # PREPROCESSOR_DIRECTIVES.md — Blocchi `#if` in Form1.cs
 
 **Creato:** 2026-04-16  
-**Branch:** refactor/source-swap-idictionary-provider  
-**Scopo:** Documentare i blocchi `#if` rimasti dopo la migrazione a IDictionaryProvider.
-I blocchi relativi al caricamento Excel sono stati eliminati (unificati da IDictionaryProvider).
+**Ultimo aggiornamento:** 2026-04-16  
+**Scopo:** Documentare i blocchi `#if` rimasti dopo la migrazione a IDictionaryProvider e la rimozione di ButtonPanel.
+I blocchi relativi al caricamento Excel e alla funzionalità ButtonPanel sono stati eliminati (unificati da IDictionaryProvider).
 Questi blocchi rimasti sono candidati per il refactoring della Fase 3.
 
 ---
@@ -25,21 +25,17 @@ Questi blocchi rimasti sono candidati per il refactoring della Fase 3.
 
 ---
 
-### 2. Titolo finestra (riga ~158)
+### 2. Titolo finestra (riga ~156)
 
 ```csharp
-#if BUTTONPANEL
-    Text = "STEM Button Panel Tester ...";
-#else
 #if TOPLIFT
-    Text = "STEM Toplift A2 Manager ...";
+    Text = "STEM Toplift A2 Manager " + Software_Version;
 #elif EDEN
-    Text = "STEM Eden XP Manager ...";
+    Text = "STEM Eden XP Manager " + Software_Version;
 #elif EGICON
-    Text = "STEM Spark Manager ...";
+    Text = "STEM Spark Manager " + Software_Version;
 #else
     this.Text += Software_Version;
-#endif
 #endif
 ```
 
@@ -48,13 +44,13 @@ Questi blocchi rimasti sono candidati per il refactoring della Fase 3.
 
 ---
 
-### 3. `BootTabRef` (riga ~223)
+### 3. `BootTabRef` (riga ~221)
 
 ```csharp
 #if TOPLIFT
-    // non aggiungere BootTabRef
+
 #elif EDEN
-    // non aggiungere BootTabRef
+
 #else
     tabControl.TabPages.Add(BootTabRef);
 #endif
@@ -65,7 +61,7 @@ Questi blocchi rimasti sono candidati per il refactoring della Fase 3.
 
 ---
 
-### 4. `BootSmartDevices` (riga ~246)
+### 4. `BootSmartDevices` (riga ~244)
 
 ```csharp
 #if TOPLIFT
@@ -82,7 +78,7 @@ Questi blocchi rimasti sono candidati per il refactoring della Fase 3.
 
 ---
 
-### 5. Configurazione UI per TOPLIFT (riga ~307)
+### 5. Configurazione UI per TOPLIFT (riga ~302)
 
 ```csharp
 #if TOPLIFT
@@ -101,25 +97,7 @@ Questi blocchi rimasti sono candidati per il refactoring della Fase 3.
 
 ---
 
-### 6. `#if BUTTONPANEL` — rimozione tab (riga ~349)
-
-```csharp
-#if BUTTONPANEL
-    tabControl.TabPages.Remove(tabPageUART);
-    tabControl.TabPages.Remove(tabPageCodeGen);
-    tabControl.TabPages.Remove(TelemetryTabRef);
-    tabControl.TabPages.Remove(BLETabRef);
-    tabControl.TabPages.Remove(BootSmartTabRef);
-    tabControl.TabPages.Remove(BootTabRef);
-#endif
-```
-
-**Scopo:** Modalità solo-pulsantiere: rimuove tutti i tab non pertinenti.  
-**Refactoring futuro:** Profilo "ButtonPanel" come configurazione dichiarativa.
-
----
-
-### 7. `comboBoxBoard_SelectedIndexChanged` — aggiornamento tab (riga ~479)
+### 6. `comboBoxBoard_SelectedIndexChanged` — aggiornamento tab (riga ~474)
 
 ```csharp
 #if TOPLIFT
@@ -135,7 +113,7 @@ Questi blocchi rimasti sono candidati per il refactoring della Fase 3.
 
 ---
 
-### 8. `LoadDictionaryDataAsync` — caricamento variabili iniziale (riga ~524)
+### 7. `LoadDictionaryDataAsync` — caricamento variabili iniziale (riga ~519)
 
 ```csharp
 #if TOPLIFT
@@ -154,7 +132,7 @@ Questi blocchi rimasti sono candidati per il refactoring della Fase 3.
 
 ---
 
-### 9. `AppLayerDecoded` — visualizzazione dati (riga ~844)
+### 8. `AppLayerDecoded` — visualizzazione dati (riga ~839)
 
 ```csharp
 #if TOPLIFT
@@ -176,20 +154,35 @@ Questi blocchi rimasti sono candidati per il refactoring della Fase 3.
 | `TOPLIFT` | `TOPLIFT-A2-Debug/Release` | Lettino TOPLIFT A2 |
 | `EDEN` | `EDEN-Debug/Release` | Lettino EDEN XP |
 | `EGICON` | `EGICON-Debug/Release` | Display EGICON (SPARK) |
-| `BUTTONPANEL` | `BUTTONPANEL` | Solo collaudo pulsantiere |
 | (nessuno) | `Debug/Release` | Configurazione generica |
 
 ---
 
-## Eliminati in questo branch (refactor/source-swap-idictionary-provider)
+## Eliminati durante la modernizzazione
 
-I seguenti blocchi `#if` sono stati **eliminati** perché unificati da `IDictionaryProvider`:
+I seguenti blocchi `#if` sono stati **eliminati** perché unificati da `IDictionaryProvider` o rimossi con la funzionalità ButtonPanel:
 
-| Posizione originale | Contenuto | Perché eliminato |
-|--------------------|-----------|-----------------|
-| Riga ~356-403 | `#if TOPLIFT` caricamento Excel embedded vs file esterno | `LoadProtocolDataAsync` è uguale per tutti |
-| Riga ~396-403 | `#if TOPLIFT isStreamBased = true #else false` | `isStreamBased` rimosso |
-| Riga ~436 | `hExcel.EstraiDizionario(RecipientId, Dizionario, ExcelfilePath)` (`#if EDEN`) | Sostituito da `LoadVariablesAsync` |
-| Riga ~475 | `hExcel.EstraiDizionario(RecipientId, Dizionario, ExcelfilePath)` (`#elif EGICON`) | Sostituito da `LoadVariablesAsync` |
-| Riga ~484 | `hExcel.EstraiDizionario(RecipientId, Dizionario)` (`#if TOPLIFT` in board change) | Sostituito da `LoadVariablesAsync` |
-| Riga ~488 | `hExcel.EstraiDizionario(RecipientId, Dizionario, ExcelfilePath)` (`#else` in board change) | Sostituito da `LoadVariablesAsync` |
+| Periodo | Contenuto eliminato | Perché |
+|--------|-------------------|--------|
+| Branch 2 (refactor/source-swap-idictionary-provider) | 6 blocchi `#if TOPLIFT/#else` caricamento Excel | `LoadProtocolDataAsync`/`LoadVariablesAsync` unificano il caricamento per tutti i device |
+| Refactor ButtonPanel (main branch) | `#if BUTTONPANEL` titolo, rimozione tab, rimozione dizionari | Modulo ButtonPanel completamente rimosso dal repository |
+| Refactor ButtonPanel (main branch) | `#if BUTTONPANEL` caricamento variabili smart-devices | Integrazione con ButtonPanelTestService rimossa |
+
+---
+
+## Strategia di refactoring (Fase 3)
+
+I blocchi `#if` rimanenti (1-8) saranno progressivamente eliminati mediante:
+
+1. **Device Profile Manager** — Configurazione centralizzata (file JSON o API) con metadati device:
+   - CommunicationPort (can/ble)
+   - Titolo applicazione
+   - Tab visibili
+   - Dispositivi per bootloader smart
+   - RecipientId di default
+
+2. **Factory pattern** — Creazione UI dinamica in base al profilo device
+
+3. **Feature flags** — Migrazione da `#if` a `FeatureFlags` in configurazione (più flessibile e testabile)
+
+4. **Interfacce comuni** — `ITelemetryTab`, `IBootTab` per rendere l'UI modulare e device-agnostica

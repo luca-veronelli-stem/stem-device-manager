@@ -23,7 +23,6 @@
     <File Path=".copilot/agents/test-agent.md" />
   </Folder>
   <Folder Name="/Docs/">
-    <File Path="Docs/MIGRATION_API.md" />
     <File Path="Docs/PREPROCESSOR_DIRECTIVES.md" />
     <File Path="Docs/REFACTOR_ANALYSIS.md" />
   </Folder>

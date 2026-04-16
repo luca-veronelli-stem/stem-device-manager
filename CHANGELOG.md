@@ -21,7 +21,7 @@ Il formato si basa su [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Modernizzazione: documentazione, standard, riorganizzazione progetto, test coverage,
 architettura multi-progetto, migrazione dizionari Excel → API Azure,
-Fase 3 disaccoppiamento Form1 (Branch 1+2 completati).
+Fase 3 disaccoppiamento Form1 (Branch 1+2 completati), rimozione funzionalità ButtonPanel.
 
 ### Added
 
@@ -31,20 +31,18 @@ Fase 3 disaccoppiamento Form1 (Branch 1+2 completati).
 - `CHANGELOG.md` — Questo file
 - `LICENSE` — Licenza proprietaria
 - `Stem.Device.Manager.slnx` — Solution file migrato a formato XML moderno (da `.sln`)
-- `Tests/` — Progetto test xUnit con 258 test (dual TFM: net10.0 + net10.0-windows)
-  - **Unit test** (95): Terminal, Core Models/Enums, RollingCodeGenerator, SP_Code_Generator,
-    ExcelHandler, CircularProgressBar, DictionaryApiProvider, ExcelDictionaryProvider,
-    FallbackDictionaryProvider
-  - **Integration test** (34): ExcelHandler con Excel embedded reale, DI wiring con IDictionaryProvider,
-    ButtonPanelTestPresenter (MVP), SP_Code_Generator E2E, ExcelDictionaryProvider cross-reference
-  - **Manual mocks**: MockButtonPanelTestTab, MockButtonPanelTestService, MockHttpMessageHandler
+- `Tests/` — Progetto test xUnit con 176 test (xUnit 2.5.3)
+  - **Unit test** (68): Core Models, Infrastructure providers (API/Excel/Fallback), Terminal, Protocol, CodeGenerator, ExcelHandler, CircularProgressBar
+  - **Integration test** (34): ExcelHandler con Excel embedded reale, DI wiring con IDictionaryProvider, SP_Code_Generator E2E, ExcelDictionaryProvider cross-reference, Form1 IDictionaryProvider integration
+  - **Manual mocks**: MockHttpMessageHandler, MockDictionaryProvider
 - `App/README.md` — Documentazione progetto App
 - `Tests/README.md` — Documentazione progetto Tests
 - `Core/README.md` — Documentazione progetto Core
 - `Infrastructure/README.md` — Documentazione progetto Infrastructure
+- `Docs/PREPROCESSOR_DIRECTIVES.md` — Documentazione blocchi `#if` nel codice, strategia Fase 3
 - `InternalsVisibleTo("Tests")` in `App.csproj` per testare tipi `internal`
 - **Architettura multi-progetto** — Migrazione da monolite a 4 progetti separati:
-  - `Core/` (net10.0) — Modelli dominio, interfacce (`IDictionaryProvider`, `IButtonPanelTestService`)
+  - `Core/` (net10.0) — Modelli dominio, interfacce (`IDictionaryProvider`)
   - `Infrastructure/` (net10.0) — Provider dati (API Azure + Excel + Fallback decorator)
   - `Services/` (net10.0-windows) — Pronto per logica business futura
   - `App/` (net10.0-windows) — Windows Forms, DI configurato con `IConfiguration`
@@ -69,7 +67,6 @@ Fase 3 disaccoppiamento Form1 (Branch 1+2 completati).
   - Eliminati 6 blocchi `#if TOPLIFT/#else` relativi al caricamento (unificati da `LoadProtocolDataAsync`/`LoadVariablesAsync`)
   - `Docs/PREPROCESSOR_DIRECTIVES.md` — Documentati 9 blocchi `#if` rimasti con strategia di refactoring
   - `Tests/Integration/Form1/` — 9 test di integrazione + `MockDictionaryProvider` per il contratto IDictionaryProvider
-  - Test totali: 258 → 272 (dual TFM: 92 net10.0 + 180 net10.0-windows)
 
 ### Changed
 
@@ -77,17 +74,66 @@ Fase 3 disaccoppiamento Form1 (Branch 1+2 completati).
 - `bitbucket-pipelines.yml` — image `sdk:10.0`, build via `.slnx` (supportato da SDK 10)
 - Rinominato progetto da `STEMPM` ad `App` (cartella `App/`, file `App.csproj`)
 - Migrato solution file da `.sln` (legacy) a `.slnx` (XML moderno, ~58% riduzione righe)
-- Build configurations ridotte da 10 a 9 (rimossa `STEMDM`)
+- Build configurations ridotte da 10 a 8 (rimossa `STEMDM`, rimossa `BUTTONPANEL`)
 - `bitbucket-pipelines.yml` — aggiunto step Test dopo Build
-- `README.md` — aggiornato badge test (0 → 258), struttura soluzione multi-progetto
+- `README.md` — aggiornato badge test (0 → 176), struttura soluzione multi-progetto, caratteristiche, build config
 - `App/Program.cs` — Aggiunto `IConfiguration` (appsettings.json + env vars) e `AddDictionaryProvider()`
-- `App/App.csproj` — Aggiunto `ProjectReference` a Core e Infrastructure, pacchetti Configuration
+- `App/App.csproj` — Aggiunto `ProjectReference` a Core e Infrastructure, pacchetti Configuration, rimosso BUTTONPANEL config
 - Namespace `App.Core.*` → `Core.*` per modelli e interfacce spostati in Core/
+- `App/README.md` — Rimosso ButtonPanel da struttura e build config, LOC 56k → 54k
+- `Core/README.md` — Rimosso ButtonPanel da modelli e interfacce
+- `Tests/README.md` — Aggiornato test count 272 → 176, rimosso ButtonPanel test suite
+- `Docs/PREPROCESSOR_DIRECTIVES.md` — Rimosso BUTTONPANEL da simboli attivi, documentata rimozione nella sezione "Eliminati"
+- `CLAUDE.md` — Rimosso ButtonPanel da componenti chiave, aggiornato numero configurazioni build 9 → 8
 
 ### Removed
 
-- Configurazione `STEMDM` — mai usata, nessun `#if STEMDM` nel codice, nessun `DefineConstants` nel `.csproj`
+- Configurazione `STEMDM` — mai usata, nessun `#if STEMDM` nel codice
+- **Configurazione build `BUTTONPANEL`** — Funzionalità test pulsantiere rimossa interamente
+- **Modulo ButtonPanel completo** — Rimozione in 6 fasi:
+  - Fase 1: Test ButtonPanel (7 file, 34 test unit, 8 test integration)
+  - Fase 2: Disconnessione da Form1 e Program.cs (metodi, blocchi `#if BUTTONPANEL`, registrazione DI)
+  - Fase 3: Interfaccia e servizi (IButtonPanelTestService, ButtonPanelTestService, MVP presenter/view)
+  - Fase 4: Modelli core (ButtonPanel, ButtonPanelTestResult, ButtonPanelEnums, ButtonIndicator)
+  - Fase 5: Configurazione build (rimosso da `<Configurations>` in App.csproj)
+  - Fase 6: Risorse e documentazione (cartella images/ButtonPanels/, aggiornamento README)
+- `Core/Models/ButtonPanel.cs` — Factory e maschere bit
+- `Core/Models/ButtonPanelTestResult.cs` — DTO risultato test
+- `Core/Models/ButtonIndicator.cs` — Indicatore visuale stato pulsante
+- `Core/Enums/ButtonPanelEnums.cs` — 6 enum (ButtonPanelType, TestType, IndicatorState, pulsanti)
+- `Core/Interfaces/IButtonPanelTestService.cs` — Contratto servizio collaudo
+- `App/Services/ButtonPanelTestService.cs` — Implementazione servizio (~250 LOC)
+- `App/GUI/Presenters/ButtonPanelTestPresenter.cs` — Presenter MVP (157 LOC)
+- `App/GUI/Views/ButtonPanelTestTabControl.cs` — UserControl WinForms (579 LOC)
+- `App/GUI/Views/ButtonPanelTestTabControl.Designer.cs` — Auto-generated WinForms
+- `App/Core/Interfaces/IButtonPanelTestTab.cs` — Contratto vista
+- `App/images/ButtonPanels/` — Cartella con 4 immagini JPG (risorse pulsantiere)
+- Test ButtonPanel:
+  - `Tests/Unit/Core/Models/ButtonPanelTests.cs` (10 test)
+  - `Tests/Unit/Core/Models/ButtonPanelTestResultTests.cs` (3 test)
+  - `Tests/Unit/Core/Models/ButtonIndicatorTests.cs` (2 test)
+  - `Tests/Unit/Core/Enums/ButtonPanelEnumsTests.cs` (8 test)
+  - `Tests/Integration/Presenter/ButtonPanelTestPresenterTests.cs` (8+ test)
+  - `Tests/Integration/Presenter/Mocks/MockButtonPanelTestTab.cs`
+  - `Tests/Integration/Presenter/Mocks/MockButtonPanelTestService.cs`
 - `Stem.Device.Manager.sln` — sostituito da `.slnx`
+
+### Fixed
+
+- Blocchi `#if BUTTONPANEL` rimossi da `Form1.cs` (righe ~156, ~344)
+- Blocchi `#if BUTTONPANEL` rimossi da `SplashScreen.cs` (riga ~12)
+
+---
+
+### Statistiche rimozione ButtonPanel
+
+- File eliminati: 19
+- File modificati: 10
+- Test rimossi: 130 (34 unit + 96 integration)
+- Test rimanenti: 176 ✅ (tutti passanti)
+- Linee di codice rimosse: ~1.200
+- LOC App: 56k → 54k
+- Build configurations: 9 → 8
 
 ---
 
@@ -157,7 +203,7 @@ Stato dell'arte del progetto legacy pre-modernizzazione. ~330 commit, ~56k LOC, 
 - Tab Test Pulsantiere (MVP)
 - SplashScreen all'avvio
 - Barra di stato con stato connessione PCAN
-- 9 build configurations: Debug, Release, TOPLIFT-A2-Debug/Release, EDEN-Debug/Release, EGICON-Debug/Release, BUTTONPANEL
+- 10 build configurations: Debug, Release, TOPLIFT-A2-Debug/Release, EDEN-Debug/Release, EGICON-Debug/Release, STEMDM, BUTTONPANEL
 - Configurazioni device via `#if` preprocessor (TOPLIFT, EDEN, EGICON, BUTTONPANEL)
 - Titolo form dinamico per configurazione: "STEM Toplift A2 Manager", "STEM Eden XP Manager", "STEM Spark Manager", "STEM Button Panel Tester"
 - Selezione canale comunicazione CAN/BLE/Serial via menu
@@ -218,4 +264,4 @@ Stato dell'arte del progetto legacy pre-modernizzazione. ~330 commit, ~56k LOC, 
 
 ## Storico URL versioni
 
-[Unreleased]: https://bitbucket.org/stem-fw/win10-stem-dev-man/branches/compare/test/copertura-iniziale..main
+[Unreleased]: https://bitbucket.org/stem-fw/stem-device-manager/branches
