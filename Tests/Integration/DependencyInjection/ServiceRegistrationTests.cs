@@ -1,5 +1,3 @@
-using App.Core.Interfaces;
-using App.Services;
 using Core.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,40 +18,8 @@ public class ServiceRegistrationTests
             .Build();
 
         var services = new ServiceCollection();
-        services.AddTransient<IButtonPanelTestService, ButtonPanelTestService>();
         global::Infrastructure.DependencyInjection.AddDictionaryProvider(services, config);
         return services.BuildServiceProvider();
-    }
-
-    [Fact]
-    public void Resolve_ButtonPanelTestService_ReturnsInstance()
-    {
-        using var sp = BuildServiceProvider();
-
-        var service = sp.GetRequiredService<IButtonPanelTestService>();
-
-        Assert.NotNull(service);
-        Assert.IsType<ButtonPanelTestService>(service);
-    }
-
-    [Fact]
-    public void Resolve_ButtonPanelTestService_IsTransient()
-    {
-        using var sp = BuildServiceProvider();
-
-        var first = sp.GetRequiredService<IButtonPanelTestService>();
-        var second = sp.GetRequiredService<IButtonPanelTestService>();
-
-        Assert.NotSame(first, second);
-    }
-
-    [Fact]
-    public void Resolve_UnregisteredService_Throws()
-    {
-        using var sp = BuildServiceProvider();
-
-        Assert.Throws<InvalidOperationException>(
-            () => sp.GetRequiredService<IButtonPanelTestTab>());
     }
 
     // --- IDictionaryProvider: no API config → Excel ---

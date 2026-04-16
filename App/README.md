@@ -1,6 +1,6 @@
 # App
 
-> Progetto Windows Forms principale — gestione, diagnostica e test dispositivi STEM.  
+> Progetto Windows Forms principale — gestione, diagnostica e comunicazione dispositivi STEM.  
 > **Ultimo aggiornamento:** 2026-04-16
 
 ---
@@ -12,7 +12,7 @@
 | **Tipo** | Windows Forms (.NET 10) |
 | **TFM** | `net10.0-windows10.0.19041.0` |
 | **Target** | `win-x64` (Windows 10+) |
-| **LOC** | ~56,000 |
+| **LOC** | ~54,000 |
 | **Entry point** | `Program.cs` |
 
 ---
@@ -22,7 +22,7 @@
 ```
 App/
 ├── Program.cs                      Entry point + DI setup
-├── Form1.cs                        Main form (God Object ~55k LOC)
+├── Form1.cs                        Main form (God Object ~54k LOC)
 ├── Form1.Designer.cs               WinForms designer
 │
 ├── STEMProtocol/                   Protocollo comunicazione proprietario
@@ -34,29 +34,24 @@ App/
 │   ├── TelemetryManager.cs         Telemetria lenta + veloce
 │   └── SPRollingCode.cs            Codice rolling per sicurezza
 │
-├── Core/                           Modelli e interfacce (ButtonPanel)
-│   ├── Enums/ButtonPanelEnums.cs   5 enums dominio
-│   ├── Models/                     ButtonPanel, ButtonIndicator, ButtonPanelTestResult
-│   └── Interfaces/                 IButtonPanelTestService, IButtonPanelTestTab
-│
-├── Services/
-│   └── ButtonPanelTestService.cs   Logica collaudo pulsantiere
-│
-├── GUI/
-│   ├── Views/                      ButtonPanelTestTabControl (WinForms)
-│   └── Presenters/                 ButtonPanelTestPresenter (MVP)
+├── GUI/                            Tab pages WinForms
+│   ├── BLE_WF_Tab.cs               Tab interfaccia BLE
+│   ├── CAN_WF_Tab.cs               Tab interfaccia CAN
+│   ├── Boot_WF_Tab.cs              Tab bootloader
+│   ├── Boot_Smart_WF_Tab.cs        Tab bootloader smart
+│   ├── Telemetry_WF_Tab.cs         Tab telemetria
+│   └── TopLift_Telemetry_WF_Tab.cs Tab telemetria TopLift
 │
 ├── Resources/
 │   ├── Dizionari STEM.xlsx         Excel dizionari embedded (~187k)
 │   └── Ztem.ico                    Icona applicazione
 │
-├── ExcelHandler.cs                 Lettura dizionari da Excel (ClosedXML) — legacy, non più usato da Form1
 ├── Terminal.cs                     Logger basico (StringBuilder)
 ├── SP_Code_Generator.cs            Generatore sp_config.h
 ├── CircularProgressBar.cs          Custom control progresso circolare
 ├── SerialPort_Manager.cs           Gestione porte seriali
 ├── PCAN_Manager.cs                 Gestione hardware PCAN
-└── *_WF_Tab.cs                     Tab pages (BLE, CAN, Boot, Telemetry)
+└── BLE_Manager.cs                  Gestione BLE
 ```
 
 ---
@@ -67,7 +62,6 @@ Configurazione minimale in `Program.cs`:
 
 | Servizio | Implementazione | Lifetime |
 |----------|----------------|----------|
-| `IButtonPanelTestService` | `ButtonPanelTestService` | Transient |
 | `IDictionaryProvider` | `ExcelDictionaryProvider` o `FallbackDictionaryProvider` | Singleton |
 
 `IDictionaryProvider` viene registrato da `Infrastructure.DependencyInjection.AddDictionaryProvider()`.
@@ -87,7 +81,6 @@ viene usato `FallbackDictionaryProvider(API, Excel)`. Altrimenti solo `ExcelDict
 | `TOPLIFT-A2-Debug/Release` | `TOPLIFT` | Solo TopLift A2 |
 | `EDEN-Debug/Release` | `EDEN` | Solo Eden XP |
 | `EGICON-Debug/Release` | `EGICON` | Solo Spark |
-| `BUTTONPANEL` | — | Solo test pulsantiere |
 
 ---
 
@@ -95,7 +88,7 @@ viene usato `FallbackDictionaryProvider(API, Excel)`. Altrimenti solo `ExcelDict
 
 | Package | Versione | Uso |
 |---------|----------|-----|
-| ClosedXML | 0.105.0 | Lettura dizionari Excel |
+| ClosedXML | 0.105.0 | Lettura dizionari Excel (Infrastructure) |
 | DocumentFormat.OpenXml | 3.5.1 | Supporto formati Excel |
 | OxyPlot.WindowsForms | 2.2.0 | Grafici telemetria |
 | Peak.PCANBasic.NET | 5.0.1 | Interfaccia CAN |
@@ -130,21 +123,14 @@ dotnet build App/App.csproj -c TOPLIFT-A2-Release
 
 ---
 
-## Note Legacy
+## Note
 
-- `Form1.cs` è un God Object (~55k LOC con Designer) — contiene GUI + logica protocollo + telemetria
-- Il caricamento dizionari avviene tramite `IDictionaryProvider` (async, event `Load`) — non più via `ExcelHandler`
-- `ExcelHandler.cs` è ancora presente ma non ha consumer attivi — candidato alla rimozione nella Fase 3
-- Le configurazioni device usano `#if` preprocessor (`TOPLIFT`, `EDEN`, `EGICON`, `BUTTONPANEL`) — documentate in `Docs/PREPROCESSOR_DIRECTIVES.md`
-- Il file Excel dei dizionari è embedded in `Infrastructure` (usato come fallback da `ExcelDictionaryProvider`)
+- `Form1.cs` è un God Object (~54k LOC con Designer) — contiene GUI + logica protocollo + telemetria
+- Il caricamento dizionari avviene tramite `IDictionaryProvider` (async, event `Load`)
+- Le configurazioni device usano `#if` preprocessor (`TOPLIFT`, `EDEN`, `EGICON`) — documentate in `Docs/PREPROCESSOR_DIRECTIVES.md`
+- Il file Excel dei dizionari è gestito da `Infrastructure` (ExcelDictionaryProvider) come fallback da `IDictionaryProvider`
 - `InternalsVisibleTo("Tests")` abilitato per permettere test su tipi `internal`
 - `ProjectReference` a `Core` e `Infrastructure` per accesso a `IDictionaryProvider`
-
----
-
-## Issue Correlate
-
-→ [ISSUES.md](../ISSUES.md) (da creare)
 
 ---
 

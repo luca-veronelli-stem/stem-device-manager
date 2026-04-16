@@ -37,7 +37,6 @@
     <Compile Remove="Integration\**" />
     <Compile Remove="Unit\Terminal\**" />
     <Compile Remove="Unit\Protocol\**" />
-    <Compile Remove="Unit\ExcelHandler\**" />
     <Compile Remove="Unit\CodeGenerator\**" />
     <Compile Remove="Unit\CircularProgressBar\**" />
     <Compile Remove="Unit\Core\Models\ButtonIndicatorTests.cs" />

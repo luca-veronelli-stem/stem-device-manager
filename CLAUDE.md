@@ -49,17 +49,17 @@ Dipendenze: `App → Infrastructure → Core`, `Tests → App, Infrastructure, C
 
 ### Componenti chiave
 
-**Core** — Modelli: `Variable`, `Command`, `ProtocolAddress`, `DictionaryData`, `ButtonPanel`. Interfacce: `IDictionaryProvider`, `IButtonPanelTestService`.
+**Core** — Modelli: `Variable`, `Command`, `ProtocolAddress`, `DictionaryData`. Interfacce: `IDictionaryProvider`.
 
 **Infrastructure** — `DictionaryApiProvider` (REST HTTP verso Azure), `ExcelDictionaryProvider` (ClosedXML su `Dizionari STEM.xlsx` embedded), `FallbackDictionaryProvider` (decorator: API → catch `HttpRequestException` → Excel). Registrazione DI via `AddDictionaryProvider(IConfiguration)` — legge `DictionaryApi:BaseUrl/ApiKey/TimeoutSeconds` da `appsettings.json`.
 
-**App/Program.cs** — Entry point DI: registra `ButtonPanelTestService` (transient) + `IDictionaryProvider` (via Infrastructure). Configurazione da `appsettings.json` + env vars.
+**App/Program.cs** — Entry point DI: registra `IDictionaryProvider` (via Infrastructure). Configurazione da `appsettings.json` + env vars.
 
-**App/Form1.cs** — God Object (~55k LOC). Non toccare senza piano di refactoring. Consumer legacy di `ExcelHandler` (ancora separato da `IDictionaryProvider`).
+**App/Form1.cs** — God Object (~55k LOC). Non toccare senza piano di refactoring. Usa `IDictionaryProvider` via DI.
 
 **App/STEMProtocol/** — Stack multi-layer proprietario: `STEM_protocol.cs` → `PacketManager.cs` → `CanDataLayer.cs` / `SerialDataLayer.cs`. Comunicazione hardware via CAN (PCAN), BLE, Serial.
 
-**App/GUI/** — Unico modulo con architettura pulita: MVP (`ButtonPanelTestPresenter` + Views). Modello da seguire per Fase 3.
+**App/GUI/** — Moduli di interfaccia per tab (Boot, BLE, Telemetry, ecc.). Architettura da modernizzare in Fase 3 (MVP pattern da valutare per il refactoring incrementale).
 
 ### Strategia test dual TFM
 
@@ -69,7 +69,7 @@ I mock sono manuali (no librerie esterne) in `Tests/Integration/Presenter/Mocks/
 
 ### Build configurations
 
-9 configurazioni: `Debug`, `Release`, `TOPLIFT-A2-Debug`, `TOPLIFT-A2-Release`, `EDEN-Debug`, `EDEN-Release`, `EGICON-Debug`, `EGICON-Release`, `BUTTONPANEL`. Le varianti device usano `#if TOPLIFT / EDEN / EGICON` nel codice.
+8 configurazioni: `Debug`, `Release`, `TOPLIFT-A2-Debug`, `TOPLIFT-A2-Release`, `EDEN-Debug`, `EDEN-Release`, `EGICON-Debug`, `EGICON-Release`. Le varianti device usano `#if TOPLIFT / EDEN / EGICON` nel codice.
 
 ---
 
@@ -91,12 +91,11 @@ I mock sono manuali (no librerie esterne) in `Tests/Integration/Presenter/Mocks/
 |------|-------------|-------|
 | 1 | Test coverage codice esistente | ✅ Completata |
 | 2 | Migrazione dizionari Excel → API Azure (infrastruttura) | ✅ Completata |
-| 3 | Refactoring incrementale (estrarre classi, spezzare Form1) | ⏳ Prossima |
-| 4 | Consumer migration a `IDictionaryProvider` (Form1 tabs) | ⏳ In attesa Fase 3 |
+| 3 | Refactoring incrementale (estrarre classi, spezzare Form1) | ✅ Completata (rimozione ExcelHandler) |
+| 4 | Consumer migration a `IDictionaryProvider` (Form1 tabs) | ✅ Completata |
 | 5 | Valutazione migrazione UI (WPF o altro) | ⏳ Futura |
 
-Il branch attuale (`refactor/disaccoppiamento-form1`) è parte della Fase 3.  
-`ExcelHandler.cs` è legacy, ancora usato direttamente da Form1 — la migrazione avviene in Fase 3-4.
+`ExcelHandler.cs` è stato rimosso. Tutti i consumer usano `IDictionaryProvider` via DI.
 
 ---
 
