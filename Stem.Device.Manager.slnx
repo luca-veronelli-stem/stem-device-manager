@@ -22,7 +22,7 @@
   </Folder>
   <Folder Name="/Docs/">
     <File Path="Docs/PREPROCESSOR_DIRECTIVES.md" />
-    <File Path="Docs/REFACTOR_ANALYSIS.md" />
+    <File Path="Docs/REFACTOR_PLAN.md" />
   </Folder>
   <Folder Name="/Docs/Standards/">
     <File Path="Docs/Standards/TEMPLATE_STANDARD.md" />
