@@ -186,3 +186,31 @@ I blocchi `#if` rimanenti (1-8) saranno progressivamente eliminati mediante:
 3. **Feature flags** — Migrazione da `#if` a `FeatureFlags` in configurazione (più flessibile e testabile)
 
 4. **Interfacce comuni** — `ITelemetryTab`, `IBootTab` per rendere l'UI modulare e device-agnostica
+
+---
+
+## Nota Fase 1 — IDeviceVariantConfig (TODO per Fase 3)
+
+**Aggiornato:** 2026-04-17
+
+In Fase 1 (`refactor/protocol-abstractions`) è stata introdotta `IDeviceVariantConfig` in `Core/Interfaces/` con **sole** le proprietà:
+
+- `Variant` (enum `DeviceVariant`)
+- `DefaultRecipientId`
+- `DeviceName`
+- `BoardName`
+
+I **feature flag booleani** che sostituiranno i blocchi `#if` 1–8 sopra **NON** sono ancora stati definiti, per evitare di inventare flag prima di toccare davvero il codice. Saranno aggiunti a `IDeviceVariantConfig` **in Fase 3**, uno alla volta, man mano che ogni blocco `#if` viene convertito in `if (variantConfig.FlagX)`.
+
+Esempi di flag attesi (da derivare dai blocchi numerati 1-8 sopra):
+
+- `DefaultCommunicationPort` ("can" vs "ble") — blocco #1
+- `WindowTitleTemplate` — blocco #2
+- `ShowClassicBootTab` (bool) — blocco #3
+- `SmartBootDevices` (lista) — blocco #4
+- `InitialTabLayout` — blocco #5
+- `TelemetryTabKind` (enum: Classic / TopLift) — blocco #6
+- `DefaultDevice` / `DefaultBoard` — blocco #7
+- `ShowAppLayerDecodedPanel` (bool) — blocco #8
+
+**Regola:** ogni volta che in Fase 3 si rimuove uno dei blocchi `#if` 1-8, si aggiunge il flag corrispondente a `IDeviceVariantConfig` e si aggiorna la factory `DeviceVariantConfig.Create`, oltre a rimuovere la riga dalla tabella "Blocchi attivi" sopra.

@@ -21,10 +21,18 @@ Il formato si basa su [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Modernizzazione: documentazione, standard, riorganizzazione progetto, test coverage,
 architettura multi-progetto, migrazione dizionari Excel → API Azure,
-Fase 3 disaccoppiamento Form1 (Branch 1+2 completati), rimozione funzionalità ButtonPanel e ExcelHandler.
+Fase 3 disaccoppiamento Form1 (Branch 1+2 completati), rimozione funzionalità ButtonPanel e ExcelHandler,
+avvio refactor architetturale (REFACTOR_PLAN) con Fase 1 — protocol abstractions in Core.
 
 ### Added
 
+- **REFACTOR_PLAN Fase 1 — Protocol abstractions in Core** (branch `refactor/protocol-abstractions`):
+  - `Core/Interfaces/` — 5 nuove interfacce: `ICommunicationPort` (astrazione CAN/BLE/Serial), `IPacketDecoder` (decoder puro `RawPacket → AppLayerDecodedEvent`), `ITelemetryService`, `IBootService` (+ enum `BootState`, record `BootProgress`), `IDeviceVariantConfig`
+  - `Core/Models/` — 6 nuovi modelli: `ConnectionState` (enum), `DeviceVariant` (enum), `DeviceVariantConfig` (record + factory totale `Create(DeviceVariant)`), `RawPacket`, `AppLayerDecodedEvent`, `TelemetryDataPoint`
+  - `Core/Models/ImmutableArrayEquality.cs` — helper interno per equality strutturale di `ImmutableArray<byte>` (necessario perché `ImmutableArray<T>.Equals` è reference-based)
+  - `Specs/Phase1/` — 7 file Lean 4 (formalizzazione dei tipi + teoremi di correttezza della factory `DeviceVariantConfig.Create`)
+  - `Tests/Unit/Core/Models/` — 6 nuovi file test (33 test): `ConnectionStateTests`, `DeviceVariantTests`, `DeviceVariantConfigTests`, `RawPacketTests`, `AppLayerDecodedEventTests`, `TelemetryDataPointTests`
+  - `Docs/PREPROCESSOR_DIRECTIVES.md` — sezione "Nota Fase 1 — IDeviceVariantConfig (TODO per Fase 3)" che elenca i feature flag booleani da aggiungere in Fase 3 per eliminare i blocchi `#if`
 - `.copilot/` — Istruzioni Copilot con memoria a lungo termine, 5 agent files (CODING, TEST, DOCS, ISSUES, FORMAL)
 - `Docs/Standards/` — Template standard (README, ISSUES, STANDARD, TEMPLATE_STANDARD)
 - `README.md` — Documentazione root del progetto

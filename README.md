@@ -2,11 +2,11 @@
 
 [![Version](https://img.shields.io/badge/version-2.15-blue)](./CHANGELOG.md)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
-[![Tests](https://img.shields.io/badge/tests-176-brightgreen)](./Tests/)
+[![Tests](https://img.shields.io/badge/tests-209-brightgreen)](./Tests/)
 [![License](https://img.shields.io/badge/license-Proprietary-red)](#licenza)
 
 > **Applicativo desktop per la gestione, diagnostica e comunicazione dei dispositivi STEM via protocollo proprietario multi-canale (CAN, BLE, Serial).**  
-> **Ultimo aggiornamento:** 2026-04-16
+> **Ultimo aggiornamento:** 2026-04-17
 
 ---
 
@@ -25,10 +25,11 @@ Stem Device Manager è un tool Windows desktop utilizzato per:
 Il progetto è un **monolite legacy** attualmente in fase di modernizzazione:  
 - ~54k LOC di codice produzione in un singolo progetto  
 - `Form1.cs` è un God Object (~54k LOC con Designer) — ora usa `IDictionaryProvider` per i dizionari  
-- **176 test automatizzati** (xUnit) — unit + integration  
+- **209 test automatizzati** (xUnit) — unit + integration  
 - Architettura multi-progetto: **Core** (net10.0) + **Infrastructure** (net10.0) + **App** (WinForms)  
 - Infrastruttura API Azure pronta con fallback Excel via DI; Form1 migrata a `IDictionaryProvider`  
-- ExcelHandler rimosso completamente (migrato a Infrastructure.ExcelDictionaryProvider)
+- ExcelHandler rimosso completamente (migrato a Infrastructure.ExcelDictionaryProvider)  
+- Refactor architetturale in corso (vedi [`Docs/REFACTOR_PLAN.md`](./Docs/REFACTOR_PLAN.md)): Fase 1 completata con astrazioni protocol/communication in Core e formalizzazioni Lean 4 in [`Specs/Phase1/`](./Specs/Phase1/README.md)
 
 ---
 
@@ -44,7 +45,7 @@ Il progetto è un **monolite legacy** attualmente in fase di modernizzazione:
 | **Bootloader** | ✅ | Aggiornamento firmware (classico + smart) |
 | **Telemetria** | ✅ | Lettura variabili + grafici OxyPlot (lenta + veloce) |
 | **Code Generator** | ✅ | Genera sp_config.h |
-| **Test Automatizzati** | ✅ | 176 test (unit + integration) — xUnit |
+| **Test Automatizzati** | ✅ | 209 test (unit + integration) — xUnit |
 
 ---
 
@@ -102,24 +103,30 @@ dotnet run --project App/App.csproj
 Stem.Device.Manager/
 ├── Stem.Device.Manager.slnx        Solution file (XML moderno)
 ├── Core/                            Modelli dominio, interfacce (net10.0)
-│   ├── Models/                      Variable, Command, ProtocolAddress
-│   └── Interfaces/                  IDictionaryProvider
+│   ├── Models/                      Dizionario (Variable, Command, ProtocolAddress, DictionaryData)
+│   │                                + Protocol abstractions (ConnectionState, DeviceVariant,
+│   │                                  DeviceVariantConfig, RawPacket, AppLayerDecodedEvent,
+│   │                                  TelemetryDataPoint)
+│   └── Interfaces/                  IDictionaryProvider, ICommunicationPort, IPacketDecoder,
+│                                    ITelemetryService, IBootService, IDeviceVariantConfig
 ├── Infrastructure/                   Provider dati (net10.0)
 │   ├── Api/                         DictionaryApiProvider + DTO
 │   ├── Excel/                       ExcelDictionaryProvider
 │   ├── FallbackDictionaryProvider   Decorator API→Excel
 │   └── DependencyInjection.cs       Registrazione DI
-├── Services/                        Logica business (net10.0-windows, vuoto)
+├── Services/                        Logica business (net10.0-windows, vuoto — Fase 2 REFACTOR_PLAN)
 ├── App/                             Windows Forms (.NET 10)
 │   ├── Program.cs                   Entry point + DI + IConfiguration
 │   ├── Form1.cs                     Main form (God Object ~54k LOC) — usa IDictionaryProvider
 │   ├── STEMProtocol/                Protocollo comunicazione proprietario
 │   ├── GUI/                         Tab pages WinForms
 │   └── Resources/                   Excel embedded, icone
-├── Tests/                           176 test (xUnit)
+├── Specs/                           Formalizzazioni Lean 4
+│   └── Phase1/                      Tipi/interfacce di protocollo (branch refactor/protocol-abstractions)
+├── Tests/                           209 test (xUnit)
 │   ├── Unit/                        Core, Infrastructure, Protocol
 │   └── Integration/                 DI, ExcelHandler, CodeGenerator, Form1
-└── Docs/                            Documentazione + Standards
+└── Docs/                            Documentazione + Standards + REFACTOR_PLAN
 ```
 
 ---
@@ -131,8 +138,9 @@ Stem.Device.Manager/
 - [Infrastructure — Provider dati (API + Excel)](./Infrastructure/README.md)
 - [Tests — Test automatizzati](./Tests/README.md)
 - [Standards e Templates](./Docs/Standards/)
-- [Analisi refactoring Fase 3](./Docs/REFACTOR_ANALYSIS.md)
+- [Piano di refactoring architetturale](./Docs/REFACTOR_PLAN.md)
 - [Direttive preprocessore (#if)](./Docs/PREPROCESSOR_DIRECTIVES.md)
+- [Specs/Phase1 — formalizzazioni Lean 4](./Specs/Phase1/README.md)
 - [CHANGELOG](./CHANGELOG.md)
 - [LICENSE](./LICENSE)
 
