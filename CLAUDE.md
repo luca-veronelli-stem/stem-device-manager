@@ -38,18 +38,19 @@ dotnet test Tests/Tests.csproj --framework net10.0  # solo test cross-platform s
 ### Struttura multi-progetto
 
 ```
-Core/          [net10.0, zero dipendenze NuGet]   — domain models + interfacce
-Infrastructure/ [net10.0]                          — provider dati (API + Excel + Fallback)
-Services/       [net10.0-windows, vuoto]           — placeholder Fase 3
-App/            [net10.0-windows, WinForms]        — GUI + protocollo + DI entry point
-Tests/          [dual TFM: net10.0 + net10.0-windows] — 258 test
+Core/           [net10.0, zero dipendenze NuGet]    — domain models + interfacce (dizionario + protocollo)
+Infrastructure/ [net10.0]                           — provider dati (API + Excel + Fallback)
+Services/       [net10.0-windows, vuoto]            — placeholder Fase 2 (refactor plan)
+App/            [net10.0-windows, WinForms]         — GUI + protocollo + DI entry point
+Tests/          [dual TFM: net10.0 + net10.0-windows] — 86 test net10.0 / 138 test net10.0-windows
+Specs/          [Lean 4]                            — formalizzazioni dei tipi estratti (Phase1/)
 ```
 
 Dipendenze: `App → Infrastructure → Core`, `Tests → App, Infrastructure, Core`.
 
 ### Componenti chiave
 
-**Core** — Modelli: `Variable`, `Command`, `ProtocolAddress`, `DictionaryData`. Interfacce: `IDictionaryProvider`.
+**Core** — Modelli dizionario: `Variable`, `Command`, `ProtocolAddress`, `DictionaryData`. Modelli protocol abstractions (Fase 1 refactor): `ConnectionState`, `DeviceVariant`, `DeviceVariantConfig`, `RawPacket`, `AppLayerDecodedEvent`, `TelemetryDataPoint`, `BootState`/`BootProgress`. Interfacce: `IDictionaryProvider`, `ICommunicationPort`, `IPacketDecoder`, `ITelemetryService`, `IBootService`, `IDeviceVariantConfig`.
 
 **Infrastructure** — `DictionaryApiProvider` (REST HTTP verso Azure), `ExcelDictionaryProvider` (ClosedXML su `Dizionari STEM.xlsx` embedded), `FallbackDictionaryProvider` (decorator: API → catch `HttpRequestException` → Excel). Registrazione DI via `AddDictionaryProvider(IConfiguration)` — legge `DictionaryApi:BaseUrl/ApiKey/TimeoutSeconds` da `appsettings.json`.
 
@@ -97,6 +98,17 @@ I mock sono manuali (no librerie esterne) in `Tests/Integration/Presenter/Mocks/
 
 `ExcelHandler.cs` è stato rimosso. Tutti i consumer usano `IDictionaryProvider` via DI.
 
+### Piano di refactoring architetturale (REFACTOR_PLAN.md)
+
+Vedi [`Docs/REFACTOR_PLAN.md`](Docs/REFACTOR_PLAN.md) per il piano branch-by-branch verso architettura modulare (Core / Infrastructure / Services / App).
+
+| Branch | Descrizione | Stato |
+|--------|-------------|-------|
+| `refactor/protocol-abstractions` | Fase 1 — interfacce + modelli Core per comunicazione/protocollo, formalizzazioni Lean 4 in `Specs/Phase1/` | ✅ Completata |
+| `refactor/phase-2-services-layer` | Estrarre TelemetryService, BootService, PacketDecoder, ProtocolService in `Services/` | ⏳ In attesa |
+| `refactor/phase-3-form1-decomposition` | Decomporre Form1, rimuovere `#if`, tab autonome | ⏳ In attesa |
+| `refactor/phase-4-protocol-migration-prep` | Adapter per `Stem.Communication` NuGet + feature flag | ⏳ In attesa |
+
 ---
 
 ## File di riferimento
@@ -113,10 +125,14 @@ I mock sono manuali (no librerie esterne) in `Tests/Integration/Presenter/Mocks/
 
 ## Specifiche di dominio (Lean 4)
 
-Sezione da popolare durante la Fase 3 man mano che i moduli vengono estratti da Form1, seguendo il metodo TDD+Lean: formalizzare il comportamento esistente in Lean 4 → confermare con l'utente → scrivere test → implementare.
+Formalizzazioni esistenti in `Specs/`:
 
-I moduli candidati in ordine di priorità per la formalizzazione:
-1. `STEMProtocol/PacketManager` — logica parsing/encoding pacchetti
-2. `STEMProtocol/STEM_protocol` — stack layer applicativo
-3. `TelemetryManager` — lettura variabili e campionamento
-4. `BootManager` — sequenza aggiornamento firmware
+| Cartella | Branch | Contenuto |
+|----------|--------|-----------|
+| `Specs/Phase1/` | `refactor/protocol-abstractions` | Tipi e interfacce Core: `ConnectionState`, `DeviceVariant`, `DeviceVariantConfig` (+ factory totale + teoremi di correttezza), `RawPacket`, `AppLayerDecodedEvent`, `TelemetryDataPoint`, `Interfaces` (ICommunicationPort, IPacketDecoder, ITelemetryService, IBootService, IDeviceVariantConfig) |
+
+Moduli candidati per le formalizzazioni future (Fase 2–3):
+1. `STEMProtocol/PacketManager` → `PacketDecoder` — logica parsing/encoding pacchetti
+2. `STEMProtocol/STEM_protocol` → `ProtocolService` — stack layer applicativo
+3. `TelemetryManager` → `TelemetryService` — lettura variabili e campionamento
+4. `BootManager` → `BootService` — sequenza aggiornamento firmware (macchina a stati già abbozzata in `Specs/Phase1/Interfaces.lean`)
