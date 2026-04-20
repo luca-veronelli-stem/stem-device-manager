@@ -51,7 +51,7 @@
     <BuildType Solution="TOPLIFT-A2-Debug|*" Project="Debug" />
     <BuildType Solution="TOPLIFT-A2-Release|*" Project="Release" />
   </Project>
-  <Project Path="Infrastructure/Infrastructure.csproj" Id="ef04ae12-ec87-4b4f-ba6a-206b085d18ba">
+  <Project Path="Infrastructure.Persistence/Infrastructure.Persistence.csproj" Id="ef04ae12-ec87-4b4f-ba6a-206b085d18ba">
     <BuildType Solution="EDEN-Debug|*" Project="Debug" />
     <BuildType Solution="EDEN-Release|*" Project="Release" />
     <BuildType Solution="EGICON-Debug|*" Project="Debug" />
