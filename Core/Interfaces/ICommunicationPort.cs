@@ -24,6 +24,9 @@ namespace Core.Interfaces;
 /// </summary>
 public interface ICommunicationPort : IDisposable
 {
+    /// <summary>Tipo di canale fisico (CAN / BLE / Serial). Invariante per la vita dell'adapter.</summary>
+    ChannelKind Kind { get; }
+
     /// <summary>Stato corrente del canale.</summary>
     ConnectionState State { get; }
 

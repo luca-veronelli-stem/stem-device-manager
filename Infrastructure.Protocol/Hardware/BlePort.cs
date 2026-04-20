@@ -51,6 +51,9 @@ public sealed class BlePort : ICommunicationPort
     }
 
     /// <inheritdoc/>
+    public ChannelKind Kind => ChannelKind.Ble;
+
+    /// <inheritdoc/>
     public ConnectionState State => (ConnectionState)Volatile.Read(ref _state);
 
     /// <inheritdoc/>
