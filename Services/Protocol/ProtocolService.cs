@@ -117,8 +117,14 @@ public sealed class ProtocolService : IDisposable
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(replyValidator);
 
-        var tcs = new TaskCompletionSource<bool>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        // Default TCS (no RunContinuationsAsynchronously): la continuation
+        // di WaitAsync può girare inline sul thread che chiama TrySetResult.
+        // Nel caso tipico del protocollo STEM questo thread è la receive loop
+        // del driver HW — accettabile perché il lavoro post-reply (ritorno del
+        // bool e completamento di sendTask) è trascurabile. Ha l'effetto
+        // collaterale positivo di evitare una hop su thread pool che, sotto
+        // contention, può introdurre latenze artificiali.
+        var tcs = new TaskCompletionSource<bool>();
 
         void Handler(object? sender, AppLayerDecodedEvent evt)
         {
@@ -128,12 +134,16 @@ public sealed class ProtocolService : IDisposable
         AppLayerDecoded += Handler;
         try
         {
-            await SendCommandAsync(recipientId, command, payload, ct);
-            var timeoutTask = Task.Delay(timeout, ct);
-            var completed = await Task.WhenAny(tcs.Task, timeoutTask);
-            if (completed == tcs.Task) return await tcs.Task;
-            ct.ThrowIfCancellationRequested();
-            return false;
+            await SendCommandAsync(recipientId, command, payload, ct)
+                .ConfigureAwait(false);
+            try
+            {
+                return await tcs.Task.WaitAsync(timeout, ct).ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                return false;
+            }
         }
         finally
         {

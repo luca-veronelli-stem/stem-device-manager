@@ -192,7 +192,13 @@ public class PacketReassemblerTests
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
         var exceptions = new List<Exception>();
 
-        var workers = Enumerable.Range(1, 7).Select(packetId => Task.Run(() =>
+        // LongRunning → thread dedicati, evitano di saturare il thread pool
+        // (che invece servirà ad altri test paralleli per continuations).
+        // NON passare cts.Token a StartNew: il token del task factory marca
+        // il Task come Cancelled se il thread non parte in tempo, causando
+        // TaskCanceledException su WhenAll. Il cts viene letto solo dentro
+        // al worker nel while-loop (via cts.IsCancellationRequested).
+        var workers = Enumerable.Range(1, 7).Select(packetId => Task.Factory.StartNew(() =>
         {
             try
             {
@@ -212,7 +218,7 @@ public class PacketReassemblerTests
                 }
             }
             catch (Exception ex) { lock (exceptions) exceptions.Add(ex); }
-        })).ToArray();
+        }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default)).ToArray();
 
         await Task.WhenAll(workers);
 
