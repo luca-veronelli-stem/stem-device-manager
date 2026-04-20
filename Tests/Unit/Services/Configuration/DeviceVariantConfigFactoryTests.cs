@@ -47,6 +47,7 @@ public class DeviceVariantConfigFactoryTests
 
         Assert.Equal(DeviceVariant.TopLift, cfg.Variant);
         Assert.Equal(0x00080381u, cfg.DefaultRecipientId);
+        Assert.Equal(DeviceVariantConfig.DefaultSenderId, cfg.SenderId);
     }
 
     [Fact]
@@ -57,6 +58,7 @@ public class DeviceVariantConfigFactoryTests
         Assert.Equal(DeviceVariant.Eden, cfg.Variant);
         Assert.Equal("EDEN", cfg.DeviceName);
         Assert.Equal("Madre", cfg.BoardName);
+        Assert.Equal(DeviceVariantConfig.DefaultSenderId, cfg.SenderId);
     }
 
     [Fact]
@@ -66,6 +68,25 @@ public class DeviceVariantConfigFactoryTests
 
         Assert.Equal(DeviceVariant.Generic, cfg.Variant);
         Assert.Equal(0u, cfg.DefaultRecipientId);
+        Assert.Equal(DeviceVariantConfig.DefaultSenderId, cfg.SenderId);
+    }
+
+    [Fact]
+    public void FromString_WithExplicitSenderId_OverridesDefault()
+    {
+        var cfg = DeviceVariantConfigFactory.FromString("TopLift", senderId: 0x42u);
+
+        Assert.Equal(DeviceVariant.TopLift, cfg.Variant);
+        Assert.Equal(0x42u, cfg.SenderId);
+    }
+
+    [Fact]
+    public void FromString_WithExplicitSenderId_NullVariantStillGeneric()
+    {
+        var cfg = DeviceVariantConfigFactory.FromString(null, senderId: 0x99u);
+
+        Assert.Equal(DeviceVariant.Generic, cfg.Variant);
+        Assert.Equal(0x99u, cfg.SenderId);
     }
 
     [Theory]
