@@ -41,8 +41,8 @@ public sealed class BootService : IBootService, IDisposable
     private const int EndRetries = 5;
     private const int RestartCount = 2;
     private const string ReplyCodeHigh = "80";
-    private static readonly TimeSpan ResponseTimeout = TimeSpan.FromMilliseconds(4000);
-    private static readonly TimeSpan RestartInterval = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan DefaultResponseTimeout = TimeSpan.FromMilliseconds(4000);
+    private static readonly TimeSpan DefaultRestartInterval = TimeSpan.FromSeconds(1);
     private static readonly byte[] EmptyPayload = [];
 
     private static readonly Command CmdStartProcedure =
@@ -55,6 +55,8 @@ public sealed class BootService : IBootService, IDisposable
         new("RestartMachine", "00", "0A");
 
     private readonly ProtocolService _protocol;
+    private readonly TimeSpan _responseTimeout;
+    private readonly TimeSpan _restartInterval;
     private readonly Lock _stateLock = new();
     private BootState _state = BootState.Idle;
     private int _currentOffset;
@@ -62,9 +64,19 @@ public sealed class BootService : IBootService, IDisposable
     private bool _disposed;
 
     public BootService(ProtocolService protocol)
+        : this(protocol, DefaultResponseTimeout, DefaultRestartInterval) { }
+
+    /// <summary>
+    /// Overload interno per i test: consente di iniettare timeout più aggressivi
+    /// (es. 50ms invece di 4000ms) per accelerare le suite.
+    /// </summary>
+    internal BootService(
+        ProtocolService protocol, TimeSpan responseTimeout, TimeSpan restartInterval)
     {
         ArgumentNullException.ThrowIfNull(protocol);
         _protocol = protocol;
+        _responseTimeout = responseTimeout;
+        _restartInterval = restartInterval;
     }
 
     /// <inheritdoc/>
@@ -199,7 +211,7 @@ public sealed class BootService : IBootService, IDisposable
             await _protocol.SendCommandAsync(recipientId, CmdRestartMachine, EmptyPayload, ct)
                 .ConfigureAwait(false);
             if (i < RestartCount - 1)
-                await Task.Delay(RestartInterval, ct).ConfigureAwait(false);
+                await Task.Delay(_restartInterval, ct).ConfigureAwait(false);
         }
     }
 
@@ -214,7 +226,7 @@ public sealed class BootService : IBootService, IDisposable
                 command,
                 payload,
                 evt => MatchesReply(evt, command),
-                ResponseTimeout,
+                _responseTimeout,
                 ct).ConfigureAwait(false);
             if (ok) return true;
         }
