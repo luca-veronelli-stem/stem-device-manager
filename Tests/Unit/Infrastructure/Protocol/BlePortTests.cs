@@ -287,4 +287,91 @@ public class BlePortTests
         await Assert.ThrowsAsync<ObjectDisposedException>(
             () => port.SendAsync(new byte[] { 0xAA }));
     }
+
+    [Fact]
+    public async Task AfterDispose_ConnectAsync_ThrowsObjectDisposed()
+    {
+        var driver = new FakeBleDriver { IsConnected = false };
+        var port = new BlePort(driver);
+        port.Dispose();
+
+        await Assert.ThrowsAsync<ObjectDisposedException>(
+            () => port.ConnectAsync());
+    }
+
+    [Fact]
+    public async Task AfterDispose_DisconnectAsync_ThrowsObjectDisposed()
+    {
+        var driver = new FakeBleDriver { IsConnected = true };
+        var port = new BlePort(driver);
+        port.Dispose();
+
+        await Assert.ThrowsAsync<ObjectDisposedException>(
+            () => port.DisconnectAsync());
+    }
+
+    [Fact]
+    public void Dispose_CalledTwice_IsIdempotent()
+    {
+        var driver = new FakeBleDriver { IsConnected = true };
+        var port = new BlePort(driver);
+
+        port.Dispose();
+        port.Dispose();
+
+        Assert.Equal(1, driver.DisconnectCount);
+    }
+
+    [Fact]
+    public void Dispose_FromDisconnected_DoesNotCallDriverDisconnect()
+    {
+        var driver = new FakeBleDriver { IsConnected = false };
+        var port = new BlePort(driver);
+
+        port.Dispose();
+
+        Assert.Equal(0, driver.DisconnectCount);
+    }
+
+    [Fact]
+    public void MultipleStateCycles_FireAllTransitionEvents()
+    {
+        var driver = new FakeBleDriver { IsConnected = false };
+        using var port = new BlePort(driver);
+        var stateEvents = new List<ConnectionState>();
+        port.StateChanged += (_, s) => stateEvents.Add(s);
+
+        driver.RaiseConnectionStatusChanged(true);
+        driver.RaiseConnectionStatusChanged(false);
+        driver.RaiseConnectionStatusChanged(true);
+        driver.RaiseConnectionStatusChanged(false);
+
+        Assert.Equal(
+            new[]
+            {
+                ConnectionState.Connected,
+                ConnectionState.Disconnected,
+                ConnectionState.Connected,
+                ConnectionState.Disconnected,
+            },
+            stateEvents);
+    }
+
+    [Fact]
+    public async Task ConnectAsync_DriverNeverConnects_TransitionsToErrorAndThrows()
+    {
+        var driver = new FakeBleDriver { IsConnected = false };
+        using var port = new BlePort(driver);
+        var stateEvents = new List<ConnectionState>();
+        port.StateChanged += (_, s) => stateEvents.Add(s);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => port.ConnectAsync());
+
+        Assert.Contains("BLE", ex.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(ConnectionState.Error, port.State);
+        Assert.Equal(
+            new[] { ConnectionState.Connecting, ConnectionState.Error },
+            stateEvents);
+    }
 }
