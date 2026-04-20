@@ -25,13 +25,21 @@ internal sealed class FakeCommunicationPort : ICommunicationPort
 
     public List<byte[]> SentPayloads { get; } = [];
 
+    /// <summary>
+    /// Hook opzionale: invocato dopo ogni <see cref="SendAsync"/> con il frame
+    /// inviato. Usato dai test che richiedono auto-reply (es. BootService).
+    /// </summary>
+    public Action<byte[]>? OnSent { get; set; }
+
     public Task ConnectAsync(CancellationToken ct = default) => Task.CompletedTask;
     public Task DisconnectAsync(CancellationToken ct = default) => Task.CompletedTask;
 
     public Task SendAsync(ReadOnlyMemory<byte> payload, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
-        SentPayloads.Add(payload.ToArray());
+        var frame = payload.ToArray();
+        SentPayloads.Add(frame);
+        OnSent?.Invoke(frame);
         return Task.CompletedTask;
     }
 

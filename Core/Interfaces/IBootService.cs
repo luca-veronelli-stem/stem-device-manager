@@ -21,9 +21,13 @@ public interface IBootService
     event EventHandler<BootProgress>? ProgressChanged;
 
     /// <summary>
-    /// Avvia l'upload di un firmware. Il binario deve essere già interamente in memoria.
+    /// Avvia l'upload di un firmware verso il device con <paramref name="recipientId"/>.
+    /// Il binario deve essere già interamente in memoria.
     /// </summary>
-    Task StartFirmwareUploadAsync(byte[] firmware, CancellationToken ct = default);
+    /// <param name="firmware">Bytes del firmware da inviare.</param>
+    /// <param name="recipientId">RecipientId del device target dell'aggiornamento.</param>
+    /// <param name="ct">Token di cancellazione (rispettato fra blocchi).</param>
+    Task StartFirmwareUploadAsync(byte[] firmware, uint recipientId, CancellationToken ct = default);
 }
 
 /// <summary>Stato della macchina a stati di <see cref="IBootService"/>.</summary>

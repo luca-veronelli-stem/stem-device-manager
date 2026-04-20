@@ -27,7 +27,25 @@ e Fase 2 (in corso) — services layer + HW adapter + rinomina a pattern Stem.
 
 ### Added
 
-- **REFACTOR_PLAN Fase 2 — Branch A `refactor/protocol-service`** (in corso, Step 6 completato):
+- **REFACTOR_PLAN Fase 2 — Branch B `refactor/services-business`** (in corso, Step 3-5 completati):
+  - `Services/Configuration/DeviceVariantConfigFactory.cs` — factory totale: parsing case-insensitive da stringa di configurazione (default Generic per null/vuoto/sconosciuto), helper `CanonicalName` per round-trip
+  - `App/appsettings.json` — sezione `Device:Variant` (default `"Generic"`)
+  - `Services/Telemetry/TelemetryService.cs` — implementa `ITelemetryService` usando `ProtocolService` come facade (zero ref a `ICommunicationPort`/`IPacketDecoder` diretti, zero ref a Form1):
+    - protocollo CMD_CONFIGURE_TELEMETRY (0x0015) / CMD_START_TELEMETRY (0x0016) / CMD_STOP_TELEMETRY (0x0017)
+    - decode CMD_TELEMETRY_DATA (0x0018) per uint8/uint16/uint32 LE — variabili a DataType ignoto saltate
+    - state machine stopped/running con `Lock`, `UpdateDictionary` atomico, pacchetti a telemetria spenta ignorati
+  - `Services/Boot/BootService.cs` — implementa `IBootService` usando `ProtocolService.SendCommandAndWaitReplyAsync` per il pattern request/reply:
+    - sequenza upload: CMD_START_PROCEDURE → loop blocchi 1024B (paddati 0xFF) di CMD_PROGRAM_BLOCK con 10 retry → CMD_END_PROCEDURE con 5 retry → CMD_RESTART_MACHINE x 2
+    - reply matching tramite convenzione "CodeHigh=80 → risposta"
+    - fwType estratto da byte 14-15 little-endian del firmware
+    - state machine Idle → Uploading → (Completed | Failed) con `Lock`; `BootProtocolException` interna assorbita (parità legacy: stato Failed osservabile, niente rethrow)
+    - `CancellationToken` rispettato fra blocchi
+    - ctor interno con `responseTimeout` + `restartInterval` configurabili (per test veloci)
+  - `Core/Interfaces/IBootService` — aggiunto parametro `uint recipientId` a `StartFirmwareUploadAsync` (target device)
+  - `Services/Protocol/ProtocolService.SenderId` — getter pubblico per accesso al senderId interno (usato da TelemetryService per payload CONFIGURE)
+  - `Tests/Unit/Services/Protocol/FakeCommunicationPort` — hook `OnSent` opzionale per auto-reply nei test BootService
+  - Test: **+56 test** (25 DeviceVariantConfigFactory + 18 TelemetryService + 13 BootService), tutti cross-platform → suite **228 net10.0** / **373 net10.0-windows**
+- **REFACTOR_PLAN Fase 2 — Branch A `refactor/protocol-service`** (merged in main 2026-04-20, PR #25, Step 6 completato):
   - `Core/Models/ChannelKind.cs` — enum Can/Ble/Serial per discriminare il framing atteso dal protocollo
   - `Core/Interfaces/ICommunicationPort` — aggiunta proprietà `ChannelKind Kind { get; }` (i 3 adapter esistenti la espongono)
   - `Services/Protocol/NetInfo.cs` — struct immutable (readonly record struct) per parsing/encoding dei 2 byte Network Layer (remainingChunks 10 bit, setLength 1 bit, packetId 3 bit, version 2 bit)

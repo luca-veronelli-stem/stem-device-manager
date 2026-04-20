@@ -6,6 +6,13 @@
 
 **Vincoli:** WinForms resta (migrazione WPF è Fase 5 futura). Stem.Communication NuGet sostituirà lo stack protocollo ma non è ancora pronto — preparare l'astrazione.
 
+**Decisioni architetturali (confermate):**
+- **IProtocolService facade** — TelemetryService/BootService dipendono da `IProtocolService` (non da `ICommunicationPort` + `IPacketDecoder` direttamente). `ProtocolService` incapsula encode/chunking/CRC/reassembly/decode; i servizi di business lo usano via `SendCommandAsync`/`SendCommandAndWaitReplyAsync` + evento `AppLayerDecoded`.
+- **Riscrittura, non wrapping** — la logica in Services/ è codice nuovo, non wrapper sui vecchi file in `App/STEMProtocol/`. I file legacy restano in App/ senza essere chiamati dopo Fase 3, eliminati in Fase 4.
+- **Nessun FormRef nei nuovi servizi** — i servizi nascono senza alcun riferimento a Form1 o UI. Il progresso/stato viene comunicato via eventi tipizzati. Il rewiring UI avviene in Fase 3.
+- **ImmutableArray<byte> per payload** — `AppLayerDecodedEvent.Payload` usa `ImmutableArray<byte>` (BCL `System.Collections.Immutable`, incluso nel runtime .NET 8+, non è un NuGet esterno). Fornisce immutabilità vera + equality strutturale elemento per elemento.
+- **Services referenzia solo Core** — nessun riferimento a Infrastructure. Il wiring concreto avviene nel composition root (`App/Program.cs`).
+
 ---
 
 ## Branch Map
@@ -35,6 +42,7 @@ In `Core/Interfaces/` creare:
 ```
 ICommunicationPort.cs    — astrazione su CAN/BLE/Serial (Connect, Disconnect, Send, Receive, IsConnected, ConnectionStateChanged event)
 IPacketDecoder.cs        — decode payload → AppLayerDecodedEventArgs (senza dipendenza Form1)
+IProtocolService.cs      — facade protocollo: SendCommandAsync, SendCommandAndWaitReplyAsync, evento AppLayerDecoded
 ITelemetryService.cs     — StartFastTelemetry, StopTelemetry, OnDataReceived event, UpdateDictionary
 IBootService.cs          — StartFirmwareUpload, OnProgress event, stato corrente
 IDeviceVariantConfig.cs  — RecipientId default, device name, board name, feature flags (sostituisce #if TOPLIFT/EDEN/EGICON)
@@ -46,7 +54,7 @@ In `Core/Models/` aggiungere:
 
 ```
 ConnectionState.cs       — enum: Disconnected, Connecting, Connected, Error
-AppLayerDecodedEvent.cs  — record: Command, Variable?, byte[] Payload, string SenderDevice, string SenderBoard
+AppLayerDecodedEvent.cs  — record: Command, Variable?, ImmutableArray<byte> Payload, string SenderDevice, string SenderBoard
 DeviceVariant.cs         — enum: Generic, TopLift, Eden, Egicon
 DeviceVariantConfig.cs   — record implementa IDeviceVariantConfig con factory method per variant
 TelemetryDataPoint.cs    — record: Variable, byte[] RawValue, DateTime Timestamp
@@ -84,13 +92,21 @@ Branch `refactor/services-foundation` (merged → main, PR #24):
 - ✅ `PCANManager` spostato da `App/` a `Infrastructure.Protocol/Hardware/` (driver autonomo)
 - ✅ `Docs/PROTOCOL.md` — documentazione completa del protocollo STEM legacy
 
-Branch `refactor/protocol-service` (in corso, **Branch A** della strategia multi-branch):
+Branch `refactor/protocol-service` (merged → main 2026-04-20, PR #25, **Branch A** completata):
 - ✅ `NetInfo` struct + `PacketReassembler` thread-safe (Services/Protocol/)
 - ✅ `ChannelKind` enum in Core.Models + proprietà `Kind` su `ICommunicationPort`
 - ✅ Step 6 — `ProtocolService` facade (encode TP + CRC16 + chunking + framing per canale; decode + reassembly + event; pattern request/reply con validator custom)
+- ✅ Test: **317 net10.0-windows** (era 274) / **172 net10.0** (era 132) — +43 test (13 NetInfo + 13 PacketReassembler + 13 ProtocolService + 3 Kind adapter + 1 refactor PacketDecoder)
+
+Branch `refactor/services-business` (in corso, **Branch B**, Step 3-5 completati):
+- ✅ Step 3 — `Services/Configuration/DeviceVariantConfigFactory` (parsing case-insensitive, default Generic, `CanonicalName` round-trip) + `App/appsettings.json` sezione `Device:Variant`
+- ✅ Step 4 — `Services/Telemetry/TelemetryService` implementa `ITelemetryService` usando `ProtocolService` come facade (decisione architetturale **opzione b**: niente duplicazione encode/chunking/CRC, decode CMD_TELEMETRY_DATA con uint8/16/32 LE, packet a telemetria spenta ignorati)
+- ✅ Step 5 — `Services/Boot/BootService` implementa `IBootService` usando `ProtocolService.SendCommandAndWaitReplyAsync` (sequenza START → loop blocchi 1024B con 10 retry → END con 5 retry → RESTART x2; state machine Idle→Uploading→(Completed|Failed); BootProtocolException assorbita per parità legacy)
+- ✅ `Core/Interfaces/IBootService.StartFirmwareUploadAsync` — aggiunto parametro `recipientId` (target device)
+- ✅ `Services/Protocol/ProtocolService.SenderId` — getter pubblico (usato da TelemetryService per payload CONFIGURE)
+- ✅ Test: **+56 test** (25 DeviceVariantConfigFactory + 18 TelemetryService + 13 BootService), tutti cross-platform → suite **228 net10.0** / **373 net10.0-windows**
 
 Rimanente:
-- ⏳ **Branch B** `refactor/services-business` — Step 3 (`DeviceVariantConfigFactory`) + Step 4 (`TelemetryService`) + Step 5 (`BootService`)
 - ⏳ **Branch C** `refactor/services-di-integration` — Step 7 (`AddServices()` + `AddProtocolInfrastructure()` + wiring `App/Program.cs`)
 
 ### 2.1 Setup progetti Services e Infrastructure.Protocol ✅ Completato
@@ -105,9 +121,10 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddServices(this IServiceCollection services)
     {
-        services.AddSingleton<ITelemetryService, TelemetryService>();
-        services.AddSingleton<IBootService, BootService>();
         services.AddSingleton<IPacketDecoder, PacketDecoder>();
+        services.AddSingleton<IProtocolService, ProtocolService>();
+        services.AddSingleton<ITelemetryService, TelemetryService>();  // dipende da IProtocolService, IDictionaryProvider
+        services.AddSingleton<IBootService, BootService>();            // dipende da IProtocolService
         return services;
     }
 }
@@ -115,14 +132,16 @@ public static class DependencyInjection
 
 `Infrastructure.Protocol/DependencyInjection.cs` esporrà `AddProtocolInfrastructure()` per registrare gli adapter (`CanPort`, `BlePort`, `SerialPort`) come `ICommunicationPort`.
 
-### 2.2 Estrarre da App/STEMProtocol/
+### 2.2 Riscrivere logica da App/STEMProtocol/ (codice nuovo, non wrapper)
 
-| Sorgente | Destinazione (Services/) | Note |
-|----------|-------------------------|------|
-| `TelemetryManager.cs` (422 LOC) | `Services/Telemetry/TelemetryService.cs` | Implementa `ITelemetryService`. Rimuovere dipendenze UI. Riceve `IDictionaryProvider` via DI. |
-| `BootManager.cs` (371 LOC) | `Services/Boot/BootService.cs` | Implementa `IBootService`. Progress via eventi tipizzati, non callback a Form1. |
-| `PacketManager.cs` decode logic | `Services/Protocol/PacketDecoder.cs` | Implementa `IPacketDecoder`. Solo decode, nessun riferimento a canali HW. |
-| `STEM_protocol.cs` send/receive | `Services/Protocol/ProtocolService.cs` | Facade: usa `ICommunicationPort`, gestisce encode/decode/routing. |
+I servizi in Services/ sono **riscritture pulite** della logica, non wrapper sui file originali. I file in `App/STEMProtocol/` restano intatti e continuano a essere usati dall'app fino a Fase 3 (rewiring). Dopo Fase 3 non sono più chiamati; eliminati in Fase 4.
+
+| Sorgente (riferimento) | Destinazione (Services/) | Dipendenze ctor |
+|------------------------|-------------------------|-----------------|
+| `TelemetryManager.cs` (422 LOC) | `Services/Telemetry/TelemetryService.cs` | `IProtocolService`, `IDictionaryProvider`. Usa `SendCommandAsync` per inviare richieste telemetria, si iscrive a `AppLayerDecoded` per decodificare risposte. Nessun riferimento a Form1 o UI. |
+| `BootManager.cs` (371 LOC) | `Services/Boot/BootService.cs` | `IProtocolService`. Progress via eventi tipizzati (`BootProgress`), stato via state machine. Nessun callback a Form1. |
+| `PacketManager.cs` decode logic | `Services/Protocol/PacketDecoder.cs` ✅ | Implementa `IPacketDecoder`. Solo decode puro, nessun riferimento a canali HW. |
+| `STEM_protocol.cs` send/receive | `Services/Protocol/ProtocolService.cs` ✅ | `ICommunicationPort`, `IPacketDecoder`. Facade: encode TP+CRC+chunking+framing, decode+reassembly+event, request/reply con validator. Implementa `IProtocolService`. |
 
 ### 2.3 Adattatori hardware ✅ Completato
 
@@ -152,11 +171,12 @@ Aggiornare `appsettings.json` con sezione `"Device"`.
 ### 2.5 Test
 
 Target: ≥90% coverage su Services/.
-- `TelemetryServiceTests` — encode payload, decode risposta, UpdateDictionary con mock IDictionaryProvider
-- `BootServiceTests` — state machine upload, eventi progress
-- `PacketDecoderTests` — decode da byte[] a AppLayerDecodedEvent
+- `TelemetryServiceTests` — encode payload, decode risposta, UpdateDictionary. Mock di `IProtocolService` + `IDictionaryProvider` (non serve ICommunicationPort — ProtocolService lo nasconde)
+- `BootServiceTests` — state machine upload, eventi progress. Mock di `IProtocolService`
+- `PacketDecoderTests` — decode da byte[] a AppLayerDecodedEvent (ImmutableArray<byte> equality strutturale)
+- `ProtocolServiceTests` ✅ — encode/decode/chunking/reassembly/request-reply (mock di ICommunicationPort)
 - `DeviceVariantConfigFactoryTests` — ogni variant produce config corretta
-- Mock manuali di `ICommunicationPort` in `Tests/Mocks/`
+- Mock manuali di `IProtocolService`, `ICommunicationPort`, `IDictionaryProvider` in `Tests/Mocks/`
 
 ### 2.6 Comandi
 
@@ -318,9 +338,9 @@ git checkout -b refactor/phase-4-protocol-migration-prep
 ## Struttura finale
 
 ```
-Core/                    [net10.0, zero deps]
-  Interfaces/            ICommunicationPort, IPacketDecoder, ITelemetryService, IBootService, IDeviceVariantConfig
-  Models/                Variable, Command, ProtocolAddress, DictionaryData, ConnectionState, DeviceVariant, AppLayerDecodedEvent, TelemetryDataPoint
+Core/                    [net10.0, zero deps NuGet esterni — System.Collections.Immutable è BCL]
+  Interfaces/            ICommunicationPort, IPacketDecoder, IProtocolService, ITelemetryService, IBootService, IDeviceVariantConfig
+  Models/                Variable, Command, ProtocolAddress, DictionaryData, ConnectionState, DeviceVariant, AppLayerDecodedEvent (ImmutableArray<byte>), TelemetryDataPoint
 
 Infrastructure.Persistence/ [net10.0]
   Api/, Excel/           DictionaryApiProvider, ExcelDictionaryProvider, FallbackDictionaryProvider
