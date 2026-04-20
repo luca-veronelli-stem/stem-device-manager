@@ -18,6 +18,7 @@ public class DeviceVariantConfigTests
         Assert.Equal(0u, cfg.DefaultRecipientId);
         Assert.Equal("", cfg.DeviceName);
         Assert.Equal("", cfg.BoardName);
+        Assert.Equal(DeviceVariantConfig.DefaultSenderId, cfg.SenderId);
     }
 
     [Fact]
@@ -29,6 +30,7 @@ public class DeviceVariantConfigTests
         Assert.Equal(0x00080381u, cfg.DefaultRecipientId);
         Assert.Equal("", cfg.DeviceName);
         Assert.Equal("", cfg.BoardName);
+        Assert.Equal(DeviceVariantConfig.DefaultSenderId, cfg.SenderId);
     }
 
     [Fact]
@@ -40,6 +42,7 @@ public class DeviceVariantConfigTests
         Assert.Equal(0u, cfg.DefaultRecipientId);
         Assert.Equal("EDEN", cfg.DeviceName);
         Assert.Equal("Madre", cfg.BoardName);
+        Assert.Equal(DeviceVariantConfig.DefaultSenderId, cfg.SenderId);
     }
 
     [Fact]
@@ -51,6 +54,38 @@ public class DeviceVariantConfigTests
         Assert.Equal(0u, cfg.DefaultRecipientId);
         Assert.Equal("SPARK", cfg.DeviceName);
         Assert.Equal("HMI", cfg.BoardName);
+        Assert.Equal(DeviceVariantConfig.DefaultSenderId, cfg.SenderId);
+    }
+
+    [Fact]
+    public void DefaultSenderId_IsEightForLegacyParity()
+    {
+        Assert.Equal(8u, DeviceVariantConfig.DefaultSenderId);
+    }
+
+    [Theory]
+    [InlineData(DeviceVariant.Generic)]
+    [InlineData(DeviceVariant.TopLift)]
+    [InlineData(DeviceVariant.Eden)]
+    [InlineData(DeviceVariant.Egicon)]
+    public void Create_WithExplicitSenderId_OverridesDefault(DeviceVariant v)
+    {
+        var cfg = DeviceVariantConfig.Create(v, senderId: 0x12345678u);
+
+        Assert.Equal(0x12345678u, cfg.SenderId);
+        // Le altre proprietà devono essere identiche alla factory single-arg
+        var defaultCfg = DeviceVariantConfig.Create(v);
+        Assert.Equal(defaultCfg.Variant, cfg.Variant);
+        Assert.Equal(defaultCfg.DefaultRecipientId, cfg.DefaultRecipientId);
+        Assert.Equal(defaultCfg.DeviceName, cfg.DeviceName);
+        Assert.Equal(defaultCfg.BoardName, cfg.BoardName);
+    }
+
+    [Fact]
+    public void Create_WithExplicitSenderId_InvalidVariant_Throws()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => DeviceVariantConfig.Create((DeviceVariant)999, senderId: 8));
     }
 
     [Theory]
