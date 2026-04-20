@@ -76,16 +76,22 @@ git checkout -b refactor/phase-1-protocol-abstractions
 **Obiettivo:** Popolare Services/ con implementazioni concrete + introdurre Infrastructure.Protocol per gli adapter HW. Spostare logica da App/ a Services/ / Infrastructure.Protocol/.
 
 **Progresso al 2026-04-20:**
+
+Branch `refactor/services-foundation` (merged → main, PR #24):
 - ✅ Step 1 — Setup struttura progetti: Services `net10.0` puro + nuovo `Infrastructure.Protocol` dual TFM + rinomina `Infrastructure` → `Infrastructure.Persistence` (allineamento pattern Stem)
-- ✅ Step 1 — `PacketDecoder` + `DictionarySnapshot` in `Services/Protocol/` (19 test + thread-safety)
-- ✅ Step 2 — Adapter HW `CanPort` (option A arbId LE prefix), `BlePort` e `SerialPort` (pass-through) in `Infrastructure.Protocol/Hardware/` (76 test totali)
+- ✅ Step 1 — `PacketDecoder` + `DictionarySnapshot` in `Services/Protocol/`
+- ✅ Step 2 — Adapter HW `CanPort` (option A arbId LE prefix), `BlePort` e `SerialPort` (pass-through) in `Infrastructure.Protocol/Hardware/`
 - ✅ `PCANManager` spostato da `App/` a `Infrastructure.Protocol/Hardware/` (driver autonomo)
 - ✅ `Docs/PROTOCOL.md` — documentazione completa del protocollo STEM legacy
-- ⏳ Step 3 — `DeviceVariantConfigFactory`
-- ⏳ Step 4 — `TelemetryService`
-- ⏳ Step 5 — `BootService`
-- ⏳ Step 6 — `ProtocolService` (facade + `PacketReassembler`)
-- ⏳ Step 7 — `AddServices()` + `AddProtocolInfrastructure()` DI registration
+
+Branch `refactor/protocol-service` (in corso, **Branch A** della strategia multi-branch):
+- ✅ `NetInfo` struct + `PacketReassembler` thread-safe (Services/Protocol/)
+- ✅ `ChannelKind` enum in Core.Models + proprietà `Kind` su `ICommunicationPort`
+- ✅ Step 6 — `ProtocolService` facade (encode TP + CRC16 + chunking + framing per canale; decode + reassembly + event; pattern request/reply con validator custom)
+
+Rimanente:
+- ⏳ **Branch B** `refactor/services-business` — Step 3 (`DeviceVariantConfigFactory`) + Step 4 (`TelemetryService`) + Step 5 (`BootService`)
+- ⏳ **Branch C** `refactor/services-di-integration` — Step 7 (`AddServices()` + `AddProtocolInfrastructure()` + wiring `App/Program.cs`)
 
 ### 2.1 Setup progetti Services e Infrastructure.Protocol ✅ Completato
 
