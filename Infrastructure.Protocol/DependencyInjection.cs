@@ -1,3 +1,4 @@
+using Core.Interfaces;
 using Infrastructure.Protocol.Hardware;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -41,6 +42,14 @@ public static class DependencyInjection
         services.AddSingleton<CanPort>();
         services.AddSingleton<BlePort>();
         services.AddSingleton<SerialPort>();
+
+        // Esponi i 3 port anche come ICommunicationPort, così che chi richiede
+        // IEnumerable<ICommunicationPort> (es. ConnectionManager in Services)
+        // riceva tutte e tre le istanze. Risoluzione delegata ai singleton
+        // concreti per garantire identity (un solo CanPort, un solo BlePort, …).
+        services.AddSingleton<ICommunicationPort>(sp => sp.GetRequiredService<CanPort>());
+        services.AddSingleton<ICommunicationPort>(sp => sp.GetRequiredService<BlePort>());
+        services.AddSingleton<ICommunicationPort>(sp => sp.GetRequiredService<SerialPort>());
 
         return services;
     }
