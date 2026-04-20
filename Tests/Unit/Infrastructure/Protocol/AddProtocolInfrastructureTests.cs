@@ -93,4 +93,41 @@ public class AddProtocolInfrastructureTests
         // AddProtocolInfrastructure (l'host deve registrare IBleDriver/ISerialDriver).
         Assert.Throws<InvalidOperationException>(() => sp.GetRequiredService<BlePort>());
     }
+
+    [Fact]
+    public void AddProtocolInfrastructure_RegistersAllThreePortsAsICommunicationPort()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IBleDriver, FakeBleDriver>();
+        services.AddSingleton<ISerialDriver, FakeSerialDriver>();
+        services.AddSingleton<IPcanDriver, FakePcanDriver>(); // override del default PCANManager
+        services.AddProtocolInfrastructure();
+
+        using var sp = services.BuildServiceProvider();
+        var ports = sp.GetServices<global::Core.Interfaces.ICommunicationPort>().ToList();
+
+        Assert.Equal(3, ports.Count);
+        Assert.Contains(ports, p => p.Kind == global::Core.Models.ChannelKind.Can);
+        Assert.Contains(ports, p => p.Kind == global::Core.Models.ChannelKind.Ble);
+        Assert.Contains(ports, p => p.Kind == global::Core.Models.ChannelKind.Serial);
+    }
+
+    [Fact]
+    public void AddProtocolInfrastructure_ICommunicationPortRegistration_DelegatesToConcreteSingleton()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IBleDriver, FakeBleDriver>();
+        services.AddSingleton<ISerialDriver, FakeSerialDriver>();
+        services.AddSingleton<IPcanDriver, FakePcanDriver>();
+        services.AddProtocolInfrastructure();
+
+        using var sp = services.BuildServiceProvider();
+        var blePortConcrete = sp.GetRequiredService<BlePort>();
+        var blePortViaInterface = sp.GetServices<global::Core.Interfaces.ICommunicationPort>()
+            .Single(p => p.Kind == global::Core.Models.ChannelKind.Ble);
+
+        // Identità: entrambe le risoluzioni devono restituire la stessa istanza
+        // (single source of truth via singleton concreto).
+        Assert.Same(blePortConcrete, blePortViaInterface);
+    }
 }
