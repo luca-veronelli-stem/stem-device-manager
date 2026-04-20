@@ -217,6 +217,83 @@ public class PacketDecoderTests
         Assert.Null(evt.Variable);
     }
 
+    [Fact]
+    public void Decode_WriteVariableReply_ResolvesVariable()
+    {
+        // Comando 0x80 0x02 = risposta a WriteVariable (bit 7 del cmdHigh acceso)
+        var writeReply = new Command("WriteVariableReply", "80", "02");
+        var decoder = new PacketDecoder([writeReply], [Speed], []);
+        var packet = MakePacket(
+            cmdHigh: 0x80, cmdLow: 0x02,
+            applicationPayload: [0x12, 0x34, 0x00]);
+
+        var evt = decoder.Decode(packet);
+
+        Assert.NotNull(evt);
+        Assert.Same(Speed, evt.Variable);
+    }
+
+    [Fact]
+    public void Decode_ReadVariableWithSingleByteAddress_LeavesVariableNull()
+    {
+        // Payload length = 10 byte totali = 1 byte dopo cmd (index 9 presente, index 10 NO).
+        // Il decoder richiede entrambi i byte per risolvere la variabile.
+        var decoder = new PacketDecoder([ReadVariable], [Speed], []);
+        var packet = MakePacket(
+            cmdHigh: 0x00, cmdLow: 0x01,
+            applicationPayload: [0x12]);
+
+        var evt = decoder.Decode(packet);
+
+        Assert.NotNull(evt);
+        Assert.Null(evt.Variable);
+    }
+
+    [Fact]
+    public async Task UpdateDictionary_ConcurrentWithDecode_NoExceptions()
+    {
+        // Stress probabilistico: molte Decode su N thread mentre un altro thread
+        // sostituisce continuamente il dizionario. Il decoder deve vedere sempre
+        // uno snapshot coerente (o vecchio o nuovo, mai intermedio) — nessuna
+        // eccezione attesa.
+        var dictA = new[] { new Command("A", "00", "01") };
+        var dictB = new[] { new Command("B", "00", "02"), new Command("C", "00", "03") };
+        var decoder = new PacketDecoder(dictA, [], []);
+        var packetA = MakePacket(cmdHigh: 0x00, cmdLow: 0x01);
+        var packetB = MakePacket(cmdHigh: 0x00, cmdLow: 0x02);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
+        var exceptions = new List<Exception>();
+        var readers = Enumerable.Range(0, 4).Select(i => Task.Run(() =>
+        {
+            try
+            {
+                while (!cts.IsCancellationRequested)
+                {
+                    _ = decoder.Decode(packetA);
+                    _ = decoder.Decode(packetB);
+                }
+            }
+            catch (Exception ex) { lock (exceptions) exceptions.Add(ex); }
+        })).ToArray();
+        var writer = Task.Run(() =>
+        {
+            try
+            {
+                while (!cts.IsCancellationRequested)
+                {
+                    decoder.UpdateDictionary(dictA, [], []);
+                    decoder.UpdateDictionary(dictB, [], []);
+                }
+            }
+            catch (Exception ex) { lock (exceptions) exceptions.Add(ex); }
+        });
+
+        await Task.WhenAll(readers.Append(writer));
+
+        Assert.Empty(exceptions);
+    }
+
     private static RawPacket MakePacket(
         uint senderId = 0u,
         byte cmdHigh = 0x00,
