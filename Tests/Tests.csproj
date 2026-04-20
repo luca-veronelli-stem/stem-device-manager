@@ -27,18 +27,20 @@
     <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
   </ItemGroup>
 
-  <!-- App: solo per target Windows (dipende da WinForms) -->
+  <!-- App + Services: solo per target Windows (dipendono da WinForms/Windows) -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
     <ProjectReference Include="..\App\App.csproj" />
+    <ProjectReference Include="..\Services\Services.csproj" />
   </ItemGroup>
 
-  <!-- Escludi test che dipendono da App nel target cross-platform (net10.0) -->
+  <!-- Escludi test che dipendono da App/Services nel target cross-platform (net10.0) -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
     <Compile Remove="Integration\**" />
     <Compile Remove="Unit\Terminal\**" />
     <Compile Remove="Unit\Protocol\**" />
     <Compile Remove="Unit\CodeGenerator\**" />
     <Compile Remove="Unit\CircularProgressBar\**" />
+    <Compile Remove="Unit\Services\**" />
     <Compile Remove="Unit\Core\Models\ButtonIndicatorTests.cs" />
   </ItemGroup>
 
