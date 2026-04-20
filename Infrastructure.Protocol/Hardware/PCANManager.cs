@@ -35,7 +35,7 @@ public class CANPacketEventArgs : EventArgs
 /// </code>
 /// </example>
 
-public class PCANManager
+public class PCANManager : IPcanDriver
 {
     private const TPCANHandle Channel = 0x51; // PCAN_USB
     private TPCANBaudrate _currentBaudRate;
@@ -45,12 +45,23 @@ public class PCANManager
     /// <summary>
     /// Si verifica quando cambia lo stato della connessione al dispositivo PCAN.
     /// </summary>
-    public event EventHandler<bool> ConnectionStatusChanged;
+    public event EventHandler<bool>? ConnectionStatusChanged;
     /// <summary>
     /// Si verifica quando viene ricevuto un nuovo pacchetto CAN.
     /// </summary>
-    public event EventHandler<CANPacketEventArgs> PacketReceived;
-    public event EventHandler<string> ErrorOccurred;
+    public event EventHandler<CANPacketEventArgs>? PacketReceived;
+    public event EventHandler<string>? ErrorOccurred;
+
+    /// <summary>
+    /// Wrapper <see cref="IPcanDriver.SendMessageAsync"/> che adatta
+    /// <see cref="TPCANStatus"/> a <see cref="bool"/> (true = OK).
+    /// </summary>
+    async Task<bool> IPcanDriver.SendMessageAsync(
+        uint canId, byte[] data, bool isExtended)
+    {
+        var status = await SendMessageAsync(canId, data, isExtended);
+        return status == TPCANStatus.PCAN_ERROR_OK;
+    }
 
     public bool IsConnected
     {
