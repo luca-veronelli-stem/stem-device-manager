@@ -4,6 +4,8 @@
 
 //using System.Windows.Forms;
 
+using Infrastructure.Protocol.Hardware;
+
 namespace App.STEMProtocol;
 
 public class SerialMessage
@@ -115,7 +117,7 @@ public class SDL : IDisposable
         }
     }
 
-    private void OnBLEPacketReceived(object sender, BLEPacketEventArgs e)
+    private void OnBLEPacketReceived(object sender, BlePacketEventArgs e)
     {
         //aggiungi i messaggi alla coda del network layer
         SerialMessage RxMessage = new SerialMessage(e.Data, e.Timestamp);
