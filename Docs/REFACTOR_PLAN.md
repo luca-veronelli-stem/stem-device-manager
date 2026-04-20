@@ -117,7 +117,16 @@ Branch `refactor/services-di-integration` (merged → main, PR #27, **Branch C**
 - ✅ **Servizi NON registrati per scelta architetturale** (dubbio 1 opzione c): `ProtocolService`/`ITelemetryService`/`IBootService` dipendono dalla port runtime, creati dal `ConnectionManager` Phase 3. `IProtocolService` da introdurre in Core in apertura Fase 3 (refactor leggero: estrarre interfaccia da ProtocolService, cambiare ctor di TelemetryService/BootService per dipendere dall'interfaccia)
 - ✅ `Docs/PREPROCESSOR_DIRECTIVES.md` — documentato debito Phase 3: `BLE_Manager.FormRef` da rimpiazzare con evento o `ILogger`
 - ✅ Test: **+8 test** (6 DeviceVariantConfig SenderId + 2 DeviceVariantConfigFactory) → suite **236 net10.0** / **381 net10.0-windows**
-- ⏳ Integration test cross-platform per `AddServices()` + `AddProtocolInfrastructure()` (deferito a branch dedicato o Fase 3)
+- ✅ Integration test cross-platform per `AddServices()` + `AddProtocolInfrastructure()` chiusi nel branch `refactor/protocol-interface` (vedi sotto)
+
+Branch `refactor/protocol-interface` (in corso, **prerequisite di Fase 3**):
+- ✅ `Core/Interfaces/IProtocolService` — estratto contratto del facade (`SenderId`, `AppLayerDecoded`, `SendCommandAsync`, `SendCommandAndWaitReplyAsync`, `IDisposable`)
+- ✅ `Services/Protocol/ProtocolService` implementa `IProtocolService` (signature pubblica invariata)
+- ✅ `TelemetryService` e `BootService` ctor cambiati: dipendono da `IProtocolService` invece del concreto `ProtocolService`
+- ✅ Suite test esistente (Telemetry/Boot) verde **senza modifiche** ai test (real ProtocolService passato come IProtocolService via implicit conversion)
+- ✅ `Tests/Unit/Services/DependencyInjection/AddServicesTests.cs` — 11 test cross-platform (girano in CI Linux): smoke resolve `IDeviceVariantConfig`/`IPacketDecoder`, override `Device:Variant`/`Device:SenderId`, fallback su SenderId invalido, singleton lifetime
+- ✅ `Tests/Unit/Infrastructure/Protocol/AddProtocolInfrastructureTests.cs` — 8 test Windows-only: `ServiceDescriptor` per `IPcanDriver`/`CanPort`/`BlePort`/`SerialPort`, resolve di `BlePort`/`SerialPort` con fake driver registrati esternamente, conferma del contratto "host registra `IBleDriver`/`ISerialDriver` prima"
+- ✅ Test: **+19 test** (11 cross-platform + 8 Windows-only) → suite **247 net10.0** / **400 net10.0-windows**
 
 ### 2.1 Setup progetti Services e Infrastructure.Protocol ✅ Completato
 

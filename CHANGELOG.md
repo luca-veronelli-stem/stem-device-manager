@@ -27,7 +27,14 @@ e Fase 2 (in corso) — services layer + HW adapter + rinomina a pattern Stem.
 
 ### Added
 
-- **REFACTOR_PLAN Fase 2 — Branch C `refactor/services-di-integration`** (in corso, Step 7 completato — chiude Fase 2):
+- **REFACTOR_PLAN — Branch `refactor/protocol-interface`** (in corso, prerequisite di Fase 3 + chiusura debito Fase 2 integration tests):
+  - `Core/Interfaces/IProtocolService.cs` — nuovo contratto del facade protocollo (`SenderId`, `AppLayerDecoded`, `SendCommandAsync`, `SendCommandAndWaitReplyAsync`, estende `IDisposable`)
+  - `Services/Protocol/ProtocolService` implementa `IProtocolService` (nessun cambio signature pubblica)
+  - `TelemetryService` e `BootService` ctor — dipendenza da `IProtocolService` invece di `ProtocolService` concreto. Suite test esistente verde senza modifiche
+  - `Tests/Unit/Services/DependencyInjection/AddServicesTests.cs` — **11 test cross-platform** per `Services.AddServices(IConfiguration)`: smoke resolve, override `Device:Variant`/`Device:SenderId`, fallback su SenderId invalido, singleton lifetime, null guards
+  - `Tests/Unit/Infrastructure/Protocol/AddProtocolInfrastructureTests.cs` — **8 test Windows-only** per `Infrastructure.Protocol.AddProtocolInfrastructure()`: ServiceDescriptor per IPcanDriver/CanPort/BlePort/SerialPort, resolve con fake driver registrati esternamente, conferma contratto "host registra IBleDriver/ISerialDriver prima"
+  - Test: **+19 test** (11 cross-platform + 8 Windows-only) → suite **247 net10.0** / **400 net10.0-windows**
+- **REFACTOR_PLAN Fase 2 — Branch C `refactor/services-di-integration`** (merged in main, PR #27, Step 7 completato — chiude Fase 2):
   - `Core/Interfaces/IDeviceVariantConfig.SenderId` — nuova proprietà uint (indirizzo STEM del mittente, default `8` per parità legacy)
   - `Core/Models/DeviceVariantConfig` — record esteso con `SenderId`; `DefaultSenderId = 8` costante; nuovo overload `Create(variant, senderId)`; il single-arg delega al default
   - `Services/Configuration/DeviceVariantConfigFactory.FromString(variant, senderId)` — overload per host DI che legge SenderId da appsettings
