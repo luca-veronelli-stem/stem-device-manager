@@ -41,9 +41,9 @@ dotnet test Tests/Tests.csproj --framework net10.0  # solo test cross-platform s
 Core/           [net10.0, zero dipendenze NuGet]    — domain models + interfacce (dizionario + protocollo)
 Infrastructure.Persistence/ [net10.0]               — provider dati dizionari (API + Excel + Fallback)
 Infrastructure.Protocol/    [net10.0;net10.0-windows] — adapter HW (Can/Ble/Serial), driver nativi
-Services/       [net10.0-windows, vuoto]            — placeholder Fase 2 (refactor plan)
-App/            [net10.0-windows, WinForms]         — GUI + protocollo + DI entry point
-Tests/          [dual TFM: net10.0 + net10.0-windows] — 86 test net10.0 / 138 test net10.0-windows
+Services/       [net10.0]                           — logica pura (PacketDecoder, DictionarySnapshot, ...)
+App/            [net10.0-windows, WinForms]         — GUI + protocollo legacy + DI entry point
+Tests/          [dual TFM: net10.0 + net10.0-windows] — 132 test net10.0 / 274 test net10.0-windows
 Specs/          [Lean 4]                            — formalizzazioni dei tipi estratti (Phase1/)
 ```
 
@@ -55,7 +55,9 @@ Dipendenze: `App → {Infrastructure.Persistence, Infrastructure.Protocol, Servi
 
 **Infrastructure.Persistence** — `DictionaryApiProvider` (REST HTTP verso Azure), `ExcelDictionaryProvider` (ClosedXML su `Dizionari STEM.xlsx` embedded), `FallbackDictionaryProvider` (decorator: API → catch `HttpRequestException` → Excel). Registrazione DI via `AddDictionaryProvider(IConfiguration)` — legge `DictionaryApi:BaseUrl/ApiKey/TimeoutSeconds` da `appsettings.json`.
 
-**Infrastructure.Protocol** — Adapter hardware che implementano `ICommunicationPort` wrappando driver nativi (Peak.PCANBasic.NET, Plugin.BLE, System.IO.Ports). Popolato in Fase 2 (`refactor/services-layer`). Pattern allineato a `Stem.ButtonPanel.Tester/Infrastructure`.
+**Infrastructure.Protocol** — Adapter hardware che implementano `ICommunicationPort`: `CanPort` (wrappa `PCANManager` via `IPcanDriver`), `BlePort` (via `IBleDriver`, impl in `App.BLEManager`), `SerialPort` (via `ISerialDriver`, impl in `App.SerialPortManager`). Convention payload: CAN = arbId LE prefix; BLE/Serial = pass-through. Pattern allineato a `Stem.ButtonPanel.Tester/Infrastructure` e `Stem.Production.Tracker/Infrastructure.Protocol`. Dual TFM: compila cross-platform, runtime Windows-only.
+
+**Services** — Logica pura cross-platform. Fase 2 step 1 completato: `PacketDecoder` + `DictionarySnapshot` in `Services/Protocol/`. Ctor injection di `IDictionaryProvider`, `ICommunicationPort`, ecc. (zero dipendenze WinForms).
 
 **App/Program.cs** — Entry point DI: registra `IDictionaryProvider` (via Infrastructure.Persistence). Configurazione da `appsettings.json` + env vars.
 
@@ -107,9 +109,9 @@ Vedi [`Docs/REFACTOR_PLAN.md`](Docs/REFACTOR_PLAN.md) per il piano branch-by-bra
 
 | Branch | Descrizione | Stato |
 |--------|-------------|-------|
-| `refactor/protocol-abstractions` | Fase 1 — interfacce + modelli Core per comunicazione/protocollo, formalizzazioni Lean 4 in `Specs/Phase1/` | ✅ Completata |
-| `refactor/phase-2-services-layer` | Estrarre TelemetryService, BootService, PacketDecoder, ProtocolService in `Services/` | ⏳ In attesa |
-| `refactor/phase-3-form1-decomposition` | Decomporre Form1, rimuovere `#if`, tab autonome | ⏳ In attesa |
+| `refactor/protocol-abstractions` | Fase 1 — interfacce + modelli Core, formalizzazioni Lean 4 in `Specs/Phase1/` | ✅ Completata |
+| `refactor/services-layer` | Fase 2 — PacketDecoder + HW adapter (CanPort/BlePort/SerialPort) + PROTOCOL.md + rinomina Infrastructure→Infrastructure.Persistence | 🚧 In corso (Step 1-2 fatti; TelemetryService/BootService/ProtocolService pendenti) |
+| `refactor/phase-3-form1-decomposition` | Decomporre Form1, rimuovere `#if`, tab autonome, estrarre BLE/Serial manager | ⏳ In attesa |
 | `refactor/phase-4-protocol-migration-prep` | Adapter per `Stem.Communication` NuGet + feature flag | ⏳ In attesa |
 
 ---
@@ -119,7 +121,9 @@ Vedi [`Docs/REFACTOR_PLAN.md`](Docs/REFACTOR_PLAN.md) per il piano branch-by-bra
 | File | Scopo |
 |------|-------|
 | `.copilot/copilot-instructions.md` | Workflow dettagliato, profilo utente, log sessioni |
-| `Docs/MIGRATION_API.md` | Piano e log della migrazione dizionari (Fase 2) |
+| `Docs/REFACTOR_PLAN.md` | Piano branch-by-branch di modernizzazione architetturale |
+| `Docs/PROTOCOL.md` | Funzionamento interno del protocollo STEM (layering, CRC, chunking, comandi) |
+| `Docs/PREPROCESSOR_DIRECTIVES.md` | Catalogo blocchi `#if TOPLIFT/EDEN/EGICON` da rimuovere in Fase 3 |
 | `App/appsettings.json` | Configurazione `DictionaryApi` (BaseUrl, ApiKey, TimeoutSeconds) |
 | `Directory.Build.props` | Versione SemVer, autori, copyright |
 | `bitbucket-pipelines.yml` | CI/CD Bitbucket |

@@ -22,10 +22,27 @@ Il formato si basa su [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Modernizzazione: documentazione, standard, riorganizzazione progetto, test coverage,
 architettura multi-progetto, migrazione dizionari Excel → API Azure,
 Fase 3 disaccoppiamento Form1 (Branch 1+2 completati), rimozione funzionalità ButtonPanel e ExcelHandler,
-avvio refactor architetturale (REFACTOR_PLAN) con Fase 1 — protocol abstractions in Core.
+refactor architetturale (REFACTOR_PLAN) con Fase 1 — protocol abstractions in Core —
+e Fase 2 (in corso) — services layer + HW adapter + rinomina a pattern Stem.
 
 ### Added
 
+- **REFACTOR_PLAN Fase 2 — Services layer + Infrastructure.Protocol** (branch `refactor/services-layer`, in corso al 2026-04-20, Step 1-2 completati):
+  - **Rinomina** progetto `Infrastructure` → `Infrastructure.Persistence` per allineamento al pattern Stem (`Infrastructure.<Concern>` — vedi `Stem.Production.Tracker`, `Stem.ButtonPanel.Tester`)
+  - **Nuovo progetto** `Infrastructure.Protocol` (dual TFM `net10.0;net10.0-windows10.0.19041.0`) — adapter hardware CAN/BLE/Serial:
+    - `Hardware/CanPort.cs` — implementa `ICommunicationPort` con convention A (arbitration ID LE prefisso nei payload) wrappando `PCANManager` via `IPcanDriver`
+    - `Hardware/BlePort.cs` — implementa `ICommunicationPort` con convention pass-through, wrappa `App.BLEManager` via `IBleDriver`
+    - `Hardware/SerialPort.cs` — implementa `ICommunicationPort` con convention pass-through, wrappa `App.SerialPortManager` via `ISerialDriver`
+    - `Hardware/IPcanDriver.cs` / `IBleDriver.cs` / `ISerialDriver.cs` — abstraction per testability + dependency inversion (`BLEManager` e `SerialPortManager` restano in `App/` per Form1/MessageBox refs)
+    - `Hardware/BlePacketEventArgs.cs` / `SerialPacketEventArgs.cs` — event args centralizzati
+    - `Hardware/PCANManager.cs` — driver PCAN-USB spostato da `App/` (auto-reconnect, baud rate runtime)
+  - **`Services/` ora popolato** (target `net10.0` puro, cross-platform):
+    - `Services/Protocol/PacketDecoder.cs` — `IPacketDecoder` puro con thread-safe `UpdateDictionary` (Volatile.Read/Write su snapshot)
+    - `Services/Protocol/DictionarySnapshot.cs` — snapshot immutabile con lookup comandi/variabili/indirizzi (hex case-insensitive)
+  - `Docs/PROTOCOL.md` — nuova documentazione completa del protocollo STEM (3 livelli AL/TL/NL, NetInfo bit layout, CRC16 Modbus, chunking per canale, 10 comandi noti, 6 known quirks, pipeline send/receive per canale, roadmap migrazione Fase 4)
+  - Test coverage: **274 test** totali (era 209), **132 cross-platform** (era 86): +27 PacketDecoder, +21 DictionarySnapshot, +22 CanPort, +21 BlePort, +21 SerialPort, +7 PacketEventArgs, +18 gap-fill (Dispose idempotency, connect timeout, state cycle, null validation)
+  - `CanPort` / `BlePort` / `SerialPort` tests usano fake driver manuali (`FakePcanDriver`, `FakeBleDriver`, `FakeSerialDriver`) in `Tests/Unit/Infrastructure/Protocol/`
+  - README progetti: `Infrastructure.Protocol/README.md`, `Services/README.md`; `Infrastructure.Persistence/README.md` aggiornato post-rename
 - **REFACTOR_PLAN Fase 1 — Protocol abstractions in Core** (branch `refactor/protocol-abstractions`):
   - `Core/Interfaces/` — 5 nuove interfacce: `ICommunicationPort` (astrazione CAN/BLE/Serial), `IPacketDecoder` (decoder puro `RawPacket → AppLayerDecodedEvent`), `ITelemetryService`, `IBootService` (+ enum `BootState`, record `BootProgress`), `IDeviceVariantConfig`
   - `Core/Models/` — 6 nuovi modelli: `ConnectionState` (enum), `DeviceVariant` (enum), `DeviceVariantConfig` (record + factory totale `Create(DeviceVariant)`), `RawPacket`, `AppLayerDecodedEvent`, `TelemetryDataPoint`

@@ -71,11 +71,23 @@ git checkout -b refactor/phase-1-protocol-abstractions
 
 ---
 
-## Fase 2 — `refactor/phase-2-services-layer`
+## Fase 2 — `refactor/services-layer` 🚧 In corso
 
-**Obiettivo:** Popolare Services/ con implementazioni concrete. Spostare logica da App/ a Services/.
+**Obiettivo:** Popolare Services/ con implementazioni concrete + introdurre Infrastructure.Protocol per gli adapter HW. Spostare logica da App/ a Services/ / Infrastructure.Protocol/.
 
-### 2.1 Setup progetti Services e Infrastructure.Protocol
+**Progresso al 2026-04-20:**
+- ✅ Step 1 — Setup struttura progetti: Services `net10.0` puro + nuovo `Infrastructure.Protocol` dual TFM + rinomina `Infrastructure` → `Infrastructure.Persistence` (allineamento pattern Stem)
+- ✅ Step 1 — `PacketDecoder` + `DictionarySnapshot` in `Services/Protocol/` (19 test + thread-safety)
+- ✅ Step 2 — Adapter HW `CanPort` (option A arbId LE prefix), `BlePort` e `SerialPort` (pass-through) in `Infrastructure.Protocol/Hardware/` (76 test totali)
+- ✅ `PCANManager` spostato da `App/` a `Infrastructure.Protocol/Hardware/` (driver autonomo)
+- ✅ `Docs/PROTOCOL.md` — documentazione completa del protocollo STEM legacy
+- ⏳ Step 3 — `DeviceVariantConfigFactory`
+- ⏳ Step 4 — `TelemetryService`
+- ⏳ Step 5 — `BootService`
+- ⏳ Step 6 — `ProtocolService` (facade + `PacketReassembler`)
+- ⏳ Step 7 — `AddServices()` + `AddProtocolInfrastructure()` DI registration
+
+### 2.1 Setup progetti Services e Infrastructure.Protocol ✅ Completato
 
 **`Services/Services.csproj`** — target `net10.0` puro (cross-platform), riferimento solo a `Core`. Contiene solo logica pura senza dipendenze da driver hardware o WinForms. I test girano anche in CI Linux.
 
@@ -106,16 +118,21 @@ public static class DependencyInjection
 | `PacketManager.cs` decode logic | `Services/Protocol/PacketDecoder.cs` | Implementa `IPacketDecoder`. Solo decode, nessun riferimento a canali HW. |
 | `STEM_protocol.cs` send/receive | `Services/Protocol/ProtocolService.cs` | Facade: usa `ICommunicationPort`, gestisce encode/decode/routing. |
 
-### 2.3 Adattatori hardware
+### 2.3 Adattatori hardware ✅ Completato
 
-In `Infrastructure.Protocol/Hardware/` (non in Services — dipendono da driver nativi Windows):
+In `Infrastructure.Protocol/Hardware/` (non in Services — dipendono da driver nativi):
 ```
-CanPort.cs       — implementa ICommunicationPort wrappando PCAN_Manager (Peak.PCANBasic.NET)
-BlePort.cs       — implementa ICommunicationPort wrappando BLE_SDL (Plugin.BLE)
-SerialPort.cs    — implementa ICommunicationPort wrappando SerialDataLayer (System.IO.Ports)
+CanPort.cs       — implementa ICommunicationPort, wrappa PCANManager via IPcanDriver (option A: arbId LE prefix)
+BlePort.cs       — implementa ICommunicationPort, wrappa App.BLEManager via IBleDriver (pass-through)
+SerialPort.cs    — implementa ICommunicationPort, wrappa App.SerialPortManager via ISerialDriver (pass-through)
+PCANManager.cs   — driver PCAN-USB embedded (spostato da App/)
+IPcanDriver.cs, IBleDriver.cs, ISerialDriver.cs — abstraction per testability + dependency inversion
+BlePacketEventArgs.cs, SerialPacketEventArgs.cs — event args dei driver
 ```
 
-I file originali in `App/STEMProtocol/` restano come delegate interno (verranno rimossi in Fase 4 quando arriva Stem.Communication).
+`BLE_Manager.cs` e `SerialPort_Manager.cs` restano in `App/` (refs a `Form1.FormRef` e `MessageBox`, da rimuovere in Fase 3). Implementano le interfacce `IBleDriver` / `ISerialDriver` di Infrastructure.Protocol (dependency inversion).
+
+Le tre convention payload sono documentate in [PROTOCOL.md](PROTOCOL.md) e negli XML-doc degli adapter.
 
 ### 2.4 DeviceVariantConfig
 

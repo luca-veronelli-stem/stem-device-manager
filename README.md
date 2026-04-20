@@ -2,11 +2,11 @@
 
 [![Version](https://img.shields.io/badge/version-2.15-blue)](./CHANGELOG.md)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
-[![Tests](https://img.shields.io/badge/tests-209-brightgreen)](./Tests/)
+[![Tests](https://img.shields.io/badge/tests-274-brightgreen)](./Tests/)
 [![License](https://img.shields.io/badge/license-Proprietary-red)](#licenza)
 
 > **Applicativo desktop per la gestione, diagnostica e comunicazione dei dispositivi STEM via protocollo proprietario multi-canale (CAN, BLE, Serial).**  
-> **Ultimo aggiornamento:** 2026-04-17
+> **Ultimo aggiornamento:** 2026-04-20
 
 ---
 
@@ -22,14 +22,19 @@ Stem Device Manager è un tool Windows desktop utilizzato per:
 
 ### Stato Attuale
 
-Il progetto è un **monolite legacy** attualmente in fase di modernizzazione:  
-- ~54k LOC di codice produzione in un singolo progetto  
-- `Form1.cs` è un God Object (~54k LOC con Designer) — ora usa `IDictionaryProvider` per i dizionari  
-- **209 test automatizzati** (xUnit) — unit + integration  
-- Architettura multi-progetto: **Core** (net10.0) + **Infrastructure** (net10.0) + **App** (WinForms)  
-- Infrastruttura API Azure pronta con fallback Excel via DI; Form1 migrata a `IDictionaryProvider`  
-- ExcelHandler rimosso completamente (migrato a Infrastructure.ExcelDictionaryProvider)  
-- Refactor architetturale in corso (vedi [`Docs/REFACTOR_PLAN.md`](./Docs/REFACTOR_PLAN.md)): Fase 1 completata con astrazioni protocol/communication in Core e formalizzazioni Lean 4 in [`Specs/Phase1/`](./Specs/Phase1/README.md)
+Il progetto è un **monolite legacy** in fase di modernizzazione incrementale:  
+- `Form1.cs` è un God Object (~54k LOC con Designer) — usa `IDictionaryProvider` per i dizionari  
+- **274 test automatizzati** (xUnit) — unit + integration, di cui 132 cross-platform (CI Linux)  
+- Architettura multi-progetto:
+  - **Core** (net10.0) — modelli dominio + interfacce  
+  - **Infrastructure.Persistence** (net10.0) — provider dati (API Azure + Excel + Fallback)  
+  - **Infrastructure.Protocol** (dual TFM) — adapter HW CAN/BLE/Serial + driver PCAN  
+  - **Services** (net10.0) — logica pura (PacketDecoder, DictionarySnapshot, ...)  
+  - **App** (net10.0-windows, WinForms) — entry point + GUI + legacy STEMProtocol  
+- Refactor architetturale (vedi [`Docs/REFACTOR_PLAN.md`](./Docs/REFACTOR_PLAN.md)):
+  - Fase 1 — protocol abstractions in Core ✅
+  - Fase 2 — services layer + HW adapter (Step 1-2 completati, in corso) 🚧
+  - Fase 3 — decomposizione Form1 ⏳
 
 ---
 
@@ -45,7 +50,7 @@ Il progetto è un **monolite legacy** attualmente in fase di modernizzazione:
 | **Bootloader** | ✅ | Aggiornamento firmware (classico + smart) |
 | **Telemetria** | ✅ | Lettura variabili + grafici OxyPlot (lenta + veloce) |
 | **Code Generator** | ✅ | Genera sp_config.h |
-| **Test Automatizzati** | ✅ | 209 test (unit + integration) — xUnit |
+| **Test Automatizzati** | ✅ | 274 test (unit + integration) — xUnit |
 
 ---
 
@@ -101,32 +106,37 @@ dotnet run --project App/App.csproj
 
 ```
 Stem.Device.Manager/
-├── Stem.Device.Manager.slnx        Solution file (XML moderno)
-├── Core/                            Modelli dominio, interfacce (net10.0)
-│   ├── Models/                      Dizionario (Variable, Command, ProtocolAddress, DictionaryData)
-│   │                                + Protocol abstractions (ConnectionState, DeviceVariant,
-│   │                                  DeviceVariantConfig, RawPacket, AppLayerDecodedEvent,
-│   │                                  TelemetryDataPoint)
-│   └── Interfaces/                  IDictionaryProvider, ICommunicationPort, IPacketDecoder,
-│                                    ITelemetryService, IBootService, IDeviceVariantConfig
-├── Infrastructure/                   Provider dati (net10.0)
-│   ├── Api/                         DictionaryApiProvider + DTO
-│   ├── Excel/                       ExcelDictionaryProvider
-│   ├── FallbackDictionaryProvider   Decorator API→Excel
-│   └── DependencyInjection.cs       Registrazione DI
-├── Services/                        Logica business (net10.0-windows, vuoto — Fase 2 REFACTOR_PLAN)
-├── App/                             Windows Forms (.NET 10)
-│   ├── Program.cs                   Entry point + DI + IConfiguration
-│   ├── Form1.cs                     Main form (God Object ~54k LOC) — usa IDictionaryProvider
-│   ├── STEMProtocol/                Protocollo comunicazione proprietario
-│   ├── GUI/                         Tab pages WinForms
-│   └── Resources/                   Excel embedded, icone
-├── Specs/                           Formalizzazioni Lean 4
-│   └── Phase1/                      Tipi/interfacce di protocollo (branch refactor/protocol-abstractions)
-├── Tests/                           209 test (xUnit)
-│   ├── Unit/                        Core, Infrastructure, Protocol
-│   └── Integration/                 DI, ExcelHandler, CodeGenerator, Form1
-└── Docs/                            Documentazione + Standards + REFACTOR_PLAN
+├── Stem.Device.Manager.slnx          Solution file (XML moderno)
+├── Core/                             Modelli dominio + interfacce (net10.0, zero deps)
+│   ├── Models/                       Dizionario + protocol abstractions
+│   │                                 (Variable, Command, ProtocolAddress, DictionaryData,
+│   │                                  ConnectionState, DeviceVariant, DeviceVariantConfig,
+│   │                                  RawPacket, AppLayerDecodedEvent, TelemetryDataPoint)
+│   └── Interfaces/                   IDictionaryProvider, ICommunicationPort, IPacketDecoder,
+│                                     ITelemetryService, IBootService, IDeviceVariantConfig
+├── Infrastructure.Persistence/       Provider dati dizionario (net10.0)
+│   ├── Api/                          DictionaryApiProvider + DTO (REST Azure)
+│   ├── Excel/                        ExcelDictionaryProvider (fallback embedded)
+│   ├── FallbackDictionaryProvider    Decorator API→Excel
+│   └── DependencyInjection.cs        AddDictionaryProvider()
+├── Infrastructure.Protocol/          Adapter HW (dual TFM: net10.0 + net10.0-windows)
+│   └── Hardware/                     CanPort, BlePort, SerialPort (ICommunicationPort)
+│                                     + PCANManager driver + IPcanDriver/IBleDriver/ISerialDriver
+├── Services/                         Logica applicativa pura (net10.0 — cross-platform)
+│   └── Protocol/                     PacketDecoder, DictionarySnapshot
+├── App/                              Windows Forms (net10.0-windows)
+│   ├── Program.cs                    Entry point + DI + IConfiguration
+│   ├── Form1.cs                      Main form (God Object ~54k LOC)
+│   ├── STEMProtocol/                 Protocollo legacy (da migrare in Fase 4)
+│   ├── BLE_Manager.cs                Driver BLE (implementa IBleDriver)
+│   ├── SerialPort_Manager.cs         Driver seriale (implementa ISerialDriver)
+│   └── GUI/                          Tab pages WinForms
+├── Specs/                            Formalizzazioni Lean 4
+│   └── Phase1/                       Tipi/interfacce protocol (Fase 1)
+├── Tests/                            274 test (xUnit, dual TFM)
+│   ├── Unit/                         Core, Infrastructure.Persistence, Infrastructure.Protocol, Services, Terminal
+│   └── Integration/                  DI, ExcelHandler, CodeGenerator, Form1
+└── Docs/                             REFACTOR_PLAN, PROTOCOL, PREPROCESSOR_DIRECTIVES, Standards
 ```
 
 ---
@@ -135,10 +145,13 @@ Stem.Device.Manager/
 
 - [App — Progetto principale](./App/README.md)
 - [Core — Modelli dominio e interfacce](./Core/README.md)
-- [Infrastructure — Provider dati (API + Excel)](./Infrastructure/README.md)
+- [Infrastructure.Persistence — Provider dati dizionario (API + Excel)](./Infrastructure.Persistence/README.md)
+- [Infrastructure.Protocol — Adapter HW CAN/BLE/Serial](./Infrastructure.Protocol/README.md)
+- [Services — Logica applicativa pura](./Services/README.md)
 - [Tests — Test automatizzati](./Tests/README.md)
 - [Standards e Templates](./Docs/Standards/)
 - [Piano di refactoring architetturale](./Docs/REFACTOR_PLAN.md)
+- [Protocollo STEM — funzionamento interno](./Docs/PROTOCOL.md)
 - [Direttive preprocessore (#if)](./Docs/PREPROCESSOR_DIRECTIVES.md)
 - [Specs/Phase1 — formalizzazioni Lean 4](./Specs/Phase1/README.md)
 - [CHANGELOG](./CHANGELOG.md)
