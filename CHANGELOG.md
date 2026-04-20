@@ -27,7 +27,7 @@ e Fase 2 (in corso) — services layer + HW adapter + rinomina a pattern Stem.
 
 ### Added
 
-- **REFACTOR_PLAN Fase 2 — Branch A `refactor/protocol-service`** (in corso, Step 6 completato):
+- **REFACTOR_PLAN Fase 2 — Branch A `refactor/protocol-service`** (merged in main 2026-04-20, PR #25, Step 6 completato):
   - `Core/Models/ChannelKind.cs` — enum Can/Ble/Serial per discriminare il framing atteso dal protocollo
   - `Core/Interfaces/ICommunicationPort` — aggiunta proprietà `ChannelKind Kind { get; }` (i 3 adapter esistenti la espongono)
   - `Services/Protocol/NetInfo.cs` — struct immutable (readonly record struct) per parsing/encoding dei 2 byte Network Layer (remainingChunks 10 bit, setLength 1 bit, packetId 3 bit, version 2 bit)
