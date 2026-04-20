@@ -39,22 +39,25 @@ dotnet test Tests/Tests.csproj --framework net10.0  # solo test cross-platform s
 
 ```
 Core/           [net10.0, zero dipendenze NuGet]    — domain models + interfacce (dizionario + protocollo)
-Infrastructure/ [net10.0]                           — provider dati (API + Excel + Fallback)
+Infrastructure.Persistence/ [net10.0]               — provider dati dizionari (API + Excel + Fallback)
+Infrastructure.Protocol/    [net10.0;net10.0-windows] — adapter HW (Can/Ble/Serial), driver nativi
 Services/       [net10.0-windows, vuoto]            — placeholder Fase 2 (refactor plan)
 App/            [net10.0-windows, WinForms]         — GUI + protocollo + DI entry point
 Tests/          [dual TFM: net10.0 + net10.0-windows] — 86 test net10.0 / 138 test net10.0-windows
 Specs/          [Lean 4]                            — formalizzazioni dei tipi estratti (Phase1/)
 ```
 
-Dipendenze: `App → Infrastructure → Core`, `Tests → App, Infrastructure, Core`.
+Dipendenze: `App → {Infrastructure.Persistence, Infrastructure.Protocol, Services} → Core`, `Tests → App, Infrastructure.*, Services, Core`.
 
 ### Componenti chiave
 
 **Core** — Modelli dizionario: `Variable`, `Command`, `ProtocolAddress`, `DictionaryData`. Modelli protocol abstractions (Fase 1 refactor): `ConnectionState`, `DeviceVariant`, `DeviceVariantConfig`, `RawPacket`, `AppLayerDecodedEvent`, `TelemetryDataPoint`, `BootState`/`BootProgress`. Interfacce: `IDictionaryProvider`, `ICommunicationPort`, `IPacketDecoder`, `ITelemetryService`, `IBootService`, `IDeviceVariantConfig`.
 
-**Infrastructure** — `DictionaryApiProvider` (REST HTTP verso Azure), `ExcelDictionaryProvider` (ClosedXML su `Dizionari STEM.xlsx` embedded), `FallbackDictionaryProvider` (decorator: API → catch `HttpRequestException` → Excel). Registrazione DI via `AddDictionaryProvider(IConfiguration)` — legge `DictionaryApi:BaseUrl/ApiKey/TimeoutSeconds` da `appsettings.json`.
+**Infrastructure.Persistence** — `DictionaryApiProvider` (REST HTTP verso Azure), `ExcelDictionaryProvider` (ClosedXML su `Dizionari STEM.xlsx` embedded), `FallbackDictionaryProvider` (decorator: API → catch `HttpRequestException` → Excel). Registrazione DI via `AddDictionaryProvider(IConfiguration)` — legge `DictionaryApi:BaseUrl/ApiKey/TimeoutSeconds` da `appsettings.json`.
 
-**App/Program.cs** — Entry point DI: registra `IDictionaryProvider` (via Infrastructure). Configurazione da `appsettings.json` + env vars.
+**Infrastructure.Protocol** — Adapter hardware che implementano `ICommunicationPort` wrappando driver nativi (Peak.PCANBasic.NET, Plugin.BLE, System.IO.Ports). Popolato in Fase 2 (`refactor/services-layer`). Pattern allineato a `Stem.ButtonPanel.Tester/Infrastructure`.
+
+**App/Program.cs** — Entry point DI: registra `IDictionaryProvider` (via Infrastructure.Persistence). Configurazione da `appsettings.json` + env vars.
 
 **App/Form1.cs** — God Object (~55k LOC). Non toccare senza piano di refactoring. Usa `IDictionaryProvider` via DI.
 
@@ -64,7 +67,7 @@ Dipendenze: `App → Infrastructure → Core`, `Tests → App, Infrastructure, C
 
 ### Strategia test dual TFM
 
-`net10.0` (test cross-platform): Core models + Infrastructure providers — girano in CI su Linux.  
+`net10.0` (test cross-platform): Core models + Infrastructure.Persistence providers + Services pure logic — girano in CI su Linux.  
 `net10.0-windows`: test che dipendono da WinForms/App — richiedono Windows, non girano in CI.  
 I mock sono manuali (no librerie esterne) in `Tests/Integration/Presenter/Mocks/`.
 
@@ -100,7 +103,7 @@ I mock sono manuali (no librerie esterne) in `Tests/Integration/Presenter/Mocks/
 
 ### Piano di refactoring architetturale (REFACTOR_PLAN.md)
 
-Vedi [`Docs/REFACTOR_PLAN.md`](Docs/REFACTOR_PLAN.md) per il piano branch-by-branch verso architettura modulare (Core / Infrastructure / Services / App).
+Vedi [`Docs/REFACTOR_PLAN.md`](Docs/REFACTOR_PLAN.md) per il piano branch-by-branch verso architettura modulare (Core / Infrastructure.Persistence / Infrastructure.Protocol / Services / App).
 
 | Branch | Descrizione | Stato |
 |--------|-------------|-------|

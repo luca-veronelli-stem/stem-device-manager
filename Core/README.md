@@ -61,9 +61,9 @@ public interface IDictionaryProvider
 ```
 
 Implementata da:
-- `Infrastructure.Excel.ExcelDictionaryProvider` (fallback)
-- `Infrastructure.Api.DictionaryApiProvider` (API Azure)
-- `Infrastructure.FallbackDictionaryProvider` (decorator)
+- `Infrastructure.Persistence.Excel.ExcelDictionaryProvider` (fallback)
+- `Infrastructure.Persistence.Api.DictionaryApiProvider` (API Azure)
+- `Infrastructure.Persistence.FallbackDictionaryProvider` (decorator)
 
 ### Interfacce Protocol Abstractions (Fase 1)
 
@@ -145,7 +145,7 @@ I tipi introdotti in Fase 1 sono formalizzati in [`Specs/Phase1/`](../Specs/Phas
 ## Links
 
 - [README Soluzione](../README.md)
-- [Infrastructure](../Infrastructure/README.md)
+- [Infrastructure.Persistence](../Infrastructure.Persistence/README.md)
 - [Tests](../Tests/README.md)
 - [Specs/Phase1](../Specs/Phase1/README.md)
 - [REFACTOR_PLAN](../Docs/REFACTOR_PLAN.md)

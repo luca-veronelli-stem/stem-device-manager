@@ -299,7 +299,7 @@ Core/                    [net10.0, zero deps]
   Interfaces/            ICommunicationPort, IPacketDecoder, ITelemetryService, IBootService, IDeviceVariantConfig
   Models/                Variable, Command, ProtocolAddress, DictionaryData, ConnectionState, DeviceVariant, AppLayerDecodedEvent, TelemetryDataPoint
 
-Infrastructure/          [net10.0]
+Infrastructure.Persistence/ [net10.0]
   Api/, Excel/           DictionaryApiProvider, ExcelDictionaryProvider, FallbackDictionaryProvider
   DependencyInjection.cs
 
@@ -323,7 +323,8 @@ App/                     [net10.0-windows, WinForms]
 
 Tests/                   [dual TFM]
   Unit/Core/
-  Unit/Infrastructure/
+  Unit/Infrastructure/   (Persistence providers)
+  Unit/Infrastructure/Protocol/  (HW adapters, Windows-only)
   Unit/Services/
   Integration/
   Mocks/
