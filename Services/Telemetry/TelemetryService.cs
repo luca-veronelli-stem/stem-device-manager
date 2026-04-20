@@ -2,7 +2,6 @@ using System.Collections.Immutable;
 using System.Globalization;
 using Core.Interfaces;
 using Core.Models;
-using Services.Protocol;
 
 namespace Services.Telemetry;
 
@@ -43,14 +42,14 @@ public sealed class TelemetryService : ITelemetryService, IDisposable
     private static readonly Command CmdStopTelemetry =
         new("StopTelemetry", "00", "17");
 
-    private readonly ProtocolService _protocol;
+    private readonly IProtocolService _protocol;
     private readonly Lock _stateLock = new();
     private IReadOnlyList<Variable> _currentVariables = [];
     private uint _sourceRecipientId;
     private bool _isRunning;
     private bool _disposed;
 
-    public TelemetryService(ProtocolService protocol)
+    public TelemetryService(IProtocolService protocol)
     {
         ArgumentNullException.ThrowIfNull(protocol);
         _protocol = protocol;
