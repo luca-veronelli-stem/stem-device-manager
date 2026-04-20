@@ -1,12 +1,11 @@
 using Core.Interfaces;
 using Core.Models;
-using Services.Protocol;
 
 namespace Services.Boot;
 
 /// <summary>
 /// Servizio di upload firmware. Implementa <see cref="IBootService"/> usando
-/// <see cref="ProtocolService"/> come facade.
+/// <see cref="IProtocolService"/> come facade.
 ///
 /// <para><b>Sequenza upload (parità con <c>App.STEMProtocol.BootManager.UploadFirmware</c>):</b></para>
 /// <list type="number">
@@ -23,8 +22,9 @@ namespace Services.Boot;
 ///
 /// <para><b>Reply matching:</b> usa la convenzione STEM "bit alto di CodeHigh = 1
 /// indica risposta": ad esempio <c>CMD_START_PROCEDURE (00 05)</c> attende
-/// <c>(80 05)</c>. Il <see cref="ProtocolService"/> deve essere costruito con un
-/// <see cref="IPacketDecoder"/> il cui dizionario contiene i comandi di reply.</para>
+/// <c>(80 05)</c>. L'implementazione concreta di <see cref="IProtocolService"/>
+/// deve essere costruita con un <see cref="IPacketDecoder"/> il cui dizionario
+/// contiene i comandi di reply.</para>
 ///
 /// <para><b>State machine:</b> Idle → Uploading → (Completed | Failed). Una nuova
 /// chiamata a <see cref="StartFirmwareUploadAsync"/> mentre lo stato non è Idle
@@ -54,7 +54,7 @@ public sealed class BootService : IBootService, IDisposable
     private static readonly Command CmdRestartMachine =
         new("RestartMachine", "00", "0A");
 
-    private readonly ProtocolService _protocol;
+    private readonly IProtocolService _protocol;
     private readonly TimeSpan _responseTimeout;
     private readonly TimeSpan _restartInterval;
     private readonly Lock _stateLock = new();
@@ -63,7 +63,7 @@ public sealed class BootService : IBootService, IDisposable
     private int _totalLength;
     private bool _disposed;
 
-    public BootService(ProtocolService protocol)
+    public BootService(IProtocolService protocol)
         : this(protocol, DefaultResponseTimeout, DefaultRestartInterval) { }
 
     /// <summary>
@@ -71,7 +71,7 @@ public sealed class BootService : IBootService, IDisposable
     /// (es. 50ms invece di 4000ms) per accelerare le suite.
     /// </summary>
     internal BootService(
-        ProtocolService protocol, TimeSpan responseTimeout, TimeSpan restartInterval)
+        IProtocolService protocol, TimeSpan responseTimeout, TimeSpan restartInterval)
     {
         ArgumentNullException.ThrowIfNull(protocol);
         _protocol = protocol;
