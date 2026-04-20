@@ -98,8 +98,15 @@ Branch `refactor/protocol-service` (merged → main 2026-04-20, PR #25, **Branch
 - ✅ Step 6 — `ProtocolService` facade (encode TP + CRC16 + chunking + framing per canale; decode + reassembly + event; pattern request/reply con validator custom)
 - ✅ Test: **317 net10.0-windows** (era 274) / **172 net10.0** (era 132) — +43 test (13 NetInfo + 13 PacketReassembler + 13 ProtocolService + 3 Kind adapter + 1 refactor PacketDecoder)
 
+Branch `refactor/services-business` (in corso, **Branch B**, Step 3-5 completati):
+- ✅ Step 3 — `Services/Configuration/DeviceVariantConfigFactory` (parsing case-insensitive, default Generic, `CanonicalName` round-trip) + `App/appsettings.json` sezione `Device:Variant`
+- ✅ Step 4 — `Services/Telemetry/TelemetryService` implementa `ITelemetryService` usando `ProtocolService` come facade (decisione architetturale **opzione b**: niente duplicazione encode/chunking/CRC, decode CMD_TELEMETRY_DATA con uint8/16/32 LE, packet a telemetria spenta ignorati)
+- ✅ Step 5 — `Services/Boot/BootService` implementa `IBootService` usando `ProtocolService.SendCommandAndWaitReplyAsync` (sequenza START → loop blocchi 1024B con 10 retry → END con 5 retry → RESTART x2; state machine Idle→Uploading→(Completed|Failed); BootProtocolException assorbita per parità legacy)
+- ✅ `Core/Interfaces/IBootService.StartFirmwareUploadAsync` — aggiunto parametro `recipientId` (target device)
+- ✅ `Services/Protocol/ProtocolService.SenderId` — getter pubblico (usato da TelemetryService per payload CONFIGURE)
+- ✅ Test: **+56 test** (25 DeviceVariantConfigFactory + 18 TelemetryService + 13 BootService), tutti cross-platform → suite **228 net10.0** / **373 net10.0-windows**
+
 Rimanente:
-- ⏳ **Branch B** `refactor/services-business` — Step 3 (`DeviceVariantConfigFactory`) + Step 4 (`TelemetryService`) + Step 5 (`BootService`)
 - ⏳ **Branch C** `refactor/services-di-integration` — Step 7 (`AddServices()` + `AddProtocolInfrastructure()` + wiring `App/Program.cs`)
 
 ### 2.1 Setup progetti Services e Infrastructure.Protocol ✅ Completato
