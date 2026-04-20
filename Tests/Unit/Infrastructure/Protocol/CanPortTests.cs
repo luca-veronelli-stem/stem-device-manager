@@ -41,6 +41,14 @@ public class CanPortTests
         Assert.Throws<ArgumentNullException>(() => new CanPort(null!));
     }
 
+    [Fact]
+    public void Kind_IsCan()
+    {
+        var driver = new FakePcanDriver();
+        using var port = new CanPort(driver);
+        Assert.Equal(ChannelKind.Can, port.Kind);
+    }
+
     // --- ConnectAsync ---
 
     [Fact]

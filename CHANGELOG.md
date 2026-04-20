@@ -27,7 +27,15 @@ e Fase 2 (in corso) — services layer + HW adapter + rinomina a pattern Stem.
 
 ### Added
 
-- **REFACTOR_PLAN Fase 2 — Services layer + Infrastructure.Protocol** (branch `refactor/services-layer`, in corso al 2026-04-20, Step 1-2 completati):
+- **REFACTOR_PLAN Fase 2 — Branch A `refactor/protocol-service`** (in corso, Step 6 completato):
+  - `Core/Models/ChannelKind.cs` — enum Can/Ble/Serial per discriminare il framing atteso dal protocollo
+  - `Core/Interfaces/ICommunicationPort` — aggiunta proprietà `ChannelKind Kind { get; }` (i 3 adapter esistenti la espongono)
+  - `Services/Protocol/NetInfo.cs` — struct immutable (readonly record struct) per parsing/encoding dei 2 byte Network Layer (remainingChunks 10 bit, setLength 1 bit, packetId 3 bit, version 2 bit)
+  - `Services/Protocol/PacketReassembler.cs` — riassembly multi-chunk thread-safe per packetId con `Reset()` e `PendingPacketCount` per diagnostica
+  - `Services/Protocol/ProtocolService.cs` — facade del protocollo: encode command → TP con CRC16 Modbus → chunking per canale → wire frame; decode + reassembly + evento `AppLayerDecoded`; pattern `SendCommandAndWaitReplyAsync` con validator custom e timeout
+  - Mantenuto quirk storico senderId byte-swap (parità con legacy TransportLayer, vedi PROTOCOL.md §3.1)
+  - Test: +49 test (13 NetInfo + 13 PacketReassembler + 13 ProtocolService + 3 Kind adapter + 7 altri), tutti cross-platform tranne Kind per adapter (Windows-only)
+- **REFACTOR_PLAN Fase 2 — Branch `refactor/services-foundation`** (merged in main 2026-04-20, PR #24, Step 1-2 completati):
   - **Rinomina** progetto `Infrastructure` → `Infrastructure.Persistence` per allineamento al pattern Stem (`Infrastructure.<Concern>` — vedi `Stem.Production.Tracker`, `Stem.ButtonPanel.Tester`)
   - **Nuovo progetto** `Infrastructure.Protocol` (dual TFM `net10.0;net10.0-windows10.0.19041.0`) — adapter hardware CAN/BLE/Serial:
     - `Hardware/CanPort.cs` — implementa `ICommunicationPort` con convention A (arbitration ID LE prefisso nei payload) wrappando `PCANManager` via `IPcanDriver`

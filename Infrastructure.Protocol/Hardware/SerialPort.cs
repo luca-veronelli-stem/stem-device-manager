@@ -48,6 +48,9 @@ public sealed class SerialPort : ICommunicationPort
     }
 
     /// <inheritdoc/>
+    public ChannelKind Kind => ChannelKind.Serial;
+
+    /// <inheritdoc/>
     public ConnectionState State => (ConnectionState)Volatile.Read(ref _state);
 
     /// <inheritdoc/>

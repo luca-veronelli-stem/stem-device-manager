@@ -30,7 +30,9 @@ della baseline cross-platform della soluzione.
 |---------|-------|-------------|
 | **PacketDecoder** | ✅ | `IPacketDecoder` puro: `RawPacket → AppLayerDecodedEvent?` |
 | **DictionarySnapshot** | ✅ | Snapshot immutabile + lookup comandi/variabili/indirizzi |
-| **ProtocolService** | ⏳ | Facade encode/chunking/reassembly (Step 6 Fase 2) |
+| **NetInfo** | ✅ | Parser/encoder dei 2 byte header del Network Layer |
+| **PacketReassembler** | ✅ | Riassembly multi-chunk per packetId (rolling code 1..7) |
+| **ProtocolService** | ✅ | Facade encode/chunking/reassembly + request/reply pattern |
 | **TelemetryService** | ⏳ | Config + start/stop telemetria veloce (Step 4 Fase 2) |
 | **BootService** | ⏳ | State machine upload firmware (Step 5 Fase 2) |
 | **DeviceVariantConfigFactory** | ⏳ | Factory da `appsettings.json` (Step 3 Fase 2) |
@@ -47,25 +49,23 @@ Services/
 ├── Services.csproj
 └── Protocol/
     ├── PacketDecoder.cs          Decoder puro di pacchetti applicativi STEM
-    └── DictionarySnapshot.cs     Snapshot immutabile dizionario (lookup cmd/var/addr)
+    ├── DictionarySnapshot.cs     Snapshot immutabile dizionario (lookup cmd/var/addr)
+    ├── NetInfo.cs                Parser/encoder header a 16 bit del Network Layer
+    ├── PacketReassembler.cs      Riassembly multi-chunk thread-safe per packetId
+    └── ProtocolService.cs        Facade: encode TP + CRC + chunk; decode + reassembly + event
 ```
 
-In corso di popolamento (Fase 2):
+In corso di popolamento (Fase 2, rimanente):
 
 ```
 Services/
-├── Protocol/
-│   ├── PacketDecoder.cs           ✅
-│   ├── DictionarySnapshot.cs      ✅
-│   ├── ProtocolService.cs         ⏳ Step 6 — facade encode/chunking
-│   └── PacketReassembler.cs       ⏳ Step 6 — stateful multi-chunk
 ├── Telemetry/
-│   └── TelemetryService.cs        ⏳ Step 4
+│   └── TelemetryService.cs        ⏳ Step 4 — branch refactor/services-business
 ├── Boot/
-│   └── BootService.cs             ⏳ Step 5
+│   └── BootService.cs             ⏳ Step 5 — branch refactor/services-business
 ├── Configuration/
-│   └── DeviceVariantConfigFactory.cs  ⏳ Step 3
-└── DependencyInjection.cs         ⏳ Step 7 — AddServices() extension
+│   └── DeviceVariantConfigFactory.cs  ⏳ Step 3 — branch refactor/services-business
+└── DependencyInjection.cs         ⏳ Step 7 — branch refactor/services-di-integration
 ```
 
 ---
@@ -96,6 +96,57 @@ byte 5..6   : lPack
 byte 7..8   : cmdInit, cmdOpt (comando a 16 bit)
 byte 9..N   : payload applicativo
 byte N+1,N+2: CRC16 Modbus (scartato, non validato in Fase 2 — gap #1)
+```
+
+### ProtocolService
+
+Facade che combina `ICommunicationPort` + `PacketReassembler` + `IPacketDecoder`
+per esporre un'API orientata al comando:
+
+```csharp
+var svc = new ProtocolService(port, decoder, senderId: 0x12345678u);
+
+// Fire-and-forget
+await svc.SendCommandAsync(recipientId: 0x00080381u, command, payload: []);
+
+// Con attesa risposta (custom validator)
+bool replied = await svc.SendCommandAndWaitReplyAsync(
+    recipientId: 0x00080381u,
+    command: readCmd,
+    payload: [0x12, 0x34],
+    replyValidator: evt => evt.Command.Name == "ReadVariableReply",
+    timeout: TimeSpan.FromSeconds(2));
+
+// Evento per ogni pacchetto decodificato
+svc.AppLayerDecoded += (_, evt) => { /* ... */ };
+```
+
+**Framing per canale** (deriva da `port.Kind`):
+- CAN (chunk 6) → `[arbId_LE(4) + NetInfo(2) + chunk(≤6)]` (convention A CanPort)
+- BLE/Serial (chunk 98) → `[NetInfo(2) + recipientId_LE(4) + chunk(≤98)]` pass-through
+
+**Rolling packetId:** 1..7 incrementale (stesso comportamento legacy). CRC16
+Modbus su TP (quirk senderId byte-swap preservato — vedi
+[PROTOCOL.md](../Docs/PROTOCOL.md) §3.1).
+
+### NetInfo
+
+Struct immutable (`readonly record struct`) per i 2 byte del Network Layer:
+
+```csharp
+var info = NetInfo.Parse(lo, hi);
+// info.RemainingChunks, info.SetLength, info.PacketId, info.Version
+var (lo, hi) = new NetInfo(0, true, 3, 1).ToBytes();
+```
+
+### PacketReassembler
+
+Thread-safe, buffer per packetId. API:
+
+```csharp
+var reassembler = new PacketReassembler();
+byte[]? complete = reassembler.Accept(chunkWithNetInfo);
+// null se remainingChunks > 0; payload completo se remainingChunks == 0
 ```
 
 ### DictionarySnapshot

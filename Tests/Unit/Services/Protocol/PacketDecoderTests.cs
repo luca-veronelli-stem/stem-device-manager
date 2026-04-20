@@ -312,7 +312,13 @@ public class PacketDecoderTests
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
         var exceptions = new List<Exception>();
-        var readers = Enumerable.Range(0, 4).Select(i => Task.Run(() =>
+        // LongRunning → thread dedicato, NON da thread pool. Gli stress test
+        // con busy-while-loop altrimenti saturano il pool e causano flakiness
+        // in altri test che attendono continuations su thread pool.
+        // CT=None: il cts viene letto solo dentro al worker (altrimenti
+        // il task può essere marcato Cancelled se il thread non parte in
+        // tempo, causando TaskCanceledException su WhenAll).
+        var readers = Enumerable.Range(0, 4).Select(i => Task.Factory.StartNew(() =>
         {
             try
             {
@@ -323,8 +329,8 @@ public class PacketDecoderTests
                 }
             }
             catch (Exception ex) { lock (exceptions) exceptions.Add(ex); }
-        })).ToArray();
-        var writer = Task.Run(() =>
+        }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default)).ToArray();
+        var writer = Task.Factory.StartNew(() =>
         {
             try
             {
@@ -335,7 +341,7 @@ public class PacketDecoderTests
                 }
             }
             catch (Exception ex) { lock (exceptions) exceptions.Add(ex); }
-        });
+        }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 
         await Task.WhenAll(readers.Append(writer));
 
