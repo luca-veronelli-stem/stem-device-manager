@@ -70,6 +70,13 @@ public sealed class ProtocolService : IDisposable
     public event EventHandler<AppLayerDecodedEvent>? AppLayerDecoded;
 
     /// <summary>
+    /// Indirizzo del mittente STEM (il nostro). Usato nei payload dei protocolli
+    /// applicativi che devono specificare dove ricevere le risposte (es.
+    /// <c>CMD_CONFIGURE_TELEMETRY</c>).
+    /// </summary>
+    public uint SenderId => _senderId;
+
+    /// <summary>
     /// Invia un comando senza attendere risposta (fire-and-forget).
     /// </summary>
     public async Task SendCommandAsync(
