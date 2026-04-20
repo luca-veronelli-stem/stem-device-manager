@@ -1,7 +1,7 @@
-# Infrastructure
+# Infrastructure.Persistence
 
 > **Provider dati cross-platform: API Azure, Excel fallback, DI registration.**  
-> **Ultimo aggiornamento:** 2026-04-14
+> **Ultimo aggiornamento:** 2026-04-20
 
 ---
 
@@ -14,19 +14,23 @@
 | **Dipendenze** | Core, ClosedXML, Microsoft.Extensions.* |
 | **Scopo** | Implementazioni di `IDictionaryProvider` + registrazione DI |
 
-Infrastructure contiene la logica I/O per accedere ai dati dizionario:
+Infrastructure.Persistence contiene la logica I/O per accedere ai dati dizionario:
 - **API Azure** — chiama l'API REST di Stem.Dictionaries.Manager
 - **Excel** — legge dal file `Dizionari STEM.xlsx` embedded
 - **Fallback** — decorator che tenta API, su errore HTTP delega a Excel
 - **DI** — extension method per registrare tutto nel container
+
+Il nome riflette il pattern Stem (`Infrastructure.<Concern>`): in questa solution
+la persistence è l'accesso ai dizionari, mentre gli adapter HW protocollari vivono
+in [Infrastructure.Protocol](../Infrastructure.Protocol/README.md).
 
 ---
 
 ## Struttura
 
 ```
-Infrastructure/
-├── Infrastructure.csproj
+Infrastructure.Persistence/
+├── Infrastructure.Persistence.csproj
 ├── DependencyInjection.cs           Extension method AddDictionaryProvider()
 ├── FallbackDictionaryProvider.cs    Decorator: API → catch → Excel
 ├── Api/
@@ -42,6 +46,8 @@ Infrastructure/
     ├── ExcelDictionaryProvider.cs   ClosedXML → Core.Models (IDictionaryProvider)
     └── Dizionari STEM.xlsx          Embedded resource (fallback)
 ```
+
+Namespace root: `Infrastructure.Persistence` (prima della rinomina Fase 2 era `Infrastructure`).
 
 ---
 
@@ -139,5 +145,7 @@ var data = await provider.LoadProtocolDataAsync();
 
 - [README Soluzione](../README.md)
 - [Core](../Core/README.md)
+- [Infrastructure.Protocol](../Infrastructure.Protocol/README.md)
+- [Services](../Services/README.md)
 - [Tests](../Tests/README.md)
-- [MIGRATION_API.md](../Docs/MIGRATION_API.md)
+- [REFACTOR_PLAN](../Docs/REFACTOR_PLAN.md)
