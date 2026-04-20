@@ -7,7 +7,7 @@
 **Vincoli:** WinForms resta (migrazione WPF è Fase 5 futura). Stem.Communication NuGet sostituirà lo stack protocollo ma non è ancora pronto — preparare l'astrazione.
 
 **Decisioni architetturali (confermate):**
-- **IProtocolService facade** — TelemetryService/BootService dipendono da `IProtocolService` (non da `ICommunicationPort` + `IPacketDecoder` direttamente). `ProtocolService` incapsula encode/chunking/CRC/reassembly/decode; i servizi di business lo usano via `SendCommandAsync`/`SendCommandAndWaitReplyAsync` + evento `AppLayerDecoded`.
+- **IProtocolService in Core, ProtocolService non in DI** — `IProtocolService` è definita in `Core/Interfaces/` (contratto: `SendCommandAsync`, `SendCommandAndWaitReplyAsync`, evento `AppLayerDecoded`). TelemetryService/BootService dipendono dall'interfaccia, non dal concreto. ProtocolService NON è registrato in DI perché dipende dalla port scelta a runtime — creato dal ConnectionManager in Fase 3. L'interfaccia abilita: (1) test unitari con mock di IProtocolService senza tirare su lo stack, (2) swap trasparente in Fase 4 quando Stem.Communication sostituisce lo stack legacy.
 - **Riscrittura, non wrapping** — la logica in Services/ è codice nuovo, non wrapper sui vecchi file in `App/STEMProtocol/`. I file legacy restano in App/ senza essere chiamati dopo Fase 3, eliminati in Fase 4.
 - **Nessun FormRef nei nuovi servizi** — i servizi nascono senza alcun riferimento a Form1 o UI. Il progresso/stato viene comunicato via eventi tipizzati. Il rewiring UI avviene in Fase 3.
 - **ImmutableArray<byte> per payload** — `AppLayerDecodedEvent.Payload` usa `ImmutableArray<byte>` (BCL `System.Collections.Immutable`, incluso nel runtime .NET 8+, non è un NuGet esterno). Fornisce immutabilità vera + equality strutturale elemento per elemento.
@@ -42,7 +42,7 @@ In `Core/Interfaces/` creare:
 ```
 ICommunicationPort.cs    — astrazione su CAN/BLE/Serial (Connect, Disconnect, Send, Receive, IsConnected, ConnectionStateChanged event)
 IPacketDecoder.cs        — decode payload → AppLayerDecodedEventArgs (senza dipendenza Form1)
-IProtocolService.cs      — facade protocollo: SendCommandAsync, SendCommandAndWaitReplyAsync, evento AppLayerDecoded
+IProtocolService.cs      — facade protocollo: SendCommandAsync, SendCommandAndWaitReplyAsync, evento AppLayerDecoded (non in DI — creato a runtime)
 ITelemetryService.cs     — StartFastTelemetry, StopTelemetry, OnDataReceived event, UpdateDictionary
 IBootService.cs          — StartFirmwareUpload, OnProgress event, stato corrente
 IDeviceVariantConfig.cs  — RecipientId default, device name, board name, feature flags (sostituisce #if TOPLIFT/EDEN/EGICON)
@@ -79,7 +79,7 @@ git checkout -b refactor/phase-1-protocol-abstractions
 
 ---
 
-## Fase 2 — `refactor/services-layer` 🚧 In corso
+## Fase 2 — `refactor/services-layer` ✅ Completata (2026-04-20)
 
 **Obiettivo:** Popolare Services/ con implementazioni concrete + introdurre Infrastructure.Protocol per gli adapter HW. Spostare logica da App/ a Services/ / Infrastructure.Protocol/.
 
@@ -106,7 +106,7 @@ Branch `refactor/services-business` (merged → main 2026-04-20, PR #26, **Branc
 - ✅ `Services/Protocol/ProtocolService.SenderId` — getter pubblico (usato da TelemetryService per payload CONFIGURE)
 - ✅ Test: **+56 test** (25 DeviceVariantConfigFactory + 18 TelemetryService + 13 BootService), tutti cross-platform → suite **228 net10.0** / **373 net10.0-windows**
 
-Branch `refactor/services-di-integration` (in corso, **Branch C**, Step 7 completato — chiude Fase 2):
+Branch `refactor/services-di-integration` (merged → main, PR #27, **Branch C** completata — chiude Fase 2):
 - ✅ `Core/Interfaces/IDeviceVariantConfig.SenderId` + `Core/Models/DeviceVariantConfig.DefaultSenderId = 8` + nuovo overload `Create(variant, senderId)`
 - ✅ `Services/Configuration/DeviceVariantConfigFactory.FromString(variant, senderId)` overload per host DI
 - ✅ `Services/DependencyInjection.AddServices(IConfiguration)` — registra `IDeviceVariantConfig` (da `Device:Variant`+`Device:SenderId`) + `IPacketDecoder` vuoto
@@ -114,10 +114,10 @@ Branch `refactor/services-di-integration` (in corso, **Branch C**, Step 7 comple
 - ✅ NuGet `Microsoft.Extensions.DependencyInjection.Abstractions 10.0.5` aggiunto a Services + Infrastructure.Protocol; `Configuration.Abstractions` a Services
 - ✅ `App/appsettings.json` sezione `Device.SenderId = 8`
 - ✅ `App/Program.cs` wiring DI completo: `AddDictionaryProvider` + driver `IBleDriver`/`ISerialDriver` + `AddProtocolInfrastructure()` + `AddServices(config)`. Form1 invariato (consumer migration = Phase 3)
-- ✅ **Servizi NON registrati per scelta architetturale** (REFACTOR_PLAN dubbio 1 opzione c): `ProtocolService`/`ITelemetryService`/`IBootService` dipendono dalla port runtime, creati dal `ConnectionManager` Phase 3
+- ✅ **Servizi NON registrati per scelta architetturale** (dubbio 1 opzione c): `ProtocolService`/`ITelemetryService`/`IBootService` dipendono dalla port runtime, creati dal `ConnectionManager` Phase 3. `IProtocolService` da introdurre in Core in apertura Fase 3 (refactor leggero: estrarre interfaccia da ProtocolService, cambiare ctor di TelemetryService/BootService per dipendere dall'interfaccia)
 - ✅ `Docs/PREPROCESSOR_DIRECTIVES.md` — documentato debito Phase 3: `BLE_Manager.FormRef` da rimpiazzare con evento o `ILogger`
 - ✅ Test: **+8 test** (6 DeviceVariantConfig SenderId + 2 DeviceVariantConfigFactory) → suite **236 net10.0** / **381 net10.0-windows**
-- ⏳ Rimanente prima del merge: integration test cross-platform per `AddServices()` + `AddProtocolInfrastructure()` (deferito a branch dedicato successivo)
+- ⏳ Integration test cross-platform per `AddServices()` + `AddProtocolInfrastructure()` (deferito a branch dedicato o Fase 3)
 
 ### 2.1 Setup progetti Services e Infrastructure.Protocol ✅ Completato
 
@@ -129,12 +129,12 @@ Creare `Services/DependencyInjection.cs`:
 ```csharp
 public static class DependencyInjection
 {
-    public static IServiceCollection AddServices(this IServiceCollection services)
+    public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration config)
     {
-        services.AddSingleton<IPacketDecoder, PacketDecoder>();
-        services.AddSingleton<IProtocolService, ProtocolService>();
-        services.AddSingleton<ITelemetryService, TelemetryService>();  // dipende da IProtocolService, IDictionaryProvider
-        services.AddSingleton<IBootService, BootService>();            // dipende da IProtocolService
+        services.AddSingleton<IDeviceVariantConfig>(_ => DeviceVariantConfigFactory.FromConfiguration(config));
+        services.AddSingleton<IPacketDecoder, PacketDecoder>();  // registrato vuoto, UpdateDictionary dopo load async
+        // ProtocolService, ITelemetryService, IBootService NON registrati:
+        // dipendono dalla port scelta a runtime → creati dal ConnectionManager (Fase 3)
         return services;
     }
 }
@@ -148,10 +148,10 @@ I servizi in Services/ sono **riscritture pulite** della logica, non wrapper sui
 
 | Sorgente (riferimento) | Destinazione (Services/) | Dipendenze ctor |
 |------------------------|-------------------------|-----------------|
-| `TelemetryManager.cs` (422 LOC) | `Services/Telemetry/TelemetryService.cs` | `IProtocolService`, `IDictionaryProvider`. Usa `SendCommandAsync` per inviare richieste telemetria, si iscrive a `AppLayerDecoded` per decodificare risposte. Nessun riferimento a Form1 o UI. |
-| `BootManager.cs` (371 LOC) | `Services/Boot/BootService.cs` | `IProtocolService`. Progress via eventi tipizzati (`BootProgress`), stato via state machine. Nessun callback a Form1. |
+| `TelemetryManager.cs` (422 LOC) | `Services/Telemetry/TelemetryService.cs` ✅ | `IProtocolService`, `IDictionaryProvider`. Usa `SendCommandAsync` per inviare richieste telemetria, si iscrive a `AppLayerDecoded` per decodificare risposte. Nessun riferimento a Form1 o UI. **Nota: attualmente dipende dal concreto — da migrare a IProtocolService.** |
+| `BootManager.cs` (371 LOC) | `Services/Boot/BootService.cs` ✅ | `IProtocolService`. Progress via eventi tipizzati (`BootProgress`), stato via state machine. Nessun callback a Form1. **Nota: attualmente dipende dal concreto — da migrare a IProtocolService.** |
 | `PacketManager.cs` decode logic | `Services/Protocol/PacketDecoder.cs` ✅ | Implementa `IPacketDecoder`. Solo decode puro, nessun riferimento a canali HW. |
-| `STEM_protocol.cs` send/receive | `Services/Protocol/ProtocolService.cs` ✅ | `ICommunicationPort`, `IPacketDecoder`. Facade: encode TP+CRC+chunking+framing, decode+reassembly+event, request/reply con validator. Implementa `IProtocolService`. |
+| `STEM_protocol.cs` send/receive | `Services/Protocol/ProtocolService.cs` ✅ | `ICommunicationPort`, `IPacketDecoder`, `uint senderId`. Implementa `IProtocolService`. Non registrato in DI — creato a runtime dal ConnectionManager (Fase 3). |
 
 ### 2.3 Adattatori hardware ✅ Completato
 
@@ -181,12 +181,12 @@ Aggiornare `appsettings.json` con sezione `"Device"`.
 ### 2.5 Test
 
 Target: ≥90% coverage su Services/.
-- `TelemetryServiceTests` — encode payload, decode risposta, UpdateDictionary. Mock di `IProtocolService` + `IDictionaryProvider` (non serve ICommunicationPort — ProtocolService lo nasconde)
-- `BootServiceTests` — state machine upload, eventi progress. Mock di `IProtocolService`
-- `PacketDecoderTests` — decode da byte[] a AppLayerDecodedEvent (ImmutableArray<byte> equality strutturale)
+- `TelemetryServiceTests` ✅ — encode payload, decode risposta, UpdateDictionary. Usa `FakeCommunicationPort` per simulare ProtocolService (non serve mock separato — ProtocolService è concreto)
+- `BootServiceTests` ✅ — state machine upload (START → blocchi → END → RESTART), eventi progress, retry logic. Usa `FakeCommunicationPort`
+- `PacketDecoderTests` ✅ — decode da byte[] a AppLayerDecodedEvent (ImmutableArray<byte> equality strutturale)
 - `ProtocolServiceTests` ✅ — encode/decode/chunking/reassembly/request-reply (mock di ICommunicationPort)
-- `DeviceVariantConfigFactoryTests` — ogni variant produce config corretta
-- Mock manuali di `IProtocolService`, `ICommunicationPort`, `IDictionaryProvider` in `Tests/Mocks/`
+- `DeviceVariantConfigFactoryTests` ✅ — ogni variant produce config corretta, SenderId override, round-trip
+- Mock manuali: `FakeCommunicationPort` (con OnSent hook), `ICommunicationPort` mock, `IDictionaryProvider` mock in `Tests/`
 
 ### 2.6 Comandi
 
@@ -209,6 +209,10 @@ git checkout -b refactor/phase-2-services-layer
 ## Fase 3 — `refactor/phase-3-form1-decomposition`
 
 **Obiettivo:** Ridurre Form1 a thin shell che delega ai servizi. Tab autonome.
+
+### 3.0 Introdurre IProtocolService (prerequisito)
+
+Estrarre `IProtocolService` da `ProtocolService` in `Core/Interfaces/`. Cambiare costruttori di `TelemetryService` e `BootService` per dipendere da `IProtocolService` invece del concreto. Aggiornare i test (possono usare mock di IProtocolService invece di FakeCommunicationPort+ProtocolService reale — test più veloci e isolati). ProtocolService resta non registrato in DI.
 
 ### 3.1 Eliminare `static FormRef`
 
@@ -345,42 +349,47 @@ git checkout -b refactor/phase-4-protocol-migration-prep
 
 ---
 
-## Struttura finale
+## Struttura finale target
 
 ```
 Core/                    [net10.0, zero deps NuGet esterni — System.Collections.Immutable è BCL]
-  Interfaces/            ICommunicationPort, IPacketDecoder, IProtocolService, ITelemetryService, IBootService, IDeviceVariantConfig
-  Models/                Variable, Command, ProtocolAddress, DictionaryData, ConnectionState, DeviceVariant, AppLayerDecodedEvent (ImmutableArray<byte>), TelemetryDataPoint
+  Interfaces/            ICommunicationPort, IPacketDecoder, IProtocolService, ITelemetryService, IBootService, IDeviceVariantConfig, IDictionaryProvider
+  Models/                Variable, Command, ProtocolAddress, DictionaryData, ConnectionState, DeviceVariant, ChannelKind, AppLayerDecodedEvent (ImmutableArray<byte>), TelemetryDataPoint, RawPacket, BootState, BootProgress
 
 Infrastructure.Persistence/ [net10.0]
   Api/, Excel/           DictionaryApiProvider, ExcelDictionaryProvider, FallbackDictionaryProvider
   DependencyInjection.cs
 
 Infrastructure.Protocol/ [net10.0;net10.0-windows]
-  Hardware/              CanPort, BlePort, SerialPort (wrappano driver nativi)
+  Hardware/              CanPort, BlePort, SerialPort, PCANManager (wrappano driver nativi via IPcanDriver/IBleDriver/ISerialDriver)
   DependencyInjection.cs
 
 Services/                [net10.0, pure logic]
   Telemetry/             TelemetryService
   Boot/                  BootService
-  Protocol/              ProtocolService, PacketDecoder, DictionarySnapshot, StemProtocolAdapter (Fase 4), CommandMapper (Fase 4)
+  Protocol/              ProtocolService (implementa IProtocolService, non in DI), PacketDecoder, PacketReassembler, DictionarySnapshot
   Configuration/         DeviceVariantConfigFactory
-  Cache/                 DictionaryCache, ConnectionManager
+  Cache/                 DictionaryCache (Fase 3), ConnectionManager (Fase 3)
   DependencyInjection.cs
 
 App/                     [net10.0-windows, WinForms]
-  Form1.cs               ~250 LOC thin shell
-  *_WF_Tab.cs            Tab autonome con DI
-  Program.cs             Host DI setup
+  Form1.cs               ~250 LOC thin shell (dopo Fase 3)
+  *_WF_Tab.cs            Tab autonome con DI (dopo Fase 3)
+  BLE_Manager.cs         Implementa IBleDriver (FormRef debt da risolvere in Fase 3)
+  SerialPort_Manager.cs  Implementa ISerialDriver
+  Program.cs             Composition root DI
   appsettings.json
 
-Tests/                   [dual TFM]
-  Unit/Core/
-  Unit/Infrastructure/   (Persistence providers)
+Tests/                   [dual TFM: net10.0 + net10.0-windows]
+  Unit/Core/Models/
+  Unit/Infrastructure/Persistence/
   Unit/Infrastructure/Protocol/  (HW adapters, Windows-only)
-  Unit/Services/
+  Unit/Services/Protocol/
+  Unit/Services/Telemetry/
+  Unit/Services/Boot/
+  Unit/Services/Configuration/
   Integration/
-  Mocks/
+  Mocks/                 FakeCommunicationPort, mock IDictionaryProvider
 ```
 
 ---
@@ -388,12 +397,13 @@ Tests/                   [dual TFM]
 ## Checklist pre-merge per ogni fase
 
 1. `dotnet build Stem.Device.Manager.slnx` — zero warning
-2. `dotnet test Tests/Tests.csproj` — tutti i test passano (inclusi i 176 esistenti)
+2. `dotnet test Tests/Tests.csproj` — tutti i test passano
 3. `dotnet test Tests/Tests.csproj --framework net10.0` — cross-platform OK
 4. Nessun `using` circolare tra layer
 5. Core non referenzia Infrastructure, Services, o App
-6. PR description elenca LOC prima/dopo per Form1
-7. CLAUDE.md aggiornato con nuovi componenti
+6. Services non referenzia Infrastructure o App
+7. PR description elenca LOC prima/dopo per Form1 (Fase 3)
+8. CLAUDE.md aggiornato con nuovi componenti
 
 ---
 
@@ -406,3 +416,4 @@ Tests/                   [dual TFM]
 - **CancellationToken** su ogni metodo async
 - **Nullable types** abilitati, mai restituire null per errori
 - **Funzioni < 15 LOC**, early returns
+- **ProtocolService non in DI** — creato a runtime quando l'utente sceglie il canale (ConnectionManager, Fase 3)
