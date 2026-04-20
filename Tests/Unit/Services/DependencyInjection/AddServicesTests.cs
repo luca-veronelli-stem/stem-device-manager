@@ -3,6 +3,8 @@ using Core.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Services;
+using Services.Cache;
+using Tests.Unit.Services.Protocol;
 
 namespace Tests.Unit.Services.Wiring;
 
@@ -99,6 +101,66 @@ public class AddServicesTests
         var second = sp.GetRequiredService<IDeviceVariantConfig>();
 
         Assert.Same(first, second);
+    }
+
+    // --- Fase 3: DictionaryCache + ConnectionManager ---
+
+    [Fact]
+    public void AddServices_DictionaryCache_ResolvesWithExternalDictionaryProvider()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IDictionaryProvider, FakeDictionaryProvider>();
+        services.AddServices(BuildConfiguration());
+
+        using var sp = services.BuildServiceProvider();
+        var cache = sp.GetRequiredService<DictionaryCache>();
+
+        Assert.NotNull(cache);
+        Assert.Empty(cache.Commands);
+    }
+
+    [Fact]
+    public void AddServices_DictionaryCache_ResolvesAsSingleton()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IDictionaryProvider, FakeDictionaryProvider>();
+        services.AddServices(BuildConfiguration());
+
+        using var sp = services.BuildServiceProvider();
+        var first = sp.GetRequiredService<DictionaryCache>();
+        var second = sp.GetRequiredService<DictionaryCache>();
+
+        Assert.Same(first, second);
+    }
+
+    [Fact]
+    public void AddServices_ConnectionManager_ResolvesWithRegisteredPorts()
+    {
+        var services = new ServiceCollection();
+        // ConnectionManager richiede IEnumerable<ICommunicationPort>: registriamo
+        // 3 FakeCommunicationPort cross-platform (uno per ChannelKind).
+        services.AddSingleton<ICommunicationPort>(_ =>
+            new FakeCommunicationPort(global::Core.Models.ChannelKind.Can));
+        services.AddSingleton<ICommunicationPort>(_ =>
+            new FakeCommunicationPort(global::Core.Models.ChannelKind.Ble));
+        services.AddSingleton<ICommunicationPort>(_ =>
+            new FakeCommunicationPort(global::Core.Models.ChannelKind.Serial));
+        services.AddServices(BuildConfiguration(variant: "TopLift"));
+
+        using var sp = services.BuildServiceProvider();
+        var manager = sp.GetRequiredService<ConnectionManager>();
+
+        Assert.NotNull(manager);
+        Assert.Equal(global::Core.Models.ChannelKind.Can, manager.ActiveChannel);
+        Assert.Null(manager.ActiveProtocol);
+    }
+
+    private sealed class FakeDictionaryProvider : IDictionaryProvider
+    {
+        public Task<DictionaryData> LoadProtocolDataAsync(CancellationToken ct = default)
+            => Task.FromResult(new DictionaryData([], []));
+        public Task<IReadOnlyList<Variable>> LoadVariablesAsync(uint recipientId, CancellationToken ct = default)
+            => Task.FromResult<IReadOnlyList<Variable>>([]);
     }
 
     private static IConfiguration BuildConfiguration(

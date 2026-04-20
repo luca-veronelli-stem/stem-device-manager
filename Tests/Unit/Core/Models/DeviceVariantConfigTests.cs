@@ -19,6 +19,7 @@ public class DeviceVariantConfigTests
         Assert.Equal("", cfg.DeviceName);
         Assert.Equal("", cfg.BoardName);
         Assert.Equal(DeviceVariantConfig.DefaultSenderId, cfg.SenderId);
+        Assert.Equal(ChannelKind.Ble, cfg.DefaultChannel);
     }
 
     [Fact]
@@ -31,6 +32,7 @@ public class DeviceVariantConfigTests
         Assert.Equal("", cfg.DeviceName);
         Assert.Equal("", cfg.BoardName);
         Assert.Equal(DeviceVariantConfig.DefaultSenderId, cfg.SenderId);
+        Assert.Equal(ChannelKind.Can, cfg.DefaultChannel);
     }
 
     [Fact]
@@ -43,6 +45,7 @@ public class DeviceVariantConfigTests
         Assert.Equal("EDEN", cfg.DeviceName);
         Assert.Equal("Madre", cfg.BoardName);
         Assert.Equal(DeviceVariantConfig.DefaultSenderId, cfg.SenderId);
+        Assert.Equal(ChannelKind.Ble, cfg.DefaultChannel);
     }
 
     [Fact]
@@ -55,6 +58,17 @@ public class DeviceVariantConfigTests
         Assert.Equal("SPARK", cfg.DeviceName);
         Assert.Equal("HMI", cfg.BoardName);
         Assert.Equal(DeviceVariantConfig.DefaultSenderId, cfg.SenderId);
+        Assert.Equal(ChannelKind.Ble, cfg.DefaultChannel);
+    }
+
+    [Theory]
+    [InlineData(DeviceVariant.Generic, ChannelKind.Ble)]
+    [InlineData(DeviceVariant.TopLift, ChannelKind.Can)]
+    [InlineData(DeviceVariant.Eden, ChannelKind.Ble)]
+    [InlineData(DeviceVariant.Egicon, ChannelKind.Ble)]
+    public void DefaultChannelFor_MatchesLegacyMapping(DeviceVariant v, ChannelKind expected)
+    {
+        Assert.Equal(expected, DeviceVariantConfig.DefaultChannelFor(v));
     }
 
     [Fact]

@@ -18,4 +18,16 @@ public interface IPacketDecoder
     /// non è riconoscibile o non appartiene a un comando noto.
     /// </summary>
     AppLayerDecodedEvent? Decode(RawPacket packet);
+
+    /// <summary>
+    /// Sostituisce atomicamente lo snapshot del dizionario usato per il lookup
+    /// di comandi, variabili e mittenti. Chiamato dalla <c>DictionaryCache</c>
+    /// ogni volta che i dati dal <see cref="IDictionaryProvider"/> cambiano.
+    /// Thread-safe: un <see cref="Decode"/> in corso vede lo snapshot vecchio
+    /// o il nuovo, mai uno intermedio.
+    /// </summary>
+    void UpdateDictionary(
+        IReadOnlyList<Command> commands,
+        IReadOnlyList<Variable> variables,
+        IReadOnlyList<ProtocolAddress> addresses);
 }

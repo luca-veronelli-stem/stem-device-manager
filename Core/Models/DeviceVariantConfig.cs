@@ -15,18 +15,27 @@ namespace Core.Models;
 /// <param name="DeviceName">Nome macchina nel dizionario (vuoto se non applicabile).</param>
 /// <param name="BoardName">Nome scheda nel dizionario (vuoto se non applicabile).</param>
 /// <param name="SenderId">Indirizzo STEM del mittente. Default <see cref="DefaultSenderId"/>.</param>
+/// <param name="DefaultChannel">Canale di default all'avvio.</param>
 public sealed record DeviceVariantConfig(
     DeviceVariant Variant,
     uint DefaultRecipientId,
     string DeviceName,
     string BoardName,
-    uint SenderId) : IDeviceVariantConfig
+    uint SenderId,
+    ChannelKind DefaultChannel) : IDeviceVariantConfig
 {
     /// <summary>
     /// SenderId di default usato dalla factory <see cref="Create(DeviceVariant)"/>.
     /// Storicamente hardcoded a 8 per tutte le varianti nel legacy.
     /// </summary>
     public const uint DefaultSenderId = 8u;
+
+    /// <summary>
+    /// Canale di default per variante, parità con il legacy:
+    /// TOPLIFT → CAN, altre → BLE.
+    /// </summary>
+    public static ChannelKind DefaultChannelFor(DeviceVariant variant)
+        => variant == DeviceVariant.TopLift ? ChannelKind.Can : ChannelKind.Ble;
 
     /// <summary>
     /// Factory totale: per ogni <see cref="DeviceVariant"/> restituisce la config di default
@@ -39,13 +48,19 @@ public sealed record DeviceVariantConfig(
     /// <summary>
     /// Factory totale con <see cref="SenderId"/> esplicito. Usata dalla DI per
     /// iniettare il valore letto da <c>appsettings.json</c> (<c>Device:SenderId</c>).
+    /// Il <see cref="DefaultChannel"/> viene calcolato da
+    /// <see cref="DefaultChannelFor(DeviceVariant)"/>.
     /// </summary>
-    public static DeviceVariantConfig Create(DeviceVariant variant, uint senderId) => variant switch
+    public static DeviceVariantConfig Create(DeviceVariant variant, uint senderId)
     {
-        DeviceVariant.Generic => new DeviceVariantConfig(variant, 0u, "", "", senderId),
-        DeviceVariant.TopLift => new DeviceVariantConfig(variant, 0x00080381u, "", "", senderId),
-        DeviceVariant.Eden    => new DeviceVariantConfig(variant, 0u, "EDEN", "Madre", senderId),
-        DeviceVariant.Egicon  => new DeviceVariantConfig(variant, 0u, "SPARK", "HMI", senderId),
-        _ => throw new ArgumentOutOfRangeException(nameof(variant), variant, "Variante non supportata.")
-    };
+        var channel = DefaultChannelFor(variant);
+        return variant switch
+        {
+            DeviceVariant.Generic => new DeviceVariantConfig(variant, 0u, "", "", senderId, channel),
+            DeviceVariant.TopLift => new DeviceVariantConfig(variant, 0x00080381u, "", "", senderId, channel),
+            DeviceVariant.Eden    => new DeviceVariantConfig(variant, 0u, "EDEN", "Madre", senderId, channel),
+            DeviceVariant.Egicon  => new DeviceVariantConfig(variant, 0u, "SPARK", "HMI", senderId, channel),
+            _ => throw new ArgumentOutOfRangeException(nameof(variant), variant, "Variante non supportata.")
+        };
+    }
 }
