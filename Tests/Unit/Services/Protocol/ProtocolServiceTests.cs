@@ -229,8 +229,9 @@ public class ProtocolServiceTests
             replyValidator: evt => evt.Command.Name == "ReadVariableReply",
             timeout: TimeSpan.FromSeconds(5));
 
-        // Simula la reply in arrivo
-        await Task.Delay(50);
+        // Il Handler è già subscribed sincronamente prima del primo await dentro
+        // SendCommandAndWaitReplyAsync, quindi la reply può arrivare subito senza
+        // rischio di race. Nessun Task.Delay artificiale.
         var replyFrame = BuildSerialSingleChunkFrame(
             senderId: 0xAA, recipientId: 0, command: ReadVariableReply, alPayload: []);
         port.RaisePacketReceived(replyFrame, DateTime.UtcNow);
