@@ -1,5 +1,5 @@
 using Core.Interfaces;
-using Infrastructure;
+using Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
 /// <summary>
 ///*****************************************************************************

@@ -1,5 +1,5 @@
 using System.Reflection;
-using Infrastructure.Excel;
+using Infrastructure.Persistence.Excel;
 
 namespace Tests.Unit.Infrastructure;
 
@@ -10,7 +10,7 @@ namespace Tests.Unit.Infrastructure;
 /// </summary>
 public class ExcelDictionaryProviderTests : IDisposable
 {
-    private const string ResourceName = "Infrastructure.Excel.Dizionari STEM.xlsx";
+    private const string ResourceName = "Infrastructure.Persistence.Excel.Dizionari STEM.xlsx";
     private readonly Stream _stream;
     private readonly ExcelDictionaryProvider _provider;
 

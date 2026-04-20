@@ -25,7 +25,7 @@ public class FallbackDictionaryProviderTests
         var fallback = new FakeProvider(
             new DictionaryData([], []), []);
 
-        var provider = new global::Infrastructure.FallbackDictionaryProvider(
+        var provider = new global::Infrastructure.Persistence.FallbackDictionaryProvider(
             primary, fallback);
 
         var result = await provider.LoadProtocolDataAsync();
@@ -40,7 +40,7 @@ public class FallbackDictionaryProviderTests
         var primary = new FailingProvider();
         var fallback = new FakeProvider(fallbackData, []);
 
-        var provider = new global::Infrastructure.FallbackDictionaryProvider(
+        var provider = new global::Infrastructure.Persistence.FallbackDictionaryProvider(
             primary, fallback);
 
         var result = await provider.LoadProtocolDataAsync();
@@ -56,7 +56,7 @@ public class FallbackDictionaryProviderTests
         var primary = new FakeProvider(SampleData, SampleVars);
         var fallback = new FakeProvider(SampleData, []);
 
-        var provider = new global::Infrastructure.FallbackDictionaryProvider(
+        var provider = new global::Infrastructure.Persistence.FallbackDictionaryProvider(
             primary, fallback);
 
         var result = await provider.LoadVariablesAsync(0x00080381);
@@ -72,7 +72,7 @@ public class FallbackDictionaryProviderTests
         var primary = new FailingProvider();
         var fallback = new FakeProvider(SampleData, fallbackVars);
 
-        var provider = new global::Infrastructure.FallbackDictionaryProvider(
+        var provider = new global::Infrastructure.Persistence.FallbackDictionaryProvider(
             primary, fallback);
 
         var result = await provider.LoadVariablesAsync(0x00080381);
@@ -88,7 +88,7 @@ public class FallbackDictionaryProviderTests
         var primary = new FailingProvider(new InvalidOperationException("boom"));
         var fallback = new FakeProvider(SampleData, SampleVars);
 
-        var provider = new global::Infrastructure.FallbackDictionaryProvider(
+        var provider = new global::Infrastructure.Persistence.FallbackDictionaryProvider(
             primary, fallback);
 
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -101,7 +101,7 @@ public class FallbackDictionaryProviderTests
         var primary = new FailingProvider(new InvalidOperationException("boom"));
         var fallback = new FakeProvider(SampleData, SampleVars);
 
-        var provider = new global::Infrastructure.FallbackDictionaryProvider(
+        var provider = new global::Infrastructure.Persistence.FallbackDictionaryProvider(
             primary, fallback);
 
         await Assert.ThrowsAsync<InvalidOperationException>(
@@ -118,7 +118,7 @@ public class FallbackDictionaryProviderTests
         var primary = new FailingProvider();
         var fallback = new CancellationAwareFakeProvider();
 
-        var provider = new global::Infrastructure.FallbackDictionaryProvider(
+        var provider = new global::Infrastructure.Persistence.FallbackDictionaryProvider(
             primary, fallback);
 
         await Assert.ThrowsAsync<OperationCanceledException>(
@@ -131,7 +131,7 @@ public class FallbackDictionaryProviderTests
     public void Constructor_NullPrimary_Throws()
     {
         Assert.Throws<ArgumentNullException>(
-            () => new global::Infrastructure.FallbackDictionaryProvider(
+            () => new global::Infrastructure.Persistence.FallbackDictionaryProvider(
                 null!, new FakeProvider(SampleData, SampleVars)));
     }
 
@@ -139,7 +139,7 @@ public class FallbackDictionaryProviderTests
     public void Constructor_NullFallback_Throws()
     {
         Assert.Throws<ArgumentNullException>(
-            () => new global::Infrastructure.FallbackDictionaryProvider(
+            () => new global::Infrastructure.Persistence.FallbackDictionaryProvider(
                 new FakeProvider(SampleData, SampleVars), null!));
     }
 

@@ -1,5 +1,5 @@
 using System.Net;
-using Infrastructure.Api;
+using Infrastructure.Persistence.Api;
 
 namespace Tests.Unit.Infrastructure;
 
