@@ -6,7 +6,7 @@ namespace Services.Configuration;
 /// <summary>
 /// Factory per <see cref="IDeviceVariantConfig"/> da stringa di configurazione.
 /// Usata dall'host DI per materializzare la variante letta da
-/// <c>appsettings.json</c> (chiave <c>Device:Variant</c>).
+/// <c>appsettings.json</c> (chiavi <c>Device:Variant</c> e <c>Device:SenderId</c>).
 ///
 /// Parsing <b>totale</b>: input sconosciuti, null o vuoti → <see cref="DeviceVariant.Generic"/>.
 /// Case-insensitive e trim-tolerant.
@@ -17,10 +17,18 @@ namespace Services.Configuration;
 public static class DeviceVariantConfigFactory
 {
     /// <summary>
-    /// Materializza la config dalla stringa di configurazione.
+    /// Materializza la config dalla stringa di configurazione, con
+    /// <see cref="DeviceVariantConfig.DefaultSenderId"/> come SenderId.
     /// </summary>
     public static IDeviceVariantConfig FromString(string? configValue)
         => DeviceVariantConfig.Create(ParseVariant(configValue));
+
+    /// <summary>
+    /// Materializza la config con variante e SenderId espliciti. Usata dall'host
+    /// DI quando il SenderId è letto da <c>appsettings.json</c>.
+    /// </summary>
+    public static IDeviceVariantConfig FromString(string? configValue, uint senderId)
+        => DeviceVariantConfig.Create(ParseVariant(configValue), senderId);
 
     /// <summary>
     /// Parsing totale della variante da stringa. Case-insensitive.

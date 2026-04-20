@@ -24,4 +24,13 @@ public interface IDeviceVariantConfig
 
     /// <summary>Nome scheda nel dizionario (vuoto se non applicabile).</summary>
     string BoardName { get; }
+
+    /// <summary>
+    /// Indirizzo STEM del mittente (il nostro). Usato dal Transport Layer e nei
+    /// payload applicativi che richiedono l'indirizzo di destinazione delle
+    /// risposte (es. <c>CMD_CONFIGURE_TELEMETRY</c>). Storicamente <c>8</c> per
+    /// tutte le varianti; configurabile da <c>appsettings.json</c>
+    /// (<c>Device:SenderId</c>).
+    /// </summary>
+    uint SenderId { get; }
 }
