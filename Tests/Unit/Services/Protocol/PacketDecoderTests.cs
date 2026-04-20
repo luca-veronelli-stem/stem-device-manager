@@ -250,6 +250,54 @@ public class PacketDecoderTests
     }
 
     [Fact]
+    public void Ctor_NullCommands_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(
+            () => new PacketDecoder(null!, [], []));
+    }
+
+    [Fact]
+    public void Ctor_NullVariables_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(
+            () => new PacketDecoder([], null!, []));
+    }
+
+    [Fact]
+    public void Ctor_NullAddresses_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(
+            () => new PacketDecoder([], [], null!));
+    }
+
+    [Fact]
+    public void UpdateDictionary_NullCommands_ThrowsArgumentNullException()
+    {
+        var decoder = new PacketDecoder([], [], []);
+
+        Assert.Throws<ArgumentNullException>(
+            () => decoder.UpdateDictionary(null!, [], []));
+    }
+
+    [Fact]
+    public void UpdateDictionary_NullVariables_ThrowsArgumentNullException()
+    {
+        var decoder = new PacketDecoder([], [], []);
+
+        Assert.Throws<ArgumentNullException>(
+            () => decoder.UpdateDictionary([], null!, []));
+    }
+
+    [Fact]
+    public void UpdateDictionary_NullAddresses_ThrowsArgumentNullException()
+    {
+        var decoder = new PacketDecoder([], [], []);
+
+        Assert.Throws<ArgumentNullException>(
+            () => decoder.UpdateDictionary([], [], null!));
+    }
+
+    [Fact]
     public async Task UpdateDictionary_ConcurrentWithDecode_NoExceptions()
     {
         // Stress probabilistico: molte Decode su N thread mentre un altro thread
