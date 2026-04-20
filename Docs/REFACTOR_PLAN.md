@@ -75,9 +75,11 @@ git checkout -b refactor/phase-1-protocol-abstractions
 
 **Obiettivo:** Popolare Services/ con implementazioni concrete. Spostare logica da App/ a Services/.
 
-### 2.1 Setup progetto Services
+### 2.1 Setup progetti Services e Infrastructure.Protocol
 
-`Services/Services.csproj`: target `net10.0-windows10.0.19041.0`, riferimenti a `Core` e `Infrastructure`.
+**`Services/Services.csproj`** — target `net10.0` puro (cross-platform), riferimento solo a `Core`. Contiene solo logica pura senza dipendenze da driver hardware o WinForms. I test girano anche in CI Linux.
+
+**`Infrastructure.Protocol/Infrastructure.Protocol.csproj`** — **nuovo progetto**, dual TFM (`net10.0;net10.0-windows10.0.19041.0`), riferimento a `Core`. Contiene gli adapter hardware che dipendono da driver nativi (Peak.PCANBasic.NET, Plugin.BLE, System.IO.Ports). Pattern allineato con `Stem.ButtonPanel.Tester/Infrastructure`.
 
 Creare `Services/DependencyInjection.cs`:
 ```csharp
@@ -93,6 +95,8 @@ public static class DependencyInjection
 }
 ```
 
+`Infrastructure.Protocol/DependencyInjection.cs` esporrà `AddProtocolInfrastructure()` per registrare gli adapter (`CanPort`, `BlePort`, `SerialPort`) come `ICommunicationPort`.
+
 ### 2.2 Estrarre da App/STEMProtocol/
 
 | Sorgente | Destinazione (Services/) | Note |
@@ -104,11 +108,11 @@ public static class DependencyInjection
 
 ### 2.3 Adattatori hardware
 
-In `Services/Hardware/`:
+In `Infrastructure.Protocol/Hardware/` (non in Services — dipendono da driver nativi Windows):
 ```
-CanPort.cs       — implementa ICommunicationPort wrappando CanDataLayer
-BlePort.cs       — implementa ICommunicationPort wrappando BLE_SDL
-SerialPort.cs    — implementa ICommunicationPort wrappando SerialDataLayer
+CanPort.cs       — implementa ICommunicationPort wrappando PCAN_Manager (Peak.PCANBasic.NET)
+BlePort.cs       — implementa ICommunicationPort wrappando BLE_SDL (Plugin.BLE)
+SerialPort.cs    — implementa ICommunicationPort wrappando SerialDataLayer (System.IO.Ports)
 ```
 
 I file originali in `App/STEMProtocol/` restano come delegate interno (verranno rimossi in Fase 4 quando arriva Stem.Communication).
@@ -296,14 +300,17 @@ Core/                    [net10.0, zero deps]
   Models/                Variable, Command, ProtocolAddress, DictionaryData, ConnectionState, DeviceVariant, AppLayerDecodedEvent, TelemetryDataPoint
 
 Infrastructure/          [net10.0]
-  Providers/             DictionaryApiProvider, ExcelDictionaryProvider, FallbackDictionaryProvider
+  Api/, Excel/           DictionaryApiProvider, ExcelDictionaryProvider, FallbackDictionaryProvider
   DependencyInjection.cs
 
-Services/                [net10.0-windows]
+Infrastructure.Protocol/ [net10.0;net10.0-windows]
+  Hardware/              CanPort, BlePort, SerialPort (wrappano driver nativi)
+  DependencyInjection.cs
+
+Services/                [net10.0, pure logic]
   Telemetry/             TelemetryService
   Boot/                  BootService
-  Protocol/              ProtocolService, PacketDecoder, StemProtocolAdapter (Fase 4), CommandMapper (Fase 4)
-  Hardware/              CanPort, BlePort, SerialPort
+  Protocol/              ProtocolService, PacketDecoder, DictionarySnapshot, StemProtocolAdapter (Fase 4), CommandMapper (Fase 4)
   Configuration/         DeviceVariantConfigFactory
   Cache/                 DictionaryCache, ConnectionManager
   DependencyInjection.cs
