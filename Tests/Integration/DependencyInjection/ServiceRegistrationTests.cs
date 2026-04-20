@@ -18,7 +18,7 @@ public class ServiceRegistrationTests
             .Build();
 
         var services = new ServiceCollection();
-        global::Infrastructure.DependencyInjection.AddDictionaryProvider(services, config);
+        global::Infrastructure.Persistence.DependencyInjection.AddDictionaryProvider(services, config);
         return services.BuildServiceProvider();
     }
 
@@ -32,7 +32,7 @@ public class ServiceRegistrationTests
         var provider = sp.GetRequiredService<IDictionaryProvider>();
 
         Assert.NotNull(provider);
-        Assert.IsType<global::Infrastructure.Excel.ExcelDictionaryProvider>(provider);
+        Assert.IsType<global::Infrastructure.Persistence.Excel.ExcelDictionaryProvider>(provider);
     }
 
     [Fact]
@@ -60,7 +60,7 @@ public class ServiceRegistrationTests
 
         var provider = sp.GetRequiredService<IDictionaryProvider>();
 
-        Assert.IsType<global::Infrastructure.FallbackDictionaryProvider>(provider);
+        Assert.IsType<global::Infrastructure.Persistence.FallbackDictionaryProvider>(provider);
     }
 
     [Fact]
@@ -75,7 +75,7 @@ public class ServiceRegistrationTests
 
         var provider = sp.GetRequiredService<IDictionaryProvider>();
 
-        Assert.IsType<global::Infrastructure.Excel.ExcelDictionaryProvider>(provider);
+        Assert.IsType<global::Infrastructure.Persistence.Excel.ExcelDictionaryProvider>(provider);
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public class ServiceRegistrationTests
 
         var provider = sp.GetRequiredService<IDictionaryProvider>();
 
-        Assert.IsType<global::Infrastructure.Excel.ExcelDictionaryProvider>(provider);
+        Assert.IsType<global::Infrastructure.Persistence.Excel.ExcelDictionaryProvider>(provider);
     }
 
     [Fact]

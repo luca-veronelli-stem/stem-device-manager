@@ -21,24 +21,27 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
   </ItemGroup>
 
-  <!-- Core + Infrastructure: disponibili per tutti i target -->
+  <!-- Core + Infrastructure + Services: disponibili per tutti i target (logica pura cross-platform) -->
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />
-    <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
+    <ProjectReference Include="..\Infrastructure.Persistence\Infrastructure.Persistence.csproj" />
+    <ProjectReference Include="..\Services\Services.csproj" />
   </ItemGroup>
 
-  <!-- App: solo per target Windows (dipende da WinForms) -->
+  <!-- App + Infrastructure.Protocol: solo per target Windows (dipendono da WinForms / driver HW) -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
     <ProjectReference Include="..\App\App.csproj" />
+    <ProjectReference Include="..\Infrastructure.Protocol\Infrastructure.Protocol.csproj" />
   </ItemGroup>
 
-  <!-- Escludi test che dipendono da App nel target cross-platform (net10.0) -->
+  <!-- Escludi test che dipendono da App/Infrastructure.Protocol nel target cross-platform (net10.0) -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
     <Compile Remove="Integration\**" />
     <Compile Remove="Unit\Terminal\**" />
     <Compile Remove="Unit\Protocol\**" />
     <Compile Remove="Unit\CodeGenerator\**" />
     <Compile Remove="Unit\CircularProgressBar\**" />
+    <Compile Remove="Unit\Infrastructure\Protocol\**" />
     <Compile Remove="Unit\Core\Models\ButtonIndicatorTests.cs" />
   </ItemGroup>
 

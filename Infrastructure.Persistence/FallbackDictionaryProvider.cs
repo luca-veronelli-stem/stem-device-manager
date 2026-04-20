@@ -1,7 +1,7 @@
 using Core.Interfaces;
 using Core.Models;
 
-namespace Infrastructure;
+namespace Infrastructure.Persistence;
 
 /// <summary>
 /// Decorator che tenta di usare il provider primario (API) e,

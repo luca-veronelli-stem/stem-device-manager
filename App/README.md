@@ -64,7 +64,7 @@ Configurazione minimale in `Program.cs`:
 |----------|----------------|----------|
 | `IDictionaryProvider` | `ExcelDictionaryProvider` o `FallbackDictionaryProvider` | Singleton |
 
-`IDictionaryProvider` viene registrato da `Infrastructure.DependencyInjection.AddDictionaryProvider()`.
+`IDictionaryProvider` viene registrato da `Infrastructure.Persistence.DependencyInjection.AddDictionaryProvider()`.
 Se `DictionaryApi:BaseUrl` + `ApiKey` sono configurati in `appsettings.json` o environment variables,
 viene usato `FallbackDictionaryProvider(API, Excel)`. Altrimenti solo `ExcelDictionaryProvider`.
 

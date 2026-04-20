@@ -463,13 +463,13 @@ namespace StemPC
             // TEMP: indicatore provider attivo — rimuovere dopo testing
             (string text, Color color) providerTag = _dictionaryProvider switch
             {
-                Infrastructure.FallbackDictionaryProvider f => f.LastUsedSource switch
+                Infrastructure.Persistence.FallbackDictionaryProvider f => f.LastUsedSource switch
                 {
-                    Infrastructure.FallbackDictionaryProvider.ProviderSource.Primary  => ("API", Color.MediumSeaGreen),
-                    Infrastructure.FallbackDictionaryProvider.ProviderSource.Fallback => ($"Excel (fallback: {f.LastFallbackReason})", Color.Goldenrod),
+                    Infrastructure.Persistence.FallbackDictionaryProvider.ProviderSource.Primary  => ("API", Color.MediumSeaGreen),
+                    Infrastructure.Persistence.FallbackDictionaryProvider.ProviderSource.Fallback => ($"Excel (fallback: {f.LastFallbackReason})", Color.Goldenrod),
                     _ => ("API+Excel?", Color.SteelBlue)
                 },
-                Infrastructure.Api.DictionaryApiProvider => ("API", Color.MediumSeaGreen),
+                Infrastructure.Persistence.Api.DictionaryApiProvider => ("API", Color.MediumSeaGreen),
                 _ => ("Excel", Color.Goldenrod)
             };
             var lblProvider = new ToolStripStatusLabel(providerTag.text)

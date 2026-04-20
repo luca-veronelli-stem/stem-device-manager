@@ -1,6 +1,7 @@
 
 //PCAN support
 using Peak.Can.Basic.BackwardCompatibility;
+using Infrastructure.Protocol.Hardware;
 
 namespace App.STEMProtocol;
 

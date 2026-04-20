@@ -1,4 +1,4 @@
-namespace Infrastructure.Api.Dtos;
+namespace Infrastructure.Persistence.Api.Dtos;
 
 /// <summary>Variabile risolta restituita dentro DictionaryResolvedDto.</summary>
 public record ResolvedVariableDto(

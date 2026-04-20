@@ -2,7 +2,7 @@ using ClosedXML.Excel;
 using Core.Interfaces;
 using Core.Models;
 
-namespace Infrastructure.Excel;
+namespace Infrastructure.Persistence.Excel;
 
 /// <summary>
 /// Implementazione di IDictionaryProvider che legge i dati dal file Excel dei dizionari STEM.

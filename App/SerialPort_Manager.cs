@@ -1,38 +1,25 @@
 ﻿using System.Diagnostics;
 using System.IO.Ports;
+using Infrastructure.Protocol.Hardware;
+using SysSerialPort = System.IO.Ports.SerialPort;
 
 namespace App
 {
     /// <summary>
-    /// EventArgs personalizzato per la ricezione di dati dalla porta seriale (byte[]).
-    /// </summary>
-    public class SerialPacketEventArgs : EventArgs
-    {
-        public byte[] Data { get; }
-        public DateTime Timestamp { get; }
-
-        public SerialPacketEventArgs(byte[] data, DateTime timestamp)
-        {
-            Data = data;
-            Timestamp = timestamp;
-        }
-    }
-
-    /// <summary>
     /// Gestore della comunicazione seriale via COM per applicazioni WinForms (.NET Framework 4.8+).
     /// Consente di scansionare porte, connettersi, inviare e ricevere dati con eventi.
     /// </summary>
-    public class SerialPortManager
+    public class SerialPortManager : ISerialDriver
     {
         // Eventi
-        public event Action<string[]> OnScanCompleted;             // Porte trovate
-        public event Action<string> OnConnectionEstablished;       // Porta aperta (nome)
-        public event Action OnDisconnected;                        // Porta chiusa
-        public event EventHandler<SerialPacketEventArgs> PacketReceived; // Dati ricevuti
-        public event EventHandler<bool> ConnectionStatusChanged;   // Stato connessione (true=connesso)
+        public event Action<string[]>? OnScanCompleted;             // Porte trovate
+        public event Action<string>? OnConnectionEstablished;       // Porta aperta (nome)
+        public event Action? OnDisconnected;                        // Porta chiusa
+        public event EventHandler<SerialPacketEventArgs>? PacketReceived; // Dati ricevuti
+        public event EventHandler<bool>? ConnectionStatusChanged;   // Stato connessione (true=connesso)
 
         // Porta seriale in uso
-        private SerialPort serialPort;
+        private SysSerialPort? serialPort;
 
         // Lista delle porte trovate
         public List<string> AvailablePorts { get; private set; } = new List<string>();
@@ -45,7 +32,7 @@ namespace App
             try
             {
                 // Ottiene l'elenco dei nomi di porta validi (es. COM1, COM2, ...):contentReference[oaicite:4]{index=4}.
-                string[] ports = SerialPort.GetPortNames();
+                string[] ports = SysSerialPort.GetPortNames();
                 Array.Sort(ports);
                 AvailablePorts.Clear();
                 AvailablePorts.AddRange(ports);
@@ -96,7 +83,7 @@ namespace App
                 }
 
                 // Crea e configura la porta seriale
-                serialPort = new SerialPort(portName, baudRate, parity, dataBits, stopBits);
+                serialPort = new SysSerialPort(portName, baudRate, parity, dataBits, stopBits);
                 serialPort.Handshake = handshake;
                 serialPort.DtrEnable = true; // (opzionale, in base all'hardware)
 

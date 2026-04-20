@@ -1,7 +1,7 @@
 # Tests
 
 > Test automatizzati per Stem.Device.Manager — xUnit.  
-> **Ultimo aggiornamento:** 2026-04-17
+> **Ultimo aggiornamento:** 2026-04-20
 
 ---
 
@@ -11,11 +11,11 @@
 |---------|--------|
 | **Framework** | xUnit 2.5.3 |
 | **TFM** | `net10.0` + `net10.0-windows10.0.19041.0` (dual target) |
-| **Test run su `net10.0`** | 86 (cross-platform, CI Linux) |
-| **Test run su `net10.0-windows`** | 138 (Windows-only, include cross) |
+| **Test run su `net10.0`** | 132 (cross-platform, CI Linux) |
+| **Test run su `net10.0-windows`** | 274 (Windows-only, include cross) |
 | **Mock** | Manual (nessuna libreria esterna) |
 
-**Nota:** xUnit esegue ogni test sul TFM in cui il file compila. I test che dipendono da `App`/WinForms girano solo su `net10.0-windows`; i test su `Core`/`Infrastructure` girano su entrambi.
+**Nota:** xUnit esegue ogni test sul TFM in cui il file compila. I test che dipendono da `App`/WinForms o driver nativi girano solo su `net10.0-windows`; i test su `Core` / `Infrastructure.Persistence` / `Services` girano su entrambi.
 
 ---
 
@@ -69,7 +69,20 @@ Tests/
 │   │   ├── MockHttpMessageHandler.cs             Mock HTTP per API provider
 │   │   ├── DictionaryApiProviderTests.cs         API provider (18 test)
 │   │   ├── ExcelDictionaryProviderTests.cs       Excel provider (14 test)
-│   │   └── FallbackDictionaryProviderTests.cs    Fallback decorator (9 test)
+│   │   ├── FallbackDictionaryProviderTests.cs    Fallback decorator (9 test)
+│   │   └── Protocol/                             Adapter HW (Windows-only)
+│   │       ├── FakePcanDriver.cs                 Mock manuale IPcanDriver
+│   │       ├── FakeBleDriver.cs                  Mock manuale IBleDriver
+│   │       ├── FakeSerialDriver.cs               Mock manuale ISerialDriver
+│   │       ├── CanPortTests.cs                   State machine + arbId LE convention (28 test)
+│   │       ├── BlePortTests.cs                   State machine + pass-through (27 test)
+│   │       ├── SerialPortTests.cs                State machine + pass-through (27 test)
+│   │       └── PacketEventArgsTests.cs           Ble/Serial/CAN args ctor + null validation (7 test)
+│   │
+│   ├── Services/
+│   │   └── Protocol/
+│   │       ├── PacketDecoderTests.cs             Decoder + thread-safety (19 test)
+│   │       └── DictionarySnapshotTests.cs        Lookup + hex case-insensitive (21 test)
 │   │
 │   ├── Terminal/
 │   │   └── TerminalTests.cs                      Append, get, write (6 test)
@@ -107,14 +120,20 @@ Tests/
 |--------|-----------|------|------|
 | **Core Models (Dictionary)** | `VariableTests.cs`, `CommandTests.cs`, `ProtocolAddressTests.cs`, `DictionaryDataTests.cs` | 12 | Unit |
 | **Core Models (Protocol Abstractions)** | `ConnectionStateTests.cs`, `DeviceVariantTests.cs`, `DeviceVariantConfigTests.cs`, `RawPacketTests.cs`, `AppLayerDecodedEventTests.cs`, `TelemetryDataPointTests.cs` | 33 | Unit |
-| **Infrastructure API** | `DictionaryApiProviderTests.cs` | 18 | Unit |
-| **Infrastructure Excel** | `ExcelDictionaryProviderTests.cs` | 14 | Unit |
-| **Infrastructure Fallback** | `FallbackDictionaryProviderTests.cs` | 9 | Unit |
+| **Infrastructure.Persistence API** | `DictionaryApiProviderTests.cs` | 18 | Unit |
+| **Infrastructure.Persistence Excel** | `ExcelDictionaryProviderTests.cs` | 14 | Unit |
+| **Infrastructure.Persistence Fallback** | `FallbackDictionaryProviderTests.cs` | 9 | Unit |
+| **Infrastructure.Protocol CanPort** | `CanPortTests.cs` + `FakePcanDriver.cs` | 28 | Unit (Windows) |
+| **Infrastructure.Protocol BlePort** | `BlePortTests.cs` + `FakeBleDriver.cs` | 27 | Unit (Windows) |
+| **Infrastructure.Protocol SerialPort** | `SerialPortTests.cs` + `FakeSerialDriver.cs` | 27 | Unit (Windows) |
+| **Infrastructure.Protocol Event Args** | `PacketEventArgsTests.cs` | 7 | Unit (Windows) |
+| **Services PacketDecoder** | `PacketDecoderTests.cs` | 19 | Unit |
+| **Services DictionarySnapshot** | `DictionarySnapshotTests.cs` | 21 | Unit |
 | **Terminal** | `TerminalTests.cs` | 6 | Unit |
 | **SPRollingCode** | `RollingCodeGeneratorTests.cs` | 4 | Unit |
 | **SP_Code_Generator** | `SP_Code_GeneratorTests.cs` | 7 | Unit |
 | **CircularProgressBar** | `CircularProgressBarTests.cs` | 5 | Unit |
-| **Infrastructure Excel** | `ExcelDictionaryProviderCrossReferenceTests.cs` | 6 | Integration |
+| **Infrastructure.Persistence Excel** | `ExcelDictionaryProviderCrossReferenceTests.cs` | 6 | Integration |
 | **DI Container** | `ServiceRegistrationTests.cs` | 5 | Integration |
 | **SP_Code_Generator** | `SP_Code_GeneratorIntegrationTests.cs` | 4 | Integration |
 | **IDictionaryProvider (Form1)** | `Form1DictionaryLoadingTests.cs` | 9 | Integration |
@@ -151,10 +170,10 @@ Tests/
 I test cross-platform (`net10.0`) vengono eseguiti automaticamente nella pipeline Bitbucket (`bitbucket-pipelines.yml`) su runner Linux:
 
 ```
-Build → Test (net10.0, 86 test) → ✅/❌
+Build → Test (net10.0, 132 test) → ✅/❌
 ```
 
-I test `net10.0-windows` (138 test, include integration Form1 + App) girano solo in locale su Windows.
+I test `net10.0-windows` (274 test, include integration Form1 + App + Infrastructure.Protocol adapter) girano solo in locale su Windows.
 
 ---
 
@@ -163,4 +182,7 @@ I test `net10.0-windows` (138 test, include integration Form1 + App) girano solo
 - [README Soluzione](../README.md)
 - [App](../App/README.md)
 - [Core](../Core/README.md)
+- [Infrastructure.Persistence](../Infrastructure.Persistence/README.md)
+- [Infrastructure.Protocol](../Infrastructure.Protocol/README.md)
+- [Services](../Services/README.md)
 - [CHANGELOG](../CHANGELOG.md)

@@ -1,11 +1,11 @@
 using System.Reflection;
 using Core.Interfaces;
-using Infrastructure.Api;
-using Infrastructure.Excel;
+using Infrastructure.Persistence.Api;
+using Infrastructure.Persistence.Excel;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Infrastructure;
+namespace Infrastructure.Persistence;
 
 /// <summary>
 /// Extension methods per registrare IDictionaryProvider nel container DI.
@@ -25,7 +25,7 @@ public static class DependencyInjection
         {
             var asm = Assembly.GetAssembly(typeof(ExcelDictionaryProvider))!;
             var stream = asm.GetManifestResourceStream(
-                "Infrastructure.Excel.Dizionari STEM.xlsx")
+                "Infrastructure.Persistence.Excel.Dizionari STEM.xlsx")
                 ?? throw new FileNotFoundException(
                     "Embedded resource 'Dizionari STEM.xlsx' not found in Infrastructure");
             return new ExcelDictionaryProvider(stream);

@@ -4,33 +4,21 @@ using Plugin.BLE.Abstractions.Contracts;
 using Plugin.BLE.Abstractions.EventArgs;
 using StemPC;
 using System.Diagnostics;
+using Infrastructure.Protocol.Hardware;
 
 namespace App
 {
-    // Classe per la gestione degli eventi di ricezione pacchetti
-    public class BLEPacketEventArgs : EventArgs
-    {
-        public byte[] Data { get; }
-        public DateTime Timestamp { get; }
-
-        public BLEPacketEventArgs(byte[] data, DateTime timestamp)
-        {
-            Data = data;
-            Timestamp = timestamp;
-        }
-    }
-
-    public class BLEManager
+    public class BLEManager : IBleDriver
     {
         /// <summary>
         /// Evento che viene sollevato quando viene scoperto un nuovo dispositivo BLE.
         /// Il parametro è il nome del dispositivo.
         /// </summary>
-        public event Action<string> OnDeviceDiscovered;
-        public event Action<IDevice> OnConnectionEstablished;
-        public event Action OnScanCompleted;
-        public event EventHandler<BLEPacketEventArgs> PacketReceived;
-        public event EventHandler<bool> ConnectionStatusChanged;
+        public event Action<string>? OnDeviceDiscovered;
+        public event Action<IDevice>? OnConnectionEstablished;
+        public event Action? OnScanCompleted;
+        public event EventHandler<BlePacketEventArgs>? PacketReceived;
+        public event EventHandler<bool>? ConnectionStatusChanged;
 
         // Adapter BLE
         private IBluetoothLE ble;
@@ -298,7 +286,7 @@ namespace App
                 byte[] data = e.Characteristic.Value;
 
                 // Crea l'evento per i dati ricevuti
-                var packetEvent = new BLEPacketEventArgs(data, DateTime.Now);
+                var packetEvent = new BlePacketEventArgs(data, DateTime.Now);
 
                 Debug.WriteLine($"Dati ble ricevuti: {data.Length} bytes");
                 Debug.WriteLine("Bytes: " + BitConverter.ToString(data));

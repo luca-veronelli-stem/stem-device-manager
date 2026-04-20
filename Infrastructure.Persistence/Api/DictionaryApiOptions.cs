@@ -1,4 +1,4 @@
-namespace Infrastructure.Api;
+namespace Infrastructure.Persistence.Api;
 
 /// <summary>
 /// Opzioni di configurazione per DictionaryApiProvider.

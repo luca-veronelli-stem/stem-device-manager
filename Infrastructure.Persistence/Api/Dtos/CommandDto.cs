@@ -1,4 +1,4 @@
-namespace Infrastructure.Api.Dtos;
+namespace Infrastructure.Persistence.Api.Dtos;
 
 /// <summary>Comando restituito da GET /api/commands.</summary>
 public record CommandDto(

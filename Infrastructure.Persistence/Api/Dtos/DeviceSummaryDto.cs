@@ -1,4 +1,4 @@
-namespace Infrastructure.Api.Dtos;
+namespace Infrastructure.Persistence.Api.Dtos;
 
 /// <summary>Riepilogo device restituito da GET /api/devices.</summary>
 public record DeviceSummaryDto(
