@@ -27,7 +27,19 @@ e Fase 2 (in corso) — services layer + HW adapter + rinomina a pattern Stem.
 
 ### Added
 
-- **REFACTOR_PLAN Fase 2 — Branch B `refactor/services-business`** (in corso, Step 3-5 completati):
+- **REFACTOR_PLAN Fase 2 — Branch C `refactor/services-di-integration`** (in corso, Step 7 completato — chiude Fase 2):
+  - `Core/Interfaces/IDeviceVariantConfig.SenderId` — nuova proprietà uint (indirizzo STEM del mittente, default `8` per parità legacy)
+  - `Core/Models/DeviceVariantConfig` — record esteso con `SenderId`; `DefaultSenderId = 8` costante; nuovo overload `Create(variant, senderId)`; il single-arg delega al default
+  - `Services/Configuration/DeviceVariantConfigFactory.FromString(variant, senderId)` — overload per host DI che legge SenderId da appsettings
+  - `Services/DependencyInjection.cs` — `AddServices(IConfiguration)`: registra `IDeviceVariantConfig` (da `Device:Variant` + `Device:SenderId`) e `IPacketDecoder` vuoto (UpdateDictionary chiamato dal consumer post-load Azure)
+  - `Infrastructure.Protocol/DependencyInjection.cs` — `AddProtocolInfrastructure()`: registra `PCANManager` come `IPcanDriver`, e `CanPort`/`BlePort`/`SerialPort` come singleton concreti (NON come `ICommunicationPort`: scelta runtime gestita in Phase 3 da `ConnectionManager`)
+  - `Services.csproj` + `Infrastructure.Protocol.csproj` — aggiunti PackageRef `Microsoft.Extensions.DependencyInjection.Abstractions 10.0.5` (e `Configuration.Abstractions` per Services)
+  - `App/appsettings.json` — `Device.SenderId = 8`
+  - `App/Program.cs` — wiring DI completo: `AddDictionaryProvider` + driver BLE/Serial registrati come `IBleDriver`/`ISerialDriver` + `AddProtocolInfrastructure()` + `AddServices(config)`. Nessun consumer cambiato (Form1 continua a usare `STEMProtocol/` legacy — rimozione in Phase 3)
+  - **Servizi NON registrati per scelta architetturale**: `ProtocolService`, `ITelemetryService`, `IBootService` dipendono dalla port runtime (CAN/BLE/Serial scelta a menu) — creati dal `ConnectionManager` in Phase 3
+  - `Docs/PREPROCESSOR_DIRECTIVES.md` — documentato debito Phase 3: `BLE_Manager.FormRef` da rimpiazzare con evento o `ILogger`
+  - Test: **+8 test** (6 DeviceVariantConfig SenderId + 2 DeviceVariantConfigFactory) → suite **236 net10.0** / **381 net10.0-windows**
+- **REFACTOR_PLAN Fase 2 — Branch B `refactor/services-business`** (merged in main 2026-04-20, PR #26, Step 3-5 completati):
   - `Services/Configuration/DeviceVariantConfigFactory.cs` — factory totale: parsing case-insensitive da stringa di configurazione (default Generic per null/vuoto/sconosciuto), helper `CanonicalName` per round-trip
   - `App/appsettings.json` — sezione `Device:Variant` (default `"Generic"`)
   - `Services/Telemetry/TelemetryService.cs` — implementa `ITelemetryService` usando `ProtocolService` come facade (zero ref a `ICommunicationPort`/`IPacketDecoder` diretti, zero ref a Form1):

@@ -98,7 +98,7 @@ Branch `refactor/protocol-service` (merged → main 2026-04-20, PR #25, **Branch
 - ✅ Step 6 — `ProtocolService` facade (encode TP + CRC16 + chunking + framing per canale; decode + reassembly + event; pattern request/reply con validator custom)
 - ✅ Test: **317 net10.0-windows** (era 274) / **172 net10.0** (era 132) — +43 test (13 NetInfo + 13 PacketReassembler + 13 ProtocolService + 3 Kind adapter + 1 refactor PacketDecoder)
 
-Branch `refactor/services-business` (in corso, **Branch B**, Step 3-5 completati):
+Branch `refactor/services-business` (merged → main 2026-04-20, PR #26, **Branch B** completata):
 - ✅ Step 3 — `Services/Configuration/DeviceVariantConfigFactory` (parsing case-insensitive, default Generic, `CanonicalName` round-trip) + `App/appsettings.json` sezione `Device:Variant`
 - ✅ Step 4 — `Services/Telemetry/TelemetryService` implementa `ITelemetryService` usando `ProtocolService` come facade (decisione architetturale **opzione b**: niente duplicazione encode/chunking/CRC, decode CMD_TELEMETRY_DATA con uint8/16/32 LE, packet a telemetria spenta ignorati)
 - ✅ Step 5 — `Services/Boot/BootService` implementa `IBootService` usando `ProtocolService.SendCommandAndWaitReplyAsync` (sequenza START → loop blocchi 1024B con 10 retry → END con 5 retry → RESTART x2; state machine Idle→Uploading→(Completed|Failed); BootProtocolException assorbita per parità legacy)
@@ -106,8 +106,18 @@ Branch `refactor/services-business` (in corso, **Branch B**, Step 3-5 completati
 - ✅ `Services/Protocol/ProtocolService.SenderId` — getter pubblico (usato da TelemetryService per payload CONFIGURE)
 - ✅ Test: **+56 test** (25 DeviceVariantConfigFactory + 18 TelemetryService + 13 BootService), tutti cross-platform → suite **228 net10.0** / **373 net10.0-windows**
 
-Rimanente:
-- ⏳ **Branch C** `refactor/services-di-integration` — Step 7 (`AddServices()` + `AddProtocolInfrastructure()` + wiring `App/Program.cs`)
+Branch `refactor/services-di-integration` (in corso, **Branch C**, Step 7 completato — chiude Fase 2):
+- ✅ `Core/Interfaces/IDeviceVariantConfig.SenderId` + `Core/Models/DeviceVariantConfig.DefaultSenderId = 8` + nuovo overload `Create(variant, senderId)`
+- ✅ `Services/Configuration/DeviceVariantConfigFactory.FromString(variant, senderId)` overload per host DI
+- ✅ `Services/DependencyInjection.AddServices(IConfiguration)` — registra `IDeviceVariantConfig` (da `Device:Variant`+`Device:SenderId`) + `IPacketDecoder` vuoto
+- ✅ `Infrastructure.Protocol/DependencyInjection.AddProtocolInfrastructure()` — registra `PCANManager` come `IPcanDriver` + `CanPort`/`BlePort`/`SerialPort` come singleton concreti (scelta canale runtime gestita in Phase 3)
+- ✅ NuGet `Microsoft.Extensions.DependencyInjection.Abstractions 10.0.5` aggiunto a Services + Infrastructure.Protocol; `Configuration.Abstractions` a Services
+- ✅ `App/appsettings.json` sezione `Device.SenderId = 8`
+- ✅ `App/Program.cs` wiring DI completo: `AddDictionaryProvider` + driver `IBleDriver`/`ISerialDriver` + `AddProtocolInfrastructure()` + `AddServices(config)`. Form1 invariato (consumer migration = Phase 3)
+- ✅ **Servizi NON registrati per scelta architetturale** (REFACTOR_PLAN dubbio 1 opzione c): `ProtocolService`/`ITelemetryService`/`IBootService` dipendono dalla port runtime, creati dal `ConnectionManager` Phase 3
+- ✅ `Docs/PREPROCESSOR_DIRECTIVES.md` — documentato debito Phase 3: `BLE_Manager.FormRef` da rimpiazzare con evento o `ILogger`
+- ✅ Test: **+8 test** (6 DeviceVariantConfig SenderId + 2 DeviceVariantConfigFactory) → suite **236 net10.0** / **381 net10.0-windows**
+- ⏳ Rimanente prima del merge: integration test cross-platform per `AddServices()` + `AddProtocolInfrastructure()` (deferito a branch dedicato successivo)
 
 ### 2.1 Setup progetti Services e Infrastructure.Protocol ✅ Completato
 
