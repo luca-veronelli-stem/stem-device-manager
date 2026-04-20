@@ -1,6 +1,9 @@
 using Core.Interfaces;
 using Infrastructure.Persistence;
+using Infrastructure.Protocol;
+using Infrastructure.Protocol.Hardware;
 using Microsoft.Extensions.Configuration;
+using Services;
 /// <summary>
 ///*****************************************************************************
 /// @file    Program.cs
@@ -51,6 +54,20 @@ namespace App
 
             // Provider dizionari (API Azure con fallback Excel, o solo Excel)
             services.AddDictionaryProvider(configuration);
+
+            // Driver hardware BLE/Serial — restano in App per ora (refs Form1.FormRef
+            // da rimuovere in Phase 3, vedi Docs/PREPROCESSOR_DIRECTIVES.md)
+            services.AddSingleton<IBleDriver, BLEManager>();
+            services.AddSingleton<ISerialDriver, SerialPortManager>();
+
+            // Adapter HW (CanPort/BlePort/SerialPort) + driver PCAN-USB
+            services.AddProtocolInfrastructure();
+
+            // Servizi pure-logic: IDeviceVariantConfig + IPacketDecoder vuoto
+            // (UpdateDictionary chiamato dal consumer post-load Azure).
+            // ProtocolService/TelemetryService/BootService NON registrati: dipendono
+            // dalla port runtime, creati dal consumer (Phase 3 ConnectionManager).
+            services.AddServices(configuration);
 
             // Provider di servizi per dependency injection
             var serviceProvider = services.BuildServiceProvider();
