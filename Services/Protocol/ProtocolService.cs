@@ -35,7 +35,7 @@ namespace Services.Protocol;
 /// <item><description>SenderId byte-swappato (convention mantenuta con il dizionario).</description></item>
 /// </list>
 /// </summary>
-public sealed class ProtocolService : IDisposable
+public sealed class ProtocolService : IProtocolService
 {
     private const byte DefaultCryptFlag = 0x00;
     private const int DefaultVersion = 1;
