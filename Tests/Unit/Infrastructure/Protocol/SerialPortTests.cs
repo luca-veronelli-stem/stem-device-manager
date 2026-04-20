@@ -39,6 +39,14 @@ public class SerialPortTests
         Assert.Throws<ArgumentNullException>(() => new SerialPort(null!));
     }
 
+    [Fact]
+    public void Kind_IsSerial()
+    {
+        var driver = new FakeSerialDriver();
+        using var port = new SerialPort(driver);
+        Assert.Equal(ChannelKind.Serial, port.Kind);
+    }
+
     // --- ConnectAsync ---
 
     [Fact]

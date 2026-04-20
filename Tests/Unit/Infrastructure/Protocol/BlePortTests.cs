@@ -40,6 +40,14 @@ public class BlePortTests
         Assert.Throws<ArgumentNullException>(() => new BlePort(null!));
     }
 
+    [Fact]
+    public void Kind_IsBle()
+    {
+        var driver = new FakeBleDriver();
+        using var port = new BlePort(driver);
+        Assert.Equal(ChannelKind.Ble, port.Kind);
+    }
+
     // --- ConnectAsync ---
 
     [Fact]
