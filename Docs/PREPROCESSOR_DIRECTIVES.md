@@ -214,3 +214,25 @@ Esempi di flag attesi (da derivare dai blocchi numerati 1-8 sopra):
 - `ShowAppLayerDecodedPanel` (bool) — blocco #8
 
 **Regola:** ogni volta che in Fase 3 si rimuove uno dei blocchi `#if` 1-8, si aggiunge il flag corrispondente a `IDeviceVariantConfig` e si aggiorna la factory `DeviceVariantConfig.Create`, oltre a rimuovere la riga dalla tabella "Blocchi attivi" sopra.
+
+---
+
+## Debito tecnico Phase 3 — driver HW
+
+Driver oggi in `App/` (registrati come `IBleDriver` / `ISerialDriver` da `App/Program.cs` post Branch C `refactor/services-di-integration`):
+
+### `App/BLE_Manager.cs`
+
+- **Riferimento a `Form1.FormRef.UpdateTerminal`** intorno a riga 242 (logging dei pacchetti BLE ricevuti sulla terminal tab della GUI).
+- **Refactoring previsto in Phase 3:**
+  - Sostituire la chiamata diretta con un evento `LogMessageEmitted(string)` su `IBleDriver` o equivalente; la GUI si iscrive e aggiorna la terminal tab.
+  - **Oppure** iniettare un `ILogger<BLEManager>` (Microsoft.Extensions.Logging) e configurare un sink GUI nell'host DI.
+- Finché il riferimento esiste, **`BLEManager` non può essere spostato fuori da `App/`** (compile dependency su `Form1`).
+
+### `App/SerialPort_Manager.cs`
+
+- Verificare se contiene riferimenti analoghi a `Form1.FormRef` (al 2026-04-20, da audit non risultano, ma da riconfermare in Phase 3 prima dello spostamento).
+
+### Driver in `Infrastructure.Protocol/Hardware/`
+
+- `PCANManager` è già autonomo (nessun riferimento a `Form1`). Spostato in Branch `refactor/services-foundation`.
