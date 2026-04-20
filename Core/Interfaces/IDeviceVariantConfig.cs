@@ -33,4 +33,12 @@ public interface IDeviceVariantConfig
     /// (<c>Device:SenderId</c>).
     /// </summary>
     uint SenderId { get; }
+
+    /// <summary>
+    /// Canale di default all'avvio. Usato da <c>ConnectionManager</c> come
+    /// valore iniziale; non viene aperto automaticamente (spetta al consumer
+    /// chiamare <c>SwitchToAsync</c>). Riflette il legacy:
+    /// TOPLIFT → CAN, altre varianti → BLE.
+    /// </summary>
+    ChannelKind DefaultChannel { get; }
 }
