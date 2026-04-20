@@ -122,6 +122,13 @@ public sealed class BootService : IBootService, IDisposable
             FailUpload();
             throw;
         }
+        catch (BootProtocolException)
+        {
+            // Fallimento di protocollo (timeout reply) — stato Failed, niente
+            // rethrow (parità col legacy BootManager che mostrava MessageBox e
+            // ritornava). L'osservabilità del fallimento avviene tramite State.
+            FailUpload();
+        }
         catch
         {
             FailUpload();
