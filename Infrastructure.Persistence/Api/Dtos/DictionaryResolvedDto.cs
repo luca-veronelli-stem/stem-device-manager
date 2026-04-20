@@ -1,4 +1,4 @@
-namespace Infrastructure.Api.Dtos;
+namespace Infrastructure.Persistence.Api.Dtos;
 
 /// <summary>
 /// Dizionario risolto restituito da GET /api/dictionaries/{id}/resolved.

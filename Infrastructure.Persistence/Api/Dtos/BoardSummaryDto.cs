@@ -1,4 +1,4 @@
-namespace Infrastructure.Api.Dtos;
+namespace Infrastructure.Persistence.Api.Dtos;
 
 /// <summary>
 /// Riepilogo board restituito da GET /api/devices/{id}/boards.

@@ -1,9 +1,9 @@
 using System.Net.Http.Json;
 using Core.Interfaces;
 using Core.Models;
-using Infrastructure.Api.Dtos;
+using Infrastructure.Persistence.Api.Dtos;
 
-namespace Infrastructure.Api;
+namespace Infrastructure.Persistence.Api;
 
 /// <summary>
 /// Implementazione di IDictionaryProvider che chiama l'API REST di Stem.Dictionaries.Manager.
