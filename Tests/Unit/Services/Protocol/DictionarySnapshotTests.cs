@@ -108,6 +108,73 @@ public class DictionarySnapshotTests
         Assert.Same(first, snap.FindCommand(0x00, 0x01));
     }
 
+    [Theory]
+    [InlineData("a0", "ff")]
+    [InlineData("A0", "FF")]
+    [InlineData("aB", "cD")]
+    public void FindCommand_MatchesHexCaseInsensitive(string high, string low)
+    {
+        // NumberStyles.HexNumber parsing è case-insensitive per natura.
+        var cmd = new Command("Cmd", high, low);
+        var snap = BuildSnapshot(commands: [cmd]);
+
+        Assert.Same(
+            cmd,
+            snap.FindCommand(
+                Convert.ToByte(high, 16),
+                Convert.ToByte(low, 16)));
+    }
+
+    [Fact]
+    public void FindVariable_IgnoresEntryWithInvalidHex()
+    {
+        var invalid = new Variable("Invalid", "ZZ", "ZZ", "uint8_t");
+        var valid = new Variable("Valid", "12", "34", "uint16_t");
+        var snap = BuildSnapshot(variables: [invalid, valid]);
+
+        Assert.Same(valid, snap.FindVariable(0x12, 0x34));
+    }
+
+    [Fact]
+    public void FindVariable_IgnoresEntryWithEmptyAddressHigh()
+    {
+        var empty = new Variable("Empty", "", "34", "uint16_t");
+        var snap = BuildSnapshot(variables: [empty]);
+
+        Assert.Null(snap.FindVariable(0x00, 0x34));
+    }
+
+    [Fact]
+    public void FindVariable_IgnoresEntryWithEmptyAddressLow()
+    {
+        var empty = new Variable("Empty", "12", "", "uint16_t");
+        var snap = BuildSnapshot(variables: [empty]);
+
+        Assert.Null(snap.FindVariable(0x12, 0x00));
+    }
+
+    [Fact]
+    public void FindSender_IgnoresEntryWithInvalidHex()
+    {
+        var invalid = new ProtocolAddress("X", "Y", "notahex");
+        var valid = new ProtocolAddress("A", "B", "00080381");
+        var snap = BuildSnapshot(addresses: [invalid, valid]);
+
+        Assert.Same(valid, snap.FindSender(0x00080381));
+    }
+
+    [Theory]
+    [InlineData("deadbeef")]
+    [InlineData("DEADBEEF")]
+    [InlineData("DeAdBeEf")]
+    public void FindSender_MatchesHexCaseInsensitive(string addressHex)
+    {
+        var addr = new ProtocolAddress("Dev", "Board", addressHex);
+        var snap = BuildSnapshot(addresses: [addr]);
+
+        Assert.Same(addr, snap.FindSender(0xDEADBEEF));
+    }
+
     private static DictionarySnapshot BuildSnapshot(
         IEnumerable<Command>? commands = null,
         IEnumerable<Variable>? variables = null,
