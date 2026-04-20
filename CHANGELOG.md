@@ -27,7 +27,27 @@ e Fase 2 (in corso) — services layer + HW adapter + rinomina a pattern Stem.
 
 ### Added
 
-- **REFACTOR_PLAN — Branch `refactor/protocol-interface`** (in corso, prerequisite di Fase 3 + chiusura debito Fase 2 integration tests):
+- **REFACTOR_PLAN Fase 3 — Branch 1 `refactor/phase-3-dictionary-cache`** (in corso, primo sub-branch di Fase 3):
+  - `Core/Interfaces/IDeviceVariantConfig.DefaultChannel` — nuova proprietà `ChannelKind` (TOPLIFT→Can, altre varianti→Ble per parità legacy)
+  - `Core/Models/DeviceVariantConfig` — aggiunto record param + helper `DefaultChannelFor(variant)`; factory aggiornata
+  - `Core/Interfaces/IPacketDecoder.UpdateDictionary` — promosso al contratto (era solo su `PacketDecoder` concreto). Necessario per `DictionaryCache`
+  - `Services/Cache/DictionaryCache.cs` — singleton centralizzato per dizionario STEM:
+    - properties `Commands`/`Addresses`/`Variables`/`CurrentRecipientId` thread-safe
+    - `LoadAsync` (commands+addresses), `SelectByRecipientAsync` (variables per uint), `SelectByDeviceBoardAsync` (lookup device+board → recipient)
+    - aggiorna automaticamente lo snapshot di `IPacketDecoder` ad ogni mutazione
+    - emette evento `DictionaryUpdated` per i consumer (tab Phase 3)
+    - parità legacy: niente cache LRU sulle variabili
+  - `Services/Cache/ConnectionManager.cs` — gestore canale attivo + factory `IProtocolService` runtime:
+    - aggrega `IEnumerable<ICommunicationPort>` (3 port da `AddProtocolInfrastructure`)
+    - `ActiveChannel`/`ActiveProtocol` (null finché `SwitchToAsync` non chiamato)
+    - `SwitchToAsync(ChannelKind)`: dispose protocol vecchio → disconnect vecchia port → connect nuova → crea nuovo `ProtocolService`
+    - eventi `ActiveChannelChanged` + `StateChanged` (snapshot `(ChannelKind, ConnectionState)`)
+    - stato iniziale = `IDeviceVariantConfig.DefaultChannel`, nessun auto-connect (consumer controlla timing)
+  - `Services/DependencyInjection.cs` — registra `DictionaryCache` + `ConnectionManager` come singleton
+  - `Infrastructure.Protocol/DependencyInjection.cs` — espone `CanPort`/`BlePort`/`SerialPort` anche come `ICommunicationPort` (factory delegata ai singleton concreti per identità)
+  - Test: **+47 test** (4 DeviceVariantConfig.DefaultChannel + 14 DictionaryCache + 18 ConnectionManager + 5 wiring DI) → suite **268 net10.0** / **441 net10.0-windows**
+  - `ConnectionManagerTests` Windows-only (richiede real `CanPort`/`BlePort`/`SerialPort` con fake driver) — file escluso esplicitamente da target net10.0 in `Tests.csproj`
+- **REFACTOR_PLAN — Branch `refactor/protocol-interface`** (merged in main, PR #28, prerequisite di Fase 3 + chiusura debito Fase 2 integration tests):
   - `Core/Interfaces/IProtocolService.cs` — nuovo contratto del facade protocollo (`SenderId`, `AppLayerDecoded`, `SendCommandAsync`, `SendCommandAndWaitReplyAsync`, estende `IDisposable`)
   - `Services/Protocol/ProtocolService` implementa `IProtocolService` (nessun cambio signature pubblica)
   - `TelemetryService` e `BootService` ctor — dipendenza da `IProtocolService` invece di `ProtocolService` concreto. Suite test esistente verde senza modifiche

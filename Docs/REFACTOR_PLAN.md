@@ -219,9 +219,13 @@ git checkout -b refactor/phase-2-services-layer
 
 **Obiettivo:** Ridurre Form1 a thin shell che delega ai servizi. Tab autonome.
 
-### 3.0 Introdurre IProtocolService (prerequisito)
+### 3.0 Introdurre IProtocolService ✅ Completata (branch `refactor/protocol-interface`, PR #28, 2026-04-20)
 
-Estrarre `IProtocolService` da `ProtocolService` in `Core/Interfaces/`. Cambiare costruttori di `TelemetryService` e `BootService` per dipendere da `IProtocolService` invece del concreto. Aggiornare i test (possono usare mock di IProtocolService invece di FakeCommunicationPort+ProtocolService reale — test più veloci e isolati). ProtocolService resta non registrato in DI.
+`IProtocolService` estratto in `Core/Interfaces/`, `ProtocolService` lo implementa, `TelemetryService`/`BootService` ctor cambiati a `IProtocolService`. Suite test verde senza modifiche grazie a implicit conversion.
+
+### 3.0bis Branch 1 `refactor/phase-3-dictionary-cache` (in corso)
+
+Estrai `DictionaryCache` (cache centralizzata commands+addresses+variables, `LoadAsync`/`SelectByRecipientAsync`/`SelectByDeviceBoardAsync`, evento `DictionaryUpdated`, sincronizzazione automatica con `IPacketDecoder`) e `ConnectionManager` (factory `IProtocolService` runtime, gestisce `SwitchToAsync` con dispose+disconnect+connect, eventi `ActiveChannelChanged`/`StateChanged`) in `Services/Cache/`. Aggiunto `ChannelKind DefaultChannel` a `IDeviceVariantConfig` (TOPLIFT→Can, altre→Ble). Promosso `UpdateDictionary` al contratto `IPacketDecoder`. DI: `AddServices` registra entrambi i nuovi servizi; `AddProtocolInfrastructure` espone i 3 port anche come `IEnumerable<ICommunicationPort>`. Test: 47 nuovi (32 cross-platform + 18 Windows-only ConnectionManager + 5 wiring DI). Suite **268 net10.0** / **441 net10.0-windows**.
 
 ### 3.1 Eliminare `static FormRef`
 
