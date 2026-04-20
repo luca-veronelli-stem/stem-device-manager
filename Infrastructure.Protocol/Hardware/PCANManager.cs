@@ -2,7 +2,7 @@
 using System.Text;
 using TPCANHandle = System.Byte;
 
-namespace App;
+namespace Infrastructure.Protocol.Hardware;
 
 // Classe per la gestione degli eventi di ricezione pacchetti
 public class CANPacketEventArgs : EventArgs
