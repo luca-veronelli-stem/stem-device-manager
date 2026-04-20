@@ -83,12 +83,7 @@ public class PacketEventArgsTests
         Assert.Equal(ts, args.Timestamp);
     }
 
-    [Fact(Skip =
-        "FIXME: CANPacketEventArgs.ctor in Infrastructure.Protocol/Hardware/PCANManager.cs " +
-        "non valida il parametro data, a differenza di BlePacketEventArgs e SerialPacketEventArgs. " +
-        "Passando null si ottiene NullReferenceException quando Data viene usato, non " +
-        "ArgumentNullException dal ctor. Aggiungere ArgumentNullException.ThrowIfNull(data) " +
-        "nel ctor per allineare con gli altri event args del progetto.")]
+    [Fact]
     public void CanArgs_Ctor_NullData_ThrowsArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(

@@ -13,6 +13,7 @@ public class CANPacketEventArgs : EventArgs
 
     public CANPacketEventArgs(uint arbitrationId, byte[] data, DateTime timestamp)
     {
+        ArgumentNullException.ThrowIfNull(data);
         ArbitrationId = arbitrationId;
         Data = data;
         Timestamp = timestamp;
