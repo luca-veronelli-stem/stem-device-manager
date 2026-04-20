@@ -24,7 +24,7 @@
   <!-- Core + Infrastructure + Services: disponibili per tutti i target (logica pura cross-platform) -->
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />
-    <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
+    <ProjectReference Include="..\Infrastructure.Persistence\Infrastructure.Persistence.csproj" />
     <ProjectReference Include="..\Services\Services.csproj" />
   </ItemGroup>
 
