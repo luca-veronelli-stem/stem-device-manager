@@ -175,6 +175,22 @@ public class DictionarySnapshotTests
         Assert.Same(addr, snap.FindSender(0xDEADBEEF));
     }
 
+    [Theory]
+    [InlineData("0x00080381")]
+    [InlineData("0X00080381")]
+    [InlineData("0xDEADBEEF")]
+    public void FindSender_MatchesAddressWithHexPrefix(string addressHex)
+    {
+        // ProtocolAddress produced by DictionaryApiProvider/Excel usa il formato "0x...".
+        // uint.TryParse(NumberStyles.HexNumber) non accetta il prefisso: lo snapshot
+        // deve strippare "0x"/"0X" prima del parse.
+        uint expected = Convert.ToUInt32(addressHex.AsSpan(2).ToString(), 16);
+        var addr = new ProtocolAddress("Dev", "Board", addressHex);
+        var snap = BuildSnapshot(addresses: [addr]);
+
+        Assert.Same(addr, snap.FindSender(expected));
+    }
+
     private static DictionarySnapshot BuildSnapshot(
         IEnumerable<Command>? commands = null,
         IEnumerable<Variable>? variables = null,
