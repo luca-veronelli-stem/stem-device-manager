@@ -5,12 +5,12 @@ using Infrastructure.Protocol.Legacy;
 
 public partial class BLEInterfaceTab : TabPage
 {
-    private ListBox listBoxDevices;
-    private Button btnScan;
-    private PictureBox loadingSpinner;
+    private ListBox listBoxDevices = null!;
+    private Button btnScan = null!;
+    private PictureBox loadingSpinner = null!;
 
     // Definisci il MemoryStream a livello di classe
-    private MemoryStream gifStream;
+    private MemoryStream gifStream = null!;
 
     // Driver BLE condiviso con il BlePort (registrato come singleton in DI). Iniettato
     // via ctor: il tab deve usare la STESSA istanza del BlePort, altrimenti il port

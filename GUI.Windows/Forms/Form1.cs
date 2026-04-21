@@ -86,7 +86,7 @@ namespace StemPC
         public Boot_Smart_Tab BootSmartTabRef { get; private set; }
         public Telemetry_Tab TelemetryTabRef { get; private set; }
         public BLEInterfaceTab BLETabRef { get; private set; }
-        public TopLiftTelemetry_Tab TLTTabRef { get; private set; }
+        public TopLiftTelemetry_Tab TLTTabRef { get; private set; } = null!;
 
         public Form1(IServiceProvider serviceProvider)
         {

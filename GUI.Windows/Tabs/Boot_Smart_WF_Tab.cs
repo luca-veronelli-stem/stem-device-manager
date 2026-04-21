@@ -20,15 +20,15 @@ public class DeviceInfo
 
 public class Boot_Smart_Tab : TabPage
 {
-    private TableLayoutPanel selectionPanel;
-    private Button btnStartProcedure;
-    private FlowLayoutPanel startPanel;
-    private TableLayoutPanel progressBarsPanel;
-    private CircularProgressBar circProgressBarSmall;
+    private TableLayoutPanel selectionPanel = null!;
+    private Button btnStartProcedure = null!;
+    private FlowLayoutPanel startPanel = null!;
+    private TableLayoutPanel progressBarsPanel = null!;
+    private CircularProgressBar circProgressBarSmall = null!;
     private CircularProgressBar[] circProgressBarsLarge = new CircularProgressBar[2];
     private List<BinSelectionControl> binSelections = new List<BinSelectionControl>();
     private int offsetTotalBar = 0;
-    private TextBox txtVersions;
+    private TextBox txtVersions = null!;
 
     // Servizi di dominio iniettati via ConnectionManager (ricreati ad ogni SwitchToAsync).
     private readonly DictionaryCache _cache;
