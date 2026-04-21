@@ -510,52 +510,43 @@ namespace StemPC
                     comboBoxCommand.Items.Add(item.Name);
             }
 
-#if TOPLIFT
-            RecipientId = 0x00080381;
-            label12.Text = $"Indirizzo\n 0x{RecipientId:X8}";
-            await _dictionaryCache.SelectByRecipientAsync(RecipientId, ct);
-            Dizionario = _dictionaryCache.Variables.ToList();
-#elif EDEN
-            const string macchinaEden = "EDEN";
-            const string schedaEden = "Madre";
-            foreach (ProtocolAddress item in IndirizziProtocollo)
+            // Pre-selezione device/board iniziale (blocco #7 in PREPROCESSOR_DIRECTIVES.md):
+            // due strategie in base ai campi di IDeviceVariantConfig popolati dalla factory.
+            //   TOPLIFT  → DefaultRecipientId fisso (0x00080381), nessun lookup nel dizionario
+            //              (legacy: non selezionava combo device/board perché UI nascoste).
+            //   EDEN     → DeviceName="EDEN"+BoardName="Madre", lookup nell'elenco indirizzi
+            //              per ricavare l'address reale + aggiorna combo device/board.
+            //   EGICON   → DeviceName="SPARK"+BoardName="HMI", stesso pattern di EDEN.
+            //   Generic  → tutti i campi vuoti, nessuna pre-selezione (lista variabili vuota).
+            if (_variantConfig.DefaultRecipientId != 0)
             {
-                if (item.BoardName == schedaEden && item.DeviceName == macchinaEden)
+                RecipientId = _variantConfig.DefaultRecipientId;
+                label12.Text = $"Indirizzo\n 0x{RecipientId:X8}";
+                await _dictionaryCache.SelectByRecipientAsync(RecipientId, ct);
+                Dizionario = _dictionaryCache.Variables.ToList();
+            }
+            else if (!string.IsNullOrEmpty(_variantConfig.DeviceName)
+                     && !string.IsNullOrEmpty(_variantConfig.BoardName))
+            {
+                foreach (ProtocolAddress item in IndirizziProtocollo)
                 {
-                    label12.Text = $"Indirizzo\n {item.Address}";
-                    RecipientId = Convert.ToUInt32(item.Address.Substring(2), 16);
-                    await _dictionaryCache.SelectByRecipientAsync(RecipientId, ct);
-                    Dizionario = _dictionaryCache.Variables.ToList();
+                    if (item.BoardName == _variantConfig.BoardName
+                        && item.DeviceName == _variantConfig.DeviceName)
+                    {
+                        label12.Text = $"Indirizzo\n {item.Address}";
+                        RecipientId = Convert.ToUInt32(item.Address.Substring(2), 16);
+                        await _dictionaryCache.SelectByRecipientAsync(RecipientId, ct);
+                        Dizionario = _dictionaryCache.Variables.ToList();
 
-                    int indice = comboBoxMachine.FindStringExact(macchinaEden);
-                    if (indice != -1) comboBoxMachine.SelectedIndex = indice;
+                        int indice = comboBoxMachine.FindStringExact(_variantConfig.DeviceName);
+                        if (indice != -1) comboBoxMachine.SelectedIndex = indice;
 
-                    indice = comboBoxBoard.FindStringExact(schedaEden);
-                    if (indice != -1) comboBoxBoard.SelectedIndex = indice;
-                    break;
+                        indice = comboBoxBoard.FindStringExact(_variantConfig.BoardName);
+                        if (indice != -1) comboBoxBoard.SelectedIndex = indice;
+                        break;
+                    }
                 }
             }
-#elif EGICON
-            const string macchinaEgicon = "SPARK";
-            const string schedaEgicon = "HMI";
-            foreach (ProtocolAddress item in IndirizziProtocollo)
-            {
-                if (item.BoardName == schedaEgicon && item.DeviceName == macchinaEgicon)
-                {
-                    label12.Text = $"Indirizzo\n {item.Address}";
-                    RecipientId = Convert.ToUInt32(item.Address.Substring(2), 16);
-                    await _dictionaryCache.SelectByRecipientAsync(RecipientId, ct);
-                    Dizionario = _dictionaryCache.Variables.ToList();
-
-                    int indice = comboBoxMachine.FindStringExact(macchinaEgicon);
-                    if (indice != -1) comboBoxMachine.SelectedIndex = indice;
-
-                    indice = comboBoxBoard.FindStringExact(schedaEgicon);
-                    if (indice != -1) comboBoxBoard.SelectedIndex = indice;
-                    break;
-                }
-            }
-#endif
         }
 
         private async void buttonSendPS_Click(object sender, EventArgs e)
