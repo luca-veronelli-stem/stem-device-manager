@@ -279,6 +279,139 @@ public class TelemetryServiceTests
         Assert.Empty(samples);
     }
 
+    // --- Dictionary mutation ---
+
+    [Fact]
+    public void AddToDictionary_AppendsVariable()
+    {
+        using var fixture = new Fixture();
+        fixture.Service.AddToDictionary(VarUInt8);
+        fixture.Service.AddToDictionary(VarUInt16);
+
+        Assert.Equal(2, fixture.Service.CurrentVariables.Count);
+        Assert.Same(VarUInt8, fixture.Service.CurrentVariables[0]);
+        Assert.Same(VarUInt16, fixture.Service.CurrentVariables[1]);
+    }
+
+    [Fact]
+    public void RemoveFromDictionary_RemovesAtIndex()
+    {
+        using var fixture = new Fixture();
+        fixture.Service.AddToDictionary(VarUInt8);
+        fixture.Service.AddToDictionary(VarUInt16);
+        fixture.Service.AddToDictionary(VarUInt32);
+
+        fixture.Service.RemoveFromDictionary(1);
+
+        Assert.Equal(2, fixture.Service.CurrentVariables.Count);
+        Assert.Same(VarUInt32, fixture.Service.CurrentVariables[1]);
+    }
+
+    [Fact]
+    public void ResetDictionary_ClearsAll()
+    {
+        using var fixture = new Fixture();
+        fixture.Service.AddToDictionary(VarUInt8);
+        fixture.Service.AddToDictionaryForWrite(VarUInt16, "42");
+
+        fixture.Service.ResetDictionary();
+
+        Assert.Empty(fixture.Service.CurrentVariables);
+    }
+
+    [Fact]
+    public void GetVariableName_InRange_ReturnsName()
+    {
+        using var fixture = new Fixture();
+        fixture.Service.AddToDictionary(VarUInt8);
+        Assert.Equal("PressureRaw", fixture.Service.GetVariableName(0));
+        Assert.Equal("Index out of range", fixture.Service.GetVariableName(5));
+    }
+
+    // --- ReadOneShotAsync ---
+
+    [Fact]
+    public async Task ReadOneShotAsync_SendsReadCommandForEachVariable()
+    {
+        using var fixture = new Fixture();
+        fixture.Service.UpdateSourceAddress(SourceRecipientId);
+        fixture.Service.AddToDictionary(VarUInt8);
+        fixture.Service.AddToDictionary(VarUInt16);
+
+        await fixture.Service.ReadOneShotAsync();
+
+        // 2 invii CMD_READ_VARIABLE (00, 01)
+        Assert.Equal(2, fixture.Port.SentPayloads.Count);
+        AssertCommandIs(fixture.Port.SentPayloads[0], cmdHi: 0x00, cmdLo: 0x01);
+        AssertCommandIs(fixture.Port.SentPayloads[1], cmdHi: 0x00, cmdLo: 0x01);
+        Assert.False(fixture.Service.IsRunning);
+    }
+
+    [Fact]
+    public async Task ReadOneShotAsync_EmptyDict_NoOp()
+    {
+        using var fixture = new Fixture();
+        await fixture.Service.ReadOneShotAsync();
+
+        Assert.Empty(fixture.Port.SentPayloads);
+    }
+
+    [Fact]
+    public async Task OnReadReply_DecodesBigEndianAndEmitsDataPoint()
+    {
+        var readReplyCmd = new Command("ReadReply", "80", "01");
+        using var fixture = new Fixture(receiverDecoderCommands: [readReplyCmd]);
+        fixture.Service.AddToDictionary(VarUInt16);  // addr 01/01
+        var samples = new List<TelemetryDataPoint>();
+        fixture.Service.DataReceived += (_, dp) => samples.Add(dp);
+
+        // Reply payload: [80, 01, AddrH=01, AddrL=01, 0xAB, 0xCD] → uint16 BE = 0xABCD
+        byte[] alPayload = [0x80, 0x01, 0x01, 0x01, 0xAB, 0xCD];
+        var frame = BuildBleSingleChunkFrame(
+            senderId: SourceRecipientId, recipientId: OwnRecipientId,
+            command: readReplyCmd, alPayload: alPayload);
+        fixture.Port.RaisePacketReceived(frame, DateTime.UtcNow);
+
+        Assert.Single(samples);
+        Assert.Same(VarUInt16, samples[0].Variable);
+        Assert.Equal(TelemetrySource.ReadReply, samples[0].Source);
+        Assert.Equal(0xABCDu, samples[0].NumericValue);
+    }
+
+    // --- WriteOneShotAsync ---
+
+    [Fact]
+    public async Task WriteOneShotAsync_SendsWriteCommandWithValueBigEndian()
+    {
+        using var fixture = new Fixture();
+        fixture.Service.UpdateSourceAddress(SourceRecipientId);
+        fixture.Service.AddToDictionaryForWrite(VarUInt16, "1234");
+
+        await fixture.Service.WriteOneShotAsync();
+
+        Assert.Single(fixture.Port.SentPayloads);
+        AssertCommandIs(fixture.Port.SentPayloads[0], cmdHi: 0x00, cmdLo: 0x02);
+        var alPayload = ExtractApplicationPayloadFromBle(fixture.Port.SentPayloads[0]);
+        // payload = [AddrH=01, AddrL=01, valHi=0x04, valLo=0xD2] → 0x04D2 = 1234
+        Assert.Equal(4, alPayload.Length);
+        Assert.Equal(0x01, alPayload[0]);
+        Assert.Equal(0x01, alPayload[1]);
+        Assert.Equal(0x04, alPayload[2]);
+        Assert.Equal(0xD2, alPayload[3]);
+    }
+
+    [Fact]
+    public async Task WriteOneShotAsync_InvalidValue_Skipped()
+    {
+        using var fixture = new Fixture();
+        fixture.Service.AddToDictionaryForWrite(VarUInt16, "abc"); // non parseabile
+        fixture.Service.AddToDictionaryForWrite(VarUInt32, "99999"); // > 32767
+
+        await fixture.Service.WriteOneShotAsync();
+
+        Assert.Empty(fixture.Port.SentPayloads);
+    }
+
     // --- Dispose ---
 
     [Fact]

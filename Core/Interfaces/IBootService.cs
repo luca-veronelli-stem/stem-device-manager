@@ -21,13 +21,41 @@ public interface IBootService
     event EventHandler<BootProgress>? ProgressChanged;
 
     /// <summary>
-    /// Avvia l'upload di un firmware verso il device con <paramref name="recipientId"/>.
-    /// Il binario deve essere già interamente in memoria.
+    /// Sequenza completa di upload: START → blocchi da 1024B → END → RESTART x2.
+    /// Stato passa da <see cref="BootState.Idle"/> a <see cref="BootState.Uploading"/>
+    /// a <see cref="BootState.Completed"/> o <see cref="BootState.Failed"/>.
     /// </summary>
     /// <param name="firmware">Bytes del firmware da inviare.</param>
     /// <param name="recipientId">RecipientId del device target dell'aggiornamento.</param>
     /// <param name="ct">Token di cancellazione (rispettato fra blocchi).</param>
     Task StartFirmwareUploadAsync(byte[] firmware, uint recipientId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Invia solo <c>CMD_START_PROCEDURE</c> e attende reply.
+    /// Ritorna <c>true</c> se la reply arriva in tempo, <c>false</c> su timeout.
+    /// Non modifica <see cref="State"/>.
+    /// </summary>
+    Task<bool> StartBootAsync(uint recipientId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Invia solo <c>CMD_END_PROCEDURE</c> e attende reply.
+    /// Ritorna <c>true</c> se la reply arriva in tempo, <c>false</c> su timeout.
+    /// </summary>
+    Task<bool> EndBootAsync(uint recipientId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Invia <c>CMD_RESTART_MACHINE</c> fire-and-forget (no wait reply).
+    /// </summary>
+    Task RestartAsync(uint recipientId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Invia solo i blocchi <c>CMD_PROGRAM_BLOCK</c>, senza START/END/RESTART.
+    /// Usato per workflow Egicon multi-step in cui i comandi di contorno sono gestiti
+    /// separatamente dai pulsanti StartBoot/EndBoot/Restart.
+    /// Stato passa da <see cref="BootState.Idle"/> a <see cref="BootState.Uploading"/>
+    /// a <see cref="BootState.Completed"/> o <see cref="BootState.Failed"/>.
+    /// </summary>
+    Task UploadBlocksOnlyAsync(byte[] firmware, uint recipientId, CancellationToken ct = default);
 }
 
 /// <summary>Stato della macchina a stati di <see cref="IBootService"/>.</summary>
