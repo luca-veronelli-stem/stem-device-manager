@@ -271,7 +271,7 @@ public class Boot_Smart_Tab : TabPage
         }
     }
 
-    private async void BtnStartProcedure_Click(object sender, EventArgs e)
+    private async void BtnStartProcedure_Click(object? sender, EventArgs e)
     {
         foreach (var sel in binSelections)
         {
@@ -337,7 +337,7 @@ public class Boot_Smart_Tab : TabPage
         btnStartProcedure.Enabled = true;
     }
 
-    private void UpdateProgressBar(object sender, BootProgress e)
+    private void UpdateProgressBar(object? sender, BootProgress e)
     {
         int value = e.TotalLength <= 0 ? 0 : (int)((double)e.CurrentOffset / e.TotalLength * 100);
         if (value == 99) value = 100;
@@ -369,7 +369,7 @@ public class Boot_Smart_Tab : TabPage
         return -1;
     }
 
-    private async void btnReadVersions_Click(object sender, EventArgs e)
+    private async void btnReadVersions_Click(object? sender, EventArgs e)
     {
         var tel = _connMgr.CurrentTelemetry;
         if (tel is null) { MessageBox.Show("Select communication channel first!"); return; }
@@ -385,7 +385,7 @@ public class Boot_Smart_Tab : TabPage
         await tel.ReadOneShotAsync();
     }
 
-    private void onDataReady(object sender, TelemetryDataPoint dp)
+    private void onDataReady(object? sender, TelemetryDataPoint dp)
     {
         // Solo read reply: ignora il fast stream che non interessa al tab boot smart.
         if (dp.Source != TelemetrySource.ReadReply) return;

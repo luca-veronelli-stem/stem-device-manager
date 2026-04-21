@@ -79,7 +79,7 @@ public partial class BLEInterfaceTab : TabPage
         bleManager.OnScanCompleted += BleManager_OnScanCompleted; // Aggiungi un evento di fine scansione
     }
 
-    private void BtnScan_Click(object sender, EventArgs e)
+    private void BtnScan_Click(object? sender, EventArgs e)
     {
         listBoxDevices.Items.Clear();
         loadingSpinner.Visible = true;  // Mostra l'animazione
@@ -119,7 +119,7 @@ public partial class BLEInterfaceTab : TabPage
         }
     }
 
-    private async void listBoxDevices_SelectedIndexChanged(object sender, EventArgs e)
+    private async void listBoxDevices_SelectedIndexChanged(object? sender, EventArgs e)
     {
         if (listBoxDevices.SelectedItem != null)
         {

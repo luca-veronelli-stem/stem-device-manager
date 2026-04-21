@@ -136,7 +136,7 @@ public class Telemetry_Tab : TabPage
         }
     }
 
-    private void onDataReady(object sender, TelemetryDataPoint dp)
+    private void onDataReady(object? sender, TelemetryDataPoint dp)
     {
         if (dp.Source != TelemetrySource.FastStream) return;
 
@@ -167,7 +167,7 @@ public class Telemetry_Tab : TabPage
         return -1;
     }
 
-    private void OnCacheDictionaryUpdated(object sender, EventArgs e)
+    private void OnCacheDictionaryUpdated(object? sender, EventArgs e)
     {
         MachineDictionary = _cache.Variables;
         if (IsHandleCreated && InvokeRequired)
@@ -176,7 +176,7 @@ public class Telemetry_Tab : TabPage
             UpdateComboBox();
     }
 
-    private void Button_Click(object sender, EventArgs e)
+    private void Button_Click(object? sender, EventArgs e)
     {
         if (comboBox.SelectedItem != null)
         {
@@ -270,7 +270,7 @@ public class Telemetry_Tab : TabPage
         }
     }
 
-    private async void ButtonStart_Click(object sender, EventArgs e)
+    private async void ButtonStart_Click(object? sender, EventArgs e)
     {
         var tel = _connMgr.CurrentTelemetry;
         if (tel is null) { MessageBox.Show("Select communication channel first!"); return; }
@@ -284,7 +284,7 @@ public class Telemetry_Tab : TabPage
         await tel.StartFastTelemetryAsync();
     }
 
-    private async void ButtonStop_Click(object sender, EventArgs e)
+    private async void ButtonStop_Click(object? sender, EventArgs e)
     {
         var tel = _connMgr.CurrentTelemetry;
         if (tel is null) return;

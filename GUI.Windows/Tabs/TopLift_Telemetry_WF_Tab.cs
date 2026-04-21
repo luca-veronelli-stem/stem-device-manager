@@ -434,7 +434,7 @@ public class TopLiftTelemetry_Tab : TabPage
         plotView.InvalidatePlot(true);
     }
 
-    private async void StartTelemetryButton_Click(object sender, EventArgs e)
+    private async void StartTelemetryButton_Click(object? sender, EventArgs e)
     {
         var tel = _connMgr.CurrentTelemetry;
         if (tel is null) { MessageBox.Show("Select communication channel first!"); return; }
@@ -470,14 +470,14 @@ public class TopLiftTelemetry_Tab : TabPage
         return -1;
     }
 
-    private async void StopTelemetryButton_Click(object sender, EventArgs e)
+    private async void StopTelemetryButton_Click(object? sender, EventArgs e)
     {
         var tel = _connMgr.CurrentTelemetry;
         if (tel is null) return;
         await tel.StopTelemetryAsync();
     }
 
-    private async void buttonReadFaults_Click(object sender, EventArgs e)
+    private async void buttonReadFaults_Click(object? sender, EventArgs e)
     {
         var tel = _connMgr.CurrentTelemetry;
         if (tel is null) { MessageBox.Show("Select communication channel first!"); return; }
@@ -491,7 +491,7 @@ public class TopLiftTelemetry_Tab : TabPage
         await tel.ReadOneShotAsync();
     }
 
-    private async void buttonReadSettings_Click(object sender, EventArgs e)
+    private async void buttonReadSettings_Click(object? sender, EventArgs e)
     {
         var tel = _connMgr.CurrentTelemetry;
         if (tel is null) { MessageBox.Show("Select communication channel first!"); return; }
@@ -513,7 +513,7 @@ public class TopLiftTelemetry_Tab : TabPage
         await tel.ReadOneShotAsync();
     }
 
-    private async void buttonWriteSettings_Click(object sender, EventArgs e)
+    private async void buttonWriteSettings_Click(object? sender, EventArgs e)
     {
         var tel = _connMgr.CurrentTelemetry;
         if (tel is null) { MessageBox.Show("Select communication channel first!"); return; }
@@ -635,7 +635,7 @@ public class TopLiftTelemetry_Tab : TabPage
         plotView.InvalidatePlot(true);
     }
 
-    private void onDataReady(object sender, TelemetryDataPoint dp)
+    private void onDataReady(object? sender, TelemetryDataPoint dp)
     {
         //Verifica quale variabile arriva e completa i campi di conseguenza
         String VarName = dp.Variable.Name;
@@ -804,7 +804,7 @@ public class TopLiftTelemetry_Tab : TabPage
             tb.Text = text;
     }
 
-    private void BtnSave_Click(object sender, EventArgs e)
+    private void BtnSave_Click(object? sender, EventArgs e)
     {
         using (SaveFileDialog sfd = new SaveFileDialog())
         {
@@ -841,7 +841,7 @@ public class TopLiftTelemetry_Tab : TabPage
         }
     }
 
-    private void BtnLoad_Click(object sender, EventArgs e)
+    private void BtnLoad_Click(object? sender, EventArgs e)
     {
         using (OpenFileDialog ofd = new OpenFileDialog())
         {

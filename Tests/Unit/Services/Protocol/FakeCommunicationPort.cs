@@ -21,7 +21,9 @@ internal sealed class FakeCommunicationPort : ICommunicationPort
     public bool IsConnected => State == ConnectionState.Connected;
 
     public event EventHandler<RawPacket>? PacketReceived;
+#pragma warning disable CS0067 // StateChanged non raised: il fake non cambia stato internamente
     public event EventHandler<ConnectionState>? StateChanged;
+#pragma warning restore CS0067
 
     public List<byte[]> SentPayloads { get; } = [];
 
