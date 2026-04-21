@@ -224,7 +224,7 @@ namespace StemPC
 #endif
 
             //crea e aggiungi il bootloader manager smart
-            BootSmartTabRef = new Boot_Smart_Tab(RXpacketManager);
+            BootSmartTabRef = new Boot_Smart_Tab(RXpacketManager, _serviceProvider.GetRequiredService<DictionaryCache>());
             BootSmartTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
             BootSmartTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
 
@@ -509,7 +509,8 @@ namespace StemPC
             label12.Text = $"Indirizzo\n 0x{RecipientId:X8}";
             Dizionario = (await _dictionaryProvider.LoadVariablesAsync(RecipientId, ct)).ToList();
             TLTTabRef.UpdateDictionary(Dizionario);
-            BootSmartTabRef.UpdateDictionary(Dizionario);
+            // BootSmartTabRef ora si aggiorna via DictionaryCache.DictionaryUpdated
+            // (wiring cache.LoadAsync/SelectByRecipientAsync in Task #37).
 #elif EDEN
             const string macchinaEden = "EDEN";
             const string schedaEden = "Madre";
