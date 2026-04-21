@@ -164,6 +164,20 @@ namespace Infrastructure.Protocol.Legacy
                 // Ferma la scansione
                 await StopScanningAsync();
 
+                // Se c'è già una connessione precedente (es. l'utente ha selezionato
+                // un altro device dopo averne connesso uno), chiudila in modo pulito:
+                // Plugin.BLE internamente dispone le strutture del device vecchio quando
+                // ne connetti uno nuovo, causando ObjectDisposedException se i riferimenti
+                // rxCharacteristic/txCharacteristic/connectedDevice sono ancora in uso.
+                if (connectedDevice != null)
+                {
+                    try { await DisconnectAsync(); }
+                    catch (Exception disconnectEx)
+                    {
+                        Debug.WriteLine($"Pre-connect cleanup fallito (continuo): {disconnectEx.Message}");
+                    }
+                }
+
                 // Trova il dispositivo per nome
                 var deviceEntry = discoveredDevices.FirstOrDefault(d => d.Value == deviceName);
                 if (deviceEntry.Key == Guid.Empty)
@@ -243,9 +257,17 @@ namespace Infrastructure.Protocol.Legacy
 
                 MonitorDeviceConnection();
             }
+            catch (ObjectDisposedException ode)
+            {
+                ErrorOccurred?.Invoke("Errore Connessione",
+                    $"Cannot access a disposed object (ObjectName={ode.ObjectName ?? "?"}). " +
+                    "Se il problema persiste, riavvia l'applicazione.");
+                ConnectionStatusChanged?.Invoke(this, false);
+            }
             catch (Exception ex)
             {
-                ErrorOccurred?.Invoke("Errore Connessione", $"Errore durante la connessione: {ex.Message}");
+                ErrorOccurred?.Invoke("Errore Connessione",
+                    $"Errore durante la connessione ({ex.GetType().Name}): {ex.Message}");
                 ConnectionStatusChanged?.Invoke(this, false);
             }
         }
