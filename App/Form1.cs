@@ -15,6 +15,7 @@ namespace StemPC
         private readonly IServiceProvider _serviceProvider;
         private readonly IDictionaryProvider _dictionaryProvider;
         private readonly DictionaryCache _dictionaryCache;
+        private readonly IDeviceVariantConfig _variantConfig;
 
         public const string Software_Version = "2.15";
 
@@ -143,10 +144,11 @@ namespace StemPC
         public Form1(IServiceProvider serviceProvider)
         {
             InitializeComponent();
-            // Inietta il service provider, il provider dizionari e la cache
+            // Inietta il service provider, il provider dizionari, la cache, la variante device
             _serviceProvider = serviceProvider;
             _dictionaryProvider = serviceProvider.GetRequiredService<IDictionaryProvider>();
             _dictionaryCache = serviceProvider.GetRequiredService<DictionaryCache>();
+            _variantConfig = serviceProvider.GetRequiredService<IDeviceVariantConfig>();
             Load += async (_, _) => await LoadDictionaryDataAsync(CancellationToken.None);
 
             // Controlla se il TabControl esiste gi  e crealo se non esiste
@@ -156,15 +158,11 @@ namespace StemPC
                 Controls.Add(tabControl);
             }
 
-#if TOPLIFT
-            Text = "STEM Toplift A2 Manager " + Software_Version;
-#elif EDEN
-            Text = "STEM Eden XP Manager " + Software_Version;
-#elif EGICON
-            Text = "STEM Spark Manager " + Software_Version;
-#else
-            this.Text += Software_Version;
-#endif
+            // Titolo finestra: per variante device-specifiche usa il titolo dedicato,
+            // per Generic appende solo la versione al testo di default impostato nel Designer.
+            Text = _variantConfig.Variant == DeviceVariant.Generic
+                ? Text + Software_Version
+                : _variantConfig.WindowTitle + Software_Version;
 
             FormRef = this;
 

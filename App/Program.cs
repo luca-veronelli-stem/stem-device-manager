@@ -77,7 +77,8 @@ namespace App
             ApplicationConfiguration.Initialize();
 
             // Mostra la schermata di avvio
-            SplashScreen splash = new();
+            var variantConfig = serviceProvider.GetRequiredService<IDeviceVariantConfig>();
+            SplashScreen splash = new(variantConfig);
             splash.Show();
             Application.DoEvents();
 
