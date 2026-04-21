@@ -448,7 +448,19 @@ namespace StemPC
 
         private async void buttonSendPS_Click(object sender, EventArgs e)
         {
-            await SendPS_Async(sender, e);
+            // Wrap difensivo: SendPS_Async può lanciare (BLE disconnesso a metà invio,
+            // timeout driver, ObjectDisposedException da Plugin.BLE, ecc). Senza try/catch
+            // l'eccezione risale al SynchronizationContext di WinForms e crasha l'app.
+            // Meglio mostrare MessageBox e lasciare che l'utente ritenti.
+            try
+            {
+                await SendPS_Async(sender, e);
+            }
+            catch (Exception ex)
+            {
+                ShowDriverError("Errore invio",
+                    $"Invio fallito ({ex.GetType().Name}): {ex.Message}");
+            }
         }
 
         private async Task SendPS_Async(object sender, EventArgs e)
