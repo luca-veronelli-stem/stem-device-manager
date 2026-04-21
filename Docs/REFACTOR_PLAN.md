@@ -2,16 +2,16 @@
 
 **Obiettivo:** Portare il progetto da god-object WinForms a clean architecture disaccoppiata e testabile, allineata ai pattern Stem (Production.Tracker, Communication, ButtonPanel.Tester).
 
-**Stato attuale (2026-04-21, post-Phase 4):** Core/Infrastructure puliti, Services popolato (ProtocolService/TelemetryService/BootService/DictionaryCache/ConnectionManager). Form1 731 LOC (-35% rispetto a inizio Phase 4). `App/STEMProtocol/` (2590 LOC) **eliminato**. Driver legacy `BLEManager`/`SerialPortManager` spostati in `Infrastructure.Protocol/Legacy/` (sostituibili quando arriva Stem.Communication NuGet). 4 tab WF migrati su `ConnectionManager.CurrentBoot`/`CurrentTelemetry`. Tutti i FormRef legacy eliminati. 2 build configuration (Debug/Release). Suite: **292 net10.0 / 470 net10.0-windows**.
+**Stato attuale (2026-04-21, post-Phase 4):** Core/Infrastructure puliti, Services popolato (ProtocolService/TelemetryService/BootService/DictionaryCache/ConnectionManager). Form1 731 LOC (-35% rispetto a inizio Phase 4). `GUI.Windows/STEMProtocol/` (2590 LOC) **eliminato**. Driver legacy `BLEManager`/`SerialPortManager` spostati in `Infrastructure.Protocol/Legacy/` (sostituibili quando arriva Stem.Communication NuGet). 4 tab WF migrati su `ConnectionManager.CurrentBoot`/`CurrentTelemetry`. Tutti i FormRef legacy eliminati. 2 build configuration (Debug/Release). Suite: **292 net10.0 / 470 net10.0-windows**.
 
 **Vincoli:** WinForms resta (migrazione UI = Fase 5 futura). Stem.Communication NuGet sostituirà i driver in `Legacy/` — Fase 5 futura, non blocca la chiusura di Phase 4.
 
 **Decisioni architetturali (confermate):**
 - **IProtocolService in Core, ProtocolService non in DI** — `IProtocolService` è definita in `Core/Interfaces/` (contratto: `SendCommandAsync`, `SendCommandAndWaitReplyAsync`, evento `AppLayerDecoded`). TelemetryService/BootService dipendono dall'interfaccia, non dal concreto. ProtocolService NON è registrato in DI perché dipende dalla port scelta a runtime — creato dal ConnectionManager in Fase 3. L'interfaccia abilita: (1) test unitari con mock di IProtocolService senza tirare su lo stack, (2) swap trasparente in Fase 4 quando Stem.Communication sostituisce lo stack legacy.
-- **Riscrittura, non wrapping** — la logica in Services/ è codice nuovo, non wrapper sui vecchi file in `App/STEMProtocol/`. I file legacy restano in App/ senza essere chiamati dopo Fase 3, eliminati in Fase 4.
+- **Riscrittura, non wrapping** — la logica in Services/ è codice nuovo, non wrapper sui vecchi file in `GUI.Windows/STEMProtocol/`. I file legacy restano in GUI.Windows/ senza essere chiamati dopo Fase 3, eliminati in Fase 4.
 - **Nessun FormRef nei nuovi servizi** — i servizi nascono senza alcun riferimento a Form1 o UI. Il progresso/stato viene comunicato via eventi tipizzati. Il rewiring UI avviene in Fase 3.
 - **ImmutableArray<byte> per payload** — `AppLayerDecodedEvent.Payload` usa `ImmutableArray<byte>` (BCL `System.Collections.Immutable`, incluso nel runtime .NET 8+, non è un NuGet esterno). Fornisce immutabilità vera + equality strutturale elemento per elemento.
-- **Services referenzia solo Core** — nessun riferimento a Infrastructure. Il wiring concreto avviene nel composition root (`App/Program.cs`).
+- **Services referenzia solo Core** — nessun riferimento a Infrastructure. Il wiring concreto avviene nel composition root (`GUI.Windows/Program.cs`).
 
 ---
 
@@ -89,7 +89,7 @@ git checkout -b refactor/phase-1-protocol-abstractions
 
 ## Fase 2 — `refactor/services-layer` ✅ Completata (2026-04-20)
 
-**Obiettivo:** Popolare Services/ con implementazioni concrete + introdurre Infrastructure.Protocol per gli adapter HW. Spostare logica da App/ a Services/ / Infrastructure.Protocol/.
+**Obiettivo:** Popolare Services/ con implementazioni concrete + introdurre Infrastructure.Protocol per gli adapter HW. Spostare logica da GUI.Windows/ a Services/ / Infrastructure.Protocol/.
 
 **Progresso al 2026-04-20:**
 
@@ -97,7 +97,7 @@ Branch `refactor/services-foundation` (merged → main, PR #24):
 - ✅ Step 1 — Setup struttura progetti: Services `net10.0` puro + nuovo `Infrastructure.Protocol` dual TFM + rinomina `Infrastructure` → `Infrastructure.Persistence` (allineamento pattern Stem)
 - ✅ Step 1 — `PacketDecoder` + `DictionarySnapshot` in `Services/Protocol/`
 - ✅ Step 2 — Adapter HW `CanPort` (option A arbId LE prefix), `BlePort` e `SerialPort` (pass-through) in `Infrastructure.Protocol/Hardware/`
-- ✅ `PCANManager` spostato da `App/` a `Infrastructure.Protocol/Hardware/` (driver autonomo)
+- ✅ `PCANManager` spostato da `GUI.Windows/` a `Infrastructure.Protocol/Hardware/` (driver autonomo)
 - ✅ `Docs/PROTOCOL.md` — documentazione completa del protocollo STEM legacy
 
 Branch `refactor/protocol-service` (merged → main 2026-04-20, PR #25, **Branch A** completata):
@@ -107,7 +107,7 @@ Branch `refactor/protocol-service` (merged → main 2026-04-20, PR #25, **Branch
 - ✅ Test: **317 net10.0-windows** (era 274) / **172 net10.0** (era 132) — +43 test (13 NetInfo + 13 PacketReassembler + 13 ProtocolService + 3 Kind adapter + 1 refactor PacketDecoder)
 
 Branch `refactor/services-business` (merged → main 2026-04-20, PR #26, **Branch B** completata):
-- ✅ Step 3 — `Services/Configuration/DeviceVariantConfigFactory` (parsing case-insensitive, default Generic, `CanonicalName` round-trip) + `App/appsettings.json` sezione `Device:Variant`
+- ✅ Step 3 — `Services/Configuration/DeviceVariantConfigFactory` (parsing case-insensitive, default Generic, `CanonicalName` round-trip) + `GUI.Windows/appsettings.json` sezione `Device:Variant`
 - ✅ Step 4 — `Services/Telemetry/TelemetryService` implementa `ITelemetryService` usando `ProtocolService` come facade (decisione architetturale **opzione b**: niente duplicazione encode/chunking/CRC, decode CMD_TELEMETRY_DATA con uint8/16/32 LE, packet a telemetria spenta ignorati)
 - ✅ Step 5 — `Services/Boot/BootService` implementa `IBootService` usando `ProtocolService.SendCommandAndWaitReplyAsync` (sequenza START → loop blocchi 1024B con 10 retry → END con 5 retry → RESTART x2; state machine Idle→Uploading→(Completed|Failed); BootProtocolException assorbita per parità legacy)
 - ✅ `Core/Interfaces/IBootService.StartFirmwareUploadAsync` — aggiunto parametro `recipientId` (target device)
@@ -120,8 +120,8 @@ Branch `refactor/services-di-integration` (merged → main, PR #27, **Branch C**
 - ✅ `Services/DependencyInjection.AddServices(IConfiguration)` — registra `IDeviceVariantConfig` (da `Device:Variant`+`Device:SenderId`) + `IPacketDecoder` vuoto
 - ✅ `Infrastructure.Protocol/DependencyInjection.AddProtocolInfrastructure()` — registra `PCANManager` come `IPcanDriver` + `CanPort`/`BlePort`/`SerialPort` come singleton concreti (scelta canale runtime gestita in Phase 3)
 - ✅ NuGet `Microsoft.Extensions.DependencyInjection.Abstractions 10.0.5` aggiunto a Services + Infrastructure.Protocol; `Configuration.Abstractions` a Services
-- ✅ `App/appsettings.json` sezione `Device.SenderId = 8`
-- ✅ `App/Program.cs` wiring DI completo: `AddDictionaryProvider` + driver `IBleDriver`/`ISerialDriver` + `AddProtocolInfrastructure()` + `AddServices(config)`. Form1 invariato (consumer migration = Phase 3)
+- ✅ `GUI.Windows/appsettings.json` sezione `Device.SenderId = 8`
+- ✅ `GUI.Windows/Program.cs` wiring DI completo: `AddDictionaryProvider` + driver `IBleDriver`/`ISerialDriver` + `AddProtocolInfrastructure()` + `AddServices(config)`. Form1 invariato (consumer migration = Phase 3)
 - ✅ **Servizi NON registrati per scelta architetturale** (dubbio 1 opzione c): `ProtocolService`/`ITelemetryService`/`IBootService` dipendono dalla port runtime, creati dal `ConnectionManager` Phase 3. `IProtocolService` da introdurre in Core in apertura Fase 3 (refactor leggero: estrarre interfaccia da ProtocolService, cambiare ctor di TelemetryService/BootService per dipendere dall'interfaccia)
 - ✅ `Docs/PREPROCESSOR_DIRECTIVES.md` — documentato debito Phase 3: `BLE_Manager.FormRef` da rimpiazzare con evento o `ILogger`
 - ✅ Test: **+8 test** (6 DeviceVariantConfig SenderId + 2 DeviceVariantConfigFactory) → suite **236 net10.0** / **381 net10.0-windows**
@@ -159,9 +159,9 @@ public static class DependencyInjection
 
 `Infrastructure.Protocol/DependencyInjection.cs` esporrà `AddProtocolInfrastructure()` per registrare gli adapter (`CanPort`, `BlePort`, `SerialPort`) come `ICommunicationPort`.
 
-### 2.2 Riscrivere logica da App/STEMProtocol/ (codice nuovo, non wrapper)
+### 2.2 Riscrivere logica da GUI.Windows/STEMProtocol/ (codice nuovo, non wrapper)
 
-I servizi in Services/ sono **riscritture pulite** della logica, non wrapper sui file originali. I file in `App/STEMProtocol/` restano intatti e continuano a essere usati dall'app fino a Fase 3 (rewiring). Dopo Fase 3 non sono più chiamati; eliminati in Fase 4.
+I servizi in Services/ sono **riscritture pulite** della logica, non wrapper sui file originali. I file in `GUI.Windows/STEMProtocol/` restano intatti e continuano a essere usati dall'app fino a Fase 3 (rewiring). Dopo Fase 3 non sono più chiamati; eliminati in Fase 4.
 
 | Sorgente (riferimento) | Destinazione (Services/) | Dipendenze ctor |
 |------------------------|-------------------------|-----------------|
@@ -177,12 +177,12 @@ In `Infrastructure.Protocol/Hardware/` (non in Services — dipendono da driver 
 CanPort.cs       — implementa ICommunicationPort, wrappa PCANManager via IPcanDriver (option A: arbId LE prefix)
 BlePort.cs       — implementa ICommunicationPort, wrappa App.BLEManager via IBleDriver (pass-through)
 SerialPort.cs    — implementa ICommunicationPort, wrappa App.SerialPortManager via ISerialDriver (pass-through)
-PCANManager.cs   — driver PCAN-USB embedded (spostato da App/)
+PCANManager.cs   — driver PCAN-USB embedded (spostato da GUI.Windows/)
 IPcanDriver.cs, IBleDriver.cs, ISerialDriver.cs — abstraction per testability + dependency inversion
 BlePacketEventArgs.cs, SerialPacketEventArgs.cs — event args dei driver
 ```
 
-`BLE_Manager.cs` e `SerialPort_Manager.cs` restano in `App/` (refs a `Form1.FormRef` e `MessageBox`, da rimuovere in Fase 3). Implementano le interfacce `IBleDriver` / `ISerialDriver` di Infrastructure.Protocol (dependency inversion).
+`BLE_Manager.cs` e `SerialPort_Manager.cs` restano in `GUI.Windows/` (refs a `Form1.FormRef` e `MessageBox`, da rimuovere in Fase 3). Implementano le interfacce `IBleDriver` / `ISerialDriver` di Infrastructure.Protocol (dependency inversion).
 
 Le tre convention payload sono documentate in [PROTOCOL.md](PROTOCOL.md) e negli XML-doc degli adapter.
 
@@ -299,7 +299,7 @@ Non tocca `ConnectionManager.StateChanged` (che emette solo per il canale attivo
 - **11 blocchi `#if` rimossi** su 4 file (Form1.cs 8, SplashScreen 1, Boot_WF_Tab 1, Telemetry_WF_Tab 1) — zero `#if TOPLIFT/EDEN/EGICON` attivi nel codice
 - **2 flag nuovi in `IDeviceVariantConfig`**: `WindowTitle: string`, `SmartBootDevices: IReadOnlyList<SmartBootDeviceEntry>`
 - **1 tipo nuovo in Core**: `SmartBootDeviceEntry(uint Address, string Name, bool IsKeyboard)`
-- **6 build configuration rimosse** da `App.csproj` e `Stem.Device.Manager.slnx` (TOPLIFT-A2-Debug/Release, EDEN-Debug/Release, EGICON-Debug/Release). Restano solo `Debug` e `Release`.
+- **6 build configuration rimosse** da `GUI.Windows.csproj` e `Stem.Device.Manager.slnx` (TOPLIFT-A2-Debug/Release, EDEN-Debug/Release, EGICON-Debug/Release). Restano solo `Debug` e `Release`.
 - **Iniezione DI**: `IDeviceVariantConfig` iniettato in Form1 (`GetRequiredService`), SplashScreen (ctor), Boot_Interface_Tab (ctor), Telemetry_Tab (ctor)
 - **Test**: +8 (`DeviceVariantConfigTests` esteso: WindowTitle per 4 variant + SmartBootDevices TopLift/Eden/Generic/Egicon) + 2 (tab null-ctor variant) → suite **278 net10.0 / 458 net10.0-windows**
 - **Docs aggiornati**: `Docs/PREPROCESSOR_DIRECTIVES.md` riscritto con mappa blocchi → sostituzioni, `CLAUDE.md` aggiornato (2 build config + test counts)
@@ -325,7 +325,7 @@ git checkout -b refactor/form1-thin-shell
 git checkout -b refactor/remove-ifs
 # Estendere IDeviceVariantConfig con feature flag
 # Sostituire #if TOPLIFT/EDEN/EGICON con runtime check (un commit per file)
-# Rimuovere build configuration device-specific da App.csproj
+# Rimuovere build configuration device-specific da GUI.Windows.csproj
 # Aggiornare Docs/PREPROCESSOR_DIRECTIVES.md e CLAUDE.md
 # Commit finale: "refactor(app): remove #if TOPLIFT/EDEN/EGICON, single Debug/Release config"
 ```
@@ -334,7 +334,7 @@ git checkout -b refactor/remove-ifs
 
 ## Fase 4 — `refactor/phase-4-switch-to-new-stack` ✅ Completata (2026-04-21)
 
-**Obiettivo:** Spostare Form1 + tab dai manager legacy (PacketManager, BootManager, TelemetryManager) al nuovo stack (IProtocolService + IBootService + ITelemetryService via ConnectionManager), ed eliminare lo stack protocollo embedded `App/STEMProtocol/` senza attendere Stem.Communication NuGet.
+**Obiettivo:** Spostare Form1 + tab dai manager legacy (PacketManager, BootManager, TelemetryManager) al nuovo stack (IProtocolService + IBootService + ITelemetryService via ConnectionManager), ed eliminare lo stack protocollo embedded `GUI.Windows/STEMProtocol/` senza attendere Stem.Communication NuGet.
 
 **Strategia pragmatica (decisione 2026-04-21):** invece di attendere Stem.Communication (almeno 1 mese di distanza), chiudiamo la Fase 4 usando lo stack nuovo già costruito in Fase 2. Quando Stem.Communication sarà pronto, la sua integrazione sarà uno swap locale dei wrapper `Infrastructure.Protocol/Legacy/*` — il resto dell'architettura resta invariato.
 
@@ -368,14 +368,14 @@ Nuovo `BootService` esteso con step separati per workflow Egicon:
 
 ### 4.4 Eliminazione legacy
 
-- `App/STEMProtocol/` eliminata (7 file, 2590 LOC: STEM_protocol.cs, PacketManager.cs, CanDataLayer.cs, SerialDataLayer.cs, BootManager.cs, TelemetryManager.cs, SPRollingCode.cs).
-- `App/CAN_WF_Tab.cs` eliminata (dead code, mai istanziata).
+- `GUI.Windows/STEMProtocol/` eliminata (7 file, 2590 LOC: STEM_protocol.cs, PacketManager.cs, CanDataLayer.cs, SerialDataLayer.cs, BootManager.cs, TelemetryManager.cs, SPRollingCode.cs).
+- `GUI.Windows/CAN_WF_Tab.cs` eliminata (dead code, mai istanziata).
 - `Tests/Unit/Protocol/TelemetryManagerTests.cs` e `Tests/Unit/Protocol/RollingCodeGeneratorTests.cs` eliminati (coprivano il legacy).
 - `Tests/Unit/Tabs/TabDependencyInjectionTests.cs` aggiornato con i nuovi ctor.
 
 ### 4.5 Driver legacy in Infrastructure.Protocol/Legacy/
 
-`BLE_Manager.cs` e `SerialPort_Manager.cs` spostati da `App/` a `Infrastructure.Protocol/Legacy/`:
+`BLE_Manager.cs` e `SerialPort_Manager.cs` spostati da `GUI.Windows/` a `Infrastructure.Protocol/Legacy/`:
 - Namespace `Infrastructure.Protocol.Legacy`.
 - Dipendenze WinForms eliminate: `MessageBox.Show` sostituito con event `ErrorOccurred(title, message)`. Form1 sottoscrive e mostra `MessageBox` lato UI.
 - `Plugin.BLE` + `System.IO.Ports` inclusi nel csproj solo per TFM `net10.0-windows`; `Legacy/` escluso dal build cross-platform (CI Linux).
@@ -397,20 +397,30 @@ Nuovo `BootService` esteso con step separati per workflow Egicon:
 
 ---
 
-## Fase 4b — `refactor/phase-4b-app-reorganization`
+## Fase 4b — `refactor/app-reorganization` ✅ Completata (2026-04-21)
 
-**Obiettivo:** Riorganizzare la cartella `App/` (attualmente flat con Form1, SplashScreen, tab WF, Program, appsettings mescolati) in sottocartelle semantiche.
+**Obiettivo:** Rinominare il progetto `App` in `GUI.Windows` e riorganizzare la cartella in sottocartelle semantiche.
 
-**Struttura proposta:**
+**Esito:**
+- Progetto rinominato: `App/App.csproj` → `GUI.Windows/GUI.Windows.csproj`. Assembly output `GUI.Windows.dll`. RootNamespace `GUI.Windows`.
+- Namespace `App` → `GUI.Windows` in Program.cs + Properties/*.Designer.cs. Refs `App.Properties.Resources.*` aggiornati nei Designer.cs. Resource stream `App.images.*` → `GUI.Windows.images.*`.
+- `Stem.Device.Manager.slnx` e `Tests/Tests.csproj` aggiornati al nuovo path.
+
+**Struttura finale `GUI.Windows/`:**
 ```
-App/
-├── App.csproj, Program.cs, appsettings.json
-├── Forms/         — Form1.cs/.Designer/.resx, SplashScreen.*
-├── Tabs/          — tab WF (Boot_Interface/Boot_Smart/Telemetry/TopLiftTelemetry/BLE) + .Designer + .resx
-└── Resources/     — immagini, icone, Dizionari STEM.xlsx
+GUI.Windows/
+├── GUI.Windows.csproj, Program.cs, appsettings.json
+├── Forms/       — Form1.{cs,Designer.cs,resx}, SplashScreen.{cs,Designer.cs,resx}
+├── Tabs/        — BLE_WF_Tab, Boot_WF_Tab, Boot_Smart_WF_Tab, Telemetry_WF_Tab, TopLift_Telemetry_WF_Tab
+├── Controls/    — CircularProgressBar, custom-oxyplot-zoom-x
+├── Properties/  — Resources/Settings designer
+├── Resources/   — ico, xlsx, png
+├── images/      — png tab telemetria TopLift
+├── SP_Code_Generator.cs, Terminal.cs  (utility in root)
+└── README.md
 ```
 
-Branch separato dopo merge di `phase-4-switch-to-new-stack` per tenere la PR del switch stack pulita dal rumore di rename.
+Branch eseguito dopo merge di `phase-4-switch-to-new-stack` per tenere quella PR pulita dal rumore di rename e sposta-file. Suite invariata: **292 net10.0 / 470 net10.0-windows**.
 
 ---
 
@@ -450,7 +460,7 @@ Services/                [net10.0, pure logic]
   Cache/                 DictionaryCache (Fase 3), ConnectionManager (Fase 3)
   DependencyInjection.cs
 
-App/                     [net10.0-windows, WinForms]
+GUI.Windows/                     [net10.0-windows, WinForms]
   Form1.cs               ~250 LOC thin shell (dopo Fase 3)
   *_WF_Tab.cs            Tab autonome con DI (dopo Fase 3)
   BLE_Manager.cs         Implementa IBleDriver (FormRef debt da risolvere in Fase 3)

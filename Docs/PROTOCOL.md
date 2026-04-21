@@ -1,7 +1,7 @@
 # Protocollo STEM
 
 Documentazione del protocollo di comunicazione proprietario STEM, estratta dallo
-stack attuale in `App/STEMProtocol/` (PacketManager 625 LOC, STEM_protocol 858
+stack attuale in `GUI.Windows/STEMProtocol/` (PacketManager 625 LOC, STEM_protocol 858
 LOC, BootManager 371 LOC, TelemetryManager 422 LOC, CanDataLayer 142 LOC,
 SerialDataLayer 150 LOC, SPRollingCode 19 LOC — totale 2587 LOC).
 
@@ -59,7 +59,7 @@ Estratti da `BootManager.cs` e `TelemetryManager.cs`:
 | `CMD_STOP_TELEMETRY` | `0x0017` | Stop telemetria veloce |
 | `CMD_TELEMETRY_DATA` | `0x0018` | Dato periodico della telemetria veloce |
 
-Il dizionario applicativo (`App/Resources/Dizionari STEM.xlsx` + API) contiene
+Il dizionario applicativo (`GUI.Windows/Resources/Dizionari STEM.xlsx` + API) contiene
 l'elenco completo con descrizioni.
 
 ### 2.2 Flag di risposta
@@ -360,13 +360,13 @@ Dopo la normalizzazione, tutti e tre i canali convergono su
 
 ### 7.2 BLE
 
-- Driver: `Plugin.BLE 3.2.0` via `BLE_Manager` (in `App/`)
+- Driver: `Plugin.BLE 3.2.0` via `BLE_Manager` (in `GUI.Windows/`)
 - Chunk size: 98 byte dati
 - Frame size: 104 byte (NetInfo + recipientId + chunk)
 
 ### 7.3 Serial
 
-- Driver: `System.IO.Ports.SerialPort` via `SerialPortManager` (in `App/`)
+- Driver: `System.IO.Ports.SerialPort` via `SerialPortManager` (in `GUI.Windows/`)
 - Chunk size: 98 byte dati
 - Frame size: 104 byte
 
@@ -430,14 +430,14 @@ Sintesi (vedi anche i known gap nella spec Lean `project_refactor_phase2_lean_sp
 
 | Concetto | File | Riga/Sezione |
 |----------|------|--------------|
-| Application Layer | `App/STEMProtocol/STEM_protocol.cs` | 54-122 |
-| Transport Layer + CRC16 | `App/STEMProtocol/STEM_protocol.cs` | 124-256 |
-| Network Layer + chunking + NetInfo | `App/STEMProtocol/STEM_protocol.cs` | 258-492 |
-| Riassembly | `App/STEMProtocol/PacketManager.cs` | 76-145 (`ProcessPacket`) |
-| Rolling code | `App/STEMProtocol/SPRollingCode.cs` | 1-19 |
-| Pipeline invio CAN | `App/STEMProtocol/STEM_protocol.cs` | 542-625 (`HandleSendCanCommandAsync`) |
-| Ricezione CAN + filtro | `App/STEMProtocol/PacketManager.cs` | 275-297 (`ProcessCANPacket`) |
-| Ricezione BLE/Serial + normalizzazione | `App/STEMProtocol/PacketManager.cs` | 428-446 / 589-607 |
+| Application Layer | `GUI.Windows/STEMProtocol/STEM_protocol.cs` | 54-122 |
+| Transport Layer + CRC16 | `GUI.Windows/STEMProtocol/STEM_protocol.cs` | 124-256 |
+| Network Layer + chunking + NetInfo | `GUI.Windows/STEMProtocol/STEM_protocol.cs` | 258-492 |
+| Riassembly | `GUI.Windows/STEMProtocol/PacketManager.cs` | 76-145 (`ProcessPacket`) |
+| Rolling code | `GUI.Windows/STEMProtocol/SPRollingCode.cs` | 1-19 |
+| Pipeline invio CAN | `GUI.Windows/STEMProtocol/STEM_protocol.cs` | 542-625 (`HandleSendCanCommandAsync`) |
+| Ricezione CAN + filtro | `GUI.Windows/STEMProtocol/PacketManager.cs` | 275-297 (`ProcessCANPacket`) |
+| Ricezione BLE/Serial + normalizzazione | `GUI.Windows/STEMProtocol/PacketManager.cs` | 428-446 / 589-607 |
 | Driver PCAN | `Infrastructure.Protocol/Hardware/PCANManager.cs` | — |
 | Adapter CanPort (nuovo) | `Infrastructure.Protocol/Hardware/CanPort.cs` | — |
 | Decoder pacchetto applicativo (nuovo) | `Services/Protocol/PacketDecoder.cs` | — |

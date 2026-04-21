@@ -85,7 +85,7 @@ Equivalente al 100% a `ExcelHandler` legacy (provato campo per campo nei test cr
 
 ## Configurazione
 
-`appsettings.json` in App/:
+`appsettings.json` in GUI.Windows/:
 
 ```json
 {

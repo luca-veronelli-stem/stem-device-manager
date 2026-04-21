@@ -10,7 +10,7 @@
 
 **Tutti i blocchi `#if TOPLIFT/EDEN/EGICON` sono stati rimossi.** Branch `refactor/remove-ifs` ha convertito le 11 occorrenze nei 4 file interessati (Form1.cs, SplashScreen.cs, Boot_WF_Tab.cs, Telemetry_WF_Tab.cs) in runtime check su `IDeviceVariantConfig.Variant` o flag dedicati (`WindowTitle`, `SmartBootDevices`, `DefaultChannel`, `DefaultRecipientId`, `DeviceName`, `BoardName`).
 
-Le 6 configurazioni di build device-specific (`TOPLIFT-A2-Debug/Release`, `EDEN-Debug/Release`, `EGICON-Debug/Release`) sono state rimosse da `App.csproj` e `Stem.Device.Manager.slnx`. Restano solo `Debug` e `Release`.
+Le 6 configurazioni di build device-specific (`TOPLIFT-A2-Debug/Release`, `EDEN-Debug/Release`, `EGICON-Debug/Release`) sono state rimosse da `GUI.Windows.csproj` e `Stem.Device.Manager.slnx`. Restano solo `Debug` e `Release`.
 
 La variante viene letta da `appsettings.json` (`Device:Variant`) via `Services.Configuration.DeviceVariantConfigFactory` e iniettata come `IDeviceVariantConfig` dal composition root.
 
@@ -60,11 +60,11 @@ I flag esistenti già in `IDeviceVariantConfig` (da Fase 1 e Fase 3 Branch 1) ri
 
 ## Debito tecnico residuo
 
-### `App/BLE_Manager.cs`
+### `GUI.Windows/BLE_Manager.cs`
 
-Riferimento a `Form1.FormRef` **eliminato** in Branch `refactor/form1-thin-shell` (2026-04-21): sostituito dall'evento `LogMessageEmitted` (`Action<string>`) a cui Form1 si sottoscrive. Il driver è ora autonomo rispetto a Form1 (il file resta in `App/` per contesto storico; spostamento a `Infrastructure.Protocol/` possibile in Phase 4).
+Riferimento a `Form1.FormRef` **eliminato** in Branch `refactor/form1-thin-shell` (2026-04-21): sostituito dall'evento `LogMessageEmitted` (`Action<string>`) a cui Form1 si sottoscrive. Il driver è ora autonomo rispetto a Form1 (il file resta in `GUI.Windows/` per contesto storico; spostamento a `Infrastructure.Protocol/` possibile in Phase 4).
 
-### `App/SerialPort_Manager.cs`
+### `GUI.Windows/SerialPort_Manager.cs`
 
 Al 2026-04-21 nessun riferimento a `Form1.FormRef`. Candidato per lo spostamento in `Infrastructure.Protocol/Hardware/` insieme a `BLE_Manager` quando lo stack legacy viene rimosso.
 

@@ -55,7 +55,7 @@ Infrastructure.Protocol/
 ```
 
 **Nota progetto/implementazione:** `PCANManager` è autonomo e risiede qui.
-`BLEManager` e `SerialPortManager` invece restano in `App/` perché hanno
+`BLEManager` e `SerialPortManager` invece restano in `GUI.Windows/` perché hanno
 refs a `Form1.FormRef` e `MessageBox` — saranno estratti in Fase 3. Per
 consentire il wiring oggi, entrambi implementano le interfacce
 `IBleDriver` / `ISerialDriver` definite qui (dependency inversion).
@@ -182,7 +182,7 @@ senza dipendere da hardware reale. I test sono esclusi dal target net10.0
 | Peak.PCANBasic.NET | 5.0.1.1131 | Driver PCAN-USB |
 
 `Plugin.BLE` e `System.IO.Ports` sono referenziati indirettamente via
-`BLEManager` / `SerialPortManager` (che vivono in `App/`).
+`BLEManager` / `SerialPortManager` (che vivono in `GUI.Windows/`).
 
 ---
 

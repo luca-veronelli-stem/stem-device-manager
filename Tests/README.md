@@ -180,7 +180,7 @@ I test `net10.0-windows` (274 test, include integration Form1 + App + Infrastruc
 ## Links
 
 - [README Soluzione](../README.md)
-- [App](../App/README.md)
+- [App](../GUI.Windows/README.md)
 - [Core](../Core/README.md)
 - [Infrastructure.Persistence](../Infrastructure.Persistence/README.md)
 - [Infrastructure.Protocol](../Infrastructure.Protocol/README.md)

@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 dotnet build Stem.Device.Manager.slnx
 ```
-La variante device (TopLift/Eden/Egicon/Generic) si imposta a runtime via `Device:Variant` in `App/appsettings.json`; non esistono più build configurations device-specific.
+La variante device (TopLift/Eden/Egicon/Generic) si imposta a runtime via `Device:Variant` in `GUI.Windows/appsettings.json`; non esistono più build configurations device-specific.
 
 **Test:**
 ```bash
@@ -22,7 +22,7 @@ dotnet test Tests/Tests.csproj --filter "FullyQualifiedName~<ClassName>" # singo
 
 **Run:**
 ```bash
-dotnet run --project App/App.csproj
+dotnet run --project GUI.Windows/GUI.Windows.csproj
 ```
 
 **CI (Bitbucket Pipelines):**
@@ -42,7 +42,7 @@ Core/           [net10.0, zero dipendenze NuGet]     — domain models + interfa
 Infrastructure.Persistence/ [net10.0]                — provider dati dizionari (API + Excel + Fallback)
 Infrastructure.Protocol/    [net10.0;net10.0-windows] — port HW (CanPort/BlePort/SerialPort) + driver legacy (Legacy/)
 Services/       [net10.0]                            — logica pura (ProtocolService, TelemetryService, BootService, ConnectionManager, DictionaryCache)
-App/            [net10.0-windows, WinForms]          — GUI + DI entry point (niente più protocollo embedded)
+GUI.Windows/            [net10.0-windows, WinForms]          — GUI + DI entry point (niente più protocollo embedded)
 Tests/          [dual TFM: net10.0 + net10.0-windows] — 292 test net10.0 / 470 test net10.0-windows
 Specs/          [Lean 4]                             — formalizzazioni dei tipi estratti (Phase1/)
 ```
@@ -66,11 +66,11 @@ Dipendenze: `App → {Infrastructure.Persistence, Infrastructure.Protocol, Servi
 - `Cache/DictionaryCache` — cache centralizzata commands+addresses+variables, load via `IDictionaryProvider`, evento `DictionaryUpdated`, sincronizzazione automatica con `IPacketDecoder`.
 - `Cache/ConnectionManager` — aggrega le 3 port (via `IEnumerable<ICommunicationPort>`), espone `ActiveProtocol`/`CurrentBoot`/`CurrentTelemetry` (ricreati ad ogni `SwitchToAsync`), forward events `AppLayerDecoded`/`TelemetryDataReceived`/`BootProgressChanged` (i consumer si iscrivono una volta sola).
 
-**App/Program.cs** — Entry point DI: registra `IDictionaryProvider` + `IBleDriver`→`BLEManager` + `ISerialDriver`→`SerialPortManager` + `AddProtocolInfrastructure()` + `AddServices(config)`.
+**GUI.Windows/Program.cs** — Entry point DI: registra `IDictionaryProvider` + `IBleDriver`→`BLEManager` + `ISerialDriver`→`SerialPortManager` + `AddProtocolInfrastructure()` + `AddServices(config)`.
 
-**App/Form1.cs** — Shell WinForms (731 LOC post-Phase 4). Usa `IServiceProvider` per ottenere `DictionaryCache`, `ConnectionManager`, `IDeviceVariantConfig`. `SendPS_Async` invia via `ConnectionManager.ActiveProtocol`; handler RX sottoscritto a `ConnectionManager.AppLayerDecoded`. Menu canale → `SwitchToAsync`.
+**GUI.Windows/Forms/Form1.cs** — Shell WinForms (731 LOC post-Phase 4). Usa `IServiceProvider` per ottenere `DictionaryCache`, `ConnectionManager`, `IDeviceVariantConfig`. `SendPS_Async` invia via `ConnectionManager.ActiveProtocol`; handler RX sottoscritto a `ConnectionManager.AppLayerDecoded`. Menu canale → `SwitchToAsync`.
 
-**App/*_WF_Tab.cs** — Tab WinForms (`Boot_Interface_Tab`, `Boot_Smart_Tab`, `Telemetry_Tab`, `TopLiftTelemetry_Tab`, `BLEInterfaceTab`). Ctor DI di `DictionaryCache` + `ConnectionManager`. I tab consumano `_connMgr.CurrentBoot`/`CurrentTelemetry` e sottoscrivono i forward events.
+**GUI.Windows/*_WF_Tab.cs** — Tab WinForms (`Boot_Interface_Tab`, `Boot_Smart_Tab`, `Telemetry_Tab`, `TopLiftTelemetry_Tab`, `BLEInterfaceTab`). Ctor DI di `DictionaryCache` + `ConnectionManager`. I tab consumano `_connMgr.CurrentBoot`/`CurrentTelemetry` e sottoscrivono i forward events.
 
 ### Strategia test dual TFM
 
@@ -116,7 +116,7 @@ Vedi [`Docs/REFACTOR_PLAN.md`](Docs/REFACTOR_PLAN.md) per il piano branch-by-bra
 | `refactor/services-foundation` → `protocol-service` → `services-business` → `services-di-integration` | Fase 2 — multi-branch popolamento Services/ e Infrastructure.Protocol/ | ✅ merged (PR #24-#27) |
 | `refactor/protocol-interface` | Fase 3 prerequisite — `IProtocolService` in Core | ✅ merged (PR #28) |
 | `refactor/dictionary-cache` → `tab-decoupling` → `form1-thin-shell` → `remove-ifs` | Fase 3 — decomposizione Form1, DictionaryCache/ConnectionManager, `#if` rimossi | ✅ merged (PR #29-#32) |
-| `refactor/phase-4-switch-to-new-stack` | Fase 4 — wiring Form1+tab sul nuovo stack, eliminazione `App/STEMProtocol/` (2590 LOC), driver in `Infrastructure.Protocol/Legacy/` | ✅ Completata (in merge) |
+| `refactor/phase-4-switch-to-new-stack` | Fase 4 — wiring Form1+tab sul nuovo stack, eliminazione `GUI.Windows/STEMProtocol/` (2590 LOC), driver in `Infrastructure.Protocol/Legacy/` | ✅ Completata (in merge) |
 | `refactor/phase-4b-app-reorganization` | Fase 4b — riorganizzazione cartelle progetto App (Forms/, Tabs/, Resources/) | ⏳ In attesa |
 
 ---
@@ -129,7 +129,7 @@ Vedi [`Docs/REFACTOR_PLAN.md`](Docs/REFACTOR_PLAN.md) per il piano branch-by-bra
 | `Docs/REFACTOR_PLAN.md` | Piano branch-by-branch di modernizzazione architetturale |
 | `Docs/PROTOCOL.md` | Funzionamento interno del protocollo STEM (layering, CRC, chunking, comandi) |
 | `Docs/PREPROCESSOR_DIRECTIVES.md` | Mappa storica dei blocchi `#if TOPLIFT/EDEN/EGICON` rimossi (Fase 3 Branch 4) |
-| `App/appsettings.json` | Configurazione `DictionaryApi` (BaseUrl, ApiKey, TimeoutSeconds) |
+| `GUI.Windows/appsettings.json` | Configurazione `DictionaryApi` (BaseUrl, ApiKey, TimeoutSeconds) |
 | `Directory.Build.props` | Versione SemVer, autori, copyright |
 | `bitbucket-pipelines.yml` | CI/CD Bitbucket |
 

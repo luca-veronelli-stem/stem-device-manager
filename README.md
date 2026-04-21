@@ -87,7 +87,7 @@ dotnet build
 dotnet test Tests/Tests.csproj
 
 # Esegui
-dotnet run --project App/App.csproj
+dotnet run --project GUI.Windows/GUI.Windows.csproj
 ```
 
 ### Build Configurations
@@ -124,7 +124,7 @@ Stem.Device.Manager/
 │                                     + PCANManager driver + IPcanDriver/IBleDriver/ISerialDriver
 ├── Services/                         Logica applicativa pura (net10.0 — cross-platform)
 │   └── Protocol/                     PacketDecoder, DictionarySnapshot
-├── App/                              Windows Forms (net10.0-windows)
+├── GUI.Windows/                              Windows Forms (net10.0-windows)
 │   ├── Program.cs                    Entry point + DI + IConfiguration
 │   ├── Form1.cs                      Main form (God Object ~54k LOC)
 │   ├── STEMProtocol/                 Protocollo legacy (da migrare in Fase 4)
@@ -143,7 +143,7 @@ Stem.Device.Manager/
 
 ## Documentazione
 
-- [App — Progetto principale](./App/README.md)
+- [App — Progetto principale](./GUI.Windows/README.md)
 - [Core — Modelli dominio e interfacce](./Core/README.md)
 - [Infrastructure.Persistence — Provider dati dizionario (API + Excel)](./Infrastructure.Persistence/README.md)
 - [Infrastructure.Protocol — Adapter HW CAN/BLE/Serial](./Infrastructure.Protocol/README.md)
