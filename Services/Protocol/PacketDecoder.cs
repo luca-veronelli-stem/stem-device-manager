@@ -12,7 +12,7 @@ namespace Services.Protocol;
 /// Struttura attesa del payload (post-riassembly):
 /// <code>
 /// byte 0    : cryptFlag           (Transport Layer)
-/// byte 1..4 : senderId LE         (Transport Layer)
+/// byte 1..4 : senderId BE         (Transport Layer, big-endian sul wire)
 /// byte 5..6 : lPack               (Transport Layer, non letto)
 /// byte 7    : cmdInit = codeHigh  (Application Layer)
 /// byte 8    : cmdOpt  = codeLow   (Application Layer)
@@ -65,7 +65,7 @@ public sealed class PacketDecoder : IPacketDecoder
         var command = ResolveCommand(packet.Payload, snapshot);
         if (command is null) return null;
         var variable = ResolveVariable(command, packet.Payload, snapshot);
-        var senderId = ReadSenderIdLittleEndian(packet.Payload);
+        var senderId = ReadSenderIdBigEndian(packet.Payload);
         var sender = snapshot.FindSender(senderId);
         var appPayload = ExtractApplicationPayload(packet.Payload);
         return new AppLayerDecodedEvent(
@@ -109,12 +109,19 @@ public sealed class PacketDecoder : IPacketDecoder
             payload[VariableLowIndex]);
     }
 
-    private static uint ReadSenderIdLittleEndian(ImmutableArray<byte> payload)
+    /// <summary>
+    /// Legge i byte 1..4 del TP come uint big-endian. È la convention wire
+    /// trasmessa dal firmware (e specularmente scritta da <c>ProtocolService.BuildTransportPacket</c>).
+    /// Il dizionario (API Azure / Excel) contiene gli indirizzi già in formato standard
+    /// (es. <c>ProtocolAddress.Address = "0x000A0441"</c>), quindi la lettura BE
+    /// produce direttamente il valore per il lookup <c>FindSender</c>.
+    /// </summary>
+    private static uint ReadSenderIdBigEndian(ImmutableArray<byte> payload)
     {
-        return payload[1]
-             | ((uint)payload[2] << 8)
-             | ((uint)payload[3] << 16)
-             | ((uint)payload[4] << 24);
+        return ((uint)payload[1] << 24)
+             | ((uint)payload[2] << 16)
+             | ((uint)payload[3] << 8)
+             | payload[4];
     }
 
     private static ImmutableArray<byte> ExtractApplicationPayload(

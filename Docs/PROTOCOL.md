@@ -102,29 +102,38 @@ byte N+1..N+2: CRC16 Modbus (2 byte, big-endian)
 
 `lPack` = `length(AL packet)` = `length(payload) + 2` (i 2 byte di cmdInit/cmdOpt).
 
-### 3.1 Endianness del senderId — quirk
+### 3.1 Endianness del senderId
 
-Il codice in `TransportLayer.BuildTransportHeader` scrive il senderId con
-`Array.Reverse` **sui byte già LE di `BitConverter.GetBytes`** → on-wire
-risulta big-endian.
-
-Al reverse, `NetworkLayer.SP_PacketReady` e il nostro `PacketDecoder`
-**leggono gli stessi byte come little-endian**:
+Il senderId viaggia sul wire in **big-endian** (MSB per primo): sia la TX
+in `ProtocolService.BuildTransportPacket` sia la RX in `PacketDecoder` usano
+la convention BE. Il firmware device fa lo stesso in spedizione.
 
 ```csharp
-(TransportPacket[4] << 24) | (TransportPacket[3] << 16)
-  | (TransportPacket[2] << 8) | TransportPacket[1]
+// TX (BuildTransportPacket):
+packet[1] = (byte)((senderId >> 24) & 0xFF);
+packet[2] = (byte)((senderId >> 16) & 0xFF);
+packet[3] = (byte)((senderId >>  8) & 0xFF);
+packet[4] = (byte)( senderId        & 0xFF);
+
+// RX (PacketDecoder.ReadSenderIdBigEndian):
+return ((uint)payload[1] << 24)
+     | ((uint)payload[2] << 16)
+     | ((uint)payload[3] << 8)
+     | payload[4];
 ```
 
-Il senderId estratto è quindi **byte-swappato** rispetto all'originale
-(`0x12345678` in spedizione → `0x78563412` in ricezione). Questo è
-intenzionalmente riflesso nel dizionario (`ProtocolAddress.Address` contiene
-la stringa hex nella stessa convenzione) e **funziona** end-to-end. Non
-toccare.
+Il dizionario (API Azure / Excel) contiene gli indirizzi nel formato standard
+(es. `ProtocolAddress.Address = "0x000A0441"` per EDEN Madre): `FindSender`
+fa il lookup diretto contro il valore letto in BE.
 
-Per la migrazione a `Stem.Communication`: il NuGet gestirà il byte order
-standard; servirà un adapter che riallinei la convenzione al momento del
-salto.
+**Nota storica:** nel legacy `TransportLayer.BuildTransportHeader` scriveva
+con `Array.Reverse` sui byte già LE di `BitConverter.GetBytes` (quindi BE
+sul wire), ma `NetworkLayer.SP_PacketReady` leggeva **gli stessi byte come
+little-endian** — il senderId estratto risultava byte-swappato rispetto
+all'originale (es. `0x000A0441` sul wire → `0x41040A00` letto). Funzionava
+perché il dizionario dell'epoca conteneva gli address byte-swappati.
+Con la migrazione del dizionario al formato standard (API + Excel rivisti),
+il decoder è stato allineato a leggere BE — parità end-to-end ripristinata.
 
 ### 3.2 CRC16 Modbus
 
