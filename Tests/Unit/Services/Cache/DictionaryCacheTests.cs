@@ -168,6 +168,43 @@ public class DictionaryCacheTests
         Assert.Equal(1, count);
     }
 
+    // --- SetCurrentRecipientId (mutazione pura, senza HTTP né event) ---
+
+    [Fact]
+    public void SetCurrentRecipientId_UpdatesPropertyOnly_NoProviderCallNoEvent()
+    {
+        var provider = new FakeDictionaryProvider();
+        var decoder = new FakePacketDecoder();
+        var cache = new DictionaryCache(provider, decoder);
+        int eventCount = 0;
+        cache.DictionaryUpdated += (_, _) => eventCount++;
+
+        cache.SetCurrentRecipientId(0xDEADBEEFu);
+
+        Assert.Equal(0xDEADBEEFu, cache.CurrentRecipientId);
+        Assert.Equal(0, provider.LoadVariablesCallCount);
+        Assert.Equal(0, eventCount);
+        Assert.Empty(decoder.UpdateCalls);
+    }
+
+    [Fact]
+    public async Task SetCurrentRecipientId_DoesNotAlterPreviouslyLoadedVariables()
+    {
+        var provider = new FakeDictionaryProvider
+        {
+            ProtocolData = new DictionaryData([], []),
+            VariablesByRecipient = { [42u] = [VarX] }
+        };
+        var cache = new DictionaryCache(provider, new FakePacketDecoder());
+        await cache.SelectByRecipientAsync(42u);
+        Assert.Single(cache.Variables);
+
+        cache.SetCurrentRecipientId(99u);
+
+        Assert.Equal(99u, cache.CurrentRecipientId);
+        Assert.Single(cache.Variables); // variabili invariate
+    }
+
     // --- SelectByDeviceBoardAsync ---
 
     [Fact]
@@ -249,6 +286,7 @@ public class DictionaryCacheTests
     {
         public DictionaryData ProtocolData { get; set; } = new DictionaryData([], []);
         public Dictionary<uint, IReadOnlyList<Variable>> VariablesByRecipient { get; } = [];
+        public int LoadVariablesCallCount { get; private set; }
 
         public Task<DictionaryData> LoadProtocolDataAsync(CancellationToken ct = default)
         {
@@ -260,6 +298,7 @@ public class DictionaryCacheTests
             uint recipientId, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
+            LoadVariablesCallCount++;
             if (!VariablesByRecipient.TryGetValue(recipientId, out var vars))
                 vars = [];
             return Task.FromResult(vars);

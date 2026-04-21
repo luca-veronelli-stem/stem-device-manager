@@ -223,9 +223,13 @@ git checkout -b refactor/phase-2-services-layer
 
 `IProtocolService` estratto in `Core/Interfaces/`, `ProtocolService` lo implementa, `TelemetryService`/`BootService` ctor cambiati a `IProtocolService`. Suite test verde senza modifiche grazie a implicit conversion.
 
-### 3.0bis Branch 1 `refactor/phase-3-dictionary-cache` (in corso)
+### 3.0bis Branch 1 `refactor/phase-3-dictionary-cache` ✅ Completata (PR #29, 2026-04-21)
 
 Estrai `DictionaryCache` (cache centralizzata commands+addresses+variables, `LoadAsync`/`SelectByRecipientAsync`/`SelectByDeviceBoardAsync`, evento `DictionaryUpdated`, sincronizzazione automatica con `IPacketDecoder`) e `ConnectionManager` (factory `IProtocolService` runtime, gestisce `SwitchToAsync` con dispose+disconnect+connect, eventi `ActiveChannelChanged`/`StateChanged`) in `Services/Cache/`. Aggiunto `ChannelKind DefaultChannel` a `IDeviceVariantConfig` (TOPLIFT→Can, altre→Ble). Promosso `UpdateDictionary` al contratto `IPacketDecoder`. DI: `AddServices` registra entrambi i nuovi servizi; `AddProtocolInfrastructure` espone i 3 port anche come `IEnumerable<ICommunicationPort>`. Test: 47 nuovi (32 cross-platform + 18 Windows-only ConnectionManager + 5 wiring DI). Suite **268 net10.0** / **441 net10.0-windows**.
+
+### 3.0ter Branch 2 `refactor/phase-3-tab-decoupling` (in corso, 2026-04-21)
+
+Disaccoppia i 4 tab WF dalla dipendenza statica `Form1.FormRef`: ctor injection di `DictionaryCache`, rimozione dei metodi pubblici `UpdateDictionary(IReadOnlyList<Variable>)` in favore di sottoscrizione all'evento `DictionaryUpdated`. Tab refattorizzati: `Boot_Interface_Tab` (legge `_cache.CurrentRecipientId` invece di `Form1.FormRef.RecipientId`), `Boot_Smart_Tab` (multi-board loop line 300 chiama `_cache.SetCurrentRecipientId(X)` — nuova API `DictionaryCache` — parallelamente a `Form1.FormRef.RecipientId = X` per parità legacy finché `STEM_protocol.cs` lo legge), `Telemetry_Tab` + `TopLiftTelemetry_Tab` (sub `DictionaryUpdated`). `BLE_WF_Tab`/`CAN_WF_Tab` esclusi dallo scope (nessun consumer dizionario). `Form1.LoadDictionaryDataAsync` ora usa `_dictionaryCache.LoadAsync`/`SelectByRecipientAsync` direttamente (una sola chiamata HTTP, notifica tab via evento); rimosse tutte le 5 chiamate `*.UpdateDictionary(Dizionario)`. `TelemetryManager`/`BootManager` restano invariati dentro i tab (rimossi in Phase 4 con lo stack `STEMProtocol/`). Test: 5 smoke test Windows-only (null-ctor + propagation). Suite **270 net10.0** / **448 net10.0-windows**.
 
 ### 3.1 Eliminare `static FormRef`
 

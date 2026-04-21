@@ -1,4 +1,5 @@
 ﻿using App.STEMProtocol;
+using Services.Cache;
 using StemPC;
 using System.Text;
 
@@ -6,6 +7,7 @@ using System.Text;
 // Classe per l'interfaccia grafica del bootloader
 public class Boot_Interface_Tab : TabPage
 {
+    private readonly DictionaryCache _cache;
     private System.Windows.Forms.TextBox txtFilePath;
     private System.Windows.Forms.Button btnSelectFile;
     private System.Windows.Forms.Button btnStartProcedure;
@@ -21,8 +23,11 @@ public class Boot_Interface_Tab : TabPage
     private string filePath = "";
     public BootManager BootHndlr;
 
-    public Boot_Interface_Tab()
+    public Boot_Interface_Tab(DictionaryCache cache)
     {
+        ArgumentNullException.ThrowIfNull(cache);
+        _cache = cache;
+
         Name = "tabPageBoot";
         Text = "Boot Interface";
 
@@ -224,7 +229,7 @@ public class Boot_Interface_Tab : TabPage
         {
             MessageBox.Show("Select Firmware file .bin!");
         }
-        else if (Form1.FormRef.RecipientId == 0)
+        else if (_cache.CurrentRecipientId == 0)
         {
             MessageBox.Show("Select destination address!");
         }
@@ -268,7 +273,7 @@ public class Boot_Interface_Tab : TabPage
         {
             MessageBox.Show("Select Firmware file .bin!");
         }
-        else if (Form1.FormRef.RecipientId == 0)
+        else if (_cache.CurrentRecipientId == 0)
         {
             MessageBox.Show("Select destination address!");
         }

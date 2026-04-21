@@ -1,6 +1,7 @@
 ﻿using App; // Per CircularProgressBar
 using App.STEMProtocol;
 using Core.Models;
+using Services.Cache;
 using StemPC;
 using System.Reflection;
 
@@ -33,11 +34,18 @@ public class Boot_Smart_Tab : TabPage
     // Classi per il backend
     public BootManager BootHndlr;
     public TelemetryManager telemetryManager;
-    //Lista variabili della macchina
-    private IReadOnlyList<Variable> MachineDictionary;
+    //Cache centralizzata dizionario (sostituisce UpdateDictionary callback)
+    private readonly DictionaryCache _cache;
+    //Lista variabili della macchina (snapshot letto dalla cache)
+    private IReadOnlyList<Variable> MachineDictionary = [];
 
-    public Boot_Smart_Tab(PacketManager packetManagerRX)
+    public Boot_Smart_Tab(PacketManager packetManagerRX, DictionaryCache cache)
     {
+        ArgumentNullException.ThrowIfNull(cache);
+        _cache = cache;
+        MachineDictionary = _cache.Variables;
+        _cache.DictionaryUpdated += (_, _) => MachineDictionary = _cache.Variables;
+
         Name = "tabPageBootSmart";
         Text = "Firmware Update";
 
@@ -218,11 +226,6 @@ public class Boot_Smart_Tab : TabPage
         telemetryManager.DataReady += onDataReady;
     }
 
-    public void UpdateDictionary(IReadOnlyList<Variable> dictionary)
-    {
-        MachineDictionary = dictionary;
-    }
-
     public void PopulateDevices(List<DeviceInfo> devices)
     {
         selectionPanel.Controls.Clear();
@@ -297,6 +300,10 @@ public class Boot_Smart_Tab : TabPage
             if (!(string.IsNullOrEmpty(sel.FilePath)))
             {
                 BootHndlr.SetFirmwarePath(sel.FilePath);
+                // Aggiorno sia cache che FormRef: legacy STEM_protocol legge ancora
+                // Form1.FormRef.RecipientId (rimosso in Phase 4). SetCurrentRecipientId
+                // è mutazione pura, niente HTTP/event, safe nel loop.
+                _cache.SetCurrentRecipientId((uint)sel.Device.Address);
                 Form1.FormRef.RecipientId = (uint)sel.Device.Address;
                 await BootHndlr.UploadFirmware();
             }

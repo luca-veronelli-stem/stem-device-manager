@@ -42,6 +42,7 @@
     <Compile Remove="Unit\CodeGenerator\**" />
     <Compile Remove="Unit\CircularProgressBar\**" />
     <Compile Remove="Unit\Infrastructure\Protocol\**" />
+    <Compile Remove="Unit\Tabs\**" />
     <Compile Remove="Unit\Core\Models\ButtonIndicatorTests.cs" />
     <!-- ConnectionManager test usa real CanPort/BlePort/SerialPort (Infrastructure.Protocol), Windows-only -->
     <Compile Remove="Unit\Services\Cache\ConnectionManagerTests.cs" />

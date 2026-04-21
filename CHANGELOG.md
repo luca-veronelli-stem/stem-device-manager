@@ -27,6 +27,18 @@ e Fase 2 (in corso) — services layer + HW adapter + rinomina a pattern Stem.
 
 ### Added
 
+- **REFACTOR_PLAN Fase 3 — Branch 2 `refactor/phase-3-tab-decoupling`** (in corso, secondo sub-branch di Fase 3):
+  - `Services/Cache/DictionaryCache.SetCurrentRecipientId(uint)` — mutazione pura di `CurrentRecipientId` senza HTTP call né `DictionaryUpdated` event (per loop multi-board in `Boot_Smart_Tab` dove il dizionario variabili non cambia)
+  - `Boot_Interface_Tab` — ctor injection di `DictionaryCache`, legge `_cache.CurrentRecipientId` invece di `Form1.FormRef.RecipientId`
+  - `Boot_Smart_Tab` — ctor injection di `DictionaryCache`, sottoscrive `DictionaryUpdated` per aggiornare `MachineDictionary`, rimosso metodo pubblico `UpdateDictionary(IReadOnlyList<Variable>)`. Nel loop multi-board line 300 chiama sia `_cache.SetCurrentRecipientId(X)` (nuovo) sia `Form1.FormRef.RecipientId = X` (parità legacy: `STEM_protocol.cs` legge ancora `FormRef.RecipientId`, rimosso in Phase 4)
+  - `Telemetry_Tab` — ctor injection di `DictionaryCache`, sottoscrive `DictionaryUpdated` (marshalling BeginInvoke per aggiornare ComboBox), rimosso `UpdateDictionary`
+  - `TopLiftTelemetry_Tab` — ctor injection di `DictionaryCache`, sottoscrive `DictionaryUpdated`, rimosso `UpdateDictionary`
+  - `Form1.cs` — resolve `DictionaryCache` via DI, passa la cache al ctor dei 4 tab. `LoadDictionaryDataAsync` usa ora `_dictionaryCache.LoadAsync`/`_dictionaryCache.SelectByRecipientAsync` (una singola chiamata HTTP, notifica tab via `DictionaryUpdated`). Rimosse tutte le chiamate a `TelemetryTabRef.UpdateDictionary(Dizionario)`/`BootSmartTabRef.UpdateDictionary(Dizionario)`/`TLTTabRef.UpdateDictionary(Dizionario)` (5 call-site in Form1)
+  - `Tests/Unit/Tabs/TabDependencyInjectionTests.cs` — 5 smoke test Windows-only: null-ctor throw per 4 tab + propagation `DictionaryCache.LoadAsync` → `DictionaryUpdated`
+  - Test: **+5 test Windows-only** → suite **270 net10.0** / **448 net10.0-windows**
+  - `Tests/Tests.csproj` — esclude `Unit/Tabs/**` dal target net10.0 (tab referenziano WinForms)
+  - **Scope skip:** `BLE_WF_Tab.cs` e `CAN_WF_Tab.cs` esclusi dal refactor (nessun consumer dizionario, nessun ref a `Form1.FormRef.RecipientId`)
+  - **Scope legacy:** `TelemetryManager`/`BootManager` dentro i tab restano invariati (Phase 4 rimuoverà lo stack `STEMProtocol/`)
 - **REFACTOR_PLAN Fase 3 — Branch 1 `refactor/phase-3-dictionary-cache`** (in corso, primo sub-branch di Fase 3):
   - `Core/Interfaces/IDeviceVariantConfig.DefaultChannel` — nuova proprietà `ChannelKind` (TOPLIFT→Can, altre varianti→Ble per parità legacy)
   - `Core/Models/DeviceVariantConfig` — aggiunto record param + helper `DefaultChannelFor(variant)`; factory aggiornata

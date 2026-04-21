@@ -119,6 +119,21 @@ public sealed class DictionaryCache
     }
 
     /// <summary>
+    /// Aggiorna SOLO <see cref="CurrentRecipientId"/>, senza chiamate al
+    /// provider e senza emettere <see cref="DictionaryUpdated"/>.
+    ///
+    /// <para>Usato in scenari in cui il consumer cambia il "destinatario
+    /// corrente" del protocollo per la prossima operazione (es. multi-board
+    /// boot loop in <c>Boot_Smart_WF_Tab</c>) senza voler ricaricare il
+    /// dizionario delle variabili — comportamento legacy era
+    /// <c>Form1.FormRef.RecipientId = X</c>, semplice assegnazione di campo.</para>
+    /// </summary>
+    public void SetCurrentRecipientId(uint recipientId)
+    {
+        lock (_stateLock) _currentRecipientId = recipientId;
+    }
+
+    /// <summary>
     /// Risolve il <see cref="ProtocolAddress"/> cercando per
     /// <paramref name="deviceName"/> + <paramref name="boardName"/>, poi
     /// carica le variabili della scheda risolta.

@@ -6,11 +6,14 @@ using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
 using OxyPlot.WindowsForms;
+using Services.Cache;
 
 public class TopLiftTelemetry_Tab : TabPage
 {
-    //Lista variabili della macchina
-    private IReadOnlyList<Variable> MachineDictionary;
+    //Cache centralizzata dizionario (sostituisce UpdateDictionary callback)
+    private readonly DictionaryCache _cache;
+    //Lista variabili della macchina (snapshot letto dalla cache)
+    private IReadOnlyList<Variable> MachineDictionary = [];
 
     // Classe per il backend
     public TelemetryManager telemetryManager;
@@ -51,8 +54,13 @@ public class TopLiftTelemetry_Tab : TabPage
     private double windowWidth = 100;     // ampiezza della finestra X (es. 10 secondi)
 
 
-    public TopLiftTelemetry_Tab(PacketManager packetManagerRX)
+    public TopLiftTelemetry_Tab(PacketManager packetManagerRX, DictionaryCache cache)
     {
+        ArgumentNullException.ThrowIfNull(cache);
+        _cache = cache;
+        MachineDictionary = _cache.Variables;
+        _cache.DictionaryUpdated += (_, _) => MachineDictionary = _cache.Variables;
+
         InitializeComponent();
         InitializeCustomComponents();
         SetupEventHandlers();
@@ -62,11 +70,6 @@ public class TopLiftTelemetry_Tab : TabPage
 
         // Aggiunta del gestore per l'evento DataReady
         telemetryManager.DataReady += onDataReady;
-    }
-
-    public void UpdateDictionary(IReadOnlyList<Variable> dictionary)
-    {
-        MachineDictionary = dictionary;
     }
 
     private void InitializeComponent()
