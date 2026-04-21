@@ -308,30 +308,31 @@ namespace Infrastructure.Protocol.Legacy
             // Verifica se il dispositivo è connesso
             if (connectedDevice == null || connectedDevice.State != DeviceState.Connected)
             {
-                Debug.WriteLine("Impossibile inviare dati: dispositivo non connesso");
+                ErrorOccurred?.Invoke("Errore BLE TX", "Dispositivo BLE non connesso.");
                 return false;
             }
 
             // Verifica se abbiamo una caratteristica RX valida
             if (rxCharacteristic == null || !rxCharacteristic.CanWrite)
             {
-                Debug.WriteLine("Impossibile inviare dati: caratteristica RX non disponibile o non scrivibile");
+                ErrorOccurred?.Invoke("Errore BLE TX",
+                    "Caratteristica RX non disponibile o non scrivibile.");
                 return false;
             }
 
             try
             {
-                // Invia i dati alla caratteristica RX
                 await rxCharacteristic.WriteAsync(data);
-
                 Debug.WriteLine($"Invio dati riuscito: {data.Length} bytes");
-                //   Debug.WriteLine("Bytes: " + BitConverter.ToString(data)); //debug dati in uscita
-
                 return true;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Errore durante l'invio dei dati: {ex.Message}");
+                // Propaga il messaggio di errore reale al consumer UI (BlePort → ProtocolService)
+                // invece di silenziarlo: è essenziale per diagnosticare problemi di device
+                // specifici (MTU, caratteristiche, permissioni).
+                ErrorOccurred?.Invoke("Errore BLE TX",
+                    $"WriteAsync fallita ({data.Length} byte, WriteType={rxCharacteristic.WriteType}): {ex.Message}");
                 return false;
             }
         }
