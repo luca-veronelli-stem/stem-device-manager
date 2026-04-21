@@ -640,7 +640,6 @@
         private Label labelDictionary;
         private TextBox textBox3;
         private Label labelBytes;
-        private ToolStripSplitButton toolStripSplitButton1;
         private RichTextBox terminalOut;
         private StatusStrip statusStrip1;
         private ToolStripStatusLabel BLEStatusLabel;

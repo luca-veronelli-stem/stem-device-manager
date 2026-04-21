@@ -24,7 +24,6 @@ public class Boot_Smart_Tab : TabPage
     private Button btnStartProcedure = null!;
     private FlowLayoutPanel startPanel = null!;
     private TableLayoutPanel progressBarsPanel = null!;
-    private CircularProgressBar circProgressBarSmall = null!;
     private CircularProgressBar[] circProgressBarsLarge = new CircularProgressBar[2];
     private List<BinSelectionControl> binSelections = new List<BinSelectionControl>();
     private int offsetTotalBar = 0;
