@@ -94,6 +94,43 @@ public class ConnectionManagerTests
     }
 
     [Fact]
+    public void InitialState_CurrentBootAndTelemetryAreNull()
+    {
+        using var fixture = new Fixture();
+
+        Assert.Null(fixture.Manager.CurrentBoot);
+        Assert.Null(fixture.Manager.CurrentTelemetry);
+    }
+
+    [Fact]
+    public async Task SwitchToAsync_FirstCall_CreatesCurrentBootAndTelemetry()
+    {
+        using var fixture = new Fixture();
+        fixture.BleDriver.IsConnected = true;
+
+        await fixture.Manager.SwitchToAsync(ChannelKind.Ble);
+
+        Assert.NotNull(fixture.Manager.CurrentBoot);
+        Assert.NotNull(fixture.Manager.CurrentTelemetry);
+    }
+
+    [Fact]
+    public async Task SwitchToAsync_SecondCall_RecreatesBootAndTelemetry()
+    {
+        using var fixture = new Fixture();
+        fixture.BleDriver.IsConnected = true;
+        fixture.PcanDriver.IsConnected = true;
+        await fixture.Manager.SwitchToAsync(ChannelKind.Ble);
+        var firstBoot = fixture.Manager.CurrentBoot!;
+        var firstTelemetry = fixture.Manager.CurrentTelemetry!;
+
+        await fixture.Manager.SwitchToAsync(ChannelKind.Can);
+
+        Assert.NotSame(firstBoot, fixture.Manager.CurrentBoot);
+        Assert.NotSame(firstTelemetry, fixture.Manager.CurrentTelemetry);
+    }
+
+    [Fact]
     public async Task SwitchToAsync_FromBleToCan_DisconnectsBleAndConnectsCan()
     {
         using var fixture = new Fixture();
@@ -160,6 +197,19 @@ public class ConnectionManagerTests
 
         Assert.Null(fixture.Manager.ActiveProtocol);
         Assert.Equal(1, fixture.BleDriver.DisconnectCount);
+    }
+
+    [Fact]
+    public async Task DisconnectAsync_ClearsCurrentBootAndTelemetry()
+    {
+        using var fixture = new Fixture();
+        fixture.BleDriver.IsConnected = true;
+        await fixture.Manager.SwitchToAsync(ChannelKind.Ble);
+
+        await fixture.Manager.DisconnectAsync();
+
+        Assert.Null(fixture.Manager.CurrentBoot);
+        Assert.Null(fixture.Manager.CurrentTelemetry);
     }
 
     // --- StateOf ---
@@ -230,6 +280,36 @@ public class ConnectionManagerTests
         await Assert.ThrowsAsync<ObjectDisposedException>(
             () => protocol.SendCommandAsync(0, new Command("x", "00", "01"), []));
         fixture.Dispose();
+    }
+
+    [Fact]
+    public async Task Dispose_ClearsCurrentBootAndTelemetry()
+    {
+        var fixture = new Fixture();
+        fixture.BleDriver.IsConnected = true;
+        await fixture.Manager.SwitchToAsync(ChannelKind.Ble);
+
+        fixture.Manager.Dispose();
+
+        Assert.Null(fixture.Manager.CurrentBoot);
+        Assert.Null(fixture.Manager.CurrentTelemetry);
+        fixture.Dispose();
+    }
+
+    // --- AppLayerDecoded forwarding ---
+
+    [Fact]
+    public async Task AppLayerDecoded_BeforeSwitch_NoSubscriptionRequired()
+    {
+        using var fixture = new Fixture();
+        int fired = 0;
+        fixture.Manager.AppLayerDecoded += (_, _) => fired++;
+
+        // Prima dello switch, il manager non è agganciato a nessun protocol.
+        // Emettere un pacchetto sulla port BLE non produce l'evento.
+        fixture.BleDriver.RaisePacketReceived([0x00, 0x01, 0x02], DateTime.UtcNow);
+
+        Assert.Equal(0, fired);
     }
 
     [Fact]
