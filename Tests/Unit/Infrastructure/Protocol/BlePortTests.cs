@@ -65,7 +65,7 @@ public class BlePortTests
     }
 
     [Fact]
-    public async Task ConnectAsync_DriverBecomesConnected_TransitionsViaConnecting()
+    public async Task ConnectAsync_DriverIsConnected_TransitionsDirectlyToConnected()
     {
         var driver = new FakeBleDriver { IsConnected = false };
         using var port = new BlePort(driver);
@@ -75,10 +75,11 @@ public class BlePortTests
 
         await port.ConnectAsync();
 
+        // Nuovo comportamento idempotente: nessun polling/timeout, il port si allinea al
+        // driver corrente. Se il driver è Connected al momento della chiamata, transita
+        // direttamente (un solo state event, niente Connecting intermedio).
         Assert.Equal(ConnectionState.Connected, port.State);
-        Assert.Equal(
-            new[] { ConnectionState.Connecting, ConnectionState.Connected },
-            stateEvents);
+        Assert.Equal(new[] { ConnectionState.Connected }, stateEvents);
     }
 
     [Fact]
@@ -366,20 +367,19 @@ public class BlePortTests
     }
 
     [Fact]
-    public async Task ConnectAsync_DriverNeverConnects_TransitionsToErrorAndThrows()
+    public async Task ConnectAsync_DriverNotConnected_NoOpStaysDisconnected()
     {
+        // Il ciclo scan/select/connect BLE è pilotato dalla UI: ConnectAsync non deve
+        // lanciare né polling se il driver non è ancora attivo. Il port resta Disconnected
+        // e si aggiornerà quando IBleDriver.ConnectionStatusChanged emetterà Connected.
         var driver = new FakeBleDriver { IsConnected = false };
         using var port = new BlePort(driver);
         var stateEvents = new List<ConnectionState>();
         port.StateChanged += (_, s) => stateEvents.Add(s);
 
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => port.ConnectAsync());
+        await port.ConnectAsync();
 
-        Assert.Contains("BLE", ex.Message, StringComparison.OrdinalIgnoreCase);
-        Assert.Equal(ConnectionState.Error, port.State);
-        Assert.Equal(
-            new[] { ConnectionState.Connecting, ConnectionState.Error },
-            stateEvents);
+        Assert.Equal(ConnectionState.Disconnected, port.State);
+        Assert.Empty(stateEvents);
     }
 }
