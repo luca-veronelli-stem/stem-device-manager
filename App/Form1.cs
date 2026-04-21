@@ -2,6 +2,7 @@ using App;
 using Core.Interfaces;
 using Core.Models;
 using Infrastructure.Protocol.Hardware;
+using Infrastructure.Protocol.Legacy;
 using Microsoft.Extensions.DependencyInjection;
 using Services.Cache;
 using System.Globalization;
@@ -134,8 +135,10 @@ namespace StemPC
             BLETabRef = new BLEInterfaceTab();
             tabControl.TabPages.Add(BLETabRef);
 
-            // Sottoscrivi log driver BLE al terminale UI
+            // Sottoscrivi log driver BLE al terminale UI + errori driver BLE/Serial al MessageBox.
             BLETabRef.bleManager.LogMessageEmitted += UpdateTerminal;
+            BLETabRef.bleManager.ErrorOccurred += ShowDriverError;
+            _serialPortManager.ErrorOccurred += ShowDriverError;
 
             // Sottoscrizioni forward da ConnectionManager: stato connessione per canale + app layer decodificato.
             _connMgr.StateChanged += OnConnectionStateChanged;
@@ -226,6 +229,19 @@ namespace StemPC
             // Nascondi la colonna delle variabili
             tableLayoutPanelProtocol.ColumnStyles[3].SizeType = SizeType.Absolute;
             tableLayoutPanelProtocol.ColumnStyles[3].Width = 0;
+        }
+
+        /// <summary>
+        /// Handler thread-safe per errori driver (BLE/Serial): mostra MessageBox sulla UI.
+        /// Sostituisce il vecchio pattern <c>MessageBox.Show</c> dentro i driver (dipendenza
+        /// da WinForms eliminata spostando i driver in Infrastructure.Protocol/Legacy/).
+        /// </summary>
+        private void ShowDriverError(string title, string message)
+        {
+            if (this.InvokeRequired)
+                this.BeginInvoke(new Action(() => ShowDriverError(title, message)));
+            else
+                MessageBox.Show(message, title, MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
         public void UpdateTerminal(string message)

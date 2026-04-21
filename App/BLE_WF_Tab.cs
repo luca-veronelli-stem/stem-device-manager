@@ -1,6 +1,7 @@
 ﻿using App;
 
 using App.Properties;
+using Infrastructure.Protocol.Legacy;
 
 public partial class BLEInterfaceTab : TabPage
 {

@@ -5,8 +5,13 @@ using Plugin.BLE.Abstractions.EventArgs;
 using System.Diagnostics;
 using Infrastructure.Protocol.Hardware;
 
-namespace App
+namespace Infrastructure.Protocol.Legacy
 {
+    /// <summary>
+    /// Implementazione <see cref="IBleDriver"/> basata su Plugin.BLE (Xamarin/MAUI).
+    /// Vive in Legacy/ perché è un driver di transizione: sarà rimpiazzato
+    /// quando Stem.Communication NuGet sarà disponibile. Nessuna dipendenza da UI.
+    /// </summary>
     public class BLEManager : IBleDriver
     {
         /// <summary>
@@ -21,9 +26,15 @@ namespace App
 
         /// <summary>
         /// Evento per messaggi di log destinati al terminale UI. Consente al driver di
-        /// restare disaccoppiato da Form1 (sostituisce il precedente Form1.FormRef.UpdateTerminal).
+        /// restare disaccoppiato dal Form1 (sostituisce il precedente Form1.FormRef.UpdateTerminal).
         /// </summary>
         public event Action<string>? LogMessageEmitted;
+
+        /// <summary>
+        /// Errori non-fatali propagati al consumer UI (es. BLE non abilitato, dispositivo
+        /// non trovato, servizio/caratteristiche mancanti). Parametri: (titolo, messaggio).
+        /// </summary>
+        public event Action<string, string>? ErrorOccurred;
 
         // Adapter BLE
         private IBluetoothLE ble;
@@ -100,9 +111,7 @@ namespace App
         {
             if (ble.State != BluetoothState.On)
             {
-                System.Windows.Forms.MessageBox.Show("Bluetooth non abilitato: abilitalo e riprova.",
-                    "Errore BLE", System.Windows.Forms.MessageBoxButtons.OK,
-                    System.Windows.Forms.MessageBoxIcon.Error);
+                ErrorOccurred?.Invoke("Errore BLE", "Bluetooth non abilitato: abilitalo e riprova.");
                 return;
             }
 
@@ -125,9 +134,7 @@ namespace App
             }
             catch (Exception ex)
             {
-                System.Windows.Forms.MessageBox.Show($"Errore durante la scansione BLE: {ex.Message}",
-                    "Errore BLE", System.Windows.Forms.MessageBoxButtons.OK,
-                    System.Windows.Forms.MessageBoxIcon.Error);
+                ErrorOccurred?.Invoke("Errore BLE", $"Errore durante la scansione BLE: {ex.Message}");
             }
         }
 
@@ -161,9 +168,7 @@ namespace App
                 var deviceEntry = discoveredDevices.FirstOrDefault(d => d.Value == deviceName);
                 if (deviceEntry.Key == Guid.Empty)
                 {
-                    System.Windows.Forms.MessageBox.Show("Dispositivo non trovato.",
-                        "Errore Connessione", System.Windows.Forms.MessageBoxButtons.OK,
-                        System.Windows.Forms.MessageBoxIcon.Error);
+                    ErrorOccurred?.Invoke("Errore Connessione", "Dispositivo non trovato.");
                     return;
                 }
 
@@ -172,9 +177,7 @@ namespace App
 
                 if (device == null || device.State != DeviceState.Connected)
                 {
-                    System.Windows.Forms.MessageBox.Show("Impossibile connettersi al dispositivo BLE.",
-                        "Errore Connessione", System.Windows.Forms.MessageBoxButtons.OK,
-                        System.Windows.Forms.MessageBoxIcon.Error);
+                    ErrorOccurred?.Invoke("Errore Connessione", "Impossibile connettersi al dispositivo BLE.");
                     return;
                 }
 
@@ -185,9 +188,7 @@ namespace App
                 nordicUartService = await device.GetServiceAsync(NordicUartServiceUuid);
                 if (nordicUartService == null)
                 {
-                    System.Windows.Forms.MessageBox.Show("Servizio Nordic UART non trovato sul dispositivo.",
-                        "Errore Servizio", System.Windows.Forms.MessageBoxButtons.OK,
-                        System.Windows.Forms.MessageBoxIcon.Error);
+                    ErrorOccurred?.Invoke("Errore Servizio", "Servizio Nordic UART non trovato sul dispositivo.");
                     await adapter.DisconnectDeviceAsync(device);
                     return;
                 }
@@ -198,9 +199,7 @@ namespace App
 
                 if (rxCharacteristic == null || txCharacteristic == null)
                 {
-                    System.Windows.Forms.MessageBox.Show("Caratteristiche UART necessarie non trovate.",
-                        "Errore Caratteristiche", System.Windows.Forms.MessageBoxButtons.OK,
-                        System.Windows.Forms.MessageBoxIcon.Error);
+                    ErrorOccurred?.Invoke("Errore Caratteristiche", "Caratteristiche UART necessarie non trovate.");
                     await adapter.DisconnectDeviceAsync(device);
                     return;
                 }
@@ -208,18 +207,14 @@ namespace App
                 // Verifica che le caratteristiche abbiano le proprietà necessarie
                 if (!rxCharacteristic.CanWrite)
                 {
-                    System.Windows.Forms.MessageBox.Show("La caratteristica RX non supporta la scrittura.",
-                        "Errore Caratteristiche", System.Windows.Forms.MessageBoxButtons.OK,
-                        System.Windows.Forms.MessageBoxIcon.Error);
+                    ErrorOccurred?.Invoke("Errore Caratteristiche", "La caratteristica RX non supporta la scrittura.");
                     await adapter.DisconnectDeviceAsync(device);
                     return;
                 }
 
                 if (!txCharacteristic.CanUpdate)
                 {
-                    System.Windows.Forms.MessageBox.Show("La caratteristica TX non supporta le notifiche.",
-                        "Errore Caratteristiche", System.Windows.Forms.MessageBoxButtons.OK,
-                        System.Windows.Forms.MessageBoxIcon.Error);
+                    ErrorOccurred?.Invoke("Errore Caratteristiche", "La caratteristica TX non supporta le notifiche.");
                     await adapter.DisconnectDeviceAsync(device);
                     return;
                 }
@@ -250,9 +245,7 @@ namespace App
             }
             catch (Exception ex)
             {
-                System.Windows.Forms.MessageBox.Show($"Errore durante la connessione: {ex.Message}",
-                    "Errore Connessione", System.Windows.Forms.MessageBoxButtons.OK,
-                    System.Windows.Forms.MessageBoxIcon.Error);
+                ErrorOccurred?.Invoke("Errore Connessione", $"Errore durante la connessione: {ex.Message}");
                 ConnectionStatusChanged?.Invoke(this, false);
             }
         }
