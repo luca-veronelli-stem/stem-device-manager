@@ -573,11 +573,11 @@ namespace StemPC
             //AL
 
             // Creazione del pacchetto a livello applicativo
-            byte cmdInit = (byte)(Form1.FormRef.SelectedCommand >> 8);//comando byte alto
-            byte cmdOpt = (byte)(Form1.FormRef.SelectedCommand);//comando byte basso 
+            byte cmdInit = (byte)(this.SelectedCommand >> 8);//comando byte alto
+            byte cmdOpt = (byte)(this.SelectedCommand);//comando byte basso 
 
             // Array di TextBox: sostituisci con i tuoi effettivi TextBox
-            TextBox[] textBoxes = { Form1.FormRef.textBox1, Form1.FormRef.textBox2 };
+            TextBox[] textBoxes = { this.textBox1, this.textBox2 };
 
             // Lista per raccogliere i valori validi
             List<byte> byteList = new List<byte>();
@@ -589,8 +589,8 @@ namespace StemPC
                 && (comboBoxVariables.SelectedIndex >= 0)
                 )
             {
-                Form1.FormRef.textBox1.Text = "";
-                Form1.FormRef.textBox2.Text = "";
+                this.textBox1.Text = "";
+                this.textBox2.Text = "";
 
                 byte AddrL = Convert.FromHexString(Dizionario.ElementAt(comboBoxVariables.SelectedIndex).AddressLow.PadLeft(2, '0'))[0];
                 byte AddrH = Convert.FromHexString(Dizionario.ElementAt(comboBoxVariables.SelectedIndex).AddressHigh.PadLeft(2, '0'))[0];
@@ -651,7 +651,7 @@ namespace StemPC
             //string interfaceType = "ble";   // Interfaccia ble
             string interfaceType = CommunicationPort;
             int version = 1;                                // Versione del protocollo
-            uint recipientId = Form1.FormRef.RecipientId;   // ID del destinatario
+            uint recipientId = this.RecipientId;   // ID del destinatario
 
 
             // Crea direttamente il pacchetto di livello Network
@@ -659,7 +659,7 @@ namespace StemPC
                 interfaceType,
                 version,
                 recipientId,
-                new byte[] { cryptFlag, (byte)Form1.FormRef.senderId, (byte)(Form1.FormRef.senderId >> 8), (byte)(Form1.FormRef.senderId >> 16), (byte)(Form1.FormRef.senderId >> 24), 0, 0, cmdInit, cmdOpt }.Concat(payload).ToArray(),
+                new byte[] { cryptFlag, (byte)this.senderId, (byte)(this.senderId >> 8), (byte)(this.senderId >> 16), (byte)(this.senderId >> 24), 0, 0, cmdInit, cmdOpt }.Concat(payload).ToArray(),
                 true
             );
 
@@ -670,24 +670,24 @@ namespace StemPC
             // Ottieni i pacchetti suddivisi per il basso livello 
             var networkPackets = networkLayer.NetworkPackets;
 
-            var packetManager = new PacketManager(Form1.FormRef.senderId);
+            var packetManager = new PacketManager(this.senderId);
             bool result = false;
 
             switch (CommunicationPort)
             {
                 case "can":
                     // Invia i pacchetti tramite CAN                    
-                    packetManager.Add_CAN_Channel(Form1.FormRef._CDL);
+                    packetManager.Add_CAN_Channel(this._CDL);
                     result = await packetManager.SendThroughCANAsync(networkPackets);
                     break;
                 case "ble":
                     //Invia i pacchetti tramite BLE
-                    packetManager.Add_BLE_Channel(Form1.FormRef._BLE_SDL);
+                    packetManager.Add_BLE_Channel(this._BLE_SDL);
                     result = await packetManager.SendThroughBLEAsync(networkPackets);
                     break;
                 case "serial":
                     //Invia i pacchetti tramite seriale
-                    packetManager.Add_Serial_Channel(Form1.FormRef._SDL);
+                    packetManager.Add_Serial_Channel(this._SDL);
                     result = await packetManager.SendThroughSerialAsync(networkPackets);
                     break;
             }
@@ -955,9 +955,9 @@ namespace StemPC
         public void onAppLayerSended(object sender, AppLayerSendEventArgs e)
         {
             // Metodo thread-safe per aggiornare lo stato della connessione
-            if (Form1.FormRef.richTextBoxTx.InvokeRequired)
+            if (this.richTextBoxTx.InvokeRequired)
             {
-                Form1.FormRef.richTextBoxTx.Invoke(new Action(() => AppLayerSended(this, e)));
+                this.richTextBoxTx.Invoke(new Action(() => AppLayerSended(this, e)));
             }
             else
             {
@@ -968,29 +968,29 @@ namespace StemPC
         public void AppLayerSended(object sender, AppLayerSendEventArgs e)
         {
             // stampa il pacchetto dell'application layer
-            //Form1.FormRef.richTextBoxTx.AppendText("-- APPLICATION --\n");
+            //this.richTextBoxTx.AppendText("-- APPLICATION --\n");
             // Ottieni il timestamp
             string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-            Form1.FormRef.richTextBoxTx.AppendText($"TX - {timestamp}: {string.Join(" ", e.NetLayer.ApplicationPacket.Select(b => b.ToString("X2")))}\n");
+            this.richTextBoxTx.AppendText($"TX - {timestamp}: {string.Join(" ", e.NetLayer.ApplicationPacket.Select(b => b.ToString("X2")))}\n");
 
             //// stampa il pacchetto del transport layer
-            //Form1.FormRef.richTextBoxTx.AppendText("-- TRANSPORT --\n");
-            //Form1.FormRef.richTextBoxTx.AppendText($"{string.Join(" ", networkLayer.TransportPacket.Select(b => b.ToString("X2")))}\n");
+            //this.richTextBoxTx.AppendText("-- TRANSPORT --\n");
+            //this.richTextBoxTx.AppendText($"{string.Join(" ", networkLayer.TransportPacket.Select(b => b.ToString("X2")))}\n");
 
             //// stampa i pacchetti del network layer
-            //Form1.FormRef.richTextBoxTx.AppendText("-- NETWORK --\n");
+            //this.richTextBoxTx.AppendText("-- NETWORK --\n");
             //foreach (var item in networkLayer.NetworkPackets)
            //{
             //    // _netInfo, _recipientId, chunk
-            //    Form1.FormRef.richTextBoxTx.AppendText($"NetInfo: {string.Join(" ", item.Item1.Select(b => b.ToString("X2")))} ");
-            //    Form1.FormRef.richTextBoxTx.AppendText($"Id: {item.Item2.ToString("X2")} ");
-            //    Form1.FormRef.richTextBoxTx.AppendText($"Chunk: {string.Join(" ", item.Item3.Select(b => b.ToString("X2")))}\n");
+            //    this.richTextBoxTx.AppendText($"NetInfo: {string.Join(" ", item.Item1.Select(b => b.ToString("X2")))} ");
+            //    this.richTextBoxTx.AppendText($"Id: {item.Item2.ToString("X2")} ");
+            //    this.richTextBoxTx.AppendText($"Chunk: {string.Join(" ", item.Item3.Select(b => b.ToString("X2")))}\n");
             //}
 
             // Imposta la posizione del cursore alla fine del testo.
-            Form1.FormRef.richTextBoxTx.SelectionStart = Form1.FormRef.richTextBoxTx.Text.Length;
+            this.richTextBoxTx.SelectionStart = this.richTextBoxTx.Text.Length;
             // Esegue lo scroll fino alla posizione del cursore.
-            Form1.FormRef.richTextBoxTx.ScrollToCaret();
+            this.richTextBoxTx.ScrollToCaret();
         }
 
         private void OnPCANConnectionStatusChanged(object sender, bool isConnected)
