@@ -180,7 +180,7 @@ public class Telemetry_Tab : TabPage
     {
         if (comboBox.SelectedItem != null)
         {
-            string selectedText = comboBox.SelectedItem.ToString();
+            string? selectedText = comboBox.SelectedItem.ToString();
 
             // Controlla se esiste già un elemento con la stessa label
             foreach (var element in activeElements)

@@ -314,7 +314,7 @@ namespace StemPC
                 if (comboBoxCorrente.SelectedIndex != -1)
                 {
                     // Ottieni la stringa correntemente selezionata
-                    string macchinaSelezionata = comboBoxCorrente.SelectedItem.ToString();
+                    string macchinaSelezionata = comboBoxCorrente.SelectedItem?.ToString() ?? "";
 
                     comboBoxBoard.Items.Clear(); //azzera i nomi delle schede
 

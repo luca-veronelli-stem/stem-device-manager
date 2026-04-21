@@ -692,7 +692,7 @@ public class TopLiftTelemetry_Tab : TabPage
                 break;
             case "Allarmi":
                 {
-                    string FaultString = null;
+                    string? FaultString = null;
                     uint FaultValue = value;
 
                     // FaultValue = 0xFFFFFFFF;

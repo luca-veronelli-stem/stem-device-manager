@@ -123,13 +123,13 @@ public partial class BLEInterfaceTab : TabPage
     {
         if (listBoxDevices.SelectedItem != null)
         {
-            string deviceName = listBoxDevices.SelectedItem.ToString();
+            string? deviceName = listBoxDevices.SelectedItem.ToString();
 
             // Recupera il ComboBox dal controllo (si assume che lo abbiamo aggiunto con il Name "comboBoxConnectOptions")
-            ComboBox comboBoxConnectOptions = this.Controls["comboBoxConnectOptions"] as ComboBox;
-            bool withResponse = (comboBoxConnectOptions.SelectedItem.ToString() == "Connect with response");
+            ComboBox? comboBoxConnectOptions = this.Controls["comboBoxConnectOptions"] as ComboBox;
+            bool withResponse = (comboBoxConnectOptions?.SelectedItem?.ToString() == "Connect with response");
 
-            // Passa il parametro al metodo di connessione 
+            // Passa il parametro al metodo di connessione
             if (deviceName != null)
                 await bleManager.ConnectToAsync(deviceName, withResponse);
         }
