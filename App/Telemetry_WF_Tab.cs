@@ -1,5 +1,4 @@
 ﻿using App.Properties;
-using App.STEMProtocol;
 using Core.Interfaces;
 using Core.Models;
 using Services.Cache;
@@ -8,12 +7,10 @@ public class Telemetry_Tab : TabPage
 {
     //Cache centralizzata dizionario (sostituisce UpdateDictionary callback)
     private readonly DictionaryCache _cache;
+    private readonly ConnectionManager _connMgr;
     private readonly IDeviceVariantConfig _variantConfig;
     //Lista variabili della macchina (snapshot letto dalla cache)
     private IReadOnlyList<Variable> MachineDictionary = [];
-
-    // Classe per il backend
-    public TelemetryManager telemetryManager;
 
     // Campi per accedere dal gestore degli eventi
     private TableLayoutPanel tableLayout;
@@ -27,11 +24,13 @@ public class Telemetry_Tab : TabPage
     private int currentColumn = 0;
     private int currentRow = 2;
 
-    public Telemetry_Tab(PacketManager packetManagerRX, DictionaryCache cache, IDeviceVariantConfig variantConfig)
+    public Telemetry_Tab(DictionaryCache cache, ConnectionManager connMgr, IDeviceVariantConfig variantConfig)
     {
         ArgumentNullException.ThrowIfNull(cache);
+        ArgumentNullException.ThrowIfNull(connMgr);
         ArgumentNullException.ThrowIfNull(variantConfig);
         _cache = cache;
+        _connMgr = connMgr;
         _variantConfig = variantConfig;
         MachineDictionary = _cache.Variables;
         _cache.DictionaryUpdated += OnCacheDictionaryUpdated;
@@ -117,11 +116,8 @@ public class Telemetry_Tab : TabPage
         // 7. Aggiunta del TableLayoutPanel alla TabPage
         Controls.Add(tableLayout);
 
-        // 8. Creazione del gestore per la telemetria
-        telemetryManager = new TelemetryManager(packetManagerRX);
-
-        // Aggiunta del gestore per l'evento DataReady
-        telemetryManager.DataReady += onDataReady;
+        // 8. Sottoscrizione data telemetria via ConnectionManager (re-binding automatico su switch canale).
+        _connMgr.TelemetryDataReceived += onDataReady;
     }
 
     private void UpdateComboBox()
@@ -140,23 +136,35 @@ public class Telemetry_Tab : TabPage
         }
     }
 
-    private async void onDataReady(object sender, DataReadyEventArgs e)
+    private void onDataReady(object sender, TelemetryDataPoint dp)
     {
-        if (e.ListIndex >= activeElements.Count)
-        {
-            MessageBox.Show("Il controllo non è una Label.", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            return;
-        }
-        var container = activeElements[e.ListIndex];
+        if (dp.Source != TelemetrySource.FastStream) return;
+
+        int listIndex = FindActiveIndex(dp.Variable);
+        if (listIndex < 0 || listIndex >= activeElements.Count) return;
+
+        var container = activeElements[listIndex];
         var control = container.Controls[1];
-        if (control is Label label)
-        {
-            await Task.Run(() => label.Invoke((MethodInvoker)(() => label.Text = telemetryManager.GetVariableName(e.ListIndex) + " " + e.Value.ToString())));
-        }
+        if (control is not Label label) return;
+
+        string text = dp.Variable.Name + " " + dp.NumericValue.ToString();
+        if (label.InvokeRequired)
+            label.BeginInvoke(new Action(() => label.Text = text));
         else
+            label.Text = text;
+    }
+
+    /// <summary>Trova la posizione della variabile nello snapshot corrente della telemetria.</summary>
+    private int FindActiveIndex(Variable variable)
+    {
+        var tel = _connMgr.CurrentTelemetry;
+        if (tel is null) return -1;
+        var vars = tel.CurrentVariables;
+        for (int i = 0; i < vars.Count; i++)
         {
-            MessageBox.Show("Il controllo non è una Label.", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            if (vars[i] == variable) return i;
         }
+        return -1;
     }
 
     private void OnCacheDictionaryUpdated(object sender, EventArgs e)
@@ -224,8 +232,8 @@ public class Telemetry_Tab : TabPage
                 // Rimuovo il contenitore dalla lista degli elementi attivi
                 activeElements.Remove(container);
 
-                // Rimuovo l'elemento dalla lista dei dispositivi da interrogare
-                telemetryManager.RemoveFromDictionary(index);
+                // Rimuovo l'elemento dal dizionario telemetria del canale attivo (se presente).
+                _connMgr.CurrentTelemetry?.RemoveFromDictionary(index);
 
                 // Ricompongo gli elementi rimasti
                 ReLayoutElements();
@@ -249,8 +257,8 @@ public class Telemetry_Tab : TabPage
             // Registro il contenitore nella lista degli elementi attivi
             activeElements.Add(container);
 
-            // Aggiorno la lista dei dispositivi da interrogare
-            telemetryManager.AddToDictionary(MachineDictionary[comboBox.SelectedIndex]);
+            // Aggiorno la lista dei dispositivi da interrogare (no-op silente se canale non attivo).
+            _connMgr.CurrentTelemetry?.AddToDictionary(MachineDictionary[comboBox.SelectedIndex]);
 
             // Aggiorno la posizione per il prossimo inserimento
             UpdateInsertionPosition();
@@ -264,18 +272,23 @@ public class Telemetry_Tab : TabPage
 
     private async void ButtonStart_Click(object sender, EventArgs e)
     {
+        var tel = _connMgr.CurrentTelemetry;
+        if (tel is null) { MessageBox.Show("Select communication channel first!"); return; }
+
         // Su TOPLIFT la telemetria interroga anche un secondo dispositivo (seconda
         // variabile nel dizionario macchina); altre varianti interrogano solo il primo.
         if (_variantConfig.Variant == DeviceVariant.TopLift)
         {
-            telemetryManager.AddToDictionary(MachineDictionary[1]);
+            tel.AddToDictionary(MachineDictionary[1]);
         }
-        await telemetryManager.TelemetryStart();
+        await tel.StartFastTelemetryAsync();
     }
 
-    private void ButtonStop_Click(object sender, EventArgs e)
+    private async void ButtonStop_Click(object sender, EventArgs e)
     {
-        telemetryManager.TelemetryStop();
+        var tel = _connMgr.CurrentTelemetry;
+        if (tel is null) return;
+        await tel.StopTelemetryAsync();
     }
 
     /// <summary>

@@ -122,6 +122,18 @@ public sealed class ConnectionManager : IDisposable
     public event EventHandler<AppLayerDecodedEvent>? AppLayerDecoded;
 
     /// <summary>
+    /// Campione di telemetria forwardato dal <see cref="CurrentTelemetry"/> corrente.
+    /// Sopravvive agli switch (re-binding interno automatico).
+    /// </summary>
+    public event EventHandler<TelemetryDataPoint>? TelemetryDataReceived;
+
+    /// <summary>
+    /// Progresso di upload firmware forwardato dal <see cref="CurrentBoot"/> corrente.
+    /// Sopravvive agli switch (re-binding interno automatico).
+    /// </summary>
+    public event EventHandler<BootProgress>? BootProgressChanged;
+
+    /// <summary>
     /// Stato corrente della port per il canale indicato.
     /// </summary>
     public ConnectionState StateOf(ChannelKind channel)
@@ -174,7 +186,9 @@ public sealed class ConnectionManager : IDisposable
         var newProtocol = CreateProtocolService(newPort);
         newProtocol.AppLayerDecoded += OnActiveProtocolAppLayer;
         var newBoot = new BootService(newProtocol);
+        newBoot.ProgressChanged += OnActiveBootProgress;
         var newTelemetry = new TelemetryService(newProtocol);
+        newTelemetry.DataReceived += OnActiveTelemetryData;
         lock (_stateLock)
         {
             _activeChannel = target;
@@ -239,12 +253,14 @@ public sealed class ConnectionManager : IDisposable
 
     /// <summary>
     /// Dispose ordinato dei servizi agganciati al protocol: prima i consumer
-    /// (telemetry, boot) che si sono iscritti a <c>AppLayerDecoded</c>, poi il
-    /// protocol stesso (che sgancia i propri handler dalla port).
+    /// (telemetry, boot) — sgancia i forwarding event — poi dispose, infine
+    /// dispose del protocol stesso (che sgancia i propri handler dalla port).
     /// </summary>
     private void DisposeActiveServices(
         IProtocolService? protocol, IBootService? boot, ITelemetryService? telemetry)
     {
+        if (telemetry is not null) telemetry.DataReceived -= OnActiveTelemetryData;
+        if (boot is not null) boot.ProgressChanged -= OnActiveBootProgress;
         (telemetry as IDisposable)?.Dispose();
         (boot as IDisposable)?.Dispose();
         if (protocol is not null)
@@ -262,6 +278,12 @@ public sealed class ConnectionManager : IDisposable
 
     private void OnActiveProtocolAppLayer(object? sender, AppLayerDecodedEvent evt)
         => AppLayerDecoded?.Invoke(this, evt);
+
+    private void OnActiveTelemetryData(object? sender, TelemetryDataPoint dp)
+        => TelemetryDataReceived?.Invoke(this, dp);
+
+    private void OnActiveBootProgress(object? sender, BootProgress p)
+        => BootProgressChanged?.Invoke(this, p);
 
     private void ThrowIfDisposed()
         => ObjectDisposedException.ThrowIf(_disposed, this);

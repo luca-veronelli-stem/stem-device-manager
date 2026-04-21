@@ -1,8 +1,6 @@
-﻿using App.STEMProtocol;
-using Core.Interfaces;
+﻿using Core.Interfaces;
 using Core.Models;
 using Services.Cache;
-using StemPC;
 using System.Text;
 
 
@@ -10,6 +8,7 @@ using System.Text;
 public class Boot_Interface_Tab : TabPage
 {
     private readonly DictionaryCache _cache;
+    private readonly ConnectionManager _connMgr;
     private readonly IDeviceVariantConfig _variantConfig;
     private System.Windows.Forms.TextBox txtFilePath;
     private System.Windows.Forms.Button btnSelectFile;
@@ -24,13 +23,15 @@ public class Boot_Interface_Tab : TabPage
     private OpenFileDialog openFileDialog;
     private TableLayoutPanel mainLayout;
     private string filePath = "";
-    public BootManager BootHndlr;
+    private byte[] _firmwareBytes = [];
 
-    public Boot_Interface_Tab(DictionaryCache cache, IDeviceVariantConfig variantConfig)
+    public Boot_Interface_Tab(DictionaryCache cache, ConnectionManager connMgr, IDeviceVariantConfig variantConfig)
     {
         ArgumentNullException.ThrowIfNull(cache);
+        ArgumentNullException.ThrowIfNull(connMgr);
         ArgumentNullException.ThrowIfNull(variantConfig);
         _cache = cache;
+        _connMgr = connMgr;
         _variantConfig = variantConfig;
 
         Name = "tabPageBoot";
@@ -192,9 +193,8 @@ public class Boot_Interface_Tab : TabPage
         this.Controls.Add(mainLayout);
 
 
-        //crea la classe di upload
-        BootHndlr = new BootManager();
-        BootHndlr.ProgressChanged += UpdateProgressBar;
+        // Sottoscrizione progress via ConnectionManager: re-binding automatico su SwitchToAsync.
+        _connMgr.BootProgressChanged += UpdateProgressBar;
     }
 
     private void BtnSelectFile_Click(object sender, EventArgs e)
@@ -204,97 +204,92 @@ public class Boot_Interface_Tab : TabPage
             filePath = openFileDialog.FileName;
             txtFilePath.Text = filePath; // Mostra il percorso nel TextBox
             DisplayFileContent(filePath);
+            _firmwareBytes = File.ReadAllBytes(filePath);
         }
     }
 
 
     private async void BtnStartBoot_Click(object sender, EventArgs e)
     {
+        var boot = _connMgr.CurrentBoot;
+        if (boot is null) { MessageBox.Show("Select communication channel first!"); return; }
         btnStartBoot.Enabled = false;
-        await BootHndlr.StartBoot();
+        bool ok = await boot.StartBootAsync(_cache.CurrentRecipientId);
+        MessageBox.Show(ok ? "Bootloader avviato!" : "Risposta al comando non ricevuta!",
+            "", MessageBoxButtons.OK, MessageBoxIcon.Information);
         btnStartBoot.Enabled = true;
     }
 
     private async void BtnEndBoot_Click(object sender, EventArgs e)
     {
+        var boot = _connMgr.CurrentBoot;
+        if (boot is null) { MessageBox.Show("Select communication channel first!"); return; }
         btnEndBoot.Enabled = false;
-        await BootHndlr.EndBoot();
+        bool ok = await boot.EndBootAsync(_cache.CurrentRecipientId);
+        MessageBox.Show(ok ? "Bootloader terminato!" : "Risposta al comando non ricevuta!",
+            "", MessageBoxButtons.OK, MessageBoxIcon.Information);
         btnEndBoot.Enabled = true;
     }
 
     private async void BtnRestart_Click(object sender, EventArgs e)
     {
+        var boot = _connMgr.CurrentBoot;
+        if (boot is null) { MessageBox.Show("Select communication channel first!"); return; }
         btnRestart.Enabled = false;
-        await BootHndlr.Restart();
+        await boot.RestartAsync(_cache.CurrentRecipientId);
         btnRestart.Enabled = true;
     }
 
     private async void BtnStartProcedure_Click(object sender, EventArgs e)
     {
-        //  Form1.FormRef.RecipientId = 0x00030141; //indirizzo fisso dell'Eden (andrà estratto dal file)
-
         if (filePath == "")
         {
             MessageBox.Show("Select Firmware file .bin!");
+            return;
         }
-        else if (_cache.CurrentRecipientId == 0)
+        if (_cache.CurrentRecipientId == 0)
         {
             MessageBox.Show("Select destination address!");
+            return;
         }
-        else
-        {
-            btnStartProcedure.Enabled = false;
+        var boot = _connMgr.CurrentBoot;
+        if (boot is null) { MessageBox.Show("Select communication channel first!"); return; }
 
-
-            //setta il perscorso del file di boot
-            BootHndlr.SetFirmwarePath(filePath);
-
-            ////manda tutte le schede in boot
-            //uint BackupAddress = Form1.FormRef.RecipientId;
-
-            ////tastiera1
-            //Form1.FormRef.RecipientId = 0x000803C1; //indirizzo fisso tastiera 1 (andrà estratto dal file)
-            //await BootHndlr.StartBoot();
-
-            //Form1.FormRef.RecipientId = 0x000803C2; //indirizzo fisso tastiera 2 (andrà estratto dal file)
-            //await BootHndlr.StartBoot();
-
-            //Form1.FormRef.RecipientId = 0x00080381; //indirizzo fisso scheda madre (andrà estratto dal file)
-            //await BootHndlr.StartBoot();
-
-            //Form1.FormRef.RecipientId = BackupAddress;
-
-            //  await BootHndlr.StartBoot();
-
-            //esegui l'upload
-            await BootHndlr.UploadFirmwareOnly();
-
-            btnStartProcedure.Enabled = true;
-        }
+        btnStartProcedure.Enabled = false;
+        await boot.UploadBlocksOnlyAsync(_firmwareBytes, _cache.CurrentRecipientId);
+        if (boot.State == BootState.Completed)
+            MessageBox.Show("Aggiornamento firmware completato!", "Successo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        else if (boot.State == BootState.Failed)
+            MessageBox.Show("Errore: programmazione blocchi fallita.", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        btnStartProcedure.Enabled = true;
     }
 
     private async void BtnAuto_Click(object sender, EventArgs e)
     {
         btnAuto.Enabled = false;
-
-        if (filePath == "")
+        try
         {
-            MessageBox.Show("Select Firmware file .bin!");
-        }
-        else if (_cache.CurrentRecipientId == 0)
-        {
-            MessageBox.Show("Select destination address!");
-        }
-        else
-        {
-            //setta il perscorso del file di boot
-            BootHndlr.SetFirmwarePath(filePath);
+            if (filePath == "")
+            {
+                MessageBox.Show("Select Firmware file .bin!");
+                return;
+            }
+            if (_cache.CurrentRecipientId == 0)
+            {
+                MessageBox.Show("Select destination address!");
+                return;
+            }
+            var boot = _connMgr.CurrentBoot;
+            if (boot is null) { MessageBox.Show("Select communication channel first!"); return; }
 
-            //esegui l'upload
-            await BootHndlr.UploadFirmware();
+            await boot.StartFirmwareUploadAsync(_firmwareBytes, _cache.CurrentRecipientId);
+            if (boot.State == BootState.Failed)
+                MessageBox.Show("Errore durante l'upload del firmware.", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
-
-        btnAuto.Enabled = true;
+        finally
+        {
+            btnAuto.Enabled = true;
+        }
     }
 
     private void DisplayFileContent(string filePath)
@@ -328,10 +323,14 @@ public class Boot_Interface_Tab : TabPage
     }
 
     // Funzione privata per aggiornare la ProgressBar
-    void UpdateProgressBar(object sender, ProgressEventArgs e)
+    void UpdateProgressBar(object sender, BootProgress e)
     {
-        progressBar.Value = (int)((double)e.CurrentOffset / e.TotalLength * 100);
-        if (progressBar.Value == 99) progressBar.Value = 100;
+        int value = e.TotalLength <= 0 ? 0 : (int)((double)e.CurrentOffset / e.TotalLength * 100);
+        if (value == 99) value = 100;
+        if (progressBar.InvokeRequired)
+            progressBar.Invoke(new Action(() => progressBar.Value = value));
+        else
+            progressBar.Value = value;
     }
 }
 

@@ -1,11 +1,10 @@
 using App;
-using App.STEMProtocol;
 using Core.Interfaces;
+using Core.Models;
+using Infrastructure.Protocol.Hardware;
 using Microsoft.Extensions.DependencyInjection;
 using Services.Cache;
 using System.Globalization;
-using static App.STEMProtocol.NetworkLayer;
-using Core.Models;
 
 namespace StemPC
 {
@@ -15,40 +14,25 @@ namespace StemPC
         private readonly IServiceProvider _serviceProvider;
         private readonly IDictionaryProvider _dictionaryProvider;
         private readonly DictionaryCache _dictionaryCache;
+        private readonly ConnectionManager _connMgr;
         private readonly IDeviceVariantConfig _variantConfig;
+        // Driver BLE/Serial iniettati via DI (impl in App/, interfaccia in Infrastructure.Protocol).
+        // Referenziati direttamente per operazioni UI-side (scan porte seriali).
+        private readonly SerialPortManager _serialPortManager;
 
         public const string Software_Version = "2.15";
 
-        // Canale hardware corrente (legacy: "can"/"ble"/"serial"). Inizializzato nel ctor
-        // a partire da IDeviceVariantConfig.DefaultChannel. Modificato dai menu handler quando
-        // l'utente cambia canale. Sostituisce il blocco #if TOPLIFT/#else (blocco #1 in
-        // PREPROCESSOR_DIRECTIVES.md): TOPLIFT → "can", altre varianti → "ble".
-        public string CommunicationPort = "ble";
+        // Canale hardware corrente selezionato. Le mutazioni vengono propagate a
+        // ConnectionManager via SwitchToAsync.
+        public ChannelKind CurrentChannel { get; private set; }
 
 
         private UInt16 Prescaler1s = 0;
 
         //**************************
         //  Terminal variablesc
-        //************************** 
+        //**************************
         private Terminal _terminal;
-
-
-        //**********************************
-        //   CAN port variables
-        //**********************************
-        public CANDataLayer _CDL;
-
-        //**********************************
-        //   BLE port variables
-        //**********************************
-        public SDL _BLE_SDL;
-
-        //**********************************
-        //   Serial port variables
-        //**********************************
-        private SerialPortManager _serialPortManager;
-        public SDL _SDL;
 
         //**************************
         //  Code gen variables
@@ -90,74 +74,37 @@ namespace StemPC
         public short SelectedCommand;
         public uint senderId;              // ID del mittente
 
-        // Ricezione globale dei pacchetti stem (pe rora una sola, da far poi diventare dinamica alla ricezione di ogni pacchetto)
-        public PacketManager RXpacketManager;
-
         //******************************
         //  public Elements instances
         //******************************
-        public CANInterfaceTab CanTabPageRef { get; private set; }
         public Boot_Interface_Tab BootTabRef { get; private set; }
         public Boot_Smart_Tab BootSmartTabRef { get; private set; }
-        public static Form1 FormRef { get; private set; }
         public Telemetry_Tab TelemetryTabRef { get; private set; }
         public BLEInterfaceTab BLETabRef { get; private set; }
         public TopLiftTelemetry_Tab TLTTabRef { get; private set; }
 
-        //**************************
-        //  Events
-        //**************************
-        // Classe per passare i dati di aggiornamneto textbox dopo la decodifica di un comando applayer
-        public class AppLayerDecoderEventArgs : EventArgs
-        {
-            public byte[] Payload { get; }
-            public Command CurrentCommand { get; }
-            public string MachineName { get; }
-            public string MachineNameRecipient { get; }
-            public Variable CurrentVariable { get; }
-
-            public AppLayerDecoderEventArgs(byte[] payload, Command currentCommand, string machineName, string machineNameRecipient, Variable currentVariable)
-            {
-                Payload = payload;
-                CurrentCommand = currentCommand;
-                MachineName = machineName;
-                MachineNameRecipient = machineNameRecipient;
-                CurrentVariable = currentVariable;
-            }
-        }
-        public event EventHandler<AppLayerDecoderEventArgs> AppLayerCommandDecoded;
-
-        // Classe per passare i dati di aggiornamneto textbox dopo la decodifica di un comando applayer
-        public class AppLayerSendEventArgs : EventArgs
-        {
-            public NetworkLayer NetLayer { get; }
-
-            public AppLayerSendEventArgs(NetworkLayer netLayer)
-            {
-                NetLayer = netLayer;
-            }
-        }
-
-        public event EventHandler<AppLayerSendEventArgs> AppLayerCommandSended;
-
         public Form1(IServiceProvider serviceProvider)
         {
             InitializeComponent();
-            // Inietta il service provider, il provider dizionari, la cache, la variante device
+            // Inietta il service provider, il provider dizionari, la cache, il manager connessioni, la variante device, il driver seriale
             _serviceProvider = serviceProvider;
             _dictionaryProvider = serviceProvider.GetRequiredService<IDictionaryProvider>();
             _dictionaryCache = serviceProvider.GetRequiredService<DictionaryCache>();
+            _connMgr = serviceProvider.GetRequiredService<ConnectionManager>();
             _variantConfig = serviceProvider.GetRequiredService<IDeviceVariantConfig>();
+            _serialPortManager = serviceProvider.GetRequiredService<ISerialDriver>() as SerialPortManager
+                ?? throw new InvalidOperationException("ISerialDriver deve essere registrato come SerialPortManager in Program.cs.");
 
-            // Canale hardware di default dalla variante (legacy: stringa invece di enum).
-            CommunicationPort = _variantConfig.DefaultChannel switch
+            // Canale hardware di default dalla variante.
+            CurrentChannel = _variantConfig.DefaultChannel;
+
+            Load += async (_, _) =>
             {
-                ChannelKind.Can    => "can",
-                ChannelKind.Serial => "serial",
-                _                  => "ble"
+                await LoadDictionaryDataAsync(CancellationToken.None);
+                // Attiva il canale di default (connette la port + crea protocol/boot/telemetry).
+                await _connMgr.SwitchToAsync(CurrentChannel);
+                _connMgr.CurrentTelemetry?.UpdateSourceAddress(RecipientId);
             };
-
-            Load += async (_, _) => await LoadDictionaryDataAsync(CancellationToken.None);
 
             // Controlla se il TabControl esiste gi  e crealo se non esiste
             if (tabControl == null)
@@ -172,59 +119,30 @@ namespace StemPC
                 ? Text + Software_Version
                 : _variantConfig.WindowTitle + Software_Version;
 
-            FormRef = this;
-
             RecipientId = 0;
             SelectedCommand = 0;
-            senderId = 8;
+            senderId = _variantConfig.SenderId;
 
             //*************************************************************
-            //   INIT PORTE DI COMUNICAZIONE CON RELATIVI MANAGER
+            //   INIT UI + TAB
             //*************************************************************
 
             //attiva il check della porta di comunicazione di default
-            cANToolStripMenuItem.Checked = false;
-            bluetoothLEToolStripMenuItem.Checked = true;
-
-            //crea e aggiungi pcan
-            var canInterface = "pcan";
-            var channel = "PCAN_USBBUS1";
-            var bitrate = 250000;
-            _CDL = new CANDataLayer(channel, canInterface, bitrate);
-            _CDL.ConnectionStatusChanged += OnPCANConnectionStatusChanged;
+            UpdateChannelMenuChecks();
 
             //crea e aggiungi il ble manager
             BLETabRef = new BLEInterfaceTab();
             tabControl.TabPages.Add(BLETabRef);
 
-            // Sottoscrivi log driver BLE al terminale UI (sostituisce FormRef.UpdateTerminal)
+            // Sottoscrivi log driver BLE al terminale UI
             BLETabRef.bleManager.LogMessageEmitted += UpdateTerminal;
 
-            //crea e aggiungi ble
-            _BLE_SDL = new SDL("BLE", "ble", 100000, BLETabRef.bleManager);
-            _BLE_SDL.ConnectionStatusChanged += OnBLEConnectionStatusChanged;
-
-            //crea e aggiungi Seriale
-            //attiva la seriale
-            _serialPortManager = new SerialPortManager();  // Inizializza l'istanza di SerialManager
-                                                           // Ottieni tutte le porte seriali disponibili
-                                                           // e aggiungi le porte alla ListBox
-            _SDL = new SDL("SERIAL", "serial", 115200, _serialPortManager);
-            _SDL.ConnectionStatusChanged += OnSerialConnectionStatusChanged;
-
-            //crea il protocollo stem di ricezione
-            RXpacketManager = new PacketManager(0xFFFFFFFF);
-            RXpacketManager.OnAppLayerPacketReceived += onAppLayerPacketReady;
-
-            //aggiungi i canali hardware
-            //RXpacketManager.Add_Serial_Channel(_SDL);
-            RXpacketManager.Add_CAN_Channel(_CDL);
-            RXpacketManager.Add_BLE_Channel(_BLE_SDL);
-            RXpacketManager.Add_Serial_Channel(_SDL);
+            // Sottoscrizioni forward da ConnectionManager: stato connessione per canale + app layer decodificato.
+            _connMgr.StateChanged += OnConnectionStateChanged;
+            _connMgr.AppLayerDecoded += OnAppLayerDecodedFromConnMgr;
 
             //crea e aggiungi il bootloader manager
-            BootTabRef = new Boot_Interface_Tab(_dictionaryCache, _variantConfig);
-            BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
+            BootTabRef = new Boot_Interface_Tab(_dictionaryCache, _connMgr, _variantConfig);
 
             // Il tab bootloader classico appare solo su varianti non-TOPLIFT e non-EDEN
             // (blocco #3 in PREPROCESSOR_DIRECTIVES.md): TOPLIFT e EDEN usano il solo
@@ -236,16 +154,7 @@ namespace StemPC
             }
 
             //crea e aggiungi il bootloader manager smart
-            BootSmartTabRef = new Boot_Smart_Tab(RXpacketManager, _dictionaryCache);
-            BootSmartTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
-            BootSmartTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
-
-            //Aggiorna il flag di comunicazione
-            if (CommunicationPort == "can")
-            {
-                cANToolStripMenuItem.Checked = true;
-                bluetoothLEToolStripMenuItem.Checked = false;
-            }
+            BootSmartTabRef = new Boot_Smart_Tab(_dictionaryCache, _connMgr);
 
             // Lista dispositivi smart-boot letta dalla variante (blocco #4 in
             // PREPROCESSOR_DIRECTIVES.md): TOPLIFT = 3 tastiere + scheda madre,
@@ -256,11 +165,6 @@ namespace StemPC
 
             // Popola la tab con la lista dei dispositivi
             BootSmartTabRef.PopulateDevices(BootSmartDevices);
-
-            //crea e aggiungi tabcan
-            // CanTabPageRef = new CANInterfaceTab(_CDL);
-            // CanTabPageRef.ActivateEvents();
-            // tabControl.TabPages.Add(CanTabPageRef);
 
             //attiva il terminale
             _terminal = new Terminal(); // Inizializza l'istanza di Terminal
@@ -277,29 +181,17 @@ namespace StemPC
             tabControl.TabPages.Remove(tabPageUART);
 
             //inizializza il code generator
-            // Crea un'istanza della classe SP_Config_Generator e chiama il metodo per generare il file
             configGenerator = new SP_Code_Generator();
             codeFilePath = "SP_Config.h";
 
             tabControl.TabPages.Remove(tabPageCodeGen);
 
-            //primo giro di update connessione can
-            OnPCANConnectionStatusChanged(this, _CDL.IsConnected);
-
             //crea e aggiungi il telemetry manager
-            TelemetryTabRef = new Telemetry_Tab(RXpacketManager, _dictionaryCache, _variantConfig);
-            TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
-            TelemetryTabRef.telemetryManager.UpdateMyAddress(senderId);
-
-            //Seleziona il tab iniziale
-
-            //tabControl.SelectedTab = BootTabRef;
-            //tabControl.SelectedTab = CanTabPageRef;
+            TelemetryTabRef = new Telemetry_Tab(_dictionaryCache, _connMgr, _variantConfig);
 
             // Layout tab iniziale (blocco #5 in PREPROCESSOR_DIRECTIVES.md):
             //   TOPLIFT  → UI semplificata: nasconde terminal/protocol/BLE, aggiunge
-            //              TopLiftTelemetry + BootSmart. Non cambia tab selezionato
-            //              (rimane quello di default del Designer).
+            //              TopLiftTelemetry + BootSmart.
             //   EGICON   → tab iniziale BLE, nessuna tab aggiuntiva.
             //   Generic  → tab iniziale BLE + aggiunge Telemetry classico.
             //   Eden     → comportamento come Generic (legacy #else: stesso ramo).
@@ -315,8 +207,7 @@ namespace StemPC
                 toolStripSplitButton3.Visible = false;
 
                 // Telemetry TOPLIFT-specific + smart boot tab
-                TLTTabRef = new TopLiftTelemetry_Tab(RXpacketManager, _dictionaryCache);
-                TLTTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
+                TLTTabRef = new TopLiftTelemetry_Tab(_dictionaryCache, _connMgr);
                 tabControl.TabPages.Add(TLTTabRef);
                 tabControl.TabPages.Add(BootSmartTabRef);
             }
@@ -335,16 +226,6 @@ namespace StemPC
             // Nascondi la colonna delle variabili
             tableLayoutPanelProtocol.ColumnStyles[3].SizeType = SizeType.Absolute;
             tableLayoutPanelProtocol.ColumnStyles[3].Width = 0;
-
-            //// Nascondi le colonne dei byte 1 e 2
-            //tableLayoutPanelProtocol.ColumnStyles[4].SizeType = SizeType.Absolute;
-            //tableLayoutPanelProtocol.ColumnStyles[4].Width = 0;
-            //tableLayoutPanelProtocol.ColumnStyles[5].SizeType = SizeType.Absolute;
-            //tableLayoutPanelProtocol.ColumnStyles[5].Width = 0;
-
-            //installa l'evento di aggiornamento textbox applayer
-            AppLayerCommandDecoded += onAppLayerDecoded;
-            AppLayerCommandSended += onAppLayerSended;
         }
 
         public void UpdateTerminal(string message)
@@ -445,17 +326,8 @@ namespace StemPC
                     // Carica variabili via cache: fa HTTP una volta sola e notifica i tab via DictionaryUpdated.
                     await _dictionaryCache.SelectByRecipientAsync(RecipientId);
                     Dizionario = _dictionaryCache.Variables.ToList();
-                    // Aggiorna il telemetry manager della tab attiva per variante
-                    // (blocco #6 in PREPROCESSOR_DIRECTIVES.md): TOPLIFT usa TLTTabRef,
-                    // altre varianti usano TelemetryTabRef quando presente.
-                    if (_variantConfig.Variant == DeviceVariant.TopLift)
-                    {
-                        TLTTabRef.telemetryManager.UpdateSourceAddress(RecipientId);
-                    }
-                    else if (TelemetryTabRef != null)
-                    {
-                        TelemetryTabRef.telemetryManager.UpdateSourceAddress(RecipientId);
-                    }
+                    // Propaga il recipient al servizio di telemetria attivo (condiviso tra tab).
+                    _connMgr.CurrentTelemetry?.UpdateSourceAddress(RecipientId);
                 }
             }
             comboBoxCommand.SelectedIndex = 0;
@@ -559,132 +431,71 @@ namespace StemPC
 
         private async Task SendPS_Async(object sender, EventArgs e)
         {
-            //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            //      SPEDIZIONE PACCHETTO DA APPLICATION LAYER
-            //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            // Parametri del pacchetto
+            var protocol = _connMgr.ActiveProtocol;
+            if (protocol is null)
+            {
+                MessageBox.Show("Select communication channel first!");
+                return;
+            }
 
-            //AL
+            byte cmdHi = (byte)(this.SelectedCommand >> 8);
+            byte cmdLo = (byte)this.SelectedCommand;
+            var command = new Command("UserSend", cmdHi.ToString("X2"), cmdLo.ToString("X2"));
 
-            // Creazione del pacchetto a livello applicativo
-            byte cmdInit = (byte)(this.SelectedCommand >> 8);//comando byte alto
-            byte cmdOpt = (byte)(this.SelectedCommand);//comando byte basso 
+            var byteList = new List<byte>();
 
-            // Array di TextBox: sostituisci con i tuoi effettivi TextBox
-            TextBox[] textBoxes = { this.textBox1, this.textBox2 };
-
-            // Lista per raccogliere i valori validi
-            List<byte> byteList = new List<byte>();
-
-            //Se sei in leggi/scrivi variabili i primi due byte te li da il dizionario
-            if (
-                (tableLayoutPanelProtocol.ColumnStyles[3].Width != 0)
+            // Se la UI è in modalità leggi/scrivi variabile, i primi 2 byte sono l'address dal dizionario.
+            if ((tableLayoutPanelProtocol.ColumnStyles[3].Width != 0)
                 && (comboBoxVariables.Items.Count != 0)
-                && (comboBoxVariables.SelectedIndex >= 0)
-                )
+                && (comboBoxVariables.SelectedIndex >= 0))
             {
                 this.textBox1.Text = "";
                 this.textBox2.Text = "";
-
-                byte AddrL = Convert.FromHexString(Dizionario.ElementAt(comboBoxVariables.SelectedIndex).AddressLow.PadLeft(2, '0'))[0];
-                byte AddrH = Convert.FromHexString(Dizionario.ElementAt(comboBoxVariables.SelectedIndex).AddressHigh.PadLeft(2, '0'))[0];
-                if (byteList.Count() < 1)
-                {
-                    byteList.Add(AddrH);
-                }
-                else byteList[0] = AddrH;
-
-
-                if (byteList.Count() < 2)
-                {
-                    byteList.Add(AddrL);
-                }
-                else byteList[1] = AddrL;
+                var variable = Dizionario.ElementAt(comboBoxVariables.SelectedIndex);
+                byteList.Add(Convert.FromHexString(variable.AddressHigh.PadLeft(2, '0'))[0]);
+                byteList.Add(Convert.FromHexString(variable.AddressLow.PadLeft(2, '0'))[0]);
             }
 
-            // Itera su ogni TextBox
-            foreach (var textBox in textBoxes)
+            // Byte esadecimali dai due TextBox singoli.
+            foreach (var textBox in new[] { this.textBox1, this.textBox2 })
             {
-                if (!string.IsNullOrWhiteSpace(textBox.Text)) // Ignora TextBox vuoti o spazi bianchi
+                if (string.IsNullOrWhiteSpace(textBox.Text)) continue;
+                if (!byte.TryParse(textBox.Text, NumberStyles.HexNumber, null, out var value))
                 {
-                    if (byte.TryParse(textBox.Text, System.Globalization.NumberStyles.HexNumber, null, out byte value))
-                    {
-                        byteList.Add(value); // Aggiungi il valore valido alla lista
-                    }
-                    else
-                    {
-                        MessageBox.Show($"Valore non valido nel campo {textBox.Name}. Inserisci un valore esadecimale valido (0-FF).",
-                                        "Errore di input", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return; // Esce se c'  un errore di input
-                    }
+                    MessageBox.Show($"Valore non valido nel campo {textBox.Name}. Inserisci un valore esadecimale valido (0-FF).",
+                                    "Errore di input", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
-            }
-
-            //Estrai i dati aggiuntivi dall'ultimo textbox
-
-            // Legge il testo dal TextBox
-            string input = textBox3.Text;
-
-            // Suddivide la stringa in base allo spazio
-            string[] hexValues = input.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (string hex in hexValues)
-            {
-                // Converte la stringa esadecimale in byte
-                byte value = byte.Parse(hex, NumberStyles.HexNumber);
                 byteList.Add(value);
             }
 
-            byte[] payload = byteList.ToArray();
-
-            //TL
-            byte cryptFlag = 0x00;         // Nessuna crittografia
-
-            //NL
-            //string interfaceType = "can";   // Interfaccia CAN
-            //string interfaceType = "ble";   // Interfaccia ble
-            string interfaceType = CommunicationPort;
-            int version = 1;                                // Versione del protocollo
-            uint recipientId = this.RecipientId;   // ID del destinatario
-
-
-            // Crea direttamente il pacchetto di livello Network
-            var networkLayer = new NetworkLayer(
-                interfaceType,
-                version,
-                recipientId,
-                new byte[] { cryptFlag, (byte)this.senderId, (byte)(this.senderId >> 8), (byte)(this.senderId >> 16), (byte)(this.senderId >> 24), 0, 0, cmdInit, cmdOpt }.Concat(payload).ToArray(),
-                true
-            );
-
-            //stampa cosa stai spedendo
-            AppLayerSendEventArgs EventArgs = new AppLayerSendEventArgs(networkLayer);
-            AppLayerCommandSended?.Invoke(this, EventArgs);
-
-            // Ottieni i pacchetti suddivisi per il basso livello 
-            var networkPackets = networkLayer.NetworkPackets;
-
-            var packetManager = new PacketManager(this.senderId);
-            bool result = false;
-
-            switch (CommunicationPort)
+            // Byte aggiuntivi dal textbox multi-valore (separati da spazio).
+            foreach (string hex in textBox3.Text.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries))
             {
-                case "can":
-                    // Invia i pacchetti tramite CAN                    
-                    packetManager.Add_CAN_Channel(this._CDL);
-                    result = await packetManager.SendThroughCANAsync(networkPackets);
-                    break;
-                case "ble":
-                    //Invia i pacchetti tramite BLE
-                    packetManager.Add_BLE_Channel(this._BLE_SDL);
-                    result = await packetManager.SendThroughBLEAsync(networkPackets);
-                    break;
-                case "serial":
-                    //Invia i pacchetti tramite seriale
-                    packetManager.Add_Serial_Channel(this._SDL);
-                    result = await packetManager.SendThroughSerialAsync(networkPackets);
-                    break;
+                byteList.Add(byte.Parse(hex, NumberStyles.HexNumber));
             }
+
+            byte[] payload = byteList.ToArray();
+            DisplaySendPacket(command, payload);
+            await protocol.SendCommandAsync(this.RecipientId, command, payload);
+        }
+
+        private void DisplaySendPacket(Command command, byte[] payload)
+        {
+            string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            string line = $"TX - {timestamp}: {command.CodeHigh} {command.CodeLow} " +
+                          string.Join(" ", payload.Select(b => b.ToString("X2"))) + "\n";
+            if (richTextBoxTx.InvokeRequired)
+                richTextBoxTx.BeginInvoke(new Action(() => AppendLog(line)));
+            else
+                AppendLog(line);
+        }
+
+        private void AppendLog(string line)
+        {
+            richTextBoxTx.AppendText(line);
+            richTextBoxTx.SelectionStart = richTextBoxTx.Text.Length;
+            richTextBoxTx.ScrollToCaret();
         }
 
         private void comboBoxCommand_SelectedIndexChanged(object sender, EventArgs e)
@@ -735,258 +546,69 @@ namespace StemPC
         }
 
 
-        public void onAppLayerPacketReady(object sender, PacketReadyEventArgs e)
+        /// <summary>
+        /// Handler dell'evento forward <see cref="ConnectionManager.AppLayerDecoded"/>.
+        /// Emette log nel richTextBox dell'applicazione (suppressa su TOPLIFT: quella
+        /// variante usa solo la tab TopLiftTelemetry per la visualizzazione).
+        /// </summary>
+        private void OnAppLayerDecodedFromConnMgr(object? sender, AppLayerDecodedEvent evt)
         {
-            if ((IndirizziProtocollo == null) || (Comandi == null)) return;
-
-            // Accesso all'array di byte ricevuto
-            byte[] payload = e.Packet;
-            if (payload.Length < 2) return;
-            uint sourceAddress = e.SourceAddress;
-            uint destinationAddress = e.DestinationAddress;
-
-            //ricerca il nome della macchina 
-            string MachineName = new string("Non in tabella");
-            string MachineNameRecipient = new string("Non in tabella");
-
-            foreach (ProtocolAddress Item in IndirizziProtocollo)
-            {
-                if (Item.Address == "0x" + sourceAddress.ToString("X8"))
-                {
-                    MachineName = Item.DeviceName + "->" + Item.BoardName;
-                }
-            }
-
-            foreach (ProtocolAddress Item in IndirizziProtocollo)
-            {
-                if (Item.Address == "0x" + destinationAddress.ToString("X8"))
-                {
-                    MachineNameRecipient = Item.DeviceName + "->" + Item.BoardName;
-                }
-            }
-
-            if (MachineName == "Non in tabella") MachineName = "0x" + sourceAddress.ToString("X8");
-            if (MachineNameRecipient == "Non in tabella") MachineNameRecipient = "0x" + destinationAddress.ToString("X8");
-
-            //Decodifica l'application layer
-            Command CurrentCommand = new Command("None", "0", "0");
-
-            foreach (Command Item in Comandi)
-            {
-                byte CmdL = Convert.FromHexString(Item.CodeLow.PadLeft(2, '0'))[0];
-                byte CmdH = Convert.FromHexString(Item.CodeHigh.PadLeft(2, '0'))[0];
-                if ((payload[0] == CmdH) && (payload[1] == CmdL))
-                {
-                    CurrentCommand = Item;
-                    break;
-                }
-            }
-
-            Variable CurrentVariable = new Variable("None", "0", "0", "");
-
-            //se il comando è leggi variabile logica lo mostro come indicato nel dizionario
-            if (CurrentCommand.Name == "Leggi variabile logica risposta")
-            {
-                foreach (Variable itemtemp in Dizionario)
-                {
-                    byte AddrL = Convert.FromHexString(itemtemp.AddressLow.PadLeft(2, '0'))[0];
-                    byte AddrH = Convert.FromHexString(itemtemp.AddressHigh.PadLeft(2, '0'))[0];
-                    if ((payload[2] == AddrH) && (payload[3] == AddrL))
-                    {
-                        CurrentVariable = itemtemp;
-                        break;
-                    }
-                }
-            }
-
-            //Aggiorna il textbox
-            AppLayerDecoderEventArgs EventArgs = new AppLayerDecoderEventArgs(payload, CurrentCommand, MachineName, MachineNameRecipient, CurrentVariable);
-            AppLayerCommandDecoded?.Invoke(this, EventArgs);
-        }
-
-        // Evento di aggiornamento del richtextbox dell'application layer
-
-        public void onAppLayerDecoded(object sender, AppLayerDecoderEventArgs e)
-        {
-            // Metodo thread-safe per aggiornare lo stato della connessione
-            if (richTextBoxTx.InvokeRequired)
-            {
-                richTextBoxTx.Invoke(new Action(() => AppLayerDecoded(this, e)));
-            }
-            else
-            {
-                AppLayerDecoded(this, e);
-            }
-        }
-
-        public void AppLayerDecoded(object sender, AppLayerDecoderEventArgs e)
-        {
-            // Pannello decodifica applayer nascosto su TOPLIFT (blocco #8 in
-            // PREPROCESSOR_DIRECTIVES.md): TOPLIFT usa TopLiftTelemetry_Tab per la
-            // visualizzazione; il richTextBox generale non viene aggiornato.
             if (_variantConfig.Variant == DeviceVariant.TopLift) return;
+            if (richTextBoxTx.InvokeRequired)
+                richTextBoxTx.BeginInvoke(new Action(() => DisplayDecodedPacket(evt)));
+            else
+                DisplayDecodedPacket(evt);
+        }
 
-            if (e.CurrentCommand.Name != "None")
+        private void DisplayDecodedPacket(AppLayerDecodedEvent evt)
+        {
+            string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            string senderName = (!string.IsNullOrEmpty(evt.SenderDevice) && !string.IsNullOrEmpty(evt.SenderBoard))
+                ? $"{evt.SenderDevice}->{evt.SenderBoard}"
+                : "unknown";
+
+            if (evt.Command.Name != "None")
             {
-                // Ottieni il timestamp
-                string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                //comando riconosciuto
-                richTextBoxTx.AppendText($"RX - {timestamp}: Comando '{e.CurrentCommand.Name} ' da {e.MachineName} per {e.MachineNameRecipient}: ");
-
-                //se il comando   leggi variabile logica lo mostro come   indicato nel dizionario
-                if (e.CurrentCommand.Name == "Leggi variabile logica risposta")
+                richTextBoxTx.AppendText($"RX - {timestamp}: Comando '{evt.Command.Name}' da {senderName}: ");
+                // Se la decode ha associato una Variable (risposta CMD_READ_VARIABLE), mostra value BE.
+                if (evt.Variable is { } variable && variable.Name != "None" && evt.Payload.Length >= 2)
                 {
-                    richTextBoxTx.AppendText($" {e.CurrentVariable.Name}= ");
-                    if (e.CurrentVariable.DataType.Contains("uint8_t"))
-                    {
-                        //visualizza in esadecimale
-                        richTextBoxTx.AppendText("0x");
-                        for (int i = 0; i < 1; i++)
-                        {
-                            richTextBoxTx.AppendText(e.Payload[4 + i].ToString("X2"));
-                        }
-                        //e in decimale
-                        int Val = (e.Payload[4]);
-                        richTextBoxTx.AppendText($" ({Val}) ");
-                    }
-                    else if (e.CurrentVariable.DataType.Contains("uint16_t"))
-                    {
-                        //visualizza in esadecimale
-                        richTextBoxTx.AppendText("0x");
-                        for (int i = 0; i < 2; i++)
-                        {
-                            richTextBoxTx.AppendText(e.Payload[4 + i].ToString("X2"));
-                        }
-                        //e in decimale
-                        int Val = ((e.Payload[4]) << 8) | (e.Payload[5]);
-                        richTextBoxTx.AppendText($" ({Val}) ");
-                    }
-                    else if (e.CurrentVariable.DataType.Contains("uint32_t"))
-                    {
-                        //visualizza in esadecimale
-                        richTextBoxTx.AppendText("0x");
-                        for (int i = 0; i < 4; i++)
-                        {
-                            richTextBoxTx.AppendText(e.Payload[4 + i].ToString("X2"));
-                        }
-                        //e in decimale
-                        int Val = ((e.Payload[4]) << 24) | ((e.Payload[5]) << 16) | ((e.Payload[6]) << 8) | (e.Payload[7]);
-                        richTextBoxTx.AppendText($" ({Val}) ");
-                    }
-                    else if (e.CurrentVariable.DataType.Contains("int8_t"))
-                    {
-                        //visualizza in esadecimale
-                        richTextBoxTx.AppendText("0x");
-                        for (int i = 0; i < 1; i++)
-                        {
-                            richTextBoxTx.AppendText(e.Payload[4 + i].ToString("X2"));
-                        }
-                        //e in decimale
-                        int Val = (e.Payload[4]);
-                        richTextBoxTx.AppendText($" ({Val}) ");
-                    }
-                    else if (e.CurrentVariable.DataType.Contains("int16_t"))
-                    {
-                        //visualizza in esadecimale
-                        richTextBoxTx.AppendText("0x");
-                        for (int i = 0; i < 2; i++)
-                        {
-                            richTextBoxTx.AppendText(e.Payload[4 + i].ToString("X2"));
-                        }
-                        //e in decimale
-                        int Val = ((e.Payload[4]) << 8) | (e.Payload[5]);
-                        richTextBoxTx.AppendText($" ({Val}) ");
-                    }
-                    else if (e.CurrentVariable.DataType.Contains("int32_t"))
-                    {
-                        //visualizza in esadecimale
-                        richTextBoxTx.AppendText("0x");
-                        for (int i = 0; i < 4; i++)
-                        {
-                            richTextBoxTx.AppendText(e.Payload[4 + i].ToString("X2"));
-                        }
-                        //e in decimale
-                        int Val = ((e.Payload[4]) << 24) | ((e.Payload[5]) << 16) | ((e.Payload[6]) << 8) | (e.Payload[7]);
-                        richTextBoxTx.AppendText($" ({Val}) ");
-                    }
-                    else if (e.CurrentVariable.DataType.Contains("float"))
-                    {
-                        // Estrai i byte 4-7
-                        byte[] floatBytes = new byte[4];
-                        Array.Copy(e.Payload, 4, floatBytes, 0, 4);
-
-                        // Inverti l'ordine perch  BitConverter usa il little-endian
-                        Array.Reverse(floatBytes);
-
-                        // Converte in float
-                        float Val = BitConverter.ToSingle(floatBytes, 0);
-                        richTextBoxTx.AppendText($" ({Val}) ");
-                    }
-                    else if (e.CurrentVariable.DataType.Contains("bool"))
-                    {
-                        if (e.Payload[4] == 0) richTextBoxTx.AppendText("false ");
-                        else richTextBoxTx.AppendText("true ");
-                    }
+                    richTextBoxTx.AppendText($" {variable.Name}= ");
+                    AppendValueFromReadReply(variable.DataType, evt.Payload);
                 }
             }
             else
             {
-                //comando non riconosciuto
-                richTextBoxTx.AppendText("Comando non presente in dizionario: ");
+                richTextBoxTx.AppendText($"RX - {timestamp}: Comando non presente in dizionario da {senderName}: ");
             }
-
-            //RAW application layer data
             richTextBoxTx.AppendText("[RAW: ");
-            for (int i = 0; i < e.Payload.Count(); i++)
-            {
-                richTextBoxTx.AppendText(e.Payload[i].ToString("X2") + " ");
-            }
-            richTextBoxTx.AppendText(" ]\r\n");
-            // Imposta la posizione del cursore alla fine del testo.
+            foreach (var b in evt.Payload) richTextBoxTx.AppendText(b.ToString("X2") + " ");
+            richTextBoxTx.AppendText("]\r\n");
             richTextBoxTx.SelectionStart = richTextBoxTx.Text.Length;
-            // Esegue lo scroll fino alla posizione del cursore.
             richTextBoxTx.ScrollToCaret();
         }
 
-        public void onAppLayerSended(object sender, AppLayerSendEventArgs e)
+        private void AppendValueFromReadReply(string? dataType, System.Collections.Immutable.ImmutableArray<byte> alPayload)
         {
-            // Metodo thread-safe per aggiornare lo stato della connessione
-            if (this.richTextBoxTx.InvokeRequired)
+            // alPayload layout: [AddrH, AddrL, value_BE...]. I primi 2 byte sono l'address;
+            // la coda è il valore in big-endian (parità col decoder legacy CMD 80 01).
+            int start = 2;
+            int width = (dataType?.Trim()) switch
             {
-                this.richTextBoxTx.Invoke(new Action(() => AppLayerSended(this, e)));
-            }
-            else
-            {
-                AppLayerSended(this, e);
-            }
-        }
+                "uint8_t" or "int8_t" => 1,
+                "uint16_t" or "int16_t" => 2,
+                "uint32_t" or "int32_t" or "float" => 4,
+                "bool" => 1,
+                _ => alPayload.Length - start
+            };
+            if (alPayload.Length < start + width) return;
 
-        public void AppLayerSended(object sender, AppLayerSendEventArgs e)
-        {
-            // stampa il pacchetto dell'application layer
-            //this.richTextBoxTx.AppendText("-- APPLICATION --\n");
-            // Ottieni il timestamp
-            string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-            this.richTextBoxTx.AppendText($"TX - {timestamp}: {string.Join(" ", e.NetLayer.ApplicationPacket.Select(b => b.ToString("X2")))}\n");
+            richTextBoxTx.AppendText("0x");
+            for (int i = 0; i < width; i++) richTextBoxTx.AppendText(alPayload[start + i].ToString("X2"));
 
-            //// stampa il pacchetto del transport layer
-            //this.richTextBoxTx.AppendText("-- TRANSPORT --\n");
-            //this.richTextBoxTx.AppendText($"{string.Join(" ", networkLayer.TransportPacket.Select(b => b.ToString("X2")))}\n");
-
-            //// stampa i pacchetti del network layer
-            //this.richTextBoxTx.AppendText("-- NETWORK --\n");
-            //foreach (var item in networkLayer.NetworkPackets)
-           //{
-            //    // _netInfo, _recipientId, chunk
-            //    this.richTextBoxTx.AppendText($"NetInfo: {string.Join(" ", item.Item1.Select(b => b.ToString("X2")))} ");
-            //    this.richTextBoxTx.AppendText($"Id: {item.Item2.ToString("X2")} ");
-            //    this.richTextBoxTx.AppendText($"Chunk: {string.Join(" ", item.Item3.Select(b => b.ToString("X2")))}\n");
-            //}
-
-            // Imposta la posizione del cursore alla fine del testo.
-            this.richTextBoxTx.SelectionStart = this.richTextBoxTx.Text.Length;
-            // Esegue lo scroll fino alla posizione del cursore.
-            this.richTextBoxTx.ScrollToCaret();
+            uint numericBe = 0;
+            for (int i = 0; i < width; i++) numericBe = (numericBe << 8) | alPayload[start + i];
+            richTextBoxTx.AppendText($" ({numericBe}) ");
         }
 
         // Helper thread-safe: aggiorna label di stato canale (testo + colore) con marshal sul thread UI.
@@ -1002,121 +624,93 @@ namespace StemPC
             label.BackColor = isConnected ? System.Drawing.Color.GreenYellow : System.Drawing.Color.Salmon;
         }
 
-        private void OnPCANConnectionStatusChanged(object sender, bool isConnected)
-            => UpdateConnectionStatus(PCanLabel, isConnected, "PCAN: Connected", "PCAN: Not Connected");
-
-        private void OnSerialConnectionStatusChanged(object sender, bool isConnected)
-            => UpdateConnectionStatus(COMStatusLabel, isConnected, "COM: Connesso", "COM: Non connesso");
-
-        private void OnBLEConnectionStatusChanged(object sender, bool isConnected)
-            => UpdateConnectionStatus(BLEStatusLabel, isConnected, "BLE: Connesso", "BLE: Non connesso");
-
-        //private void cANToolStripMenuItem_Click(object sender, EventArgs e)
-        //{
-        //    CommunicationPort = "can";
-        //    BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
-        //    TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
-        //    cANToolStripMenuItem.Checked = true;
-        //    bluetoothLEToolStripMenuItem.Checked = false;
-        //    serialToolStripMenuItem.Checked = false;
-        //}
-
-        private void bluetoothLEToolStripMenuItem_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Handler forward <see cref="ConnectionManager.StateChanged"/>: aggiorna le 3
+        /// label status (PCAN/BLE/COM) in base al canale che ha cambiato stato.
+        /// </summary>
+        private void OnConnectionStateChanged(object? sender, ConnectionStateSnapshot s)
         {
-            CommunicationPort = "ble";
-            BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
-            TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
-            cANToolStripMenuItem.Checked = false;
-            bluetoothLEToolStripMenuItem.Checked = true;
-            serialToolStripMenuItem.Checked = false;
+            bool connected = s.State == ConnectionState.Connected;
+            switch (s.Channel)
+            {
+                case ChannelKind.Can:
+                    UpdateConnectionStatus(PCanLabel, connected, "PCAN: Connected", "PCAN: Not Connected");
+                    break;
+                case ChannelKind.Ble:
+                    UpdateConnectionStatus(BLEStatusLabel, connected, "BLE: Connesso", "BLE: Non connesso");
+                    break;
+                case ChannelKind.Serial:
+                    UpdateConnectionStatus(COMStatusLabel, connected, "COM: Connesso", "COM: Non connesso");
+                    break;
+            }
         }
+
+        private async void bluetoothLEToolStripMenuItem_Click(object sender, EventArgs e)
+            => await SwitchChannelAsync(ChannelKind.Ble);
 
         private void serialToolStripMenuItem_DropDownOpening(object sender, EventArgs e)
         {
-            // Pulisce eventuali voci precedenti
             serialToolStripMenuItem.DropDownItems.Clear();
-
-            // Aggiorna la lista delle porte disponibili
             _serialPortManager.ScanPorts();
 
-            // Crea una voce di menu per ogni porta
             foreach (string port in _serialPortManager.AvailablePorts)
             {
-                ToolStripMenuItem portItem = new ToolStripMenuItem(port);
-
-                // Aggiunge un gestore per il click
-                portItem.Click += (s, e) =>
+                var portItem = new ToolStripMenuItem(port);
+                portItem.Click += async (_, _) =>
                 {
-                    // Qui puoi fare la connessione alla porta scelta
                     _serialPortManager.Connect(port);
-
-                    CommunicationPort = "serial";
-                    BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
-                    TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
-                    cANToolStripMenuItem.Checked = false;
-                    bluetoothLEToolStripMenuItem.Checked = false;
-                    serialToolStripMenuItem.Checked = true;
-                    //   MessageBox.Show($"Connesso a {port}", "Info");
+                    await SwitchChannelAsync(ChannelKind.Serial);
                 };
-
                 serialToolStripMenuItem.DropDownItems.Add(portItem);
             }
 
-            // Se non ci sono porte, mostra una voce disabilitata
             if (_serialPortManager.AvailablePorts.Count == 0)
             {
-                ToolStripMenuItem noPortsItem = new ToolStripMenuItem("Nessuna porta disponibile");
-                noPortsItem.Enabled = false;
+                var noPortsItem = new ToolStripMenuItem("Nessuna porta disponibile") { Enabled = false };
                 serialToolStripMenuItem.DropDownItems.Add(noPortsItem);
             }
         }
 
-        private void toolStripMenuItem2_Click(object sender, EventArgs e)
-        {
-            _CDL.ChangeBaudrate("pcan", 100000);
+        // I 4 handler baudrate (100/125/250/500 kbps) mantengono il switch a CAN ma non
+        // applicano più runtime change del baudrate: col nuovo stack PCAN il bitrate è
+        // configurato alla creazione di CanPort. TODO: esporre baudrate runtime via CanPort
+        // se serve (ora fix 250kbps).
+        private async void toolStripMenuItem2_Click(object sender, EventArgs e)
+            => await SwitchChannelAsync(ChannelKind.Can);
 
-            CommunicationPort = "can";
-            BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
-            TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
-            cANToolStripMenuItem.Checked = true;
-            bluetoothLEToolStripMenuItem.Checked = false;
-            serialToolStripMenuItem.Checked = false;
+        private async void toolStripMenuItem3_Click(object sender, EventArgs e)
+            => await SwitchChannelAsync(ChannelKind.Can);
+
+        private async void kbpsToolStripMenuItem1_Click(object sender, EventArgs e)
+            => await SwitchChannelAsync(ChannelKind.Can);
+
+        private async void kbpsToolStripMenuItem_Click(object sender, EventArgs e)
+            => await SwitchChannelAsync(ChannelKind.Can);
+
+        /// <summary>
+        /// Attiva il canale indicato tramite <see cref="ConnectionManager.SwitchToAsync"/>,
+        /// aggiorna lo stato UI e propaga il recipient al servizio telemetria appena creato.
+        /// </summary>
+        private async Task SwitchChannelAsync(ChannelKind kind)
+        {
+            try
+            {
+                CurrentChannel = kind;
+                UpdateChannelMenuChecks();
+                await _connMgr.SwitchToAsync(kind);
+                _connMgr.CurrentTelemetry?.UpdateSourceAddress(RecipientId);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Switch canale fallito: {ex.Message}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
-        private void toolStripMenuItem3_Click(object sender, EventArgs e)
+        private void UpdateChannelMenuChecks()
         {
-            _CDL.ChangeBaudrate("pcan", 250000);
-
-            CommunicationPort = "can";
-            BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
-            TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
-            cANToolStripMenuItem.Checked = true;
-            bluetoothLEToolStripMenuItem.Checked = false;
-            serialToolStripMenuItem.Checked = false;
-        }
-
-        private void kbpsToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            _CDL.ChangeBaudrate("pcan", 125000);
-
-            CommunicationPort = "can";
-            BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
-            TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
-            cANToolStripMenuItem.Checked = true;
-            bluetoothLEToolStripMenuItem.Checked = false;
-            serialToolStripMenuItem.Checked = false;
-        }
-
-        private void kbpsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            _CDL.ChangeBaudrate("pcan", 500000);
-
-            CommunicationPort = "can";
-            BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
-            TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
-            cANToolStripMenuItem.Checked = true;
-            bluetoothLEToolStripMenuItem.Checked = false;
-            serialToolStripMenuItem.Checked = false;
+            cANToolStripMenuItem.Checked = CurrentChannel == ChannelKind.Can;
+            bluetoothLEToolStripMenuItem.Checked = CurrentChannel == ChannelKind.Ble;
+            serialToolStripMenuItem.Checked = CurrentChannel == ChannelKind.Serial;
         }
     }
 }
