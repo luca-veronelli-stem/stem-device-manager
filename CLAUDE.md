@@ -9,8 +9,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Build:**
 ```bash
 dotnet build Stem.Device.Manager.slnx
-dotnet build App/App.csproj -c TOPLIFT-A2-Release  # device-specific config
 ```
+La variante device (TopLift/Eden/Egicon/Generic) si imposta a runtime via `Device:Variant` in `App/appsettings.json`; non esistono più build configurations device-specific.
 
 **Test:**
 ```bash
@@ -43,7 +43,7 @@ Infrastructure.Persistence/ [net10.0]               — provider dati dizionari 
 Infrastructure.Protocol/    [net10.0;net10.0-windows] — adapter HW (Can/Ble/Serial), driver nativi
 Services/       [net10.0]                           — logica pura (PacketDecoder, DictionarySnapshot, ...)
 App/            [net10.0-windows, WinForms]         — GUI + protocollo legacy + DI entry point
-Tests/          [dual TFM: net10.0 + net10.0-windows] — 132 test net10.0 / 274 test net10.0-windows
+Tests/          [dual TFM: net10.0 + net10.0-windows] — 278 test net10.0 / 458 test net10.0-windows
 Specs/          [Lean 4]                            — formalizzazioni dei tipi estratti (Phase1/)
 ```
 
@@ -75,7 +75,7 @@ I mock sono manuali (no librerie esterne) in `Tests/Integration/Presenter/Mocks/
 
 ### Build configurations
 
-8 configurazioni: `Debug`, `Release`, `TOPLIFT-A2-Debug`, `TOPLIFT-A2-Release`, `EDEN-Debug`, `EDEN-Release`, `EGICON-Debug`, `EGICON-Release`. Le varianti device usano `#if TOPLIFT / EDEN / EGICON` nel codice.
+2 configurazioni: `Debug` e `Release`. La variante device (TopLift/Eden/Egicon/Generic) è selezionata a runtime tramite `IDeviceVariantConfig` iniettato dal composition root e letto da `Device:Variant` in `appsettings.json`. I blocchi `#if TOPLIFT/EDEN/EGICON` sono stati rimossi nel branch `refactor/remove-ifs` (2026-04-21).
 
 ---
 

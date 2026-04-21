@@ -2,7 +2,7 @@
 
 **Obiettivo:** Portare il progetto da god-object WinForms a clean architecture disaccoppiata e testabile, allineata ai pattern Stem (Production.Tracker, Communication, ButtonPanel.Tester).
 
-**Stato attuale (2026-04-21):** Core/Infrastructure puliti, Services popolato (ProtocolService/TelemetryService/BootService/DictionaryCache/ConnectionManager). Form1 1125 LOC (post-Branch 3 form1-thin-shell, target finale ~250 LOC post-Phase 4). STEMProtocol/ (~2590 LOC) embedded in App, rimosso in Phase 4. 4 tab WF disaccoppiati via DI. Suite: 270 net10.0 / 448 net10.0-windows.
+**Stato attuale (2026-04-21):** Core/Infrastructure puliti, Services popolato (ProtocolService/TelemetryService/BootService/DictionaryCache/ConnectionManager). Form1 1121 LOC (post-Branch 4 remove-ifs, target finale ~250 LOC post-Phase 4). STEMProtocol/ (~2590 LOC) embedded in App, rimosso in Phase 4. 4 tab WF disaccoppiati via DI, zero `#if TOPLIFT/EDEN/EGICON` attivi. 2 build configuration (Debug/Release). Suite: 278 net10.0 / 458 net10.0-windows.
 
 **Vincoli:** WinForms resta (migrazione WPF è Fase 5 futura). Stem.Communication NuGet sostituirà lo stack protocollo ma non è ancora pronto — preparare l'astrazione.
 
@@ -27,8 +27,8 @@ main
                      └─ refactor/protocol-interface ✅ Fase 3 Branch 0 (PR #28)
                          └─ refactor/dictionary-cache ✅ Fase 3 Branch 1 (PR #29)
                              └─ refactor/tab-decoupling ✅ Fase 3 Branch 2 (PR #30)
-                                 └─ refactor/form1-thin-shell ⏳ Fase 3 Branch 3 (in corso)
-                                     └─ refactor/remove-ifs    ⏳ Fase 3 Branch 4
+                                 └─ refactor/form1-thin-shell ✅ Fase 3 Branch 3 (PR #31)
+                                     └─ refactor/remove-ifs    ⏳ Fase 3 Branch 4 (in corso)
                                          └─ refactor/phase-4-protocol-migration-prep
 ```
 
@@ -251,7 +251,7 @@ Disaccoppia i 4 tab WF dalla dipendenza statica `Form1.FormRef`: ctor injection 
 | Form1.LoadDictionaryDataAsync → DictionaryCache | Rimossa propagazione manuale UpdateDictionary | ✅ Branch 2 |
 | DictionaryCacheTests (14) + ConnectionManagerTests (18) + tab smoke (5) | Tests/ | ✅ Branch 1+2 |
 
-### 3.1 Branch 3 `refactor/form1-thin-shell` ⏳ In corso
+### 3.1 Branch 3 `refactor/form1-thin-shell` ✅ Completata (PR #31, 2026-04-21)
 
 **Obiettivo:** Eliminare `Form1.FormRef` dal codice nuovo (tab + Form1 + BLE_Manager) senza toccare il legacy `STEMProtocol/`. Riduzione progressiva di Form1.cs (LOC reduction reale dopo Phase 4).
 
@@ -287,34 +287,27 @@ Non tocca `ConnectionManager.StateChanged` (che emette solo per il canale attivo
 - `STEM_protocol.cs` / `PacketManager.cs` / `BootManager.cs` `FormRef` (32 refs): legacy, Phase 4
 - `Boot_Smart_WF_Tab` line 307 parità legacy `Form1.FormRef.RecipientId = X`: resta finché `STEM_protocol.cs` la legge
 
-### 3.2 Branch 4 `refactor/remove-ifs` ⏳ Non iniziato
+### 3.2 Branch 4 `refactor/remove-ifs` ⏳ In corso (2026-04-21)
 
 **Obiettivo:** Sostituire i blocchi `#if TOPLIFT/EDEN/EGICON` con runtime check su `IDeviceVariantConfig` e rimuovere le build configuration device-specific.
 
-#### 3.2.1 Sostituzione `#if` → runtime variant
+**Strategia pragmatica:** switch su `_variantConfig.Variant` direttamente, con commenti che spiegano il perché di ogni ramo (NO_OVERENGINEERING — niente inflazione di flag booleani). Flag dedicati solo per dati non derivabili dalla variant: `WindowTitle` + `SmartBootDevices`.
 
-14 occorrenze in 7 file (snapshot 2026-04-20): Form1.cs (8), SplashScreen (1), 2 tab (2), Core docs (3). Sostituire con:
-```csharp
-if (_variantConfig.Variant == DeviceVariant.TopLift) { ... }
-```
+#### 3.2.1 Esiti (al 2026-04-21)
 
-#### 3.2.2 Feature flag mancanti
+- **11 blocchi `#if` rimossi** su 4 file (Form1.cs 8, SplashScreen 1, Boot_WF_Tab 1, Telemetry_WF_Tab 1) — zero `#if TOPLIFT/EDEN/EGICON` attivi nel codice
+- **2 flag nuovi in `IDeviceVariantConfig`**: `WindowTitle: string`, `SmartBootDevices: IReadOnlyList<SmartBootDeviceEntry>`
+- **1 tipo nuovo in Core**: `SmartBootDeviceEntry(uint Address, string Name, bool IsKeyboard)`
+- **6 build configuration rimosse** da `App.csproj` e `Stem.Device.Manager.slnx` (TOPLIFT-A2-Debug/Release, EDEN-Debug/Release, EGICON-Debug/Release). Restano solo `Debug` e `Release`.
+- **Iniezione DI**: `IDeviceVariantConfig` iniettato in Form1 (`GetRequiredService`), SplashScreen (ctor), Boot_Interface_Tab (ctor), Telemetry_Tab (ctor)
+- **Test**: +8 (`DeviceVariantConfigTests` esteso: WindowTitle per 4 variant + SmartBootDevices TopLift/Eden/Generic/Egicon) + 2 (tab null-ctor variant) → suite **278 net10.0 / 458 net10.0-windows**
+- **Docs aggiornati**: `Docs/PREPROCESSOR_DIRECTIVES.md` riscritto con mappa blocchi → sostituzioni, `CLAUDE.md` aggiornato (2 build config + test counts)
 
-Estendere `IDeviceVariantConfig` con i flag necessari (vedi `Docs/PREPROCESSOR_DIRECTIVES.md` proposte 1-8). Finalizzare naming.
+#### 3.2.2 Deferred / esclusi
 
-#### 3.2.3 Build configuration cleanup
-
-Rimuovere le 6 configurazioni device-specific da `App.csproj` (TOPLIFT-A2-Debug/Release, EDEN-Debug/Release, EGICON-Debug/Release). Restano solo `Debug` e `Release`. La variant viene da `appsettings.json` (`Device:Variant`).
-
-#### 3.2.4 Aggiornare documentazione
-
-- `Docs/PREPROCESSOR_DIRECTIVES.md`: marcare come rimossi i blocchi convertiti
-- `CLAUDE.md`: aggiornare la riga sulle 8 build configuration
-
-#### 3.2.5 Test
-
-- Verifica che la build con solo `Debug`/`Release` continui a produrre gli eseguibili attesi
-- Eventuali test su `IDeviceVariantConfig` nuovi flag
+- `Core/**` e `README.md` refs a `#if` (3 occorrenze): solo testo esplicativo nei commenti XML, non direttive di preprocessore attive — lasciati come documentazione storica
+- Piping CI `bitbucket-pipelines.yml`: non aveva riferimenti device-specific (build solo `Release` cross-platform)
+- Run check manuale (4 varianti × 2 build): richiede hardware device, fuori scope automatico; UI preserva 1:1 la logica legacy per ogni variant.
 
 ### 3.3 Comandi
 
