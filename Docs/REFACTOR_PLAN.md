@@ -25,10 +25,10 @@ main
              └─ refactor/services-business         ✅ Fase 2 Branch B (PR #26)
                  └─ refactor/services-di-integration ✅ Fase 2 Branch C (PR #27)
                      └─ refactor/protocol-interface ✅ Fase 3 Branch 0 (PR #28)
-                         └─ refactor/phase-3-dictionary-cache ✅ Fase 3 Branch 1 (PR #29)
-                             └─ refactor/phase-3-tab-decoupling ✅ Fase 3 Branch 2 (PR #30)
-                                 └─ refactor/phase-3-form1-thin-shell ⏳ Fase 3 Branch 3 (in corso)
-                                     └─ refactor/phase-3-remove-ifs    ⏳ Fase 3 Branch 4
+                         └─ refactor/dictionary-cache ✅ Fase 3 Branch 1 (PR #29)
+                             └─ refactor/tab-decoupling ✅ Fase 3 Branch 2 (PR #30)
+                                 └─ refactor/form1-thin-shell ⏳ Fase 3 Branch 3 (in corso)
+                                     └─ refactor/remove-ifs    ⏳ Fase 3 Branch 4
                                          └─ refactor/phase-4-protocol-migration-prep
 ```
 
@@ -230,11 +230,11 @@ git checkout -b refactor/phase-2-services-layer
 
 `IProtocolService` estratto in `Core/Interfaces/`, `ProtocolService` lo implementa, `TelemetryService`/`BootService` ctor cambiati a `IProtocolService`. Suite test verde senza modifiche grazie a implicit conversion.
 
-### 3.0bis Branch 1 `refactor/phase-3-dictionary-cache` ✅ Completata (PR #29, 2026-04-21)
+### 3.0bis Branch 1 `refactor/dictionary-cache` ✅ Completata (PR #29, 2026-04-21)
 
 Estrai `DictionaryCache` (cache centralizzata commands+addresses+variables, `LoadAsync`/`SelectByRecipientAsync`/`SelectByDeviceBoardAsync`, evento `DictionaryUpdated`, sincronizzazione automatica con `IPacketDecoder`) e `ConnectionManager` (factory `IProtocolService` runtime, gestisce `SwitchToAsync` con dispose+disconnect+connect, eventi `ActiveChannelChanged`/`StateChanged`) in `Services/Cache/`. Aggiunto `ChannelKind DefaultChannel` a `IDeviceVariantConfig` (TOPLIFT→Can, altre→Ble). Promosso `UpdateDictionary` al contratto `IPacketDecoder`. DI: `AddServices` registra entrambi i nuovi servizi; `AddProtocolInfrastructure` espone i 3 port anche come `IEnumerable<ICommunicationPort>`. Test: 47 nuovi (32 cross-platform + 18 Windows-only ConnectionManager + 5 wiring DI). Suite **268 net10.0** / **441 net10.0-windows**.
 
-### 3.0ter Branch 2 `refactor/phase-3-tab-decoupling` ✅ Completata (PR #30, 2026-04-21)
+### 3.0ter Branch 2 `refactor/tab-decoupling` ✅ Completata (PR #30, 2026-04-21)
 
 Disaccoppia i 4 tab WF dalla dipendenza statica `Form1.FormRef`: ctor injection di `DictionaryCache`, rimozione dei metodi pubblici `UpdateDictionary(IReadOnlyList<Variable>)` in favore di sottoscrizione all'evento `DictionaryUpdated`. Tab refattorizzati: `Boot_Interface_Tab` (legge `_cache.CurrentRecipientId` invece di `Form1.FormRef.RecipientId`), `Boot_Smart_Tab` (multi-board loop line 300 chiama `_cache.SetCurrentRecipientId(X)` — nuova API `DictionaryCache` — parallelamente a `Form1.FormRef.RecipientId = X` per parità legacy finché `STEM_protocol.cs` lo legge), `Telemetry_Tab` + `TopLiftTelemetry_Tab` (sub `DictionaryUpdated`). `BLE_WF_Tab`/`CAN_WF_Tab` esclusi dallo scope (nessun consumer dizionario). `Form1.LoadDictionaryDataAsync` ora usa `_dictionaryCache.LoadAsync`/`SelectByRecipientAsync` direttamente (una sola chiamata HTTP, notifica tab via evento); rimosse tutte le 5 chiamate `*.UpdateDictionary(Dizionario)`. `TelemetryManager`/`BootManager` restano invariati dentro i tab (rimossi in Phase 4 con lo stack `STEMProtocol/`). Test: 5 smoke test Windows-only (null-ctor + propagation). Suite **270 net10.0** / **448 net10.0-windows**.
 
@@ -251,7 +251,7 @@ Disaccoppia i 4 tab WF dalla dipendenza statica `Form1.FormRef`: ctor injection 
 | Form1.LoadDictionaryDataAsync → DictionaryCache | Rimossa propagazione manuale UpdateDictionary | ✅ Branch 2 |
 | DictionaryCacheTests (14) + ConnectionManagerTests (18) + tab smoke (5) | Tests/ | ✅ Branch 1+2 |
 
-### 3.1 Branch 3 `refactor/phase-3-form1-thin-shell` ⏳ In corso
+### 3.1 Branch 3 `refactor/form1-thin-shell` ⏳ In corso
 
 **Obiettivo:** Eliminare `Form1.FormRef` dal codice nuovo (tab + Form1 + BLE_Manager) senza toccare il legacy `STEMProtocol/`. Riduzione progressiva di Form1.cs (LOC reduction reale dopo Phase 4).
 
@@ -287,7 +287,7 @@ Non tocca `ConnectionManager.StateChanged` (che emette solo per il canale attivo
 - `STEM_protocol.cs` / `PacketManager.cs` / `BootManager.cs` `FormRef` (32 refs): legacy, Phase 4
 - `Boot_Smart_WF_Tab` line 307 parità legacy `Form1.FormRef.RecipientId = X`: resta finché `STEM_protocol.cs` la legge
 
-### 3.2 Branch 4 `refactor/phase-3-remove-ifs` ⏳ Non iniziato
+### 3.2 Branch 4 `refactor/remove-ifs` ⏳ Non iniziato
 
 **Obiettivo:** Sostituire i blocchi `#if TOPLIFT/EDEN/EGICON` con runtime check su `IDeviceVariantConfig` e rimuovere le build configuration device-specific.
 
@@ -320,7 +320,7 @@ Rimuovere le 6 configurazioni device-specific da `App.csproj` (TOPLIFT-A2-Debug/
 
 ```bash
 # Branch 3 — form1 thin shell (in corso)
-git checkout -b refactor/phase-3-form1-thin-shell
+git checkout -b refactor/form1-thin-shell
 # Commit 1: BLE_Manager event LogMessageEmitted
 # Commit 2: Form1 internal self-reference cleanup (Form1.FormRef.X -> this.X)
 # Commit 3: unificare handler connection status in helper
@@ -328,7 +328,7 @@ git checkout -b refactor/phase-3-form1-thin-shell
 # Verificare: dotnet test Tests/Tests.csproj
 
 # Branch 4 — remove-ifs
-git checkout -b refactor/phase-3-remove-ifs
+git checkout -b refactor/remove-ifs
 # Estendere IDeviceVariantConfig con feature flag
 # Sostituire #if TOPLIFT/EDEN/EGICON con runtime check (un commit per file)
 # Rimuovere build configuration device-specific da App.csproj
