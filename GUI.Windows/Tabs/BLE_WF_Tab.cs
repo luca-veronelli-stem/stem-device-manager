@@ -12,10 +12,15 @@ public partial class BLEInterfaceTab : TabPage
     // Definisci il MemoryStream a livello di classe
     private MemoryStream gifStream;
 
+    // Driver BLE condiviso con il BlePort (registrato come singleton in DI). Iniettato
+    // via ctor: il tab deve usare la STESSA istanza del BlePort, altrimenti il port
+    // non vede il ConnectionStatusChanged emesso dopo connect e SendAsync fallisce.
     public BLEManager bleManager;
 
-    public BLEInterfaceTab()
+    public BLEInterfaceTab(BLEManager bleManager)
     {
+        ArgumentNullException.ThrowIfNull(bleManager);
+        this.bleManager = bleManager;
         InitializeComponent();
     }
 
@@ -68,7 +73,8 @@ public partial class BLEInterfaceTab : TabPage
         comboBoxConnectOptions.SelectedIndex = 0; // Imposta l'opzione di default
         Controls.Add(comboBoxConnectOptions);
 
-        bleManager = new BLEManager();
+        // Niente `new BLEManager()`: l'istanza è iniettata via ctor dal Form1 (la stessa
+        // registrata in DI come IBleDriver e usata dal BlePort).
         bleManager.OnDeviceDiscovered += BleManager_OnDeviceDiscovered;
         bleManager.OnScanCompleted += BleManager_OnScanCompleted; // Aggiungi un evento di fine scansione
     }

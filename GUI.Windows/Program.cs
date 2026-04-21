@@ -58,8 +58,14 @@ namespace GUI.Windows
 
             // Driver hardware legacy (Phase 4: spostati in Infrastructure.Protocol/Legacy/).
             // Verranno sostituiti quando Stem.Communication NuGet sarà disponibile.
-            services.AddSingleton<IBleDriver, BLEManager>();
-            services.AddSingleton<ISerialDriver, SerialPortManager>();
+            // Registriamo come tipo concreto + alias interfaccia perché UI tab (BLE_WF_Tab)
+            // e Form1 hanno bisogno dell'istanza concreta (per API non esposte dall'interfaccia,
+            // es. StartScanningAsync/ScanPorts). Lo stesso singleton viene risolto via IBleDriver
+            // dal BlePort: non crea istanze multiple con stato desincronizzato.
+            services.AddSingleton<BLEManager>();
+            services.AddSingleton<IBleDriver>(sp => sp.GetRequiredService<BLEManager>());
+            services.AddSingleton<SerialPortManager>();
+            services.AddSingleton<ISerialDriver>(sp => sp.GetRequiredService<SerialPortManager>());
 
             // Adapter HW (CanPort/BlePort/SerialPort) + driver PCAN-USB
             services.AddProtocolInfrastructure();
