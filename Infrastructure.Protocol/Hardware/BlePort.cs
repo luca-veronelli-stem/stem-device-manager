@@ -31,9 +31,6 @@ namespace Infrastructure.Protocol.Hardware;
 /// </summary>
 public sealed class BlePort : ICommunicationPort
 {
-    private const int ConnectPollAttempts = 20;
-    private const int ConnectPollIntervalMs = 100;
-
     private readonly IBleDriver _driver;
     private readonly Lock _stateLock = new();
     private int _state;
@@ -66,25 +63,21 @@ public sealed class BlePort : ICommunicationPort
     public event EventHandler<ConnectionState>? StateChanged;
 
     /// <inheritdoc/>
-    public async Task ConnectAsync(CancellationToken ct = default)
+    /// <remarks>
+    /// Il ciclo scan/select/connect BLE è pilotato dalla UI (<c>BLE_WF_Tab</c>) tramite
+    /// l'API del driver (<see cref="IBleDriver.ConnectToAsync"/>). Questo metodo quindi
+    /// non tenta di attivare il driver: allinea semplicemente lo stato del port a quello
+    /// corrente del driver. Se il driver non è ancora connesso, il port resta
+    /// <see cref="ConnectionState.Disconnected"/> e si aggiornerà automaticamente via
+    /// <see cref="IBleDriver.ConnectionStatusChanged"/> quando la UI completa la connessione.
+    /// </remarks>
+    public Task ConnectAsync(CancellationToken ct = default)
     {
         ThrowIfDisposed();
-        if (State == ConnectionState.Connected) return;
-        Transition(ConnectionState.Connecting);
-        for (int attempt = 0; attempt < ConnectPollAttempts; attempt++)
-        {
-            ct.ThrowIfCancellationRequested();
-            if (_driver.IsConnected)
-            {
-                Transition(ConnectionState.Connected);
-                return;
-            }
-            await Task.Delay(ConnectPollIntervalMs, ct);
-        }
-        Transition(ConnectionState.Error);
-        throw new InvalidOperationException(
-            "Timeout: driver BLE non ha raggiunto lo stato Connected. " +
-            "La connessione BLE deve essere inizializzata via API del driver.");
+        ct.ThrowIfCancellationRequested();
+        if (_driver.IsConnected && State != ConnectionState.Connected)
+            Transition(ConnectionState.Connected);
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc/>

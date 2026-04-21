@@ -1,5 +1,5 @@
 ﻿//using System.Reflection.Emit;
-using App.Properties;
+using GUI.Windows.Properties;
 using Core.Models;
 using OxyPlot;
 using OxyPlot.Axes;

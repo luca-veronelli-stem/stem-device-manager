@@ -164,6 +164,20 @@ namespace Infrastructure.Protocol.Legacy
                 // Ferma la scansione
                 await StopScanningAsync();
 
+                // Se c'è già una connessione precedente (es. l'utente ha selezionato
+                // un altro device dopo averne connesso uno), chiudila in modo pulito:
+                // Plugin.BLE internamente dispone le strutture del device vecchio quando
+                // ne connetti uno nuovo, causando ObjectDisposedException se i riferimenti
+                // rxCharacteristic/txCharacteristic/connectedDevice sono ancora in uso.
+                if (connectedDevice != null)
+                {
+                    try { await DisconnectAsync(); }
+                    catch (Exception disconnectEx)
+                    {
+                        Debug.WriteLine($"Pre-connect cleanup fallito (continuo): {disconnectEx.Message}");
+                    }
+                }
+
                 // Trova il dispositivo per nome
                 var deviceEntry = discoveredDevices.FirstOrDefault(d => d.Value == deviceName);
                 if (deviceEntry.Key == Guid.Empty)
@@ -243,9 +257,17 @@ namespace Infrastructure.Protocol.Legacy
 
                 MonitorDeviceConnection();
             }
+            catch (ObjectDisposedException ode)
+            {
+                ErrorOccurred?.Invoke("Errore Connessione",
+                    $"Cannot access a disposed object (ObjectName={ode.ObjectName ?? "?"}). " +
+                    "Se il problema persiste, riavvia l'applicazione.");
+                ConnectionStatusChanged?.Invoke(this, false);
+            }
             catch (Exception ex)
             {
-                ErrorOccurred?.Invoke("Errore Connessione", $"Errore durante la connessione: {ex.Message}");
+                ErrorOccurred?.Invoke("Errore Connessione",
+                    $"Errore durante la connessione ({ex.GetType().Name}): {ex.Message}");
                 ConnectionStatusChanged?.Invoke(this, false);
             }
         }
@@ -308,30 +330,31 @@ namespace Infrastructure.Protocol.Legacy
             // Verifica se il dispositivo è connesso
             if (connectedDevice == null || connectedDevice.State != DeviceState.Connected)
             {
-                Debug.WriteLine("Impossibile inviare dati: dispositivo non connesso");
+                ErrorOccurred?.Invoke("Errore BLE TX", "Dispositivo BLE non connesso.");
                 return false;
             }
 
             // Verifica se abbiamo una caratteristica RX valida
             if (rxCharacteristic == null || !rxCharacteristic.CanWrite)
             {
-                Debug.WriteLine("Impossibile inviare dati: caratteristica RX non disponibile o non scrivibile");
+                ErrorOccurred?.Invoke("Errore BLE TX",
+                    "Caratteristica RX non disponibile o non scrivibile.");
                 return false;
             }
 
             try
             {
-                // Invia i dati alla caratteristica RX
                 await rxCharacteristic.WriteAsync(data);
-
                 Debug.WriteLine($"Invio dati riuscito: {data.Length} bytes");
-                //   Debug.WriteLine("Bytes: " + BitConverter.ToString(data)); //debug dati in uscita
-
                 return true;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Errore durante l'invio dei dati: {ex.Message}");
+                // Propaga il messaggio di errore reale al consumer UI (BlePort → ProtocolService)
+                // invece di silenziarlo: è essenziale per diagnosticare problemi di device
+                // specifici (MTU, caratteristiche, permissioni).
+                ErrorOccurred?.Invoke("Errore BLE TX",
+                    $"WriteAsync fallita ({data.Length} byte, WriteType={rxCharacteristic.WriteType}): {ex.Message}");
                 return false;
             }
         }

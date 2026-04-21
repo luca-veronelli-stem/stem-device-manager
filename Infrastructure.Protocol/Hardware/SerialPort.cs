@@ -28,9 +28,6 @@ namespace Infrastructure.Protocol.Hardware;
 /// </summary>
 public sealed class SerialPort : ICommunicationPort
 {
-    private const int ConnectPollAttempts = 20;
-    private const int ConnectPollIntervalMs = 100;
-
     private readonly ISerialDriver _driver;
     private readonly Lock _stateLock = new();
     private int _state;
@@ -63,25 +60,21 @@ public sealed class SerialPort : ICommunicationPort
     public event EventHandler<ConnectionState>? StateChanged;
 
     /// <inheritdoc/>
-    public async Task ConnectAsync(CancellationToken ct = default)
+    /// <remarks>
+    /// L'apertura della porta COM è pilotata dalla UI (menu seriale in <c>Form1</c>)
+    /// tramite l'API del driver (<see cref="ISerialDriver.Connect"/>). Questo metodo
+    /// non tenta di aprire la porta: allinea lo stato del port a quello corrente del
+    /// driver. Se la porta non è ancora aperta, il port resta
+    /// <see cref="ConnectionState.Disconnected"/> e si aggiornerà automaticamente via
+    /// <see cref="ISerialDriver.ConnectionStatusChanged"/> quando la UI seleziona la porta.
+    /// </remarks>
+    public Task ConnectAsync(CancellationToken ct = default)
     {
         ThrowIfDisposed();
-        if (State == ConnectionState.Connected) return;
-        Transition(ConnectionState.Connecting);
-        for (int attempt = 0; attempt < ConnectPollAttempts; attempt++)
-        {
-            ct.ThrowIfCancellationRequested();
-            if (_driver.IsConnected)
-            {
-                Transition(ConnectionState.Connected);
-                return;
-            }
-            await Task.Delay(ConnectPollIntervalMs, ct);
-        }
-        Transition(ConnectionState.Error);
-        throw new InvalidOperationException(
-            "Timeout: driver seriale non ha raggiunto lo stato Connected. " +
-            "La porta COM deve essere aperta via API del driver.");
+        ct.ThrowIfCancellationRequested();
+        if (_driver.IsConnected && State != ConnectionState.Connected)
+            Transition(ConnectionState.Connected);
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc/>

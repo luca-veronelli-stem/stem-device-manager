@@ -482,7 +482,7 @@
             // 
             toolStripSplitButton3.DisplayStyle = ToolStripItemDisplayStyle.Image;
             toolStripSplitButton3.DropDownItems.AddRange(new ToolStripItem[] { toolStripMenuItem1 });
-            toolStripSplitButton3.Image = App.Properties.Resources.ic_fluent_serial_port_24_filled;
+            toolStripSplitButton3.Image = GUI.Windows.Properties.Resources.ic_fluent_serial_port_24_filled;
             toolStripSplitButton3.ImageTransparentColor = Color.Magenta;
             toolStripSplitButton3.Name = "toolStripSplitButton3";
             toolStripSplitButton3.Size = new Size(32, 20);

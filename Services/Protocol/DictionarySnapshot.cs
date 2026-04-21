@@ -86,8 +86,13 @@ public sealed record DictionarySnapshot(
     private static bool HexUInt32Equals(string hex, uint value)
     {
         if (string.IsNullOrEmpty(hex)) return false;
+        // ProtocolAddress.Address arriva nel formato "0x00080381" (con prefisso).
+        // uint.TryParse(NumberStyles.HexNumber) non accetta il prefisso: lo rimuoviamo.
+        var span = hex.AsSpan();
+        if (span.Length >= 2 && span[0] == '0' && (span[1] == 'x' || span[1] == 'X'))
+            span = span[2..];
         return uint.TryParse(
-            hex.AsSpan(),
+            span,
             NumberStyles.HexNumber,
             CultureInfo.InvariantCulture,
             out var parsed) && parsed == value;

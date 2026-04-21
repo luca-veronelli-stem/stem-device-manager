@@ -20,7 +20,7 @@
 ## Struttura
 
 ```
-App/
+GUI.Windows/
 ├── Program.cs                      Entry point + DI setup
 ├── Form1.cs                        Main form (God Object ~54k LOC)
 ├── Form1.Designer.cs               WinForms designer
@@ -112,13 +112,13 @@ viene usato `FallbackDictionaryProvider(API, Excel)`. Altrimenti solo `ExcelDict
 
 ```bash
 # Build
-dotnet build App/App.csproj
+dotnet build GUI.Windows/GUI.Windows.csproj
 
 # Esegui
-dotnet run --project App/App.csproj
+dotnet run --project GUI.Windows/GUI.Windows.csproj
 
 # Build per configurazione specifica
-dotnet build App/App.csproj -c TOPLIFT-A2-Release
+dotnet build GUI.Windows/GUI.Windows.csproj -c TOPLIFT-A2-Release
 ```
 
 ---

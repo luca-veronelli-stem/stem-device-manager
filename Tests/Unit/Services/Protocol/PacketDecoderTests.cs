@@ -368,10 +368,12 @@ public class PacketDecoderTests
         var app = applicationPayload ?? [];
         var builder = ImmutableArray.CreateBuilder<byte>(9 + app.Length + 2);
         builder.Add(0x00); // cryptFlag
-        builder.Add((byte)(senderId & 0xFF));
-        builder.Add((byte)((senderId >> 8) & 0xFF));
-        builder.Add((byte)((senderId >> 16) & 0xFF));
+        // senderId big-endian (convention wire del protocollo STEM: il firmware invia
+        // i 4 byte MSB→LSB, specularmente a ProtocolService.BuildTransportPacket).
         builder.Add((byte)((senderId >> 24) & 0xFF));
+        builder.Add((byte)((senderId >> 16) & 0xFF));
+        builder.Add((byte)((senderId >> 8) & 0xFF));
+        builder.Add((byte)(senderId & 0xFF));
         builder.Add(0x00); // lPack hi
         builder.Add(0x00); // lPack lo
         builder.Add(cmdHigh);

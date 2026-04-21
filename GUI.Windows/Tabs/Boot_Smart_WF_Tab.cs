@@ -1,4 +1,4 @@
-﻿using App; // Per CircularProgressBar
+﻿using GUI.Windows; // Per CircularProgressBar
 using Core.Interfaces;
 using Core.Models;
 using Services.Cache;
@@ -83,7 +83,7 @@ public class Boot_Smart_Tab : TabPage
 
         // Crea bottone start
         Assembly asm = Assembly.GetExecutingAssembly();
-        string resName = "App.images.ic_fluent_arrow_download_24_filled.png";
+        string resName = "GUI.Windows.images.ic_fluent_arrow_download_24_filled.png";
         using (Stream s = asm.GetManifestResourceStream(resName))
         {
             if (s == null)

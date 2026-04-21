@@ -1,4 +1,4 @@
-using App;
+using GUI.Windows;
 using Core.Interfaces;
 using Core.Models;
 using Infrastructure.Protocol.Hardware;
@@ -17,9 +17,13 @@ namespace StemPC
         private readonly DictionaryCache _dictionaryCache;
         private readonly ConnectionManager _connMgr;
         private readonly IDeviceVariantConfig _variantConfig;
-        // Driver BLE/Serial iniettati via DI (impl in App/, interfaccia in Infrastructure.Protocol).
-        // Referenziati direttamente per operazioni UI-side (scan porte seriali).
+        // Driver BLE/Serial iniettati via DI (impl in Infrastructure.Protocol.Legacy/).
+        // Referenziati come tipo concreto per operazioni UI-side (scan porte seriali,
+        // StartScanningAsync BLE) e per passare la STESSA istanza al tab BLE — il
+        // BlePort usa lo stesso singleton via IBleDriver, quindi scan+connect sul tab
+        // propaga ConnectionStatusChanged al port.
         private readonly SerialPortManager _serialPortManager;
+        private readonly BLEManager _bleManager;
 
         public const string Software_Version = "2.15";
 
@@ -93,8 +97,8 @@ namespace StemPC
             _dictionaryCache = serviceProvider.GetRequiredService<DictionaryCache>();
             _connMgr = serviceProvider.GetRequiredService<ConnectionManager>();
             _variantConfig = serviceProvider.GetRequiredService<IDeviceVariantConfig>();
-            _serialPortManager = serviceProvider.GetRequiredService<ISerialDriver>() as SerialPortManager
-                ?? throw new InvalidOperationException("ISerialDriver deve essere registrato come SerialPortManager in Program.cs.");
+            _serialPortManager = serviceProvider.GetRequiredService<SerialPortManager>();
+            _bleManager = serviceProvider.GetRequiredService<BLEManager>();
 
             // Canale hardware di default dalla variante.
             CurrentChannel = _variantConfig.DefaultChannel;
@@ -131,8 +135,10 @@ namespace StemPC
             //attiva il check della porta di comunicazione di default
             UpdateChannelMenuChecks();
 
-            //crea e aggiungi il ble manager
-            BLETabRef = new BLEInterfaceTab();
+            //crea e aggiungi il ble manager. Il tab riceve la stessa istanza BLEManager
+            //registrata in DI come IBleDriver del BlePort: scan+connect sul tab → BlePort
+            //vede ConnectionStatusChanged → port Connected → SendAsync funziona.
+            BLETabRef = new BLEInterfaceTab(_bleManager);
             tabControl.TabPages.Add(BLETabRef);
 
             // Sottoscrivi log driver BLE al terminale UI + errori driver BLE/Serial al MessageBox.
@@ -442,7 +448,19 @@ namespace StemPC
 
         private async void buttonSendPS_Click(object sender, EventArgs e)
         {
-            await SendPS_Async(sender, e);
+            // Wrap difensivo: SendPS_Async può lanciare (BLE disconnesso a metà invio,
+            // timeout driver, ObjectDisposedException da Plugin.BLE, ecc). Senza try/catch
+            // l'eccezione risale al SynchronizationContext di WinForms e crasha l'app.
+            // Meglio mostrare MessageBox e lasciare che l'utente ritenti.
+            try
+            {
+                await SendPS_Async(sender, e);
+            }
+            catch (Exception ex)
+            {
+                ShowDriverError("Errore invio",
+                    $"Invio fallito ({ex.GetType().Name}): {ex.Message}");
+            }
         }
 
         private async Task SendPS_Async(object sender, EventArgs e)
@@ -579,9 +597,12 @@ namespace StemPC
         private void DisplayDecodedPacket(AppLayerDecodedEvent evt)
         {
             string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            // Se il sender è nel dizionario mostra "Device->Board", altrimenti mostra l'hex
+            // raw del senderId (parità col legacy che mostrava "0x" + sourceAddress.ToString("X8")
+            // quando la scheda non era in tabella).
             string senderName = (!string.IsNullOrEmpty(evt.SenderDevice) && !string.IsNullOrEmpty(evt.SenderBoard))
                 ? $"{evt.SenderDevice}->{evt.SenderBoard}"
-                : "unknown";
+                : $"0x{evt.SenderId:X8}";
 
             if (evt.Command.Name != "None")
             {
