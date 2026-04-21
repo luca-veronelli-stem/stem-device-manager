@@ -19,12 +19,11 @@ namespace StemPC
 
         public const string Software_Version = "2.15";
 
-#if TOPLIFT
-        public string CommunicationPort = "can";
-#else
+        // Canale hardware corrente (legacy: "can"/"ble"/"serial"). Inizializzato nel ctor
+        // a partire da IDeviceVariantConfig.DefaultChannel. Modificato dai menu handler quando
+        // l'utente cambia canale. Sostituisce il blocco #if TOPLIFT/#else (blocco #1 in
+        // PREPROCESSOR_DIRECTIVES.md): TOPLIFT → "can", altre varianti → "ble".
         public string CommunicationPort = "ble";
-        //       public string CommunicationPort = "serial";
-#endif
 
 
         private UInt16 Prescaler1s = 0;
@@ -149,6 +148,15 @@ namespace StemPC
             _dictionaryProvider = serviceProvider.GetRequiredService<IDictionaryProvider>();
             _dictionaryCache = serviceProvider.GetRequiredService<DictionaryCache>();
             _variantConfig = serviceProvider.GetRequiredService<IDeviceVariantConfig>();
+
+            // Canale hardware di default dalla variante (legacy: stringa invece di enum).
+            CommunicationPort = _variantConfig.DefaultChannel switch
+            {
+                ChannelKind.Can    => "can",
+                ChannelKind.Serial => "serial",
+                _                  => "ble"
+            };
+
             Load += async (_, _) => await LoadDictionaryDataAsync(CancellationToken.None);
 
             // Controlla se il TabControl esiste gi  e crealo se non esiste
