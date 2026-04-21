@@ -65,14 +65,16 @@ public sealed class PacketDecoder : IPacketDecoder
         var command = ResolveCommand(packet.Payload, snapshot);
         if (command is null) return null;
         var variable = ResolveVariable(command, packet.Payload, snapshot);
-        var sender = ResolveSender(packet.Payload, snapshot);
+        var senderId = ReadSenderIdLittleEndian(packet.Payload);
+        var sender = snapshot.FindSender(senderId);
         var appPayload = ExtractApplicationPayload(packet.Payload);
         return new AppLayerDecodedEvent(
             command,
             variable,
             appPayload,
             sender?.DeviceName ?? "",
-            sender?.BoardName ?? "");
+            sender?.BoardName ?? "",
+            senderId);
     }
 
     private static DictionarySnapshot Build(
@@ -105,14 +107,6 @@ public sealed class PacketDecoder : IPacketDecoder
         return snapshot.FindVariable(
             payload[VariableHighIndex],
             payload[VariableLowIndex]);
-    }
-
-    private static ProtocolAddress? ResolveSender(
-        ImmutableArray<byte> payload,
-        DictionarySnapshot snapshot)
-    {
-        var senderId = ReadSenderIdLittleEndian(payload);
-        return snapshot.FindSender(senderId);
     }
 
     private static uint ReadSenderIdLittleEndian(ImmutableArray<byte> payload)

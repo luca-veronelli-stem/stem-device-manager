@@ -12,14 +12,16 @@ namespace Core.Models;
 /// <param name="Command">Comando decodificato dal pacchetto.</param>
 /// <param name="Variable">Variabile associata (solo per comandi di read/write variabile). Null negli altri casi.</param>
 /// <param name="Payload">Byte grezzi del pacchetto. Equality strutturale garantita da <see cref="Equals(AppLayerDecodedEvent)"/>.</param>
-/// <param name="SenderDevice">Nome del device mittente (da <see cref="ProtocolAddress.DeviceName"/>).</param>
-/// <param name="SenderBoard">Nome della board mittente (da <see cref="ProtocolAddress.BoardName"/>).</param>
+/// <param name="SenderDevice">Nome del device mittente (da <see cref="ProtocolAddress.DeviceName"/>). Stringa vuota se non risolto nel dizionario.</param>
+/// <param name="SenderBoard">Nome della board mittente (da <see cref="ProtocolAddress.BoardName"/>). Stringa vuota se non risolto nel dizionario.</param>
+/// <param name="SenderId">Indirizzo raw (uint) del mittente letto dal Transport Layer. Sempre popolato anche se SenderDevice/Board sono vuoti (per diagnostica).</param>
 public sealed record AppLayerDecodedEvent(
     Command Command,
     Variable? Variable,
     ImmutableArray<byte> Payload,
     string SenderDevice,
-    string SenderBoard)
+    string SenderBoard,
+    uint SenderId = 0)
 {
     /// <summary>True se l'evento è associato a una variabile.</summary>
     public bool IsVariableEvent => Variable is not null;
@@ -35,6 +37,7 @@ public sealed record AppLayerDecodedEvent(
             && Variable == other.Variable
             && SenderDevice == other.SenderDevice
             && SenderBoard == other.SenderBoard
+            && SenderId == other.SenderId
             && ImmutableArrayEquality.SequenceEqual(Payload, other.Payload);
     }
 
@@ -45,5 +48,6 @@ public sealed record AppLayerDecodedEvent(
             Variable,
             SenderDevice,
             SenderBoard,
+            SenderId,
             ImmutableArrayEquality.SequenceHash(Payload));
 }

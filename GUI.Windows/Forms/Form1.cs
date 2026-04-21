@@ -585,9 +585,12 @@ namespace StemPC
         private void DisplayDecodedPacket(AppLayerDecodedEvent evt)
         {
             string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            // Se il sender è nel dizionario mostra "Device->Board", altrimenti mostra l'hex
+            // raw del senderId (parità col legacy che mostrava "0x" + sourceAddress.ToString("X8")
+            // quando la scheda non era in tabella).
             string senderName = (!string.IsNullOrEmpty(evt.SenderDevice) && !string.IsNullOrEmpty(evt.SenderBoard))
                 ? $"{evt.SenderDevice}->{evt.SenderBoard}"
-                : "unknown";
+                : $"0x{evt.SenderId:X8}";
 
             if (evt.Command.Name != "None")
             {
