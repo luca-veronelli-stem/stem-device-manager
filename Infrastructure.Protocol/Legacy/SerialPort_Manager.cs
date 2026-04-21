@@ -3,11 +3,13 @@ using System.IO.Ports;
 using Infrastructure.Protocol.Hardware;
 using SysSerialPort = System.IO.Ports.SerialPort;
 
-namespace App
+namespace Infrastructure.Protocol.Legacy
 {
     /// <summary>
-    /// Gestore della comunicazione seriale via COM per applicazioni WinForms (.NET Framework 4.8+).
-    /// Consente di scansionare porte, connettersi, inviare e ricevere dati con eventi.
+    /// Gestore comunicazione seriale via COM. Implementa <see cref="ISerialDriver"/>.
+    /// Vive in Legacy/ come driver di transizione (sarà rimpiazzato da Stem.Communication).
+    /// Disaccoppiato dalla UI: errori di apertura/scansione propagati via evento
+    /// <see cref="ErrorOccurred"/> — il consumer UI-side (Form1) decide come mostrarli.
     /// </summary>
     public class SerialPortManager : ISerialDriver
     {
@@ -17,6 +19,12 @@ namespace App
         public event Action? OnDisconnected;                        // Porta chiusa
         public event EventHandler<SerialPacketEventArgs>? PacketReceived; // Dati ricevuti
         public event EventHandler<bool>? ConnectionStatusChanged;   // Stato connessione (true=connesso)
+
+        /// <summary>
+        /// Errori non-fatali propagati al consumer UI (es. porta non trovata, eccezioni
+        /// di I/O in apertura/scansione). Parametri: (titolo, messaggio).
+        /// </summary>
+        public event Action<string, string>? ErrorOccurred;
 
         // Porta seriale in uso
         private SysSerialPort? serialPort;
@@ -44,8 +52,8 @@ namespace App
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Errore durante la scansione delle porte seriali: {ex.Message}",
-                                "Errore Porta Seriale", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ErrorOccurred?.Invoke("Errore Porta Seriale",
+                    $"Errore durante la scansione delle porte seriali: {ex.Message}");
             }
         }
 
@@ -70,8 +78,7 @@ namespace App
                 // Verifica se la porta è nella lista trovata
                 if (!AvailablePorts.Contains(portName))
                 {
-                    MessageBox.Show($"Porta seriale non trovata: {portName}",
-                                    "Errore Connessione", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    ErrorOccurred?.Invoke("Errore Connessione", $"Porta seriale non trovata: {portName}");
                     return;
                 }
 
@@ -101,8 +108,8 @@ namespace App
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Impossibile connettersi alla porta seriale {portName}: {ex.Message}",
-                                "Errore Connessione", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ErrorOccurred?.Invoke("Errore Connessione",
+                    $"Impossibile connettersi alla porta seriale {portName}: {ex.Message}");
                 ConnectionStatusChanged?.Invoke(this, false);
             }
         }

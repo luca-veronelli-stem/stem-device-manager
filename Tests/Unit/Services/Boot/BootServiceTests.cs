@@ -220,6 +220,70 @@ public class BootServiceTests
         Assert.Equal(BootState.Failed, fixture.Service.State);
     }
 
+    // --- Step separati ---
+
+    [Fact]
+    public async Task StartBootAsync_WithReply_ReturnsTrue()
+    {
+        using var fixture = new Fixture();
+
+        bool ok = await fixture.Service.StartBootAsync(TargetRecipientId);
+
+        Assert.True(ok);
+        var codes = fixture.GetSentCommandCodes();
+        Assert.Single(codes);
+        Assert.Equal((0x00, 0x05), codes[0]);
+    }
+
+    [Fact]
+    public async Task StartBootAsync_NoReply_ReturnsFalse()
+    {
+        using var fixture = new Fixture(autoReply: false);
+
+        bool ok = await fixture.Service.StartBootAsync(TargetRecipientId);
+
+        Assert.False(ok);
+    }
+
+    [Fact]
+    public async Task EndBootAsync_WithReply_ReturnsTrue()
+    {
+        using var fixture = new Fixture();
+
+        bool ok = await fixture.Service.EndBootAsync(TargetRecipientId);
+
+        Assert.True(ok);
+        var codes = fixture.GetSentCommandCodes();
+        Assert.Single(codes);
+        Assert.Equal((0x00, 0x06), codes[0]);
+    }
+
+    [Fact]
+    public async Task RestartAsync_SendsRestartFireAndForget()
+    {
+        using var fixture = new Fixture();
+
+        await fixture.Service.RestartAsync(TargetRecipientId);
+
+        var codes = fixture.GetSentCommandCodes();
+        Assert.Single(codes);
+        Assert.Equal((0x00, 0x0A), codes[0]);
+    }
+
+    [Fact]
+    public async Task UploadBlocksOnlyAsync_SendsBlocksWithoutStartEndRestart()
+    {
+        using var fixture = new Fixture();
+        var firmware = BuildFirmware(length: 16, fwTypeLow: 0x05, fwTypeHigh: 0x00);
+
+        await fixture.Service.UploadBlocksOnlyAsync(firmware, TargetRecipientId);
+
+        Assert.Equal(BootState.Completed, fixture.Service.State);
+        var codes = fixture.GetSentCommandCodes();
+        // Solo BLOCK (00, 07). No START/END/RESTART.
+        Assert.All(codes, c => Assert.Equal((0x00, 0x07), c));
+    }
+
     // --- Dispose ---
 
     [Fact]

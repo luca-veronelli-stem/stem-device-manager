@@ -1,13 +1,14 @@
-using App.STEMProtocol;
 using Core.Interfaces;
 using Core.Models;
 using Services.Cache;
+using Tests.Unit.Services.Protocol;
 
 namespace Tests.Unit.Tabs;
 
 /// <summary>
-/// Smoke test dell'injection di <see cref="DictionaryCache"/> nei 4 tab refattorizzati
-/// in Branch 2 (<c>refactor/phase-3-tab-decoupling</c>):
+/// Smoke test dell'injection di <see cref="DictionaryCache"/> e
+/// <see cref="ConnectionManager"/> nei 4 tab refattorizzati in Phase 4
+/// (<c>refactor/phase-4-switch-to-new-stack</c>):
 /// <see cref="Boot_Interface_Tab"/>, <see cref="Boot_Smart_Tab"/>,
 /// <see cref="Telemetry_Tab"/>, <see cref="TopLiftTelemetry_Tab"/>.
 ///
@@ -15,8 +16,8 @@ namespace Tests.Unit.Tabs;
 /// App, quindi girano solo sul target <c>net10.0-windows</c>. Tests.csproj esclude
 /// <c>Unit/Tabs/**</c> dal target cross-platform.</para>
 ///
-/// <para><b>Scope:</b> verifica che il ctor rifiuti cache null con
-/// <see cref="ArgumentNullException"/>. L'istanza completa del tab (con UI real)
+/// <para><b>Scope:</b> verifica che il ctor rifiuti argomenti null con
+/// <see cref="ArgumentNullException"/>. L'istanza completa del tab (con UI reale)
 /// non è necessaria perché il throw avviene prima dell'inizializzazione WinForms.</para>
 /// </summary>
 public class TabDependencyInjectionTests
@@ -24,45 +25,85 @@ public class TabDependencyInjectionTests
     [Fact]
     public void BootInterfaceTab_NullCache_Throws()
     {
+        using var fixture = new Fixture();
         var variant = DeviceVariantConfig.Create(DeviceVariant.Generic);
-        Assert.Throws<ArgumentNullException>(() => new Boot_Interface_Tab(null!, variant));
+        Assert.Throws<ArgumentNullException>(
+            () => new Boot_Interface_Tab(null!, fixture.Manager, variant));
+    }
+
+    [Fact]
+    public void BootInterfaceTab_NullConnMgr_Throws()
+    {
+        using var fixture = new Fixture();
+        var variant = DeviceVariantConfig.Create(DeviceVariant.Generic);
+        Assert.Throws<ArgumentNullException>(
+            () => new Boot_Interface_Tab(fixture.Cache, null!, variant));
     }
 
     [Fact]
     public void BootInterfaceTab_NullVariant_Throws()
     {
-        var cache = new DictionaryCache(new FakeDictionaryProvider(), new NoopDecoder());
-        Assert.Throws<ArgumentNullException>(() => new Boot_Interface_Tab(cache, null!));
+        using var fixture = new Fixture();
+        Assert.Throws<ArgumentNullException>(
+            () => new Boot_Interface_Tab(fixture.Cache, fixture.Manager, null!));
     }
 
     [Fact]
     public void BootSmartTab_NullCache_Throws()
     {
-        var rxPacket = new PacketManager(0xFFFFFFFF);
-        Assert.Throws<ArgumentNullException>(() => new Boot_Smart_Tab(rxPacket, null!));
+        using var fixture = new Fixture();
+        Assert.Throws<ArgumentNullException>(
+            () => new Boot_Smart_Tab(null!, fixture.Manager));
+    }
+
+    [Fact]
+    public void BootSmartTab_NullConnMgr_Throws()
+    {
+        using var fixture = new Fixture();
+        Assert.Throws<ArgumentNullException>(
+            () => new Boot_Smart_Tab(fixture.Cache, null!));
     }
 
     [Fact]
     public void TelemetryTab_NullCache_Throws()
     {
-        var rxPacket = new PacketManager(0xFFFFFFFF);
+        using var fixture = new Fixture();
         var variant = DeviceVariantConfig.Create(DeviceVariant.Generic);
-        Assert.Throws<ArgumentNullException>(() => new Telemetry_Tab(rxPacket, null!, variant));
+        Assert.Throws<ArgumentNullException>(
+            () => new Telemetry_Tab(null!, fixture.Manager, variant));
+    }
+
+    [Fact]
+    public void TelemetryTab_NullConnMgr_Throws()
+    {
+        using var fixture = new Fixture();
+        var variant = DeviceVariantConfig.Create(DeviceVariant.Generic);
+        Assert.Throws<ArgumentNullException>(
+            () => new Telemetry_Tab(fixture.Cache, null!, variant));
     }
 
     [Fact]
     public void TelemetryTab_NullVariant_Throws()
     {
-        var rxPacket = new PacketManager(0xFFFFFFFF);
-        var cache = new DictionaryCache(new FakeDictionaryProvider(), new NoopDecoder());
-        Assert.Throws<ArgumentNullException>(() => new Telemetry_Tab(rxPacket, cache, null!));
+        using var fixture = new Fixture();
+        Assert.Throws<ArgumentNullException>(
+            () => new Telemetry_Tab(fixture.Cache, fixture.Manager, null!));
     }
 
     [Fact]
     public void TopLiftTelemetryTab_NullCache_Throws()
     {
-        var rxPacket = new PacketManager(0xFFFFFFFF);
-        Assert.Throws<ArgumentNullException>(() => new TopLiftTelemetry_Tab(rxPacket, null!));
+        using var fixture = new Fixture();
+        Assert.Throws<ArgumentNullException>(
+            () => new TopLiftTelemetry_Tab(null!, fixture.Manager));
+    }
+
+    [Fact]
+    public void TopLiftTelemetryTab_NullConnMgr_Throws()
+    {
+        using var fixture = new Fixture();
+        Assert.Throws<ArgumentNullException>(
+            () => new TopLiftTelemetry_Tab(fixture.Cache, null!));
     }
 
     /// <summary>
@@ -89,6 +130,40 @@ public class TabDependencyInjectionTests
         Assert.Equal(1, fired);
         Assert.Single(cache.Addresses);
         Assert.Single(cache.Commands);
+    }
+
+    /// <summary>
+    /// Bundle minimale per istanziare <see cref="ConnectionManager"/> con port fake:
+    /// tre <see cref="FakeCommunicationPort"/> (Can/Ble/Serial) + decoder noop + variant
+    /// Generic. Sufficiente per i ctor-test che throw prima di attivare alcun canale.
+    /// </summary>
+    private sealed class Fixture : IDisposable
+    {
+        public Fixture()
+        {
+            Cache = new DictionaryCache(new FakeDictionaryProvider(), new NoopDecoder());
+            var ports = new[]
+            {
+                new FakeCommunicationPort(ChannelKind.Can),
+                new FakeCommunicationPort(ChannelKind.Ble),
+                new FakeCommunicationPort(ChannelKind.Serial)
+            };
+            Manager = new ConnectionManager(
+                ports,
+                new NoopDecoder(),
+                DeviceVariantConfig.Create(DeviceVariant.Generic));
+            _ports = ports;
+        }
+
+        public DictionaryCache Cache { get; }
+        public ConnectionManager Manager { get; }
+        private readonly FakeCommunicationPort[] _ports;
+
+        public void Dispose()
+        {
+            Manager.Dispose();
+            foreach (var p in _ports) p.Dispose();
+        }
     }
 
     private sealed class FakeDictionaryProvider : IDictionaryProvider

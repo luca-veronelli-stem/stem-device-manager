@@ -6,35 +6,48 @@ using Core.Models;
 namespace Services.Telemetry;
 
 /// <summary>
-/// Servizio di telemetria veloce. Implementa <see cref="ITelemetryService"/>
-/// usando <see cref="ProtocolService"/> come facade per encode + I/O.
+/// Servizio di telemetria. Implementa <see cref="ITelemetryService"/> usando
+/// <see cref="IProtocolService"/> come facade per encode + I/O.
 ///
 /// <para><b>Protocollo (parità con <c>App.STEMProtocol.TelemetryManager</c>):</b></para>
 /// <list type="bullet">
-/// <item><description><c>CMD_CONFIGURE_TELEMETRY (0x0015)</c> — payload: tipo(4) + destAddr_BE(4) + instance(1) + period_BE(2) + boardAddr_BE(4) + varAddrs(2*N)</description></item>
-/// <item><description><c>CMD_START_TELEMETRY (0x0016)</c> — payload: <c>[instance]</c></description></item>
-/// <item><description><c>CMD_STOP_TELEMETRY (0x0017)</c> — payload: <c>[instance]</c></description></item>
-/// <item><description><c>CMD_TELEMETRY_DATA (0x0018)</c> — RX: header 4 byte (tipo telemetria, deve essere 0x00000000) + valori little-endian per ogni variabile in ordine, ampiezza da <see cref="Variable.DataType"/>.</description></item>
+/// <item><description><c>CMD_READ_VARIABLE (0x0001)</c> — fire: <c>[AddrH, AddrL]</c>. Reply: <c>CMD 80 01</c>, <c>[80,01,AddrH,AddrL, value_BE...]</c>.</description></item>
+/// <item><description><c>CMD_WRITE_VARIABLE (0x0002)</c> — fire: <c>[AddrH, AddrL, value_BE...]</c>.</description></item>
+/// <item><description><c>CMD_CONFIGURE_TELEMETRY (0x0015)</c> — fast: tipo(4) + destAddr_BE(4) + instance(1) + period_BE(2) + boardAddr_BE(4) + varAddrs(2*N).</description></item>
+/// <item><description><c>CMD_START_TELEMETRY (0x0016)</c> — fast: <c>[instance]</c>.</description></item>
+/// <item><description><c>CMD_STOP_TELEMETRY (0x0017)</c> — fast: <c>[instance]</c>.</description></item>
+/// <item><description><c>CMD_TELEMETRY_DATA (0x0018)</c> — RX: header 4 byte zero + valori little-endian per ogni variabile in ordine.</description></item>
 /// </list>
 ///
-/// <para><b>Stato:</b> stopped/running, lista variabili correnti, RecipientId della
-/// scheda sorgente. Tutte le mutazioni sono serializzate da <see cref="Lock"/>.
-/// I pacchetti CMD_TELEMETRY_DATA arrivati a telemetria spenta sono ignorati.</para>
+/// <para><b>Stato:</b> dizionario mutabile (<see cref="AddToDictionary"/> /
+/// <see cref="RemoveFromDictionary"/> / <see cref="ResetDictionary"/>), lista valori
+/// per write in parallelo, running flag, sourceRecipientId. Serializzati via <see cref="Lock"/>.</para>
 ///
-/// <para><b>Indirizzo destinazione:</b> letto da <see cref="ProtocolService.SenderId"/>
-/// — è il nostro indirizzo, presso cui la scheda sorgente invia i pacchetti
-/// di telemetria.</para>
+/// <para><b>DataReceived:</b> emesso per ogni campione decodificato, sia da fast
+/// stream (<see cref="TelemetrySource.FastStream"/>, LE) sia da read reply
+/// (<see cref="TelemetrySource.ReadReply"/>, BE). I pacchetti di fast stream
+/// arrivati a <see cref="IsRunning"/> = false sono ignorati; le reply di read invece
+/// sono sempre processate se la variabile corrispondente è nel dizionario.</para>
 /// </summary>
 public sealed class TelemetryService : ITelemetryService, IDisposable
 {
     private const string TelemetryDataCodeHigh = "00";
     private const string TelemetryDataCodeLow = "18";
+    private const string ReadReplyCodeHigh = "80";
+    private const string ReadReplyCodeLow = "01";
     private const int TelemetryHeaderSize = 4;
+    private const int ReadReplyHeaderSize = 4; // [cmdHi, cmdLo, AddrH, AddrL]
     private const byte DefaultInstance = 0x00;
     private const ushort DefaultPeriodMs = 200;
+    private const int OneShotDelayMs = 150;
+    private const ushort WriteValueMax = 32767;
 
-    // Comandi fissi del protocollo telemetria. Non passano dal dizionario:
-    // sono parte del contratto STEM, non variabili runtime.
+    // Comandi fissi del protocollo. Non passano dal dizionario: sono parte del
+    // contratto STEM, non variabili runtime.
+    private static readonly Command CmdReadVariable =
+        new("ReadVariable", "00", "01");
+    private static readonly Command CmdWriteVariable =
+        new("WriteVariable", "00", "02");
     private static readonly Command CmdConfigureTelemetry =
         new("ConfigureTelemetry", "00", "15");
     private static readonly Command CmdStartTelemetry =
@@ -44,7 +57,8 @@ public sealed class TelemetryService : ITelemetryService, IDisposable
 
     private readonly IProtocolService _protocol;
     private readonly Lock _stateLock = new();
-    private IReadOnlyList<Variable> _currentVariables = [];
+    private readonly List<Variable> _dict = [];
+    private readonly List<string> _writeValues = [];
     private uint _sourceRecipientId;
     private bool _isRunning;
     private bool _disposed;
@@ -74,14 +88,67 @@ public sealed class TelemetryService : ITelemetryService, IDisposable
     /// <inheritdoc/>
     public IReadOnlyList<Variable> CurrentVariables
     {
-        get { lock (_stateLock) return _currentVariables; }
+        get { lock (_stateLock) return _dict.ToArray(); }
     }
 
     /// <inheritdoc/>
     public void UpdateDictionary(IReadOnlyList<Variable> variables)
     {
         ArgumentNullException.ThrowIfNull(variables);
-        lock (_stateLock) _currentVariables = [.. variables];
+        lock (_stateLock)
+        {
+            _dict.Clear();
+            _dict.AddRange(variables);
+        }
+    }
+
+    /// <inheritdoc/>
+    public void AddToDictionary(Variable variable)
+    {
+        ArgumentNullException.ThrowIfNull(variable);
+        lock (_stateLock) _dict.Add(variable);
+    }
+
+    /// <inheritdoc/>
+    public void AddToDictionaryForWrite(Variable variable, string valueText)
+    {
+        ArgumentNullException.ThrowIfNull(variable);
+        ArgumentNullException.ThrowIfNull(valueText);
+        lock (_stateLock)
+        {
+            _dict.Add(variable);
+            _writeValues.Add(valueText);
+        }
+    }
+
+    /// <inheritdoc/>
+    public void RemoveFromDictionary(int index)
+    {
+        lock (_stateLock)
+        {
+            if (index < 0 || index >= _dict.Count) return;
+            _dict.RemoveAt(index);
+        }
+    }
+
+    /// <inheritdoc/>
+    public void ResetDictionary()
+    {
+        lock (_stateLock)
+        {
+            _dict.Clear();
+            _writeValues.Clear();
+        }
+    }
+
+    /// <inheritdoc/>
+    public string GetVariableName(int index)
+    {
+        lock (_stateLock)
+        {
+            if (index < 0 || index >= _dict.Count) return "Index out of range";
+            return _dict[index].Name;
+        }
     }
 
     /// <inheritdoc/>
@@ -94,12 +161,12 @@ public sealed class TelemetryService : ITelemetryService, IDisposable
     public async Task StartFastTelemetryAsync(CancellationToken ct = default)
     {
         ThrowIfDisposed();
-        IReadOnlyList<Variable> variables;
+        List<Variable> variables;
         uint sourceAddr;
         lock (_stateLock)
         {
             if (_isRunning) return;
-            variables = _currentVariables;
+            variables = [.. _dict];
             sourceAddr = _sourceRecipientId;
             _isRunning = true;
         }
@@ -127,6 +194,83 @@ public sealed class TelemetryService : ITelemetryService, IDisposable
     }
 
     /// <inheritdoc/>
+    public async Task ReadOneShotAsync(CancellationToken ct = default)
+    {
+        ThrowIfDisposed();
+        List<Variable> snapshot;
+        uint sourceAddr;
+        lock (_stateLock)
+        {
+            if (_isRunning) return;
+            if (_dict.Count == 0) return;
+            snapshot = [.. _dict];
+            sourceAddr = _sourceRecipientId;
+            _isRunning = true;
+        }
+
+        try
+        {
+            foreach (var variable in snapshot)
+            {
+                ct.ThrowIfCancellationRequested();
+                byte[] addr =
+                [
+                    ParseHexByte(variable.AddressHigh),
+                    ParseHexByte(variable.AddressLow)
+                ];
+                await _protocol.SendCommandAsync(sourceAddr, CmdReadVariable, addr, ct)
+                    .ConfigureAwait(false);
+                await Task.Delay(OneShotDelayMs, ct).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            lock (_stateLock) _isRunning = false;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task WriteOneShotAsync(CancellationToken ct = default)
+    {
+        ThrowIfDisposed();
+        List<(Variable v, string text)> snapshot;
+        uint sourceAddr;
+        lock (_stateLock)
+        {
+            if (_isRunning) return;
+            if (_dict.Count == 0) return;
+            int pairs = Math.Min(_dict.Count, _writeValues.Count);
+            snapshot = new List<(Variable, string)>(pairs);
+            for (int i = 0; i < pairs; i++) snapshot.Add((_dict[i], _writeValues[i]));
+            sourceAddr = _sourceRecipientId;
+            _isRunning = true;
+        }
+
+        try
+        {
+            foreach (var (variable, text) in snapshot)
+            {
+                ct.ThrowIfCancellationRequested();
+                if (!TryParseWriteValue(text, out ushort value)) continue;
+                byte[] payload =
+                [
+                    ParseHexByte(variable.AddressHigh),
+                    ParseHexByte(variable.AddressLow),
+                    (byte)((value >> 8) & 0xFF),
+                    (byte)(value & 0xFF)
+                ];
+                await _protocol.SendCommandAsync(sourceAddr, CmdWriteVariable, payload, ct)
+                    .ConfigureAwait(false);
+                await Task.Delay(OneShotDelayMs, ct).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            lock (_stateLock) _isRunning = false;
+        }
+    }
+
+    /// <inheritdoc/>
     public void Dispose()
     {
         if (_disposed) return;
@@ -137,22 +281,59 @@ public sealed class TelemetryService : ITelemetryService, IDisposable
     private void OnAppLayerDecoded(object? sender, AppLayerDecodedEvent evt)
     {
         if (_disposed) return;
-        if (!IsTelemetryDataCommand(evt.Command)) return;
 
+        if (IsTelemetryDataCommand(evt.Command))
+        {
+            HandleFastTelemetry(evt);
+        }
+        else if (IsReadReplyCommand(evt.Command))
+        {
+            HandleReadReply(evt);
+        }
+    }
+
+    private void HandleFastTelemetry(AppLayerDecodedEvent evt)
+    {
         IReadOnlyList<Variable> variables;
         lock (_stateLock)
         {
             if (!_isRunning) return;
-            variables = _currentVariables;
+            variables = [.. _dict];
         }
 
         var payload = evt.Payload;
         if (!HasValidTelemetryHeader(payload)) return;
 
-        EmitDataPoints(payload, variables);
+        EmitFastStreamDataPoints(payload, variables);
     }
 
-    private void EmitDataPoints(ImmutableArray<byte> payload, IReadOnlyList<Variable> variables)
+    private void HandleReadReply(AppLayerDecodedEvent evt)
+    {
+        // payload = [80, 01, AddrH, AddrL, value_BE...]
+        var payload = evt.Payload;
+        if (payload.Length < ReadReplyHeaderSize + 1) return;
+        byte addrH = payload[2];
+        byte addrL = payload[3];
+
+        IReadOnlyList<Variable> variables;
+        lock (_stateLock) variables = [.. _dict];
+
+        foreach (var variable in variables)
+        {
+            if (ParseHexByte(variable.AddressHigh) != addrH) continue;
+            if (ParseHexByte(variable.AddressLow) != addrL) continue;
+            int width = DataTypeWidth(variable.DataType);
+            if (width == 0) return;
+            if (payload.Length < ReadReplyHeaderSize + width) return;
+            var builder = ImmutableArray.CreateBuilder<byte>(width);
+            for (int i = 0; i < width; i++) builder.Add(payload[ReadReplyHeaderSize + i]);
+            DataReceived?.Invoke(this, new TelemetryDataPoint(
+                variable, builder.MoveToImmutable(), DateTime.UtcNow, TelemetrySource.ReadReply));
+            return;
+        }
+    }
+
+    private void EmitFastStreamDataPoints(ImmutableArray<byte> payload, IReadOnlyList<Variable> variables)
     {
         var timestamp = DateTime.UtcNow;
         int pos = TelemetryHeaderSize;
@@ -165,13 +346,17 @@ public sealed class TelemetryService : ITelemetryService, IDisposable
             for (int i = 0; i < width; i++) rawValue.Add(payload[pos + i]);
             pos += width;
             DataReceived?.Invoke(this, new TelemetryDataPoint(
-                variable, rawValue.MoveToImmutable(), timestamp));
+                variable, rawValue.MoveToImmutable(), timestamp, TelemetrySource.FastStream));
         }
     }
 
     private static bool IsTelemetryDataCommand(Command command)
         => command.CodeHigh == TelemetryDataCodeHigh
         && command.CodeLow == TelemetryDataCodeLow;
+
+    private static bool IsReadReplyCommand(Command command)
+        => command.CodeHigh == ReadReplyCodeHigh
+        && command.CodeLow == ReadReplyCodeLow;
 
     private static bool HasValidTelemetryHeader(ImmutableArray<byte> payload)
     {
@@ -200,6 +385,16 @@ public sealed class TelemetryService : ITelemetryService, IDisposable
             payload[16 + i * 2] = ParseHexByte(variables[i].AddressLow);
         }
         return payload;
+    }
+
+    private static bool TryParseWriteValue(string text, out ushort value)
+    {
+        value = 0;
+        if (!int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed))
+            return false;
+        if (parsed < 0 || parsed > WriteValueMax) return false;
+        value = (ushort)parsed;
+        return true;
     }
 
     private static void WriteUInt32BigEndian(byte[] buffer, int offset, uint value)

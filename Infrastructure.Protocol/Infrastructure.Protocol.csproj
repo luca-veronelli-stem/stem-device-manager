@@ -12,6 +12,16 @@
     <PackageReference Include="Peak.PCANBasic.NET" Version="5.0.1.1131" />
   </ItemGroup>
 
+  <!-- Driver legacy (BLE_Manager/SerialPort_Manager) disponibili solo su Windows.
+       Verranno sostituiti quando arriverà Stem.Communication NuGet. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
+    <PackageReference Include="Plugin.BLE" Version="3.2.0" />
+    <PackageReference Include="System.IO.Ports" Version="10.0.5" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'net10.0-windows10.0.19041.0'">
+    <Compile Remove="Legacy\**" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />
   </ItemGroup>

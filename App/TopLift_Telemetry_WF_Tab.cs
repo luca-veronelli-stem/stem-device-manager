@@ -1,6 +1,5 @@
 ﻿//using System.Reflection.Emit;
 using App.Properties;
-using App.STEMProtocol;
 using Core.Models;
 using OxyPlot;
 using OxyPlot.Axes;
@@ -12,11 +11,9 @@ public class TopLiftTelemetry_Tab : TabPage
 {
     //Cache centralizzata dizionario (sostituisce UpdateDictionary callback)
     private readonly DictionaryCache _cache;
+    private readonly ConnectionManager _connMgr;
     //Lista variabili della macchina (snapshot letto dalla cache)
     private IReadOnlyList<Variable> MachineDictionary = [];
-
-    // Classe per il backend
-    public TelemetryManager telemetryManager;
 
 
     // Dichiarazione dei controlli
@@ -54,10 +51,12 @@ public class TopLiftTelemetry_Tab : TabPage
     private double windowWidth = 100;     // ampiezza della finestra X (es. 10 secondi)
 
 
-    public TopLiftTelemetry_Tab(PacketManager packetManagerRX, DictionaryCache cache)
+    public TopLiftTelemetry_Tab(DictionaryCache cache, ConnectionManager connMgr)
     {
         ArgumentNullException.ThrowIfNull(cache);
+        ArgumentNullException.ThrowIfNull(connMgr);
         _cache = cache;
+        _connMgr = connMgr;
         MachineDictionary = _cache.Variables;
         _cache.DictionaryUpdated += (_, _) => MachineDictionary = _cache.Variables;
 
@@ -65,11 +64,8 @@ public class TopLiftTelemetry_Tab : TabPage
         InitializeCustomComponents();
         SetupEventHandlers();
 
-        // Creazione del gestore per la telemetria
-        telemetryManager = new TelemetryManager(packetManagerRX);
-
-        // Aggiunta del gestore per l'evento DataReady
-        telemetryManager.DataReady += onDataReady;
+        // Sottoscrizione data telemetria via ConnectionManager (re-binding automatico su switch canale).
+        _connMgr.TelemetryDataReceived += onDataReady;
     }
 
     private void InitializeComponent()
@@ -440,9 +436,11 @@ public class TopLiftTelemetry_Tab : TabPage
 
     private async void StartTelemetryButton_Click(object sender, EventArgs e)
     {
-        // Qui inserisci la logica per avviare la telemetria
-        telemetryManager.TelemetryStop();
-        telemetryManager.ResetDictionary();
+        var tel = _connMgr.CurrentTelemetry;
+        if (tel is null) { MessageBox.Show("Select communication channel first!"); return; }
+
+        await tel.StopTelemetryAsync();
+        tel.ResetDictionary();
 
         //Azzera il grafico oxyplot
         time = 0;
@@ -450,16 +448,16 @@ public class TopLiftTelemetry_Tab : TabPage
         ResetPlot(pointSeries2, plotView2);
 
         //Carica in telemetria i dati valvole e pompa
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EVA")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EVB")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EVC")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Valore RAW del potenzio altezza")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato P2A")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato pompa")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Stato finecorsa ")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Valore RAW del potenzio inclinazione")]);
+        tel.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EVA")]);
+        tel.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EVB")]);
+        tel.AddToDictionary(MachineDictionary[GetVariableIndex("Stato EVC")]);
+        tel.AddToDictionary(MachineDictionary[GetVariableIndex("Valore RAW del potenzio altezza")]);
+        tel.AddToDictionary(MachineDictionary[GetVariableIndex("Stato P2A")]);
+        tel.AddToDictionary(MachineDictionary[GetVariableIndex("Stato pompa")]);
+        tel.AddToDictionary(MachineDictionary[GetVariableIndex("Stato finecorsa ")]);
+        tel.AddToDictionary(MachineDictionary[GetVariableIndex("Valore RAW del potenzio inclinazione")]);
 
-        await telemetryManager.TelemetryStart();
+        await tel.StartFastTelemetryAsync();
     }
 
     private int GetVariableIndex(String Name)
@@ -472,84 +470,75 @@ public class TopLiftTelemetry_Tab : TabPage
         return -1;
     }
 
-    private void StopTelemetryButton_Click(object sender, EventArgs e)
+    private async void StopTelemetryButton_Click(object sender, EventArgs e)
     {
-        telemetryManager.TelemetryStop();
-        // Qui inserisci la logica per arrestare la telemetria
+        var tel = _connMgr.CurrentTelemetry;
+        if (tel is null) return;
+        await tel.StopTelemetryAsync();
     }
 
     private async void buttonReadFaults_Click(object sender, EventArgs e)
     {
-        // Qui inserisci la logica per avviare la telemetria
-        telemetryManager.TelemetryStop();
-        telemetryManager.ResetDictionary();
+        var tel = _connMgr.CurrentTelemetry;
+        if (tel is null) { MessageBox.Show("Select communication channel first!"); return; }
 
-        //Carica in telemetria i fault
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Allarmi")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Allarmi")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Allarmi")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Allarmi")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Allarmi")]);
-        await telemetryManager.ReadOneShot();
+        await tel.StopTelemetryAsync();
+        tel.ResetDictionary();
+
+        //Carica in telemetria i fault (5 richieste per robustezza verso pacchetti persi, parità legacy).
+        for (int i = 0; i < 5; i++)
+            tel.AddToDictionary(MachineDictionary[GetVariableIndex("Allarmi")]);
+        await tel.ReadOneShotAsync();
     }
 
     private async void buttonReadSettings_Click(object sender, EventArgs e)
     {
-        // Qui inserisci la logica per avviare la telemetria
-        telemetryManager.TelemetryStop();
-        telemetryManager.ResetDictionary();
+        var tel = _connMgr.CurrentTelemetry;
+        if (tel is null) { MessageBox.Show("Select communication channel first!"); return; }
 
-        //Carica in telemetria i fault
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione giu'")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione orizz.")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza max")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza min")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza min")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Altezza di carico")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Altezza 1 da chiuso")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Altezza 2 da chiuso")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Altezza 3 da chiuso")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Tempo di ritardo all'accensione")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione giu'")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio inclinazione orizz.")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza max")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza min")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Potenzio altezza min")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Altezza di carico")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Altezza 1 da chiuso")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Altezza 2 da chiuso")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Altezza 3 da chiuso")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Tempo di ritardo all'accensione")]);
-        await telemetryManager.ReadOneShot();
+        await tel.StopTelemetryAsync();
+        tel.ResetDictionary();
+
+        //Carica in telemetria i parametri (lista duplicata per robustezza pacchetti persi, parità legacy).
+        string[] settings =
+        {
+            "Potenzio inclinazione giu'", "Potenzio inclinazione orizz.",
+            "Potenzio altezza max", "Potenzio altezza min", "Potenzio altezza min",
+            "Altezza di carico", "Altezza 1 da chiuso", "Altezza 2 da chiuso",
+            "Altezza 3 da chiuso", "Tempo di ritardo all'accensione"
+        };
+        for (int rep = 0; rep < 2; rep++)
+            foreach (var name in settings)
+                tel.AddToDictionary(MachineDictionary[GetVariableIndex(name)]);
+        await tel.ReadOneShotAsync();
     }
 
     private async void buttonWriteSettings_Click(object sender, EventArgs e)
     {
-        // Qui inserisci la logica per avviare la telemetria
-        telemetryManager.TelemetryStop();
-        telemetryManager.ResetDictionary();
+        var tel = _connMgr.CurrentTelemetry;
+        if (tel is null) { MessageBox.Show("Select communication channel first!"); return; }
 
-        //Carica in telemetria i fault
-        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio inclinazione giu'")], textBoxesRow4[3].Text);
-        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio inclinazione orizz.")], textBoxesRow4[2].Text);
-        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio altezza max")], textBoxesRow4[0].Text);
-        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio altezza min")], textBoxesRow4[1].Text);
-        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Altezza di carico")], textBoxesRow4[4].Text);
-        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Altezza 1 da chiuso")], textBoxesRow4[5].Text);
-        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Altezza 2 da chiuso")], textBoxesRow4[6].Text);
-        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Altezza 3 da chiuso")], textBoxesRow4[7].Text);
-        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Tempo di ritardo all'accensione")], textBoxesRow4[8].Text);
-        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio inclinazione giu'")], textBoxesRow4[3].Text);
-        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio inclinazione orizz.")], textBoxesRow4[2].Text);
-        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio altezza max")], textBoxesRow4[0].Text);
-        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Potenzio altezza min")], textBoxesRow4[1].Text);
-        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Altezza di carico")], textBoxesRow4[4].Text);
-        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Altezza 1 da chiuso")], textBoxesRow4[5].Text);
-        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Altezza 2 da chiuso")], textBoxesRow4[6].Text);
-        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Altezza 3 da chiuso")], textBoxesRow4[7].Text);
-        telemetryManager.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex("Tempo di ritardo all'accensione")], textBoxesRow4[8].Text);
+        await tel.StopTelemetryAsync();
+        tel.ResetDictionary();
 
-        await telemetryManager.WriteOneShot();
+        //Carica in telemetria i parametri da scrivere (lista duplicata, parità legacy).
+        (string varName, int textBoxIndex)[] writes =
+        {
+            ("Potenzio inclinazione giu'", 3),
+            ("Potenzio inclinazione orizz.", 2),
+            ("Potenzio altezza max", 0),
+            ("Potenzio altezza min", 1),
+            ("Altezza di carico", 4),
+            ("Altezza 1 da chiuso", 5),
+            ("Altezza 2 da chiuso", 6),
+            ("Altezza 3 da chiuso", 7),
+            ("Tempo di ritardo all'accensione", 8)
+        };
+        for (int rep = 0; rep < 2; rep++)
+            foreach (var (varName, idx) in writes)
+                tel.AddToDictionaryForWrite(MachineDictionary[GetVariableIndex(varName)], textBoxesRow4[idx].Text);
+
+        await tel.WriteOneShotAsync();
 
         buttonReadSettings_Click(this, EventArgs.Empty);
     }
@@ -646,64 +635,65 @@ public class TopLiftTelemetry_Tab : TabPage
         plotView.InvalidatePlot(true);
     }
 
-    private async void onDataReady(object sender, DataReadyEventArgs e)
+    private void onDataReady(object sender, TelemetryDataPoint dp)
     {
         //Verifica quale variabile arriva e completa i campi di conseguenza
-        String VarName = telemetryManager.GetVariableName(e.ListIndex);
+        String VarName = dp.Variable.Name;
+        uint value = dp.NumericValue;
         switch (VarName)
         {
             case "Stato EVA":
-                if (e.Value != 0) imageStates[0] = true;
+                if (value != 0) imageStates[0] = true;
                 else imageStates[0] = false;
                 UpdateImageDisplay(0);
                 break;
             case "Stato EVB":
-                if (e.Value != 0) imageStates[1] = true;
+                if (value != 0) imageStates[1] = true;
                 else imageStates[1] = false;
                 UpdateImageDisplay(1);
                 break;
             case "Stato EVC":
-                if (e.Value != 0) imageStates[2] = true;
+                if (value != 0) imageStates[2] = true;
                 else imageStates[2] = false;
                 UpdateImageDisplay(2);
                 break;
             case "Stato P2A":
-                if (e.Value != 0) imageStates[3] = true;
+                if (value != 0) imageStates[3] = true;
                 else imageStates[3] = false;
                 UpdateImageDisplay(3);
                 break;
             case "Stato pompa":
-                if (e.Value != 0) imageStates[4] = true;
+                if (value != 0) imageStates[4] = true;
                 else imageStates[4] = false;
                 UpdateImageDisplay(4);
                 break;
             case "Stato finecorsa ":
-                if ((e.Value & 0x01) != 0) imageStates[5] = true;
+                if ((value & 0x01) != 0) imageStates[5] = true;
                 else imageStates[5] = false;
                 UpdateImageDisplay(5);
 
-                if ((e.Value & 0x02) != 0) imageStates[6] = true;
+                if ((value & 0x02) != 0) imageStates[6] = true;
                 else imageStates[6] = false;
                 UpdateImageDisplay(6);
                 break;
             case "Valore RAW del potenzio altezza":
                 {
                     time += 1;
-                    if (e.Value != 0)
-                        UpdatePlot(e.Value, pointSeries1, xAxis1, plotView1);
+                    if (value != 0)
+                        UpdatePlot(value, pointSeries1, xAxis1, plotView1);
                 }
                 break;
             case "Valore RAW del potenzio inclinazione":
                 {
                     time += 1;
-                    if (e.Value != 0)
-                        UpdatePlot(e.Value, pointSeries2, xAxis2, plotView2);
+                    if (value != 0)
+                        UpdatePlot(value, pointSeries2, xAxis2, plotView2);
                 }
                 break;
             case "Allarmi":
                 {
                     string FaultString = null;
-                    uint FaultValue = e.Value;
+                    uint FaultValue = value;
 
                     // FaultValue = 0xFFFFFFFF;
 
@@ -775,98 +765,43 @@ public class TopLiftTelemetry_Tab : TabPage
                 }
                 break;
             case "Potenzio inclinazione giu'":
-                if (this.InvokeRequired)
-                {
-                    this.Invoke(new Action(() => textBoxesRow4[3].Text = e.Value.ToString()));
-                }
-                else
-                {
-                    textBoxesRow4[3].Text = e.Value.ToString();
-                }
+                SetTextBoxSafe(textBoxesRow4[3], value.ToString());
                 break;
             case "Potenzio inclinazione orizz.":
-                if (this.InvokeRequired)
-                {
-                    this.Invoke(new Action(() => textBoxesRow4[2].Text = e.Value.ToString()));
-                }
-                else
-                {
-                    textBoxesRow4[2].Text = e.Value.ToString();
-                }
+                SetTextBoxSafe(textBoxesRow4[2], value.ToString());
                 break;
             case "Potenzio altezza max":
-                if (this.InvokeRequired)
-                {
-                    this.Invoke(new Action(() => textBoxesRow4[0].Text = e.Value.ToString()));
-                }
-                else
-                {
-                    textBoxesRow4[0].Text = e.Value.ToString();
-                }
+                SetTextBoxSafe(textBoxesRow4[0], value.ToString());
                 break;
             case "Potenzio altezza min":
-                if (this.InvokeRequired)
-                {
-                    this.Invoke(new Action(() => textBoxesRow4[1].Text = e.Value.ToString()));
-                }
-                else
-                {
-                    textBoxesRow4[1].Text = e.Value.ToString();
-                }
+                SetTextBoxSafe(textBoxesRow4[1], value.ToString());
                 break;
             case "Altezza di carico":
-                if (this.InvokeRequired)
-                {
-                    this.Invoke(new Action(() => textBoxesRow4[4].Text = e.Value.ToString()));
-                }
-                else
-                {
-                    textBoxesRow4[4].Text = e.Value.ToString();
-                }
+                SetTextBoxSafe(textBoxesRow4[4], value.ToString());
                 break;
             case "Altezza 1 da chiuso":
-                if (this.InvokeRequired)
-                {
-                    this.Invoke(new Action(() => textBoxesRow4[5].Text = e.Value.ToString()));
-                }
-                else
-                {
-                    textBoxesRow4[5].Text = e.Value.ToString();
-                }
+                SetTextBoxSafe(textBoxesRow4[5], value.ToString());
                 break;
             case "Altezza 2 da chiuso":
-                if (this.InvokeRequired)
-                {
-                    this.Invoke(new Action(() => textBoxesRow4[6].Text = e.Value.ToString()));
-                }
-                else
-                {
-                    textBoxesRow4[6].Text = e.Value.ToString();
-                }
+                SetTextBoxSafe(textBoxesRow4[6], value.ToString());
                 break;
             case "Altezza 3 da chiuso":
-                if (this.InvokeRequired)
-                {
-                    this.Invoke(new Action(() => textBoxesRow4[7].Text = e.Value.ToString()));
-                }
-                else
-                {
-                    textBoxesRow4[7].Text = e.Value.ToString();
-                }
+                SetTextBoxSafe(textBoxesRow4[7], value.ToString());
                 break;
             case "Tempo di ritardo all'accensione":
-                if (this.InvokeRequired)
-                {
-                    this.Invoke(new Action(() => textBoxesRow4[8].Text = e.Value.ToString()));
-                }
-                else
-                {
-                    textBoxesRow4[8].Text = e.Value.ToString();
-                }
+                SetTextBoxSafe(textBoxesRow4[8], value.ToString());
                 break;
             default:
                 break;
         }
+    }
+
+    private void SetTextBoxSafe(TextBox tb, string text)
+    {
+        if (tb.InvokeRequired)
+            tb.BeginInvoke(new Action(() => tb.Text = text));
+        else
+            tb.Text = text;
     }
 
     private void BtnSave_Click(object sender, EventArgs e)

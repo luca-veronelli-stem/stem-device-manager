@@ -2,9 +2,9 @@
 
 **Obiettivo:** Portare il progetto da god-object WinForms a clean architecture disaccoppiata e testabile, allineata ai pattern Stem (Production.Tracker, Communication, ButtonPanel.Tester).
 
-**Stato attuale (2026-04-21):** Core/Infrastructure puliti, Services popolato (ProtocolService/TelemetryService/BootService/DictionaryCache/ConnectionManager). Form1 1121 LOC (post-Branch 4 remove-ifs, target finale ~250 LOC post-Phase 4). STEMProtocol/ (~2590 LOC) embedded in App, rimosso in Phase 4. 4 tab WF disaccoppiati via DI, zero `#if TOPLIFT/EDEN/EGICON` attivi. 2 build configuration (Debug/Release). Suite: 278 net10.0 / 458 net10.0-windows.
+**Stato attuale (2026-04-21, post-Phase 4):** Core/Infrastructure puliti, Services popolato (ProtocolService/TelemetryService/BootService/DictionaryCache/ConnectionManager). Form1 731 LOC (-35% rispetto a inizio Phase 4). `App/STEMProtocol/` (2590 LOC) **eliminato**. Driver legacy `BLEManager`/`SerialPortManager` spostati in `Infrastructure.Protocol/Legacy/` (sostituibili quando arriva Stem.Communication NuGet). 4 tab WF migrati su `ConnectionManager.CurrentBoot`/`CurrentTelemetry`. Tutti i FormRef legacy eliminati. 2 build configuration (Debug/Release). Suite: **292 net10.0 / 470 net10.0-windows**.
 
-**Vincoli:** WinForms resta (migrazione WPF è Fase 5 futura). Stem.Communication NuGet sostituirà lo stack protocollo ma non è ancora pronto — preparare l'astrazione.
+**Vincoli:** WinForms resta (migrazione UI = Fase 5 futura). Stem.Communication NuGet sostituirà i driver in `Legacy/` — Fase 5 futura, non blocca la chiusura di Phase 4.
 
 **Decisioni architetturali (confermate):**
 - **IProtocolService in Core, ProtocolService non in DI** — `IProtocolService` è definita in `Core/Interfaces/` (contratto: `SendCommandAsync`, `SendCommandAndWaitReplyAsync`, evento `AppLayerDecoded`). TelemetryService/BootService dipendono dall'interfaccia, non dal concreto. ProtocolService NON è registrato in DI perché dipende dalla port scelta a runtime — creato dal ConnectionManager in Fase 3. L'interfaccia abilita: (1) test unitari con mock di IProtocolService senza tirare su lo stack, (2) swap trasparente in Fase 4 quando Stem.Communication sostituisce lo stack legacy.
@@ -19,17 +19,18 @@
 
 ```
 main
- └─ refactor/protocol-abstractions                 ✅ Fase 1 (merged)
-     └─ refactor/services-foundation               ✅ Fase 2 Branch A (PR #24)
-         └─ refactor/protocol-service              ✅ Fase 2 Branch A2 (PR #25)
-             └─ refactor/services-business         ✅ Fase 2 Branch B (PR #26)
-                 └─ refactor/services-di-integration ✅ Fase 2 Branch C (PR #27)
-                     └─ refactor/protocol-interface ✅ Fase 3 Branch 0 (PR #28)
+ └─ refactor/protocol-abstractions                    ✅ Fase 1 (merged)
+     └─ refactor/services-foundation                  ✅ Fase 2 Branch A (PR #24)
+         └─ refactor/protocol-service                 ✅ Fase 2 Branch A2 (PR #25)
+             └─ refactor/services-business            ✅ Fase 2 Branch B (PR #26)
+                 └─ refactor/services-di-integration  ✅ Fase 2 Branch C (PR #27)
+                     └─ refactor/protocol-interface   ✅ Fase 3 Branch 0 (PR #28)
                          └─ refactor/dictionary-cache ✅ Fase 3 Branch 1 (PR #29)
                              └─ refactor/tab-decoupling ✅ Fase 3 Branch 2 (PR #30)
                                  └─ refactor/form1-thin-shell ✅ Fase 3 Branch 3 (PR #31)
-                                     └─ refactor/remove-ifs    ⏳ Fase 3 Branch 4 (in corso)
-                                         └─ refactor/phase-4-protocol-migration-prep
+                                     └─ refactor/remove-ifs     ✅ Fase 3 Branch 4 (PR #32)
+                                         └─ refactor/phase-4-switch-to-new-stack ✅ Fase 4 (in review)
+                                             └─ refactor/phase-4b-app-reorganization ⏳ Fase 4b
 ```
 
 Ogni branch: PR → review → squash merge in main. Non procedere alla fase successiva senza merge della precedente.
@@ -331,64 +332,98 @@ git checkout -b refactor/remove-ifs
 
 ---
 
-## Fase 4 — `refactor/phase-4-protocol-migration-prep`
+## Fase 4 — `refactor/phase-4-switch-to-new-stack` ✅ Completata (2026-04-21)
 
-**Obiettivo:** Preparare la sostituzione dello stack protocollo embedded con Stem.Communication NuGet.
+**Obiettivo:** Spostare Form1 + tab dai manager legacy (PacketManager, BootManager, TelemetryManager) al nuovo stack (IProtocolService + IBootService + ITelemetryService via ConnectionManager), ed eliminare lo stack protocollo embedded `App/STEMProtocol/` senza attendere Stem.Communication NuGet.
 
-### 4.1 Adapter per Stem.Communication
+**Strategia pragmatica (decisione 2026-04-21):** invece di attendere Stem.Communication (almeno 1 mese di distanza), chiudiamo la Fase 4 usando lo stack nuovo già costruito in Fase 2. Quando Stem.Communication sarà pronto, la sua integrazione sarà uno swap locale dei wrapper `Infrastructure.Protocol/Legacy/*` — il resto dell'architettura resta invariato.
 
-In `Services/Protocol/`:
+### 4.1 Estensione servizi di dominio
+
+Il nuovo `TelemetryService` inizialmente copriva solo fast telemetry; esteso con:
+- `ReadOneShotAsync`/`WriteOneShotAsync` — loop round-robin CMD_READ_VARIABLE/CMD_WRITE_VARIABLE
+- Dizionario mutabile: `AddToDictionary`, `AddToDictionaryForWrite`, `RemoveFromDictionary`, `ResetDictionary`, `GetVariableName`
+- Decodifica CMD_READ_VARIABLE reply (cmdHi=0x80, cmdLo=0x01) in big-endian
+
+Nuovo `BootService` esteso con step separati per workflow Egicon:
+- `StartBootAsync`/`EndBootAsync`/`RestartAsync` (single-shot)
+- `UploadBlocksOnlyAsync` (solo blocchi, senza START/END/RESTART)
+
+`TelemetryDataPoint` esteso con `TelemetrySource` (FastStream/ReadReply) + helper `NumericValue` che sceglie endianness corretta.
+
+### 4.2 ConnectionManager come coordinatore runtime
+
+`ConnectionManager` già esposto in Fase 3 è stato esteso per esporre i servizi di dominio:
+- `CurrentBoot: IBootService?` + `CurrentTelemetry: ITelemetryService?` — ricreati ad ogni `SwitchToAsync` insieme al protocol.
+- Forward events `AppLayerDecoded`, `TelemetryDataReceived`, `BootProgressChanged` — i consumer (Form1, tab) si iscrivono una volta sola al manager, il re-binding ai servizi nuovi è interno.
+
+### 4.3 Migrazione Form1 e tab
+
+- **Form1.SendPS_Async** (133 LOC legacy) → chiama `_connMgr.ActiveProtocol.SendCommandAsync(recipientId, command, payload)`. Rimossi `_CDL`/`_BLE_SDL`/`_SDL`/`RXpacketManager`.
+- **Handler RX** (`onAppLayerPacketReady`/`onAppLayerDecoded`, ~385 LOC) → sottoscrizione unica a `ConnectionManager.AppLayerDecoded`, display semplificato (`DisplayDecodedPacket`).
+- **Menu canale** (CAN/BLE/Serial + baudrate) → chiama `SwitchChannelAsync(ChannelKind)`. Baudrate PCAN runtime deferito (ora fix 250 kbps in `CanPort`).
+- **Connection status** (3 handler separati) → unico `OnConnectionStateChanged` che riceve `ConnectionStateSnapshot` e aggiorna la label corrispondente.
+- **Tab** (Boot_Interface, Boot_Smart, Telemetry, TopLiftTelemetry) → ctor injection `DictionaryCache` + `ConnectionManager` + (eventuale) `IDeviceVariantConfig`. Usano `_connMgr.CurrentBoot`/`CurrentTelemetry` con null-check ("Select communication channel first!").
+- **FormRef static** (`public static Form1 FormRef`) eliminato. Zero FormRef residui.
+
+### 4.4 Eliminazione legacy
+
+- `App/STEMProtocol/` eliminata (7 file, 2590 LOC: STEM_protocol.cs, PacketManager.cs, CanDataLayer.cs, SerialDataLayer.cs, BootManager.cs, TelemetryManager.cs, SPRollingCode.cs).
+- `App/CAN_WF_Tab.cs` eliminata (dead code, mai istanziata).
+- `Tests/Unit/Protocol/TelemetryManagerTests.cs` e `Tests/Unit/Protocol/RollingCodeGeneratorTests.cs` eliminati (coprivano il legacy).
+- `Tests/Unit/Tabs/TabDependencyInjectionTests.cs` aggiornato con i nuovi ctor.
+
+### 4.5 Driver legacy in Infrastructure.Protocol/Legacy/
+
+`BLE_Manager.cs` e `SerialPort_Manager.cs` spostati da `App/` a `Infrastructure.Protocol/Legacy/`:
+- Namespace `Infrastructure.Protocol.Legacy`.
+- Dipendenze WinForms eliminate: `MessageBox.Show` sostituito con event `ErrorOccurred(title, message)`. Form1 sottoscrive e mostra `MessageBox` lato UI.
+- `Plugin.BLE` + `System.IO.Ports` inclusi nel csproj solo per TFM `net10.0-windows`; `Legacy/` escluso dal build cross-platform (CI Linux).
+
+### 4.6 Esiti
+
+- Form1.cs: **1121 → 731 LOC** (-35%)
+- Legacy protocollo: **-2590 LOC** (STEMProtocol/ eliminata)
+- Dead code: **-283 LOC** (CAN_WF_Tab)
+- Codice totale netto: **-3420 LOC** in un commit
+- FormRef residui: **0**
+- Suite: **292 net10.0 / 470 net10.0-windows** (+14/+12 vs pre-Phase 4)
+
+### 4.7 Deferred
+
+- `CanPort.ChangeBaudrate` runtime: ora il bitrate PCAN è fissato alla creazione. Se serve nuovamente, esporre API sul port.
+- Display RX fine (int/float/bool decoding): semplificato a uint LE/BE. Il legacy supportava più type; può essere riintrodotto ma non era critico.
+- `Boot_Smart_Tab` line 300 (parità legacy `FormRef.RecipientId = X`): **rimossa** — non più necessaria, il legacy che la leggeva non esiste più.
+
+---
+
+## Fase 4b — `refactor/phase-4b-app-reorganization`
+
+**Obiettivo:** Riorganizzare la cartella `App/` (attualmente flat con Form1, SplashScreen, tab WF, Program, appsettings mescolati) in sottocartelle semantiche.
+
+**Struttura proposta:**
 ```
-StemProtocolAdapter.cs  — implementa ICommunicationPort usando Stem.Communication.StemClient
-                          (ProtocolStackBuilder → ProtocolStack → StemClient wrapper)
-StemCanDriver.cs        — implementa Stem.Communication.IChannelDriver wrappando PCAN_Manager
-StemBleDriver.cs        — implementa Stem.Communication.IChannelDriver wrappando BLE_Manager
+App/
+├── App.csproj, Program.cs, appsettings.json
+├── Forms/         — Form1.cs/.Designer/.resx, SplashScreen.*
+├── Tabs/          — tab WF (Boot_Interface/Boot_Smart/Telemetry/TopLiftTelemetry/BLE) + .Designer + .resx
+└── Resources/     — immagini, icone, Dizionari STEM.xlsx
 ```
 
-### 4.2 Mappatura comandi
+Branch separato dopo merge di `phase-4-switch-to-new-stack` per tenere la PR del switch stack pulita dal rumore di rename.
 
-Creare `Services/Protocol/CommandMapper.cs`:
-- Mappa `Core.Models.Command` ↔ `Stem.Communication.CommandId` enum (43 comandi)
-- Mappa `AppLayerDecodedEvent` ↔ `Stem.Communication.ApplicationMessage`
+---
 
-### 4.3 Feature flag
+## Fase 5 — Integrazione `Stem.Communication` NuGet (quando disponibile)
 
-In `appsettings.json`:
-```json
-{
-  "Protocol": {
-    "UseNewStack": false
-  }
-}
-```
+**Obiettivo:** Sostituire i driver in `Infrastructure.Protocol/Legacy/` con adapter `Stem.Communication`.
 
-`DependencyInjection.cs` registra il vecchio o nuovo stack in base al flag. Permette rollback immediato.
+**Scope ridotto grazie al refactor precedente:**
+- Il contratto `ICommunicationPort` è stabile (Fase 1). Basta sostituire le 3 implementazioni (`CanPort`/`BlePort`/`SerialPort`) con wrapper verso `Stem.Communication.StemClient`.
+- Nessuna modifica a Core/Services/tab/Form1.
+- Eliminare `Infrastructure.Protocol/Legacy/` e aggiungere `PackageReference Stem.Communication`.
 
-### 4.4 Rimuovere codice legacy
-
-Quando `UseNewStack: true` è stabile:
-- Eliminare `App/STEMProtocol/` (2587 LOC)
-- Eliminare `App/PCAN_Manager.cs`, `App/BLE_Manager.cs`, `App/SerialPort_Manager.cs`
-- Aggiungere PackageReference a `Stem.Communication`, `Stem.Communication.Drivers.Can`, `Stem.Communication.Drivers.Ble`
-
-### 4.5 Test
-
-- `StemProtocolAdapterTests` — mock StemClient, verifica send/receive
-- `CommandMapperTests` — round-trip Core.Command ↔ CommandId
-- Integration test con feature flag on/off
-
-### 4.6 Comandi
-
-```bash
-git checkout -b refactor/phase-4-protocol-migration-prep
-# Aggiungere PackageReference Stem.Communication (quando disponibile come NuGet)
-# Creare adapter e mapper
-# Aggiungere feature flag
-# Test con entrambi gli stack
-# Commit: "feat(services): add Stem.Communication adapter with feature flag"
-# Quando stabile:
-# Commit: "refactor(app): remove legacy STEMProtocol stack"
-```
+**Valutazione parallela:** migrazione UI da WinForms a WPF (o altro). Questione separata, non blocca l'integrazione NuGet.
 
 ---
 

@@ -1,8 +1,7 @@
 ﻿using App; // Per CircularProgressBar
-using App.STEMProtocol;
+using Core.Interfaces;
 using Core.Models;
 using Services.Cache;
-using StemPC;
 using System.Reflection;
 
 public class DeviceInfo
@@ -31,18 +30,18 @@ public class Boot_Smart_Tab : TabPage
     private int offsetTotalBar = 0;
     private TextBox txtVersions;
 
-    // Classi per il backend
-    public BootManager BootHndlr;
-    public TelemetryManager telemetryManager;
-    //Cache centralizzata dizionario (sostituisce UpdateDictionary callback)
+    // Servizi di dominio iniettati via ConnectionManager (ricreati ad ogni SwitchToAsync).
     private readonly DictionaryCache _cache;
+    private readonly ConnectionManager _connMgr;
     //Lista variabili della macchina (snapshot letto dalla cache)
     private IReadOnlyList<Variable> MachineDictionary = [];
 
-    public Boot_Smart_Tab(PacketManager packetManagerRX, DictionaryCache cache)
+    public Boot_Smart_Tab(DictionaryCache cache, ConnectionManager connMgr)
     {
         ArgumentNullException.ThrowIfNull(cache);
+        ArgumentNullException.ThrowIfNull(connMgr);
         _cache = cache;
+        _connMgr = connMgr;
         MachineDictionary = _cache.Variables;
         _cache.DictionaryUpdated += (_, _) => MachineDictionary = _cache.Variables;
 
@@ -215,15 +214,9 @@ public class Boot_Smart_Tab : TabPage
         mainLayout.Controls.Add(progressBarsPanel, 0, 2);
         this.Controls.Add(mainLayout);
 
-        // Inizializza BootManager
-        BootHndlr = new BootManager();
-        BootHndlr.ProgressChanged += UpdateProgressBar;
-
-        // Creazione del gestore per la telemetria
-        telemetryManager = new TelemetryManager(packetManagerRX);
-
-        // Aggiunta del gestore per l'evento DataReady
-        telemetryManager.DataReady += onDataReady;
+        // Sottoscrizioni via ConnectionManager: re-binding automatico su switch canale.
+        _connMgr.BootProgressChanged += UpdateProgressBar;
+        _connMgr.TelemetryDataReceived += onDataReady;
     }
 
     public void PopulateDevices(List<DeviceInfo> devices)
@@ -289,6 +282,9 @@ public class Boot_Smart_Tab : TabPage
             }
         }
 
+        var boot = _connMgr.CurrentBoot;
+        if (boot is null) { MessageBox.Show("Select communication channel first!"); return; }
+
         btnStartProcedure.Enabled = false;
 
         //reset progress bars
@@ -299,13 +295,10 @@ public class Boot_Smart_Tab : TabPage
         {
             if (!(string.IsNullOrEmpty(sel.FilePath)))
             {
-                BootHndlr.SetFirmwarePath(sel.FilePath);
-                // Aggiorno sia cache che FormRef: legacy STEM_protocol legge ancora
-                // Form1.FormRef.RecipientId (rimosso in Phase 4). SetCurrentRecipientId
-                // è mutazione pura, niente HTTP/event, safe nel loop.
+                // Mutazione pura sul cache (nessuna HTTP/event), usata da consumer che leggono CurrentRecipientId.
                 _cache.SetCurrentRecipientId((uint)sel.Device.Address);
-                Form1.FormRef.RecipientId = (uint)sel.Device.Address;
-                await BootHndlr.UploadFirmware();
+                byte[] firmware = File.ReadAllBytes(sel.FilePath);
+                await boot.StartFirmwareUploadAsync(firmware, (uint)sel.Device.Address);
             }
             else
             {
@@ -344,13 +337,12 @@ public class Boot_Smart_Tab : TabPage
         btnStartProcedure.Enabled = true;
     }
 
-    private void UpdateProgressBar(object sender, ProgressEventArgs e)
+    private void UpdateProgressBar(object sender, BootProgress e)
     {
+        int value = e.TotalLength <= 0 ? 0 : (int)((double)e.CurrentOffset / e.TotalLength * 100);
+        if (value == 99) value = 100;
 
-        int Value = (int)((double)e.CurrentOffset / e.TotalLength * 100);
-        if (Value == 99) Value = 100;
-
-        int progress = Value;
+        int progress = value;
 
         if (InvokeRequired)
         {
@@ -379,26 +371,31 @@ public class Boot_Smart_Tab : TabPage
 
     private async void btnReadVersions_Click(object sender, EventArgs e)
     {
-        // Qui inserisci la logica per avviare la telemetria
-        telemetryManager.TelemetryStop();
-        telemetryManager.ResetDictionary();
+        var tel = _connMgr.CurrentTelemetry;
+        if (tel is null) { MessageBox.Show("Select communication channel first!"); return; }
 
-        //Carica in telemetria il firmware della scheda
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Firmware scheda")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Firmware scheda")]);
-        telemetryManager.AddToDictionary(MachineDictionary[GetVariableIndex("Firmware scheda")]);
-        await telemetryManager.ReadOneShot();
+        await tel.StopTelemetryAsync();
+        tel.ResetDictionary();
+
+        // Carica in telemetria il firmware della scheda (3 richieste per robustezza verso
+        // eventuali pacchetti persi — pattern parità con legacy).
+        tel.AddToDictionary(MachineDictionary[GetVariableIndex("Firmware scheda")]);
+        tel.AddToDictionary(MachineDictionary[GetVariableIndex("Firmware scheda")]);
+        tel.AddToDictionary(MachineDictionary[GetVariableIndex("Firmware scheda")]);
+        await tel.ReadOneShotAsync();
     }
 
-    private async void onDataReady(object sender, DataReadyEventArgs e)
+    private void onDataReady(object sender, TelemetryDataPoint dp)
     {
-        //Verifica quale variabile arriva e completa i campi di conseguenza
-        String VarName = telemetryManager.GetVariableName(e.ListIndex);
-        switch (VarName)
+        // Solo read reply: ignora il fast stream che non interessa al tab boot smart.
+        if (dp.Source != TelemetrySource.ReadReply) return;
+
+        switch (dp.Variable.Name)
         {
             case "Firmware scheda":
-                uint MajorVersion = ((e.Value) >> 8);
-                uint MinorVersion = ((e.Value) & ((uint)0x000000FF));
+                uint value = dp.NumericValue;
+                uint MajorVersion = value >> 8;
+                uint MinorVersion = value & 0x000000FF;
 
                 if (this.InvokeRequired)
                 {

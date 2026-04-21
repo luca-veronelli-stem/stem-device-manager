@@ -105,11 +105,7 @@ public sealed class BootService : IBootService, IDisposable
         byte[] firmware, uint recipientId, CancellationToken ct = default)
     {
         ThrowIfDisposed();
-        ArgumentNullException.ThrowIfNull(firmware);
-        if (firmware.Length < MinFirmwareLength)
-            throw new ArgumentException(
-                $"Firmware troppo corto ({firmware.Length} byte): servono almeno {MinFirmwareLength} byte per estrarre fwType.",
-                nameof(firmware));
+        ValidateFirmware(firmware);
 
         BeginUpload(firmware.Length);
         try
@@ -134,6 +130,65 @@ public sealed class BootService : IBootService, IDisposable
             FailUpload();
             throw;
         }
+    }
+
+    /// <inheritdoc/>
+    public Task<bool> StartBootAsync(uint recipientId, CancellationToken ct = default)
+    {
+        ThrowIfDisposed();
+        return SendWithRetry(recipientId, CmdStartProcedure, EmptyPayload, StartRetries, ct);
+    }
+
+    /// <inheritdoc/>
+    public Task<bool> EndBootAsync(uint recipientId, CancellationToken ct = default)
+    {
+        ThrowIfDisposed();
+        return SendWithRetry(recipientId, CmdEndProcedure, EmptyPayload, EndRetries, ct);
+    }
+
+    /// <inheritdoc/>
+    public Task RestartAsync(uint recipientId, CancellationToken ct = default)
+    {
+        ThrowIfDisposed();
+        return _protocol.SendCommandAsync(recipientId, CmdRestartMachine, EmptyPayload, ct);
+    }
+
+    /// <inheritdoc/>
+    public async Task UploadBlocksOnlyAsync(
+        byte[] firmware, uint recipientId, CancellationToken ct = default)
+    {
+        ThrowIfDisposed();
+        ValidateFirmware(firmware);
+
+        BeginUpload(firmware.Length);
+        try
+        {
+            await SendAllBlocks(firmware, recipientId, ct).ConfigureAwait(false);
+            CompleteUpload();
+        }
+        catch (OperationCanceledException)
+        {
+            FailUpload();
+            throw;
+        }
+        catch (BootProtocolException)
+        {
+            FailUpload();
+        }
+        catch
+        {
+            FailUpload();
+            throw;
+        }
+    }
+
+    private static void ValidateFirmware(byte[] firmware)
+    {
+        ArgumentNullException.ThrowIfNull(firmware);
+        if (firmware.Length < MinFirmwareLength)
+            throw new ArgumentException(
+                $"Firmware troppo corto ({firmware.Length} byte): servono almeno {MinFirmwareLength} byte per estrarre fwType.",
+                nameof(firmware));
     }
 
     /// <inheritdoc/>

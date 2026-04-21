@@ -2,6 +2,7 @@ using Core.Interfaces;
 using Infrastructure.Persistence;
 using Infrastructure.Protocol;
 using Infrastructure.Protocol.Hardware;
+using Infrastructure.Protocol.Legacy;
 using Microsoft.Extensions.Configuration;
 using Services;
 /// <summary>
@@ -55,8 +56,8 @@ namespace App
             // Provider dizionari (API Azure con fallback Excel, o solo Excel)
             services.AddDictionaryProvider(configuration);
 
-            // Driver hardware BLE/Serial — restano in App per ora (refs Form1.FormRef
-            // da rimuovere in Phase 3, vedi Docs/PREPROCESSOR_DIRECTIVES.md)
+            // Driver hardware legacy (Phase 4: spostati in Infrastructure.Protocol/Legacy/).
+            // Verranno sostituiti quando Stem.Communication NuGet sarà disponibile.
             services.AddSingleton<IBleDriver, BLEManager>();
             services.AddSingleton<ISerialDriver, SerialPortManager>();
 
