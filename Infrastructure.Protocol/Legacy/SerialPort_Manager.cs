@@ -118,8 +118,9 @@ namespace Infrastructure.Protocol.Legacy
         /// Handler dell'evento DataReceived di SerialPort.
         /// Legge i dati disponibili e solleva PacketReceived.
         /// </summary>
-        private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        private void SerialPort_DataReceived(object? sender, SerialDataReceivedEventArgs e)
         {
+            if (serialPort is null) return;
             try
             {
                 // Legge i dati presenti nel buffer
@@ -142,7 +143,7 @@ namespace Infrastructure.Protocol.Legacy
         /// Handler dell'evento ErrorReceived di SerialPort.
         /// In caso di errore (frame, overrun, ecc.), disconnette.
         /// </summary>
-        private void SerialPort_ErrorReceived(object sender, SerialErrorReceivedEventArgs e)
+        private void SerialPort_ErrorReceived(object? sender, SerialErrorReceivedEventArgs e)
         {
             Debug.WriteLine($"Errore seriale ricevuto: {e.EventType}");
             // Opzionalmente gestire errori specifici

@@ -5,12 +5,12 @@ using Infrastructure.Protocol.Legacy;
 
 public partial class BLEInterfaceTab : TabPage
 {
-    private ListBox listBoxDevices;
-    private Button btnScan;
-    private PictureBox loadingSpinner;
+    private ListBox listBoxDevices = null!;
+    private Button btnScan = null!;
+    private PictureBox loadingSpinner = null!;
 
     // Definisci il MemoryStream a livello di classe
-    private MemoryStream gifStream;
+    private MemoryStream gifStream = null!;
 
     // Driver BLE condiviso con il BlePort (registrato come singleton in DI). Iniettato
     // via ctor: il tab deve usare la STESSA istanza del BlePort, altrimenti il port
@@ -79,7 +79,7 @@ public partial class BLEInterfaceTab : TabPage
         bleManager.OnScanCompleted += BleManager_OnScanCompleted; // Aggiungi un evento di fine scansione
     }
 
-    private void BtnScan_Click(object sender, EventArgs e)
+    private void BtnScan_Click(object? sender, EventArgs e)
     {
         listBoxDevices.Items.Clear();
         loadingSpinner.Visible = true;  // Mostra l'animazione
@@ -119,17 +119,17 @@ public partial class BLEInterfaceTab : TabPage
         }
     }
 
-    private async void listBoxDevices_SelectedIndexChanged(object sender, EventArgs e)
+    private async void listBoxDevices_SelectedIndexChanged(object? sender, EventArgs e)
     {
         if (listBoxDevices.SelectedItem != null)
         {
-            string deviceName = listBoxDevices.SelectedItem.ToString();
+            string? deviceName = listBoxDevices.SelectedItem.ToString();
 
             // Recupera il ComboBox dal controllo (si assume che lo abbiamo aggiunto con il Name "comboBoxConnectOptions")
-            ComboBox comboBoxConnectOptions = this.Controls["comboBoxConnectOptions"] as ComboBox;
-            bool withResponse = (comboBoxConnectOptions.SelectedItem.ToString() == "Connect with response");
+            ComboBox? comboBoxConnectOptions = this.Controls["comboBoxConnectOptions"] as ComboBox;
+            bool withResponse = (comboBoxConnectOptions?.SelectedItem?.ToString() == "Connect with response");
 
-            // Passa il parametro al metodo di connessione 
+            // Passa il parametro al metodo di connessione
             if (deviceName != null)
                 await bleManager.ConnectToAsync(deviceName, withResponse);
         }

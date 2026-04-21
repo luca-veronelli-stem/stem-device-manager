@@ -17,34 +17,34 @@ public class TopLiftTelemetry_Tab : TabPage
 
 
     // Dichiarazione dei controlli
-    private Panel panel1;
-    private Panel panel2;
-    private Button startTelemetryButton;
-    private Button stopTelemetryButton;
-    private PictureBox[] imageContainers;
-    private System.Windows.Forms.Label[] imageLabels;
-    private Button buttonReadFaults;
-    private TextBox textBoxRow3;
-    private System.Windows.Forms.Label[] labelsRow4;
-    private TextBox[] textBoxesRow4;
-    private Button buttonReadSettings;
-    private Button buttonWriteSettings;
-    private Button buttonLoadSettings;
-    private Button buttonSaveSettings;
+    private Panel panel1 = null!;
+    private Panel panel2 = null!;
+    private Button startTelemetryButton = null!;
+    private Button stopTelemetryButton = null!;
+    private PictureBox[] imageContainers = null!;
+    private System.Windows.Forms.Label[] imageLabels = null!;
+    private Button buttonReadFaults = null!;
+    private TextBox textBoxRow3 = null!;
+    private System.Windows.Forms.Label[] labelsRow4 = null!;
+    private TextBox[] textBoxesRow4 = null!;
+    private Button buttonReadSettings = null!;
+    private Button buttonWriteSettings = null!;
+    private Button buttonLoadSettings = null!;
+    private Button buttonSaveSettings = null!;
 
     //Plotview section
-    private LineSeries pointSeries1;
-    private PlotView plotView1;
-    private LinearAxis xAxis1;
-    private LinearAxis yAxis1;
+    private LineSeries pointSeries1 = null!;
+    private PlotView plotView1 = null!;
+    private LinearAxis xAxis1 = null!;
+    private LinearAxis yAxis1 = null!;
 
-    private LineSeries pointSeries2;
-    private PlotView plotView2;
-    private LinearAxis xAxis2;
-    private LinearAxis yAxis2;
+    private LineSeries pointSeries2 = null!;
+    private PlotView plotView2 = null!;
+    private LinearAxis xAxis2 = null!;
+    private LinearAxis yAxis2 = null!;
 
     // Variabili booleane associate ai contenitori di immagini
-    private bool[] imageStates;
+    private bool[] imageStates = null!;
 
     //oxyplot variables
     private int time;
@@ -434,7 +434,7 @@ public class TopLiftTelemetry_Tab : TabPage
         plotView.InvalidatePlot(true);
     }
 
-    private async void StartTelemetryButton_Click(object sender, EventArgs e)
+    private async void StartTelemetryButton_Click(object? sender, EventArgs e)
     {
         var tel = _connMgr.CurrentTelemetry;
         if (tel is null) { MessageBox.Show("Select communication channel first!"); return; }
@@ -470,14 +470,14 @@ public class TopLiftTelemetry_Tab : TabPage
         return -1;
     }
 
-    private async void StopTelemetryButton_Click(object sender, EventArgs e)
+    private async void StopTelemetryButton_Click(object? sender, EventArgs e)
     {
         var tel = _connMgr.CurrentTelemetry;
         if (tel is null) return;
         await tel.StopTelemetryAsync();
     }
 
-    private async void buttonReadFaults_Click(object sender, EventArgs e)
+    private async void buttonReadFaults_Click(object? sender, EventArgs e)
     {
         var tel = _connMgr.CurrentTelemetry;
         if (tel is null) { MessageBox.Show("Select communication channel first!"); return; }
@@ -491,7 +491,7 @@ public class TopLiftTelemetry_Tab : TabPage
         await tel.ReadOneShotAsync();
     }
 
-    private async void buttonReadSettings_Click(object sender, EventArgs e)
+    private async void buttonReadSettings_Click(object? sender, EventArgs e)
     {
         var tel = _connMgr.CurrentTelemetry;
         if (tel is null) { MessageBox.Show("Select communication channel first!"); return; }
@@ -513,7 +513,7 @@ public class TopLiftTelemetry_Tab : TabPage
         await tel.ReadOneShotAsync();
     }
 
-    private async void buttonWriteSettings_Click(object sender, EventArgs e)
+    private async void buttonWriteSettings_Click(object? sender, EventArgs e)
     {
         var tel = _connMgr.CurrentTelemetry;
         if (tel is null) { MessageBox.Show("Select communication channel first!"); return; }
@@ -635,7 +635,7 @@ public class TopLiftTelemetry_Tab : TabPage
         plotView.InvalidatePlot(true);
     }
 
-    private void onDataReady(object sender, TelemetryDataPoint dp)
+    private void onDataReady(object? sender, TelemetryDataPoint dp)
     {
         //Verifica quale variabile arriva e completa i campi di conseguenza
         String VarName = dp.Variable.Name;
@@ -692,7 +692,7 @@ public class TopLiftTelemetry_Tab : TabPage
                 break;
             case "Allarmi":
                 {
-                    string FaultString = null;
+                    string? FaultString = null;
                     uint FaultValue = value;
 
                     // FaultValue = 0xFFFFFFFF;
@@ -804,7 +804,7 @@ public class TopLiftTelemetry_Tab : TabPage
             tb.Text = text;
     }
 
-    private void BtnSave_Click(object sender, EventArgs e)
+    private void BtnSave_Click(object? sender, EventArgs e)
     {
         using (SaveFileDialog sfd = new SaveFileDialog())
         {
@@ -841,7 +841,7 @@ public class TopLiftTelemetry_Tab : TabPage
         }
     }
 
-    private void BtnLoad_Click(object sender, EventArgs e)
+    private void BtnLoad_Click(object? sender, EventArgs e)
     {
         using (OpenFileDialog ofd = new OpenFileDialog())
         {

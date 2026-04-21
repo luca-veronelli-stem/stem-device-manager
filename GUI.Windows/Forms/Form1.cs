@@ -86,7 +86,7 @@ namespace StemPC
         public Boot_Smart_Tab BootSmartTabRef { get; private set; }
         public Telemetry_Tab TelemetryTabRef { get; private set; }
         public BLEInterfaceTab BLETabRef { get; private set; }
-        public TopLiftTelemetry_Tab TLTTabRef { get; private set; }
+        public TopLiftTelemetry_Tab TLTTabRef { get; private set; } = null!;
 
         public Form1(IServiceProvider serviceProvider)
         {
@@ -258,7 +258,7 @@ namespace StemPC
             terminalOut.ScrollToCaret(); // Scorri fino all'ultimo
         }
 
-        private void timerBaseTime_Tick(object sender, EventArgs e)
+        private void timerBaseTime_Tick(object? sender, EventArgs e)
         {
             if (Prescaler1s > 0) Prescaler1s--;
             else
@@ -268,7 +268,7 @@ namespace StemPC
             }
         }
 
-        private void listBoxSerialPorts_SelectedIndexChanged(object sender, EventArgs e)
+        private void listBoxSerialPorts_SelectedIndexChanged(object? sender, EventArgs e)
         {
             if (listBoxSerialPorts.SelectedItem == null)
             {
@@ -290,13 +290,13 @@ namespace StemPC
             //}
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void button1_Click(object? sender, EventArgs e)
         {
             configGenerator.GeneraFileDiTesto(configurazioni, codeFilePath);
             UpdateTerminal($"File generato con successo: {codeFilePath}");
         }
 
-        private void MaskedTextBox_KeyPress(object sender, KeyPressEventArgs e)
+        private void MaskedTextBox_KeyPress(object? sender, KeyPressEventArgs e)
         {
             // Permetti solo caratteri esadecimali (0-9, A-F, a-f) , Backspace e spazio
             if (!Uri.IsHexDigit(e.KeyChar) && e.KeyChar != (char)Keys.Back && e.KeyChar != (char)Keys.Space)
@@ -305,7 +305,7 @@ namespace StemPC
             }
         }
 
-        private void comboBoxMachine_SelectedIndexChanged(object sender, EventArgs e)
+        private void comboBoxMachine_SelectedIndexChanged(object? sender, EventArgs e)
         {
             // Verifica che il mittente sia effettivamente un ComboBox
             if (sender is ComboBox comboBoxCorrente)
@@ -314,7 +314,7 @@ namespace StemPC
                 if (comboBoxCorrente.SelectedIndex != -1)
                 {
                     // Ottieni la stringa correntemente selezionata
-                    string macchinaSelezionata = comboBoxCorrente.SelectedItem.ToString();
+                    string macchinaSelezionata = comboBoxCorrente.SelectedItem?.ToString() ?? "";
 
                     comboBoxBoard.Items.Clear(); //azzera i nomi delle schede
 
@@ -331,7 +331,7 @@ namespace StemPC
             }
         }
         
-        private async void comboBoxBoard_SelectedIndexChanged(object sender, EventArgs e)
+        private async void comboBoxBoard_SelectedIndexChanged(object? sender, EventArgs e)
         {
             if (sender is not ComboBox comboBoxCorrente) return;
             if (comboBoxCorrente.SelectedIndex == -1) return;
@@ -446,7 +446,7 @@ namespace StemPC
             }
         }
 
-        private async void buttonSendPS_Click(object sender, EventArgs e)
+        private async void buttonSendPS_Click(object? sender, EventArgs e)
         {
             // Wrap difensivo: SendPS_Async può lanciare (BLE disconnesso a metà invio,
             // timeout driver, ObjectDisposedException da Plugin.BLE, ecc). Senza try/catch
@@ -463,7 +463,7 @@ namespace StemPC
             }
         }
 
-        private async Task SendPS_Async(object sender, EventArgs e)
+        private async Task SendPS_Async(object? sender, EventArgs e)
         {
             var protocol = _connMgr.ActiveProtocol;
             if (protocol is null)
@@ -532,7 +532,7 @@ namespace StemPC
             richTextBoxTx.ScrollToCaret();
         }
 
-        private void comboBoxCommand_SelectedIndexChanged(object sender, EventArgs e)
+        private void comboBoxCommand_SelectedIndexChanged(object? sender, EventArgs e)
         {
             SelectedCommand = (short)comboBoxCommand.SelectedIndex;
 
@@ -682,10 +682,10 @@ namespace StemPC
             }
         }
 
-        private async void bluetoothLEToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void bluetoothLEToolStripMenuItem_Click(object? sender, EventArgs e)
             => await SwitchChannelAsync(ChannelKind.Ble);
 
-        private void serialToolStripMenuItem_DropDownOpening(object sender, EventArgs e)
+        private void serialToolStripMenuItem_DropDownOpening(object? sender, EventArgs e)
         {
             serialToolStripMenuItem.DropDownItems.Clear();
             _serialPortManager.ScanPorts();
@@ -712,16 +712,16 @@ namespace StemPC
         // applicano più runtime change del baudrate: col nuovo stack PCAN il bitrate è
         // configurato alla creazione di CanPort. TODO: esporre baudrate runtime via CanPort
         // se serve (ora fix 250kbps).
-        private async void toolStripMenuItem2_Click(object sender, EventArgs e)
+        private async void toolStripMenuItem2_Click(object? sender, EventArgs e)
             => await SwitchChannelAsync(ChannelKind.Can);
 
-        private async void toolStripMenuItem3_Click(object sender, EventArgs e)
+        private async void toolStripMenuItem3_Click(object? sender, EventArgs e)
             => await SwitchChannelAsync(ChannelKind.Can);
 
-        private async void kbpsToolStripMenuItem1_Click(object sender, EventArgs e)
+        private async void kbpsToolStripMenuItem1_Click(object? sender, EventArgs e)
             => await SwitchChannelAsync(ChannelKind.Can);
 
-        private async void kbpsToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void kbpsToolStripMenuItem_Click(object? sender, EventArgs e)
             => await SwitchChannelAsync(ChannelKind.Can);
 
         /// <summary>

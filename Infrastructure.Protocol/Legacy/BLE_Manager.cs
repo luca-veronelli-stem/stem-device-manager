@@ -44,10 +44,10 @@ namespace Infrastructure.Protocol.Legacy
         private Dictionary<Guid, string> discoveredDevices = new Dictionary<Guid, string>();
 
         // Dispositivo e caratteristiche connesse
-        private IDevice connectedDevice;
-        private IService nordicUartService;
-        private ICharacteristic rxCharacteristic;
-        private ICharacteristic txCharacteristic;
+        private IDevice? connectedDevice;
+        private IService? nordicUartService;
+        private ICharacteristic? rxCharacteristic;
+        private ICharacteristic? txCharacteristic;
 
         // UUID del servizio Nordic UART e delle caratteristiche
         private static readonly Guid NordicUartServiceUuid = new Guid("6E400001-B5A3-F393-E0A9-E50E24DCCA9E");
@@ -72,7 +72,7 @@ namespace Infrastructure.Protocol.Legacy
             //};
         }
 
-        private void Ble_StateChanged(object sender, BluetoothStateChangedArgs e)
+        private void Ble_StateChanged(object? sender, BluetoothStateChangedArgs e)
         {
             Debug.WriteLine($"Stato BLE cambiato: {e.NewState}");
             if (e.NewState != BluetoothState.On)
@@ -81,7 +81,7 @@ namespace Infrastructure.Protocol.Legacy
             }
         }
 
-        private void Adapter_DeviceDiscovered(object sender, DeviceEventArgs e)
+        private void Adapter_DeviceDiscovered(object? sender, DeviceEventArgs e)
         {
             // Verifica se il dispositivo ha un nome valido
             if (!string.IsNullOrEmpty(e.Device.Name))
@@ -99,7 +99,7 @@ namespace Infrastructure.Protocol.Legacy
             }
         }
 
-        private void Adapter_ScanTimeoutElapsed(object sender, EventArgs e)
+        private void Adapter_ScanTimeoutElapsed(object? sender, EventArgs e)
         {
             OnScanCompleted?.Invoke();
         }
@@ -298,7 +298,7 @@ namespace Infrastructure.Protocol.Legacy
             });
         }
 
-        private void TxCharacteristic_ValueUpdated(object sender, CharacteristicUpdatedEventArgs e)
+        private void TxCharacteristic_ValueUpdated(object? sender, CharacteristicUpdatedEventArgs e)
         {
             try
             {

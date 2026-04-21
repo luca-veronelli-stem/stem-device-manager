@@ -20,15 +20,14 @@ public class DeviceInfo
 
 public class Boot_Smart_Tab : TabPage
 {
-    private TableLayoutPanel selectionPanel;
-    private Button btnStartProcedure;
-    private FlowLayoutPanel startPanel;
-    private TableLayoutPanel progressBarsPanel;
-    private CircularProgressBar circProgressBarSmall;
+    private TableLayoutPanel selectionPanel = null!;
+    private Button btnStartProcedure = null!;
+    private FlowLayoutPanel startPanel = null!;
+    private TableLayoutPanel progressBarsPanel = null!;
     private CircularProgressBar[] circProgressBarsLarge = new CircularProgressBar[2];
     private List<BinSelectionControl> binSelections = new List<BinSelectionControl>();
     private int offsetTotalBar = 0;
-    private TextBox txtVersions;
+    private TextBox txtVersions = null!;
 
     // Servizi di dominio iniettati via ConnectionManager (ricreati ad ogni SwitchToAsync).
     private readonly DictionaryCache _cache;
@@ -84,7 +83,7 @@ public class Boot_Smart_Tab : TabPage
         // Crea bottone start
         Assembly asm = Assembly.GetExecutingAssembly();
         string resName = "GUI.Windows.images.ic_fluent_arrow_download_24_filled.png";
-        using (Stream s = asm.GetManifestResourceStream(resName))
+        using (Stream? s = asm.GetManifestResourceStream(resName))
         {
             if (s == null)
             {
@@ -271,7 +270,7 @@ public class Boot_Smart_Tab : TabPage
         }
     }
 
-    private async void BtnStartProcedure_Click(object sender, EventArgs e)
+    private async void BtnStartProcedure_Click(object? sender, EventArgs e)
     {
         foreach (var sel in binSelections)
         {
@@ -337,7 +336,7 @@ public class Boot_Smart_Tab : TabPage
         btnStartProcedure.Enabled = true;
     }
 
-    private void UpdateProgressBar(object sender, BootProgress e)
+    private void UpdateProgressBar(object? sender, BootProgress e)
     {
         int value = e.TotalLength <= 0 ? 0 : (int)((double)e.CurrentOffset / e.TotalLength * 100);
         if (value == 99) value = 100;
@@ -369,7 +368,7 @@ public class Boot_Smart_Tab : TabPage
         return -1;
     }
 
-    private async void btnReadVersions_Click(object sender, EventArgs e)
+    private async void btnReadVersions_Click(object? sender, EventArgs e)
     {
         var tel = _connMgr.CurrentTelemetry;
         if (tel is null) { MessageBox.Show("Select communication channel first!"); return; }
@@ -385,7 +384,7 @@ public class Boot_Smart_Tab : TabPage
         await tel.ReadOneShotAsync();
     }
 
-    private void onDataReady(object sender, TelemetryDataPoint dp)
+    private void onDataReady(object? sender, TelemetryDataPoint dp)
     {
         // Solo read reply: ignora il fast stream che non interessa al tab boot smart.
         if (dp.Source != TelemetrySource.ReadReply) return;

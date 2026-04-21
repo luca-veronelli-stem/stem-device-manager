@@ -197,7 +197,7 @@ public class Boot_Interface_Tab : TabPage
         _connMgr.BootProgressChanged += UpdateProgressBar;
     }
 
-    private void BtnSelectFile_Click(object sender, EventArgs e)
+    private void BtnSelectFile_Click(object? sender, EventArgs e)
     {
         if (openFileDialog.ShowDialog() == DialogResult.OK)
         {
@@ -209,7 +209,7 @@ public class Boot_Interface_Tab : TabPage
     }
 
 
-    private async void BtnStartBoot_Click(object sender, EventArgs e)
+    private async void BtnStartBoot_Click(object? sender, EventArgs e)
     {
         var boot = _connMgr.CurrentBoot;
         if (boot is null) { MessageBox.Show("Select communication channel first!"); return; }
@@ -220,7 +220,7 @@ public class Boot_Interface_Tab : TabPage
         btnStartBoot.Enabled = true;
     }
 
-    private async void BtnEndBoot_Click(object sender, EventArgs e)
+    private async void BtnEndBoot_Click(object? sender, EventArgs e)
     {
         var boot = _connMgr.CurrentBoot;
         if (boot is null) { MessageBox.Show("Select communication channel first!"); return; }
@@ -231,7 +231,7 @@ public class Boot_Interface_Tab : TabPage
         btnEndBoot.Enabled = true;
     }
 
-    private async void BtnRestart_Click(object sender, EventArgs e)
+    private async void BtnRestart_Click(object? sender, EventArgs e)
     {
         var boot = _connMgr.CurrentBoot;
         if (boot is null) { MessageBox.Show("Select communication channel first!"); return; }
@@ -240,7 +240,7 @@ public class Boot_Interface_Tab : TabPage
         btnRestart.Enabled = true;
     }
 
-    private async void BtnStartProcedure_Click(object sender, EventArgs e)
+    private async void BtnStartProcedure_Click(object? sender, EventArgs e)
     {
         if (filePath == "")
         {
@@ -264,7 +264,7 @@ public class Boot_Interface_Tab : TabPage
         btnStartProcedure.Enabled = true;
     }
 
-    private async void BtnAuto_Click(object sender, EventArgs e)
+    private async void BtnAuto_Click(object? sender, EventArgs e)
     {
         btnAuto.Enabled = false;
         try
@@ -323,7 +323,7 @@ public class Boot_Interface_Tab : TabPage
     }
 
     // Funzione privata per aggiornare la ProgressBar
-    void UpdateProgressBar(object sender, BootProgress e)
+    void UpdateProgressBar(object? sender, BootProgress e)
     {
         int value = e.TotalLength <= 0 ? 0 : (int)((double)e.CurrentOffset / e.TotalLength * 100);
         if (value == 99) value = 100;
