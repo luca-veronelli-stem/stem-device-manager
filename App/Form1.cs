@@ -993,89 +993,27 @@ namespace StemPC
             this.richTextBoxTx.ScrollToCaret();
         }
 
-        private void OnPCANConnectionStatusChanged(object sender, bool isConnected)
+        // Helper thread-safe: aggiorna label di stato canale (testo + colore) con marshal sul thread UI.
+        private void UpdateConnectionStatus(ToolStripStatusLabel label, bool isConnected, string connectedText, string disconnectedText)
         {
-            // Metodo thread-safe per aggiornare lo stato della connessione
             if (this.InvokeRequired)
             {
-                this.Invoke(new Action(() => UpdatePCANConnectionStatus(isConnected)));
+                this.Invoke(new Action(() => UpdateConnectionStatus(label, isConnected, connectedText, disconnectedText)));
+                return;
             }
-            else
-            {
-                UpdatePCANConnectionStatus(isConnected);
-            }
+
+            label.Text = isConnected ? connectedText : disconnectedText;
+            label.BackColor = isConnected ? System.Drawing.Color.GreenYellow : System.Drawing.Color.Salmon;
         }
 
-        private void UpdatePCANConnectionStatus(bool isConnected)
-        {
-            if (isConnected)
-            {
-                PCanLabel.Text = "PCAN: Connected";
-                PCanLabel.BackColor = System.Drawing.Color.GreenYellow;
-            }
-            else
-            {
-                PCanLabel.Text = "PCAN: Not Connected";
-                PCanLabel.BackColor = System.Drawing.Color.Salmon;
-            }
-        }
-
+        private void OnPCANConnectionStatusChanged(object sender, bool isConnected)
+            => UpdateConnectionStatus(PCanLabel, isConnected, "PCAN: Connected", "PCAN: Not Connected");
 
         private void OnSerialConnectionStatusChanged(object sender, bool isConnected)
-        {
-            // Metodo thread-safe per aggiornare lo stato della connessione
-            if (this.InvokeRequired)
-            {
-                this.Invoke(new Action(() => UpdateSerialConnectionStatus(isConnected)));
-            }
-            else
-            {
-                UpdateSerialConnectionStatus(isConnected);
-            }
-        }
-
-        private void UpdateSerialConnectionStatus(bool isConnected)
-        {
-            if (isConnected)
-            {
-                COMStatusLabel.Text = "COM: Connesso";
-                COMStatusLabel.BackColor = System.Drawing.Color.GreenYellow;
-            }
-            else
-            {
-                COMStatusLabel.Text = "COM: Non connesso";
-                COMStatusLabel.BackColor = System.Drawing.Color.Salmon;
-            }
-        }
-
-
+            => UpdateConnectionStatus(COMStatusLabel, isConnected, "COM: Connesso", "COM: Non connesso");
 
         private void OnBLEConnectionStatusChanged(object sender, bool isConnected)
-        {
-            // Metodo thread-safe per aggiornare lo stato della connessione
-            if (this.InvokeRequired)
-            {
-                this.Invoke(new Action(() => UpdateBLEConnectionStatus(isConnected)));
-            }
-            else
-            {
-                UpdateBLEConnectionStatus(isConnected);
-            }
-        }
-
-        private void UpdateBLEConnectionStatus(bool isConnected)
-        {
-            if (isConnected)
-            {
-                BLEStatusLabel.Text = "BLE: Connesso";
-                BLEStatusLabel.BackColor = System.Drawing.Color.GreenYellow;
-            }
-            else
-            {
-                BLEStatusLabel.Text = "BLE: Non connesso";
-                BLEStatusLabel.BackColor = System.Drawing.Color.Salmon;
-            }
-        }
+            => UpdateConnectionStatus(BLEStatusLabel, isConnected, "BLE: Connesso", "BLE: Non connesso");
 
         //private void cANToolStripMenuItem_Click(object sender, EventArgs e)
         //{
