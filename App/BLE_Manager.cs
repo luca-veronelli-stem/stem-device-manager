@@ -2,7 +2,6 @@ using Plugin.BLE;
 using Plugin.BLE.Abstractions;
 using Plugin.BLE.Abstractions.Contracts;
 using Plugin.BLE.Abstractions.EventArgs;
-using StemPC;
 using System.Diagnostics;
 using Infrastructure.Protocol.Hardware;
 
@@ -19,6 +18,12 @@ namespace App
         public event Action? OnScanCompleted;
         public event EventHandler<BlePacketEventArgs>? PacketReceived;
         public event EventHandler<bool>? ConnectionStatusChanged;
+
+        /// <summary>
+        /// Evento per messaggi di log destinati al terminale UI. Consente al driver di
+        /// restare disaccoppiato da Form1 (sostituisce il precedente Form1.FormRef.UpdateTerminal).
+        /// </summary>
+        public event Action<string>? LogMessageEmitted;
 
         // Adapter BLE
         private IBluetoothLE ble;
@@ -239,7 +244,7 @@ namespace App
                 ConnectionStatusChanged?.Invoke(this, true);
 
                 Debug.WriteLine($"Connesso al dispositivo: {device.Name} ({device.Id})");
-                Form1.FormRef.UpdateTerminal($"Connesso al dispositivo: {device.Name} ({device.Id})");
+                LogMessageEmitted?.Invoke($"Connesso al dispositivo: {device.Name} ({device.Id})");
 
                 MonitorDeviceConnection();
             }

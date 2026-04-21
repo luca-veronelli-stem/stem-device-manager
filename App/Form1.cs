@@ -191,6 +191,9 @@ namespace StemPC
             BLETabRef = new BLEInterfaceTab();
             tabControl.TabPages.Add(BLETabRef);
 
+            // Sottoscrivi log driver BLE al terminale UI (sostituisce FormRef.UpdateTerminal)
+            BLETabRef.bleManager.LogMessageEmitted += UpdateTerminal;
+
             //crea e aggiungi ble
             _BLE_SDL = new SDL("BLE", "ble", 100000, BLETabRef.bleManager);
             _BLE_SDL.ConnectionStatusChanged += OnBLEConnectionStatusChanged;
