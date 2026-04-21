@@ -41,4 +41,20 @@ public interface IDeviceVariantConfig
     /// TOPLIFT → CAN, altre varianti → BLE.
     /// </summary>
     ChannelKind DefaultChannel { get; }
+
+    /// <summary>
+    /// Titolo della finestra principale (e label della splash screen).
+    /// Rimpiazza il blocco <c>#if TOPLIFT/EDEN/EGICON</c> sul testo della form
+    /// (vedi <c>Docs/PREPROCESSOR_DIRECTIVES.md</c> blocco #2). Il caller è
+    /// responsabile di appendere la versione software.
+    /// </summary>
+    string WindowTitle { get; }
+
+    /// <summary>
+    /// Lista dispositivi pre-popolati nel tab bootloader smart. Vuota per la
+    /// variante <see cref="DeviceVariant.Generic"/> e per <see cref="DeviceVariant.Egicon"/>.
+    /// Rimpiazza il blocco <c>#if TOPLIFT/EDEN</c> in <c>Form1</c>
+    /// (vedi <c>Docs/PREPROCESSOR_DIRECTIVES.md</c> blocco #4).
+    /// </summary>
+    IReadOnlyList<SmartBootDeviceEntry> SmartBootDevices { get; }
 }

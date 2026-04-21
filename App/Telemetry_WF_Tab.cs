@@ -1,5 +1,6 @@
 ﻿using App.Properties;
 using App.STEMProtocol;
+using Core.Interfaces;
 using Core.Models;
 using Services.Cache;
 
@@ -7,6 +8,7 @@ public class Telemetry_Tab : TabPage
 {
     //Cache centralizzata dizionario (sostituisce UpdateDictionary callback)
     private readonly DictionaryCache _cache;
+    private readonly IDeviceVariantConfig _variantConfig;
     //Lista variabili della macchina (snapshot letto dalla cache)
     private IReadOnlyList<Variable> MachineDictionary = [];
 
@@ -25,10 +27,12 @@ public class Telemetry_Tab : TabPage
     private int currentColumn = 0;
     private int currentRow = 2;
 
-    public Telemetry_Tab(PacketManager packetManagerRX, DictionaryCache cache)
+    public Telemetry_Tab(PacketManager packetManagerRX, DictionaryCache cache, IDeviceVariantConfig variantConfig)
     {
         ArgumentNullException.ThrowIfNull(cache);
+        ArgumentNullException.ThrowIfNull(variantConfig);
         _cache = cache;
+        _variantConfig = variantConfig;
         MachineDictionary = _cache.Variables;
         _cache.DictionaryUpdated += OnCacheDictionaryUpdated;
 
@@ -260,10 +264,12 @@ public class Telemetry_Tab : TabPage
 
     private async void ButtonStart_Click(object sender, EventArgs e)
     {
-#if TOPLIFT
-        // Aggiorno la lista dei dispositivi da interrogare
-        telemetryManager.AddToDictionary(MachineDictionary[1]);
-#endif
+        // Su TOPLIFT la telemetria interroga anche un secondo dispositivo (seconda
+        // variabile nel dizionario macchina); altre varianti interrogano solo il primo.
+        if (_variantConfig.Variant == DeviceVariant.TopLift)
+        {
+            telemetryManager.AddToDictionary(MachineDictionary[1]);
+        }
         await telemetryManager.TelemetryStart();
     }
 

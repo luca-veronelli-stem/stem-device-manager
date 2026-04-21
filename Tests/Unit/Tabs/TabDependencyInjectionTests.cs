@@ -24,7 +24,15 @@ public class TabDependencyInjectionTests
     [Fact]
     public void BootInterfaceTab_NullCache_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => new Boot_Interface_Tab(null!));
+        var variant = DeviceVariantConfig.Create(DeviceVariant.Generic);
+        Assert.Throws<ArgumentNullException>(() => new Boot_Interface_Tab(null!, variant));
+    }
+
+    [Fact]
+    public void BootInterfaceTab_NullVariant_Throws()
+    {
+        var cache = new DictionaryCache(new FakeDictionaryProvider(), new NoopDecoder());
+        Assert.Throws<ArgumentNullException>(() => new Boot_Interface_Tab(cache, null!));
     }
 
     [Fact]
@@ -38,7 +46,16 @@ public class TabDependencyInjectionTests
     public void TelemetryTab_NullCache_Throws()
     {
         var rxPacket = new PacketManager(0xFFFFFFFF);
-        Assert.Throws<ArgumentNullException>(() => new Telemetry_Tab(rxPacket, null!));
+        var variant = DeviceVariantConfig.Create(DeviceVariant.Generic);
+        Assert.Throws<ArgumentNullException>(() => new Telemetry_Tab(rxPacket, null!, variant));
+    }
+
+    [Fact]
+    public void TelemetryTab_NullVariant_Throws()
+    {
+        var rxPacket = new PacketManager(0xFFFFFFFF);
+        var cache = new DictionaryCache(new FakeDictionaryProvider(), new NoopDecoder());
+        Assert.Throws<ArgumentNullException>(() => new Telemetry_Tab(rxPacket, cache, null!));
     }
 
     [Fact]

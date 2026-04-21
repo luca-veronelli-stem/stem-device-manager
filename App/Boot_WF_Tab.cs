@@ -1,4 +1,6 @@
 ﻿using App.STEMProtocol;
+using Core.Interfaces;
+using Core.Models;
 using Services.Cache;
 using StemPC;
 using System.Text;
@@ -8,6 +10,7 @@ using System.Text;
 public class Boot_Interface_Tab : TabPage
 {
     private readonly DictionaryCache _cache;
+    private readonly IDeviceVariantConfig _variantConfig;
     private System.Windows.Forms.TextBox txtFilePath;
     private System.Windows.Forms.Button btnSelectFile;
     private System.Windows.Forms.Button btnStartProcedure;
@@ -23,10 +26,12 @@ public class Boot_Interface_Tab : TabPage
     private string filePath = "";
     public BootManager BootHndlr;
 
-    public Boot_Interface_Tab(DictionaryCache cache)
+    public Boot_Interface_Tab(DictionaryCache cache, IDeviceVariantConfig variantConfig)
     {
         ArgumentNullException.ThrowIfNull(cache);
+        ArgumentNullException.ThrowIfNull(variantConfig);
         _cache = cache;
+        _variantConfig = variantConfig;
 
         Name = "tabPageBoot";
         Text = "Boot Interface";
@@ -108,17 +113,20 @@ public class Boot_Interface_Tab : TabPage
 
         buttonPanel.Controls.Add(btnSelectFile);
 
-#if EGICON
-        //Versione Egicon
-        buttonPanel.Controls.Add(btnStartBoot);
-        buttonPanel.Controls.Add(btnStartProcedure);
-        buttonPanel.Controls.Add(btnEndBoot);
-        buttonPanel.Controls.Add(btnRestart);
-#else
-
-        //Versione nostra
-        buttonPanel.Controls.Add(btnAuto);
-#endif
+        // Set di pulsanti specifico per variante: Egicon espone i 4 step separati
+        // (StartBoot/StartProcedure/EndBoot/Restart), le altre varianti espongono il
+        // solo btnAuto che esegue la sequenza completa.
+        if (_variantConfig.Variant == DeviceVariant.Egicon)
+        {
+            buttonPanel.Controls.Add(btnStartBoot);
+            buttonPanel.Controls.Add(btnStartProcedure);
+            buttonPanel.Controls.Add(btnEndBoot);
+            buttonPanel.Controls.Add(btnRestart);
+        }
+        else
+        {
+            buttonPanel.Controls.Add(btnAuto);
+        }
 
         // DataGridView per visualizzare il contenuto in esadecimale e ASCII
         dgvHexView = new DataGridView

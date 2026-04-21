@@ -146,4 +146,46 @@ public class DeviceVariantConfigTests
 
         Assert.NotEqual(a, b);
     }
+
+    [Theory]
+    [InlineData(DeviceVariant.TopLift, "STEM Toplift A2 Manager ")]
+    [InlineData(DeviceVariant.Eden,    "STEM Eden XP Manager ")]
+    [InlineData(DeviceVariant.Egicon,  "STEM Spark Manager ")]
+    [InlineData(DeviceVariant.Generic, "STEM Device Manager ")]
+    public void WindowTitle_MatchesVariant(DeviceVariant variant, string expected)
+    {
+        var cfg = DeviceVariantConfig.Create(variant);
+
+        Assert.Equal(expected, cfg.WindowTitle);
+    }
+
+    [Fact]
+    public void SmartBootDevices_TopLift_HasThreeKeyboardsPlusMotherboard()
+    {
+        var cfg = DeviceVariantConfig.Create(DeviceVariant.TopLift);
+
+        Assert.Equal(4, cfg.SmartBootDevices.Count);
+        Assert.Equal(3, cfg.SmartBootDevices.Count(d => d.IsKeyboard));
+        Assert.Contains(cfg.SmartBootDevices, d => d.Address == 0x00080381u && !d.IsKeyboard);
+    }
+
+    [Fact]
+    public void SmartBootDevices_Eden_HasTwoKeyboardsPlusMotherboard()
+    {
+        var cfg = DeviceVariantConfig.Create(DeviceVariant.Eden);
+
+        Assert.Equal(3, cfg.SmartBootDevices.Count);
+        Assert.Equal(2, cfg.SmartBootDevices.Count(d => d.IsKeyboard));
+        Assert.Contains(cfg.SmartBootDevices, d => d.Address == 0x00030141u && !d.IsKeyboard);
+    }
+
+    [Theory]
+    [InlineData(DeviceVariant.Generic)]
+    [InlineData(DeviceVariant.Egicon)]
+    public void SmartBootDevices_GenericAndEgicon_AreEmpty(DeviceVariant variant)
+    {
+        var cfg = DeviceVariantConfig.Create(variant);
+
+        Assert.Empty(cfg.SmartBootDevices);
+    }
 }

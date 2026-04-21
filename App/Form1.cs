@@ -15,15 +15,15 @@ namespace StemPC
         private readonly IServiceProvider _serviceProvider;
         private readonly IDictionaryProvider _dictionaryProvider;
         private readonly DictionaryCache _dictionaryCache;
+        private readonly IDeviceVariantConfig _variantConfig;
 
         public const string Software_Version = "2.15";
 
-#if TOPLIFT
-        public string CommunicationPort = "can";
-#else
+        // Canale hardware corrente (legacy: "can"/"ble"/"serial"). Inizializzato nel ctor
+        // a partire da IDeviceVariantConfig.DefaultChannel. Modificato dai menu handler quando
+        // l'utente cambia canale. Sostituisce il blocco #if TOPLIFT/#else (blocco #1 in
+        // PREPROCESSOR_DIRECTIVES.md): TOPLIFT → "can", altre varianti → "ble".
         public string CommunicationPort = "ble";
-        //       public string CommunicationPort = "serial";
-#endif
 
 
         private UInt16 Prescaler1s = 0;
@@ -143,10 +143,20 @@ namespace StemPC
         public Form1(IServiceProvider serviceProvider)
         {
             InitializeComponent();
-            // Inietta il service provider, il provider dizionari e la cache
+            // Inietta il service provider, il provider dizionari, la cache, la variante device
             _serviceProvider = serviceProvider;
             _dictionaryProvider = serviceProvider.GetRequiredService<IDictionaryProvider>();
             _dictionaryCache = serviceProvider.GetRequiredService<DictionaryCache>();
+            _variantConfig = serviceProvider.GetRequiredService<IDeviceVariantConfig>();
+
+            // Canale hardware di default dalla variante (legacy: stringa invece di enum).
+            CommunicationPort = _variantConfig.DefaultChannel switch
+            {
+                ChannelKind.Can    => "can",
+                ChannelKind.Serial => "serial",
+                _                  => "ble"
+            };
+
             Load += async (_, _) => await LoadDictionaryDataAsync(CancellationToken.None);
 
             // Controlla se il TabControl esiste gi  e crealo se non esiste
@@ -156,15 +166,11 @@ namespace StemPC
                 Controls.Add(tabControl);
             }
 
-#if TOPLIFT
-            Text = "STEM Toplift A2 Manager " + Software_Version;
-#elif EDEN
-            Text = "STEM Eden XP Manager " + Software_Version;
-#elif EGICON
-            Text = "STEM Spark Manager " + Software_Version;
-#else
-            this.Text += Software_Version;
-#endif
+            // Titolo finestra: per variante device-specifiche usa il titolo dedicato,
+            // per Generic appende solo la versione al testo di default impostato nel Designer.
+            Text = _variantConfig.Variant == DeviceVariant.Generic
+                ? Text + Software_Version
+                : _variantConfig.WindowTitle + Software_Version;
 
             FormRef = this;
 
@@ -217,16 +223,17 @@ namespace StemPC
             RXpacketManager.Add_Serial_Channel(_SDL);
 
             //crea e aggiungi il bootloader manager
-            BootTabRef = new Boot_Interface_Tab(_dictionaryCache);
+            BootTabRef = new Boot_Interface_Tab(_dictionaryCache, _variantConfig);
             BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
 
-#if TOPLIFT
-
-#elif EDEN
-
-#else
-            tabControl.TabPages.Add(BootTabRef);
-#endif
+            // Il tab bootloader classico appare solo su varianti non-TOPLIFT e non-EDEN
+            // (blocco #3 in PREPROCESSOR_DIRECTIVES.md): TOPLIFT e EDEN usano il solo
+            // bootloader smart; per Egicon e Generic il classico rimane visibile.
+            if (_variantConfig.Variant != DeviceVariant.TopLift
+                && _variantConfig.Variant != DeviceVariant.Eden)
+            {
+                tabControl.TabPages.Add(BootTabRef);
+            }
 
             //crea e aggiungi il bootloader manager smart
             BootSmartTabRef = new Boot_Smart_Tab(RXpacketManager, _dictionaryCache);
@@ -240,24 +247,12 @@ namespace StemPC
                 bluetoothLEToolStripMenuItem.Checked = false;
             }
 
-            // Crea la lista dei dispositivi
-            List<DeviceInfo> BootSmartDevices = new List<DeviceInfo>
-            {
-#if TOPLIFT
-                //TOPLIFT devices
-                   new DeviceInfo(0x000803C1, "Keyboard 1", true),
-                   new DeviceInfo(0x000803C2, "Keyboard 2", true),
-                   new DeviceInfo(0x000803C3, "Keyboard 3", true),
-                   new DeviceInfo(0x00080381, "Motherboard", false),
-#elif EDEN
-                //EDEN devices
-                    new DeviceInfo(0x00030101, "Keyboard 1", true),
-                    new DeviceInfo(0x00030102, "Keyboard 2", true),
-                    new DeviceInfo(0x00030141, "Motherboard", false),
-#else
-
-#endif
-            };
+            // Lista dispositivi smart-boot letta dalla variante (blocco #4 in
+            // PREPROCESSOR_DIRECTIVES.md): TOPLIFT = 3 tastiere + scheda madre,
+            // EDEN = 2 tastiere + scheda madre, altre = lista vuota.
+            List<DeviceInfo> BootSmartDevices = _variantConfig.SmartBootDevices
+                .Select(d => new DeviceInfo((int)d.Address, d.Name, d.IsKeyboard))
+                .ToList();
 
             // Popola la tab con la lista dei dispositivi
             BootSmartTabRef.PopulateDevices(BootSmartDevices);
@@ -292,7 +287,7 @@ namespace StemPC
             OnPCANConnectionStatusChanged(this, _CDL.IsConnected);
 
             //crea e aggiungi il telemetry manager
-            TelemetryTabRef = new Telemetry_Tab(RXpacketManager, _dictionaryCache);
+            TelemetryTabRef = new Telemetry_Tab(RXpacketManager, _dictionaryCache, _variantConfig);
             TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
             TelemetryTabRef.telemetryManager.UpdateMyAddress(senderId);
 
@@ -301,36 +296,41 @@ namespace StemPC
             //tabControl.SelectedTab = BootTabRef;
             //tabControl.SelectedTab = CanTabPageRef;
 
-#if TOPLIFT
-            terminalOut.Visible = false;
-            // Rimuovi la riga
-            tableLayoutPanel1.RowStyles.RemoveAt(1);
-            tableLayoutPanel1.RowCount--;
-            tabControl.TabPages.Remove(tabPageProtocol);
-            tabControl.TabPages.Remove(BLETabRef);
-            BLEStatusLabel.Visible = false;
-            toolStripSplitButton3.Visible = false;
+            // Layout tab iniziale (blocco #5 in PREPROCESSOR_DIRECTIVES.md):
+            //   TOPLIFT  → UI semplificata: nasconde terminal/protocol/BLE, aggiunge
+            //              TopLiftTelemetry + BootSmart. Non cambia tab selezionato
+            //              (rimane quello di default del Designer).
+            //   EGICON   → tab iniziale BLE, nessuna tab aggiuntiva.
+            //   Generic  → tab iniziale BLE + aggiunge Telemetry classico.
+            //   Eden     → comportamento come Generic (legacy #else: stesso ramo).
+            if (_variantConfig.Variant == DeviceVariant.TopLift)
+            {
+                terminalOut.Visible = false;
+                // Rimuove la riga del terminal dal layout principale
+                tableLayoutPanel1.RowStyles.RemoveAt(1);
+                tableLayoutPanel1.RowCount--;
+                tabControl.TabPages.Remove(tabPageProtocol);
+                tabControl.TabPages.Remove(BLETabRef);
+                BLEStatusLabel.Visible = false;
+                toolStripSplitButton3.Visible = false;
 
-            //crea e aggiungi il telemetry per Toplift
+                // Telemetry TOPLIFT-specific + smart boot tab
+                TLTTabRef = new TopLiftTelemetry_Tab(RXpacketManager, _dictionaryCache);
+                TLTTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
+                tabControl.TabPages.Add(TLTTabRef);
+                tabControl.TabPages.Add(BootSmartTabRef);
+            }
+            else
+            {
+                tabControl.SelectedTab = BLETabRef;
 
-            //TLTTabRef = new TopLiftTelemetry_Tab(RXpacketManager);
-            //TLTTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
-
-            TLTTabRef = new TopLiftTelemetry_Tab(RXpacketManager, _dictionaryCache);
-            TLTTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
-
-            tabControl.TabPages.Add(TLTTabRef);
-            tabControl.TabPages.Add(BootSmartTabRef);
-#elif EGICON
-            tabControl.SelectedTab = BLETabRef;
-#else
-            tabControl.SelectedTab = BLETabRef;
-
-            //tabControl.SelectedTab = tabControl.TabPages["tabPageProtocol"];
-
-            tabControl.TabPages.Add(TelemetryTabRef);
-            //  tabControl.TabPages.Add(BootSmartTabRef);
-#endif
+                // Il tab Telemetry classico appare solo fuori da Egicon (legacy: Egicon
+                // usa solo BLE senza telemetria classica).
+                if (_variantConfig.Variant != DeviceVariant.Egicon)
+                {
+                    tabControl.TabPages.Add(TelemetryTabRef);
+                }
+            }
 
             // Nascondi la colonna delle variabili
             tableLayoutPanelProtocol.ColumnStyles[3].SizeType = SizeType.Absolute;
@@ -445,14 +445,17 @@ namespace StemPC
                     // Carica variabili via cache: fa HTTP una volta sola e notifica i tab via DictionaryUpdated.
                     await _dictionaryCache.SelectByRecipientAsync(RecipientId);
                     Dizionario = _dictionaryCache.Variables.ToList();
-#if TOPLIFT
-                    TLTTabRef.telemetryManager.UpdateSourceAddress(RecipientId);
-#else
-                    if (TelemetryTabRef != null)
+                    // Aggiorna il telemetry manager della tab attiva per variante
+                    // (blocco #6 in PREPROCESSOR_DIRECTIVES.md): TOPLIFT usa TLTTabRef,
+                    // altre varianti usano TelemetryTabRef quando presente.
+                    if (_variantConfig.Variant == DeviceVariant.TopLift)
+                    {
+                        TLTTabRef.telemetryManager.UpdateSourceAddress(RecipientId);
+                    }
+                    else if (TelemetryTabRef != null)
                     {
                         TelemetryTabRef.telemetryManager.UpdateSourceAddress(RecipientId);
                     }
-#endif
                 }
             }
             comboBoxCommand.SelectedIndex = 0;
@@ -510,52 +513,43 @@ namespace StemPC
                     comboBoxCommand.Items.Add(item.Name);
             }
 
-#if TOPLIFT
-            RecipientId = 0x00080381;
-            label12.Text = $"Indirizzo\n 0x{RecipientId:X8}";
-            await _dictionaryCache.SelectByRecipientAsync(RecipientId, ct);
-            Dizionario = _dictionaryCache.Variables.ToList();
-#elif EDEN
-            const string macchinaEden = "EDEN";
-            const string schedaEden = "Madre";
-            foreach (ProtocolAddress item in IndirizziProtocollo)
+            // Pre-selezione device/board iniziale (blocco #7 in PREPROCESSOR_DIRECTIVES.md):
+            // due strategie in base ai campi di IDeviceVariantConfig popolati dalla factory.
+            //   TOPLIFT  → DefaultRecipientId fisso (0x00080381), nessun lookup nel dizionario
+            //              (legacy: non selezionava combo device/board perché UI nascoste).
+            //   EDEN     → DeviceName="EDEN"+BoardName="Madre", lookup nell'elenco indirizzi
+            //              per ricavare l'address reale + aggiorna combo device/board.
+            //   EGICON   → DeviceName="SPARK"+BoardName="HMI", stesso pattern di EDEN.
+            //   Generic  → tutti i campi vuoti, nessuna pre-selezione (lista variabili vuota).
+            if (_variantConfig.DefaultRecipientId != 0)
             {
-                if (item.BoardName == schedaEden && item.DeviceName == macchinaEden)
+                RecipientId = _variantConfig.DefaultRecipientId;
+                label12.Text = $"Indirizzo\n 0x{RecipientId:X8}";
+                await _dictionaryCache.SelectByRecipientAsync(RecipientId, ct);
+                Dizionario = _dictionaryCache.Variables.ToList();
+            }
+            else if (!string.IsNullOrEmpty(_variantConfig.DeviceName)
+                     && !string.IsNullOrEmpty(_variantConfig.BoardName))
+            {
+                foreach (ProtocolAddress item in IndirizziProtocollo)
                 {
-                    label12.Text = $"Indirizzo\n {item.Address}";
-                    RecipientId = Convert.ToUInt32(item.Address.Substring(2), 16);
-                    await _dictionaryCache.SelectByRecipientAsync(RecipientId, ct);
-                    Dizionario = _dictionaryCache.Variables.ToList();
+                    if (item.BoardName == _variantConfig.BoardName
+                        && item.DeviceName == _variantConfig.DeviceName)
+                    {
+                        label12.Text = $"Indirizzo\n {item.Address}";
+                        RecipientId = Convert.ToUInt32(item.Address.Substring(2), 16);
+                        await _dictionaryCache.SelectByRecipientAsync(RecipientId, ct);
+                        Dizionario = _dictionaryCache.Variables.ToList();
 
-                    int indice = comboBoxMachine.FindStringExact(macchinaEden);
-                    if (indice != -1) comboBoxMachine.SelectedIndex = indice;
+                        int indice = comboBoxMachine.FindStringExact(_variantConfig.DeviceName);
+                        if (indice != -1) comboBoxMachine.SelectedIndex = indice;
 
-                    indice = comboBoxBoard.FindStringExact(schedaEden);
-                    if (indice != -1) comboBoxBoard.SelectedIndex = indice;
-                    break;
+                        indice = comboBoxBoard.FindStringExact(_variantConfig.BoardName);
+                        if (indice != -1) comboBoxBoard.SelectedIndex = indice;
+                        break;
+                    }
                 }
             }
-#elif EGICON
-            const string macchinaEgicon = "SPARK";
-            const string schedaEgicon = "HMI";
-            foreach (ProtocolAddress item in IndirizziProtocollo)
-            {
-                if (item.BoardName == schedaEgicon && item.DeviceName == macchinaEgicon)
-                {
-                    label12.Text = $"Indirizzo\n {item.Address}";
-                    RecipientId = Convert.ToUInt32(item.Address.Substring(2), 16);
-                    await _dictionaryCache.SelectByRecipientAsync(RecipientId, ct);
-                    Dizionario = _dictionaryCache.Variables.ToList();
-
-                    int indice = comboBoxMachine.FindStringExact(macchinaEgicon);
-                    if (indice != -1) comboBoxMachine.SelectedIndex = indice;
-
-                    indice = comboBoxBoard.FindStringExact(schedaEgicon);
-                    if (indice != -1) comboBoxBoard.SelectedIndex = indice;
-                    break;
-                }
-            }
-#endif
         }
 
         private async void buttonSendPS_Click(object sender, EventArgs e)
@@ -827,8 +821,11 @@ namespace StemPC
 
         public void AppLayerDecoded(object sender, AppLayerDecoderEventArgs e)
         {
-#if TOPLIFT
-#else
+            // Pannello decodifica applayer nascosto su TOPLIFT (blocco #8 in
+            // PREPROCESSOR_DIRECTIVES.md): TOPLIFT usa TopLiftTelemetry_Tab per la
+            // visualizzazione; il richTextBox generale non viene aggiornato.
+            if (_variantConfig.Variant == DeviceVariant.TopLift) return;
+
             if (e.CurrentCommand.Name != "None")
             {
                 // Ottieni il timestamp
@@ -949,7 +946,6 @@ namespace StemPC
             richTextBoxTx.SelectionStart = richTextBoxTx.Text.Length;
             // Esegue lo scroll fino alla posizione del cursore.
             richTextBoxTx.ScrollToCaret();
-#endif
         }
 
         public void onAppLayerSended(object sender, AppLayerSendEventArgs e)
