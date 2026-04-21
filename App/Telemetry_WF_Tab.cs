@@ -1,11 +1,14 @@
 ﻿using App.Properties;
 using App.STEMProtocol;
 using Core.Models;
+using Services.Cache;
 
 public class Telemetry_Tab : TabPage
 {
-    //Lista variabili della macchina
-    private IReadOnlyList<Variable> MachineDictionary;
+    //Cache centralizzata dizionario (sostituisce UpdateDictionary callback)
+    private readonly DictionaryCache _cache;
+    //Lista variabili della macchina (snapshot letto dalla cache)
+    private IReadOnlyList<Variable> MachineDictionary = [];
 
     // Classe per il backend
     public TelemetryManager telemetryManager;
@@ -22,8 +25,13 @@ public class Telemetry_Tab : TabPage
     private int currentColumn = 0;
     private int currentRow = 2;
 
-    public Telemetry_Tab(PacketManager packetManagerRX)
+    public Telemetry_Tab(PacketManager packetManagerRX, DictionaryCache cache)
     {
+        ArgumentNullException.ThrowIfNull(cache);
+        _cache = cache;
+        MachineDictionary = _cache.Variables;
+        _cache.DictionaryUpdated += OnCacheDictionaryUpdated;
+
         Name = "tabPageTelemetry";
         Text = "Telemetry";
 
@@ -147,10 +155,13 @@ public class Telemetry_Tab : TabPage
         }
     }
 
-    public void UpdateDictionary(IReadOnlyList<Variable> dictionary)
+    private void OnCacheDictionaryUpdated(object sender, EventArgs e)
     {
-        MachineDictionary = dictionary;
-        UpdateComboBox();
+        MachineDictionary = _cache.Variables;
+        if (IsHandleCreated && InvokeRequired)
+            BeginInvoke(new Action(UpdateComboBox));
+        else
+            UpdateComboBox();
     }
 
     private void Button_Click(object sender, EventArgs e)

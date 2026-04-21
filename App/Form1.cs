@@ -287,7 +287,7 @@ namespace StemPC
             OnPCANConnectionStatusChanged(this, _CDL.IsConnected);
 
             //crea e aggiungi il telemetry manager
-            TelemetryTabRef = new Telemetry_Tab(RXpacketManager);
+            TelemetryTabRef = new Telemetry_Tab(RXpacketManager, _serviceProvider.GetRequiredService<DictionaryCache>());
             TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
             TelemetryTabRef.telemetryManager.UpdateMyAddress(senderId);
 
@@ -444,7 +444,8 @@ namespace StemPC
 #else
                     if (TelemetryTabRef != null)
                     {
-                        TelemetryTabRef.UpdateDictionary(Dizionario);
+                        // TelemetryTabRef ora si aggiorna via DictionaryCache.DictionaryUpdated
+                        // (wiring cache.SelectByRecipientAsync in Task #37).
                         TelemetryTabRef.telemetryManager.UpdateSourceAddress(RecipientId);
                     }
 #endif
@@ -521,7 +522,7 @@ namespace StemPC
                     label12.Text = $"Indirizzo\n {item.Address}";
                     RecipientId = Convert.ToUInt32(item.Address.Substring(2), 16);
                     Dizionario = (await _dictionaryProvider.LoadVariablesAsync(RecipientId, ct)).ToList();
-                    TelemetryTabRef.UpdateDictionary(Dizionario);
+                    // TelemetryTabRef ora via DictionaryCache (wiring in Task #37).
 
                     int indice = comboBoxMachine.FindStringExact(macchinaEden);
                     if (indice != -1) comboBoxMachine.SelectedIndex = indice;
@@ -541,7 +542,7 @@ namespace StemPC
                     label12.Text = $"Indirizzo\n {item.Address}";
                     RecipientId = Convert.ToUInt32(item.Address.Substring(2), 16);
                     Dizionario = (await _dictionaryProvider.LoadVariablesAsync(RecipientId, ct)).ToList();
-                    TelemetryTabRef.UpdateDictionary(Dizionario);
+                    // TelemetryTabRef ora via DictionaryCache (wiring in Task #37).
 
                     int indice = comboBoxMachine.FindStringExact(macchinaEgicon);
                     if (indice != -1) comboBoxMachine.SelectedIndex = indice;
@@ -552,7 +553,7 @@ namespace StemPC
                 }
             }
 #else
-            TelemetryTabRef.UpdateDictionary(Dizionario);
+            // TelemetryTabRef ora via DictionaryCache (wiring in Task #37).
 #endif
         }
 
