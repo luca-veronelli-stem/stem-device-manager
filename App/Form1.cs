@@ -445,14 +445,17 @@ namespace StemPC
                     // Carica variabili via cache: fa HTTP una volta sola e notifica i tab via DictionaryUpdated.
                     await _dictionaryCache.SelectByRecipientAsync(RecipientId);
                     Dizionario = _dictionaryCache.Variables.ToList();
-#if TOPLIFT
-                    TLTTabRef.telemetryManager.UpdateSourceAddress(RecipientId);
-#else
-                    if (TelemetryTabRef != null)
+                    // Aggiorna il telemetry manager della tab attiva per variante
+                    // (blocco #6 in PREPROCESSOR_DIRECTIVES.md): TOPLIFT usa TLTTabRef,
+                    // altre varianti usano TelemetryTabRef quando presente.
+                    if (_variantConfig.Variant == DeviceVariant.TopLift)
+                    {
+                        TLTTabRef.telemetryManager.UpdateSourceAddress(RecipientId);
+                    }
+                    else if (TelemetryTabRef != null)
                     {
                         TelemetryTabRef.telemetryManager.UpdateSourceAddress(RecipientId);
                     }
-#endif
                 }
             }
             comboBoxCommand.SelectedIndex = 0;
@@ -818,8 +821,11 @@ namespace StemPC
 
         public void AppLayerDecoded(object sender, AppLayerDecoderEventArgs e)
         {
-#if TOPLIFT
-#else
+            // Pannello decodifica applayer nascosto su TOPLIFT (blocco #8 in
+            // PREPROCESSOR_DIRECTIVES.md): TOPLIFT usa TopLiftTelemetry_Tab per la
+            // visualizzazione; il richTextBox generale non viene aggiornato.
+            if (_variantConfig.Variant == DeviceVariant.TopLift) return;
+
             if (e.CurrentCommand.Name != "None")
             {
                 // Ottieni il timestamp
@@ -940,7 +946,6 @@ namespace StemPC
             richTextBoxTx.SelectionStart = richTextBoxTx.Text.Length;
             // Esegue lo scroll fino alla posizione del cursore.
             richTextBoxTx.ScrollToCaret();
-#endif
         }
 
         public void onAppLayerSended(object sender, AppLayerSendEventArgs e)
