@@ -311,7 +311,7 @@ namespace StemPC
             //TLTTabRef = new TopLiftTelemetry_Tab(RXpacketManager);
             //TLTTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
 
-            TLTTabRef = new TopLiftTelemetry_Tab(RXpacketManager);
+            TLTTabRef = new TopLiftTelemetry_Tab(RXpacketManager, _serviceProvider.GetRequiredService<DictionaryCache>());
             TLTTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
 
             tabControl.TabPages.Add(TLTTabRef);
@@ -439,7 +439,7 @@ namespace StemPC
                     RecipientId = Convert.ToUInt32(item.Address.Substring(2), 16);
                     Dizionario = (await _dictionaryProvider.LoadVariablesAsync(RecipientId)).ToList();
 #if TOPLIFT
-                    TLTTabRef.UpdateDictionary(Dizionario);
+                    // TLTTabRef ora via DictionaryCache (wiring in Task #37).
                     TLTTabRef.telemetryManager.UpdateSourceAddress(RecipientId);
 #else
                     if (TelemetryTabRef != null)
@@ -509,8 +509,7 @@ namespace StemPC
             RecipientId = 0x00080381;
             label12.Text = $"Indirizzo\n 0x{RecipientId:X8}";
             Dizionario = (await _dictionaryProvider.LoadVariablesAsync(RecipientId, ct)).ToList();
-            TLTTabRef.UpdateDictionary(Dizionario);
-            // BootSmartTabRef ora si aggiorna via DictionaryCache.DictionaryUpdated
+            // TLTTabRef e BootSmartTabRef ora si aggiornano via DictionaryCache.DictionaryUpdated
             // (wiring cache.LoadAsync/SelectByRecipientAsync in Task #37).
 #elif EDEN
             const string macchinaEden = "EDEN";
