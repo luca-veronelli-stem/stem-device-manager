@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace App
+namespace GUI.Windows
 {
     public class CircularProgressBar : Control
     {

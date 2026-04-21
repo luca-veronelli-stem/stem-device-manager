@@ -1,6 +1,6 @@
-﻿using App;
+﻿using GUI.Windows;
 
-using App.Properties;
+using GUI.Windows.Properties;
 using Infrastructure.Protocol.Legacy;
 
 public partial class BLEInterfaceTab : TabPage

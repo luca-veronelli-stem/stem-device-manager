@@ -37,7 +37,7 @@
     <File Path="LICENSE" />
     <File Path="README.md" />
   </Folder>
-  <Project Path="App/App.csproj" />
+  <Project Path="GUI.Windows/GUI.Windows.csproj" />
   <Project Path="Core/Core.csproj" Id="3557f077-7abe-4f0b-a393-bfdca9acdf43" />
   <Project Path="Infrastructure.Persistence/Infrastructure.Persistence.csproj" Id="ef04ae12-ec87-4b4f-ba6a-206b085d18ba" />
   <Project Path="Infrastructure.Protocol/Infrastructure.Protocol.csproj" />

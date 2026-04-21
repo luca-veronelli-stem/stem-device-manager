@@ -1,6 +1,6 @@
 using OxyPlot;
 
-namespace App
+namespace GUI.Windows
 {
     /// <summary>
     /// Controller personalizzato per lo zoom solo sull'asse X

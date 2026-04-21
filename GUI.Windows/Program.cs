@@ -33,7 +33,7 @@ using Microsoft.Extensions.DependencyInjection;
 using StemPC;
 using STEMPM;
 
-namespace App
+namespace GUI.Windows
 {
     internal static class Program
     {

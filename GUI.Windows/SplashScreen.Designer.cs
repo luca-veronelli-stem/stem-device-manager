@@ -39,7 +39,7 @@
             // pictureBox1
             // 
             pictureBox1.Dock = DockStyle.Fill;
-            pictureBox1.Image = App.Properties.Resources.logo_stem_2022_300x81;
+            pictureBox1.Image = GUI.Windows.Properties.Resources.logo_stem_2022_300x81;
             pictureBox1.Location = new Point(3, 3);
             pictureBox1.Name = "pictureBox1";
             pictureBox1.Size = new Size(794, 286);

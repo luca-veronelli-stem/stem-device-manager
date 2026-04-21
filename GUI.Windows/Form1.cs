@@ -1,4 +1,4 @@
-using App;
+using GUI.Windows;
 using Core.Interfaces;
 using Core.Models;
 using Infrastructure.Protocol.Hardware;

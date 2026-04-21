@@ -9,7 +9,7 @@ public class CircularProgressBarTests
     [Fact]
     public void Value_NegativeInput_ClampedToZero()
     {
-        var bar = new App.CircularProgressBar();
+        var bar = new GUI.Windows.CircularProgressBar();
 
         bar.Value = -5;
 
@@ -19,7 +19,7 @@ public class CircularProgressBarTests
     [Fact]
     public void Value_ExceedsMaximum_ClampedToMaximum()
     {
-        var bar = new App.CircularProgressBar { Maximum = 50 };
+        var bar = new GUI.Windows.CircularProgressBar { Maximum = 50 };
 
         bar.Value = 999;
 
@@ -29,7 +29,7 @@ public class CircularProgressBarTests
     [Fact]
     public void Maximum_ZeroOrNegative_ThrowsArgumentOutOfRange()
     {
-        var bar = new App.CircularProgressBar();
+        var bar = new GUI.Windows.CircularProgressBar();
 
         Assert.Throws<ArgumentOutOfRangeException>(() => bar.Maximum = 0);
         Assert.Throws<ArgumentOutOfRangeException>(() => bar.Maximum = -1);
@@ -38,7 +38,7 @@ public class CircularProgressBarTests
     [Fact]
     public void Maximum_Reduced_ClampsExistingValue()
     {
-        var bar = new App.CircularProgressBar { Maximum = 100 };
+        var bar = new GUI.Windows.CircularProgressBar { Maximum = 100 };
         bar.Value = 80;
 
         bar.Maximum = 50;
@@ -53,7 +53,7 @@ public class CircularProgressBarTests
     [InlineData(10, 10)]
     public void LineWidth_MinimumIsOne(int input, int expected)
     {
-        var bar = new App.CircularProgressBar();
+        var bar = new GUI.Windows.CircularProgressBar();
 
         bar.LineWidth = input;
 

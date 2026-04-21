@@ -1,4 +1,4 @@
-﻿using App.Properties;
+﻿using GUI.Windows.Properties;
 using Core.Interfaces;
 using Core.Models;
 using Services.Cache;

@@ -9,7 +9,7 @@ namespace Tests.Unit.Services.Telemetry;
 /// <summary>
 /// Test per <see cref="TelemetryService"/>: usa <see cref="ProtocolService"/>
 /// reale + <see cref="FakeCommunicationPort"/> per verificare encode + decode
-/// end-to-end, parità con <c>App.STEMProtocol.TelemetryManager</c>.
+/// end-to-end, parità con il legacy <c>TelemetryManager</c> (ora eliminato).
 /// </summary>
 public class TelemetryServiceTests
 {

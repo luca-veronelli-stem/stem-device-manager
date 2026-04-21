@@ -28,13 +28,13 @@
     <ProjectReference Include="..\Services\Services.csproj" />
   </ItemGroup>
 
-  <!-- App + Infrastructure.Protocol: solo per target Windows (dipendono da WinForms / driver HW) -->
+  <!-- GUI.Windows + Infrastructure.Protocol: solo per target Windows (dipendono da WinForms / driver HW) -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
-    <ProjectReference Include="..\App\App.csproj" />
+    <ProjectReference Include="..\GUI.Windows\GUI.Windows.csproj" />
     <ProjectReference Include="..\Infrastructure.Protocol\Infrastructure.Protocol.csproj" />
   </ItemGroup>
 
-  <!-- Escludi test che dipendono da App/Infrastructure.Protocol nel target cross-platform (net10.0) -->
+  <!-- Escludi test che dipendono da GUI.Windows/Infrastructure.Protocol nel target cross-platform (net10.0) -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
     <Compile Remove="Integration\**" />
     <Compile Remove="Unit\Terminal\**" />
