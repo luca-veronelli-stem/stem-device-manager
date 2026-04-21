@@ -2,6 +2,7 @@ using App;
 using App.STEMProtocol;
 using Core.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
+using Services.Cache;
 using System.Globalization;
 using static App.STEMProtocol.NetworkLayer;
 using Core.Models;
@@ -211,7 +212,7 @@ namespace StemPC
             RXpacketManager.Add_Serial_Channel(_SDL);
 
             //crea e aggiungi il bootloader manager
-            BootTabRef = new Boot_Interface_Tab();
+            BootTabRef = new Boot_Interface_Tab(_serviceProvider.GetRequiredService<DictionaryCache>());
             BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
 
 #if TOPLIFT
