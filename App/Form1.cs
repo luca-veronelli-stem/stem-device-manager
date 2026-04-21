@@ -223,7 +223,7 @@ namespace StemPC
             RXpacketManager.Add_Serial_Channel(_SDL);
 
             //crea e aggiungi il bootloader manager
-            BootTabRef = new Boot_Interface_Tab(_dictionaryCache);
+            BootTabRef = new Boot_Interface_Tab(_dictionaryCache, _variantConfig);
             BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
 
             // Il tab bootloader classico appare solo su varianti non-TOPLIFT e non-EDEN
@@ -287,7 +287,7 @@ namespace StemPC
             OnPCANConnectionStatusChanged(this, _CDL.IsConnected);
 
             //crea e aggiungi il telemetry manager
-            TelemetryTabRef = new Telemetry_Tab(RXpacketManager, _dictionaryCache);
+            TelemetryTabRef = new Telemetry_Tab(RXpacketManager, _dictionaryCache, _variantConfig);
             TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
             TelemetryTabRef.telemetryManager.UpdateMyAddress(senderId);
 
