@@ -14,6 +14,7 @@ namespace StemPC
         // Dependency Injection Service Provider
         private readonly IServiceProvider _serviceProvider;
         private readonly IDictionaryProvider _dictionaryProvider;
+        private readonly DictionaryCache _dictionaryCache;
 
         public const string Software_Version = "2.15";
 
@@ -142,9 +143,10 @@ namespace StemPC
         public Form1(IServiceProvider serviceProvider)
         {
             InitializeComponent();
-            // Inietta il service provider e il provider dizionari
+            // Inietta il service provider, il provider dizionari e la cache
             _serviceProvider = serviceProvider;
             _dictionaryProvider = serviceProvider.GetRequiredService<IDictionaryProvider>();
+            _dictionaryCache = serviceProvider.GetRequiredService<DictionaryCache>();
             Load += async (_, _) => await LoadDictionaryDataAsync(CancellationToken.None);
 
             // Controlla se il TabControl esiste gi  e crealo se non esiste
@@ -212,7 +214,7 @@ namespace StemPC
             RXpacketManager.Add_Serial_Channel(_SDL);
 
             //crea e aggiungi il bootloader manager
-            BootTabRef = new Boot_Interface_Tab(_serviceProvider.GetRequiredService<DictionaryCache>());
+            BootTabRef = new Boot_Interface_Tab(_dictionaryCache);
             BootTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
 
 #if TOPLIFT
@@ -224,7 +226,7 @@ namespace StemPC
 #endif
 
             //crea e aggiungi il bootloader manager smart
-            BootSmartTabRef = new Boot_Smart_Tab(RXpacketManager, _serviceProvider.GetRequiredService<DictionaryCache>());
+            BootSmartTabRef = new Boot_Smart_Tab(RXpacketManager, _dictionaryCache);
             BootSmartTabRef.BootHndlr.SetHardwareChannel(CommunicationPort);
             BootSmartTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
 
@@ -287,7 +289,7 @@ namespace StemPC
             OnPCANConnectionStatusChanged(this, _CDL.IsConnected);
 
             //crea e aggiungi il telemetry manager
-            TelemetryTabRef = new Telemetry_Tab(RXpacketManager, _serviceProvider.GetRequiredService<DictionaryCache>());
+            TelemetryTabRef = new Telemetry_Tab(RXpacketManager, _dictionaryCache);
             TelemetryTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
             TelemetryTabRef.telemetryManager.UpdateMyAddress(senderId);
 
@@ -311,7 +313,7 @@ namespace StemPC
             //TLTTabRef = new TopLiftTelemetry_Tab(RXpacketManager);
             //TLTTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
 
-            TLTTabRef = new TopLiftTelemetry_Tab(RXpacketManager, _serviceProvider.GetRequiredService<DictionaryCache>());
+            TLTTabRef = new TopLiftTelemetry_Tab(RXpacketManager, _dictionaryCache);
             TLTTabRef.telemetryManager.SetHardwareChannel(CommunicationPort);
 
             tabControl.TabPages.Add(TLTTabRef);
@@ -437,15 +439,14 @@ namespace StemPC
                 {
                     label12.Text = $"Indirizzo\n {item.Address}";
                     RecipientId = Convert.ToUInt32(item.Address.Substring(2), 16);
-                    Dizionario = (await _dictionaryProvider.LoadVariablesAsync(RecipientId)).ToList();
+                    // Carica variabili via cache: fa HTTP una volta sola e notifica i tab via DictionaryUpdated.
+                    await _dictionaryCache.SelectByRecipientAsync(RecipientId);
+                    Dizionario = _dictionaryCache.Variables.ToList();
 #if TOPLIFT
-                    // TLTTabRef ora via DictionaryCache (wiring in Task #37).
                     TLTTabRef.telemetryManager.UpdateSourceAddress(RecipientId);
 #else
                     if (TelemetryTabRef != null)
                     {
-                        // TelemetryTabRef ora si aggiorna via DictionaryCache.DictionaryUpdated
-                        // (wiring cache.SelectByRecipientAsync in Task #37).
                         TelemetryTabRef.telemetryManager.UpdateSourceAddress(RecipientId);
                     }
 #endif
@@ -460,7 +461,8 @@ namespace StemPC
         /// </summary>
         private async Task LoadDictionaryDataAsync(CancellationToken ct)
         {
-            var data = await _dictionaryProvider.LoadProtocolDataAsync(ct);
+            // Carica commands + addresses via cache (HTTP una volta, notifica tab via DictionaryUpdated).
+            await _dictionaryCache.LoadAsync(ct);
 
             // TEMP: indicatore provider attivo — rimuovere dopo testing
             (string text, Color color) providerTag = _dictionaryProvider switch
@@ -482,8 +484,8 @@ namespace StemPC
             };
             statusStrip1.Items.Add(lblProvider);
             // TEMP END
-            IndirizziProtocollo = data.Addresses.ToList();
-            Comandi = data.Commands.ToList();
+            IndirizziProtocollo = _dictionaryCache.Addresses.ToList();
+            Comandi = _dictionaryCache.Commands.ToList();
             Dizionario = new List<Variable>();
 
             _terminal.WriteLog("--------------------------------------------------------------------");
@@ -508,9 +510,8 @@ namespace StemPC
 #if TOPLIFT
             RecipientId = 0x00080381;
             label12.Text = $"Indirizzo\n 0x{RecipientId:X8}";
-            Dizionario = (await _dictionaryProvider.LoadVariablesAsync(RecipientId, ct)).ToList();
-            // TLTTabRef e BootSmartTabRef ora si aggiornano via DictionaryCache.DictionaryUpdated
-            // (wiring cache.LoadAsync/SelectByRecipientAsync in Task #37).
+            await _dictionaryCache.SelectByRecipientAsync(RecipientId, ct);
+            Dizionario = _dictionaryCache.Variables.ToList();
 #elif EDEN
             const string macchinaEden = "EDEN";
             const string schedaEden = "Madre";
@@ -520,8 +521,8 @@ namespace StemPC
                 {
                     label12.Text = $"Indirizzo\n {item.Address}";
                     RecipientId = Convert.ToUInt32(item.Address.Substring(2), 16);
-                    Dizionario = (await _dictionaryProvider.LoadVariablesAsync(RecipientId, ct)).ToList();
-                    // TelemetryTabRef ora via DictionaryCache (wiring in Task #37).
+                    await _dictionaryCache.SelectByRecipientAsync(RecipientId, ct);
+                    Dizionario = _dictionaryCache.Variables.ToList();
 
                     int indice = comboBoxMachine.FindStringExact(macchinaEden);
                     if (indice != -1) comboBoxMachine.SelectedIndex = indice;
@@ -540,8 +541,8 @@ namespace StemPC
                 {
                     label12.Text = $"Indirizzo\n {item.Address}";
                     RecipientId = Convert.ToUInt32(item.Address.Substring(2), 16);
-                    Dizionario = (await _dictionaryProvider.LoadVariablesAsync(RecipientId, ct)).ToList();
-                    // TelemetryTabRef ora via DictionaryCache (wiring in Task #37).
+                    await _dictionaryCache.SelectByRecipientAsync(RecipientId, ct);
+                    Dizionario = _dictionaryCache.Variables.ToList();
 
                     int indice = comboBoxMachine.FindStringExact(macchinaEgicon);
                     if (indice != -1) comboBoxMachine.SelectedIndex = indice;
@@ -551,8 +552,6 @@ namespace StemPC
                     break;
                 }
             }
-#else
-            // TelemetryTabRef ora via DictionaryCache (wiring in Task #37).
 #endif
         }
 
