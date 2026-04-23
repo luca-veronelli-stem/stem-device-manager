@@ -149,3 +149,8 @@ Candidate modules for future formalizations (Phase 2–3):
 3. `TelemetryManager` → `TelemetryService` — variable reads and sampling
 4. `BootManager` → `BootService` — firmware update sequence (state machine already sketched in `Specs/Phase1/Interfaces.lean`)
 
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+<!-- SPECKIT END -->
+
