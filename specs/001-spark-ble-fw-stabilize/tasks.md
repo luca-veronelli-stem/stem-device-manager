@@ -45,7 +45,7 @@ description: "Task list for implementing spec 001 Spark BLE Firmware Stabilizati
 **⚠️ CRITICAL**: User stories can start in parallel only AFTER Phase 2 completes.
 
 - [x] T003 Add structured logging scopes (FR-009, research.md R11) to `Services/Boot/BootService.cs` and `Services/Cache/ConnectionManager.cs`: every state transition emits exactly one `LogInformation` line; every retry emits exactly one `LogWarning`; both use `BeginScope` with `{ Area, Step, Attempt, Recipient }`. Depends on: nothing.
-- [ ] T004 [P] Add Debug-configuration shutdown-audit logger `GUI.Windows/Diagnostics/ShutdownAudit.cs` (research.md R8): logs every `IDisposable` owned by `ConnectionManager`, `BootService`, `BLEManager` at dispose time with stack-trace. Wired in `GUI.Windows/Program.cs` under `#if DEBUG`. Depends on: nothing.
+- [x] T004 [P] Add Debug-configuration shutdown-audit logger `GUI.Windows/Diagnostics/ShutdownAudit.cs` (research.md R8): logs every `IDisposable` owned by `ConnectionManager`, `BootService`, `BLEManager` at dispose time with stack-trace. Wired in `GUI.Windows/Program.cs` under `#if DEBUG`. Depends on: nothing.
 - [ ] T005 Define Lean 4 state-machine types and transitions (no preservation theorems yet) in `Lean/Phase2/BootStateMachine.lean`, `Lean/Phase2/BleLifecycle.lean`, `Lean/Phase2/BatchComposition.lean`. Exact shapes per `data-model.md`. `lake build` MUST pass. Depends on: T001.
 
 **Checkpoint**: After T003–T005, each user story phase can proceed in any order subject to the dependencies noted below.

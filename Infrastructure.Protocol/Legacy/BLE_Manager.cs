@@ -3,6 +3,7 @@ using Plugin.BLE.Abstractions;
 using Plugin.BLE.Abstractions.Contracts;
 using Plugin.BLE.Abstractions.EventArgs;
 using System.Diagnostics;
+using Core.Diagnostics;
 using Infrastructure.Protocol.Hardware;
 
 namespace Infrastructure.Protocol.Legacy
@@ -12,8 +13,10 @@ namespace Infrastructure.Protocol.Legacy
     /// Vive in Legacy/ perché è un driver di transizione: sarà rimpiazzato
     /// quando Stem.Communication NuGet sarà disponibile. Nessuna dipendenza da UI.
     /// </summary>
-    public class BLEManager : IBleDriver
+    public class BLEManager : IBleDriver, IDisposable
     {
+        private bool _disposed;
+
         /// <summary>
         /// Evento che viene sollevato quando viene scoperto un nuovo dispositivo BLE.
         /// Il parametro è il nome del dispositivo.
@@ -414,6 +417,20 @@ namespace Infrastructure.Protocol.Legacy
             {
                 return ble.State.ToString();
             }
+        }
+
+        /// <summary>
+        /// Minimal <see cref="IDisposable"/> implementation wired for spec-001
+        /// T004 (research.md R8): allows the Debug-only shutdown audit to
+        /// observe BLEManager's disposal. Actual cleanup of Plugin.BLE adapter
+        /// event handlers and connected-device handles is deferred to T007
+        /// (US1 root-cause fix).
+        /// </summary>
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            ShutdownAuditHook.Record(nameof(BLEManager), "(self)");
         }
     }
 }

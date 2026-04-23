@@ -1,3 +1,4 @@
+using Core.Diagnostics;
 using Core.Interfaces;
 using Core.Models;
 using Microsoft.Extensions.Logging;
@@ -274,6 +275,7 @@ public sealed class ConnectionManager : IDisposable
         _activeProtocol = null;
         _activeBoot = null;
         _activeTelemetry = null;
+        ShutdownAuditHook.Record(nameof(ConnectionManager), "(self)");
     }
 
     /// <summary>
@@ -294,11 +296,28 @@ public sealed class ConnectionManager : IDisposable
     {
         if (telemetry is not null) telemetry.DataReceived -= OnActiveTelemetryData;
         if (boot is not null) boot.ProgressChanged -= OnActiveBootProgress;
-        (telemetry as IDisposable)?.Dispose();
-        (boot as IDisposable)?.Dispose();
+        if (telemetry is IDisposable td)
+        {
+            ShutdownAuditHook.Record(
+                nameof(ConnectionManager),
+                $"ActiveTelemetry ({telemetry.GetType().Name})");
+            td.Dispose();
+        }
+        if (boot is IDisposable bd)
+        {
+            ShutdownAuditHook.Record(
+                nameof(ConnectionManager),
+                $"ActiveBoot ({boot.GetType().Name})");
+            bd.Dispose();
+        }
         if (protocol is not null)
+        {
             protocol.AppLayerDecoded -= OnActiveProtocolAppLayer;
-        protocol?.Dispose();
+            ShutdownAuditHook.Record(
+                nameof(ConnectionManager),
+                $"ActiveProtocol ({protocol.GetType().Name})");
+            protocol.Dispose();
+        }
     }
 
     private void OnPortStateChanged(object? sender, ConnectionState state)
