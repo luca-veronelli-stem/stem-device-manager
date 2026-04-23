@@ -338,6 +338,11 @@ public class Boot_Smart_Tab : TabPage
 
     private void UpdateProgressBar(object? sender, BootProgress e)
     {
+        // This tab is constructed for every variant but only visible/populated
+        // for TopLift and Eden. For Egicon/Generic, binSelections is empty and
+        // the subscription is dormant — guard against div-by-zero when another
+        // tab (e.g. SPARK firmware update) triggers BootProgressChanged.
+        if (binSelections.Count == 0) return;
         int value = e.TotalLength <= 0 ? 0 : (int)((double)e.CurrentOffset / e.TotalLength * 100);
         if (value == 99) value = 100;
 
