@@ -1,5 +1,7 @@
 using Core.Interfaces;
 using Core.Models;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Services.Boot;
 using Services.Protocol;
 using Services.Telemetry;
@@ -37,6 +39,7 @@ public sealed class ConnectionManager : IDisposable
     private readonly IReadOnlyDictionary<ChannelKind, ICommunicationPort> _ports;
     private readonly IPacketDecoder _decoder;
     private readonly IDeviceVariantConfig _variantConfig;
+    private readonly ILoggerFactory _loggerFactory;
     private readonly Lock _stateLock = new();
     private IProtocolService? _activeProtocol;
     private IBootService? _activeBoot;
@@ -47,7 +50,8 @@ public sealed class ConnectionManager : IDisposable
     public ConnectionManager(
         IEnumerable<ICommunicationPort> ports,
         IPacketDecoder decoder,
-        IDeviceVariantConfig variantConfig)
+        IDeviceVariantConfig variantConfig,
+        ILoggerFactory? loggerFactory = null)
     {
         ArgumentNullException.ThrowIfNull(ports);
         ArgumentNullException.ThrowIfNull(decoder);
@@ -59,6 +63,7 @@ public sealed class ConnectionManager : IDisposable
 
         _decoder = decoder;
         _variantConfig = variantConfig;
+        _loggerFactory = loggerFactory ?? NullLoggerFactory.Instance;
         _activeChannel = variantConfig.DefaultChannel;
 
         foreach (var port in _ports.Values)
@@ -185,7 +190,7 @@ public sealed class ConnectionManager : IDisposable
 
         var newProtocol = CreateProtocolService(newPort);
         newProtocol.AppLayerDecoded += OnActiveProtocolAppLayer;
-        var newBoot = new BootService(newProtocol);
+        var newBoot = new BootService(newProtocol, _loggerFactory.CreateLogger<BootService>());
         newBoot.ProgressChanged += OnActiveBootProgress;
         var newTelemetry = new TelemetryService(newProtocol);
         newTelemetry.DataReceived += OnActiveTelemetryData;

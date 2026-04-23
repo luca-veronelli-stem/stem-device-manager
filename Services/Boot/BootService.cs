@@ -1,5 +1,7 @@
 using Core.Interfaces;
 using Core.Models;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Services.Boot;
 
@@ -55,6 +57,7 @@ public sealed class BootService : IBootService, IDisposable
         new("RestartMachine", "00", "0A");
 
     private readonly IProtocolService _protocol;
+    private readonly ILogger<BootService> _logger;
     private readonly TimeSpan _responseTimeout;
     private readonly TimeSpan _restartInterval;
     private readonly Lock _stateLock = new();
@@ -63,18 +66,22 @@ public sealed class BootService : IBootService, IDisposable
     private int _totalLength;
     private bool _disposed;
 
-    public BootService(IProtocolService protocol)
-        : this(protocol, DefaultResponseTimeout, DefaultRestartInterval) { }
+    public BootService(IProtocolService protocol, ILogger<BootService>? logger = null)
+        : this(protocol, DefaultResponseTimeout, DefaultRestartInterval, logger) { }
 
     /// <summary>
     /// Overload interno per i test: consente di iniettare timeout più aggressivi
     /// (es. 50ms invece di 4000ms) per accelerare le suite.
     /// </summary>
     internal BootService(
-        IProtocolService protocol, TimeSpan responseTimeout, TimeSpan restartInterval)
+        IProtocolService protocol,
+        TimeSpan responseTimeout,
+        TimeSpan restartInterval,
+        ILogger<BootService>? logger = null)
     {
         ArgumentNullException.ThrowIfNull(protocol);
         _protocol = protocol;
+        _logger = logger ?? NullLogger<BootService>.Instance;
         _responseTimeout = responseTimeout;
         _restartInterval = restartInterval;
     }
@@ -233,15 +240,27 @@ public sealed class BootService : IBootService, IDisposable
 
     private async Task SendStartProcedure(uint recipientId, CancellationToken ct)
     {
+        _logger.LogInformation(
+            "Boot start: sending CMD_START_PROCEDURE to {Recipient:X8}", recipientId);
         if (!await SendWithRetry(recipientId, CmdStartProcedure, EmptyPayload, StartRetries, ct))
+        {
+            _logger.LogError(
+                "Boot start failed: no reply from {Recipient:X8} after {Retries} retries",
+                recipientId, StartRetries);
             throw new BootProtocolException(
                 "Avvio procedura bootloader fallito (CMD_START_PROCEDURE senza reply).");
+        }
     }
 
     private async Task SendAllBlocks(
         byte[] firmware, uint recipientId, CancellationToken ct)
     {
         ushort fwType = ExtractFwType(firmware);
+        int totalBlocks = (firmware.Length + FirmwareBlockSize - 1) / FirmwareBlockSize;
+        _logger.LogInformation(
+            "Boot blocks: uploading {Bytes} bytes ({Blocks} blocks of {BlockSize}B) " +
+            "fwType=0x{FwType:X4} to {Recipient:X8}",
+            firmware.Length, totalBlocks, FirmwareBlockSize, fwType, recipientId);
         uint pageNum = 0;
         for (int offset = 0; offset < firmware.Length; offset += FirmwareBlockSize)
         {
@@ -249,24 +268,54 @@ public sealed class BootService : IBootService, IDisposable
             var block = BuildPaddedBlock(firmware, offset);
             var payload = BuildProgramBlockPayload(fwType, pageNum, FirmwareBlockSize, block);
             if (!await SendWithRetry(recipientId, CmdProgramBlock, payload, BlockRetries, ct))
+            {
+                _logger.LogError(
+                    "Boot blocks failed: block {PageNum}/{TotalBlocks} not acknowledged " +
+                    "after {Retries} retries (recipient {Recipient:X8})",
+                    pageNum, totalBlocks, BlockRetries, recipientId);
                 throw new BootProtocolException(
                     $"Programmazione blocco {pageNum} fallita dopo {BlockRetries} tentativi.");
+            }
+            LogBlockProgress(pageNum, totalBlocks);
             pageNum++;
             int newOffset = Math.Min(offset + FirmwareBlockSize, firmware.Length);
             lock (_stateLock) _currentOffset = newOffset;
             EmitProgress(newOffset, firmware.Length);
         }
+        _logger.LogInformation(
+            "Boot blocks: all {Blocks} blocks acknowledged by {Recipient:X8}",
+            totalBlocks, recipientId);
+    }
+
+    private void LogBlockProgress(uint pageNum, int totalBlocks)
+    {
+        bool isFirst = pageNum == 0;
+        bool isLast = pageNum == totalBlocks - 1;
+        bool isMilestone = (pageNum + 1) % 16 == 0;
+        if (!(isFirst || isLast || isMilestone)) return;
+        _logger.LogDebug(
+            "Boot blocks: ack {Done}/{Total}", pageNum + 1, totalBlocks);
     }
 
     private async Task SendEndProcedure(uint recipientId, CancellationToken ct)
     {
+        _logger.LogInformation(
+            "Boot end: sending CMD_END_PROCEDURE to {Recipient:X8}", recipientId);
         if (!await SendWithRetry(recipientId, CmdEndProcedure, EmptyPayload, EndRetries, ct))
+        {
+            _logger.LogError(
+                "Boot end failed: no reply from {Recipient:X8} after {Retries} retries",
+                recipientId, EndRetries);
             throw new BootProtocolException(
                 "Chiusura procedura bootloader fallita (CMD_END_PROCEDURE senza reply).");
+        }
     }
 
     private async Task SendRestartSequence(uint recipientId, CancellationToken ct)
     {
+        _logger.LogInformation(
+            "Boot restart: sending CMD_RESTART_MACHINE x{Count} to {Recipient:X8}",
+            RestartCount, recipientId);
         for (int i = 0; i < RestartCount; i++)
         {
             ct.ThrowIfCancellationRequested();
