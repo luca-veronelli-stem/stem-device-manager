@@ -30,6 +30,7 @@ using Services;
 ///
 /// </summary>
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using StemPC;
 using STEMPM;
 
@@ -52,6 +53,11 @@ namespace GUI.Windows
 
             // Configurazione della dependency injection
             var services = new ServiceCollection();
+
+            // Logging: Debug sink (visible in Output window when running under VS)
+            // is enough for now; a file/event sink can be added later if bring-up
+            // sessions need persistent logs.
+            services.AddLogging(b => b.AddDebug().SetMinimumLevel(LogLevel.Debug));
 
             // Provider dizionari (API Azure con fallback Excel, o solo Excel)
             services.AddDictionaryProvider(configuration);
