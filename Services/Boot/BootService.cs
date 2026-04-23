@@ -114,15 +114,16 @@ public sealed class BootService : IBootService, IDisposable
         ThrowIfDisposed();
         ValidateFirmware(firmware);
 
-        BeginUpload(firmware.Length);
+        const string step = "StartFirmwareUpload";
+        BeginUpload(firmware.Length, recipientId, step);
         try
         {
             await RunUploadSequence(firmware, recipientId, ct).ConfigureAwait(false);
-            CompleteUpload();
+            CompleteUpload(recipientId, step);
         }
         catch (OperationCanceledException)
         {
-            FailUpload();
+            FailUpload(recipientId, step);
             throw;
         }
         catch (BootProtocolException)
@@ -130,11 +131,11 @@ public sealed class BootService : IBootService, IDisposable
             // Fallimento di protocollo (timeout reply) — stato Failed, niente
             // rethrow (parità col legacy BootManager che mostrava MessageBox e
             // ritornava). L'osservabilità del fallimento avviene tramite State.
-            FailUpload();
+            FailUpload(recipientId, step);
         }
         catch
         {
-            FailUpload();
+            FailUpload(recipientId, step);
             throw;
         }
     }
@@ -167,24 +168,25 @@ public sealed class BootService : IBootService, IDisposable
         ThrowIfDisposed();
         ValidateFirmware(firmware);
 
-        BeginUpload(firmware.Length);
+        const string step = "UploadBlocksOnly";
+        BeginUpload(firmware.Length, recipientId, step);
         try
         {
             await SendAllBlocks(firmware, recipientId, ct).ConfigureAwait(false);
-            CompleteUpload();
+            CompleteUpload(recipientId, step);
         }
         catch (OperationCanceledException)
         {
-            FailUpload();
+            FailUpload(recipientId, step);
             throw;
         }
         catch (BootProtocolException)
         {
-            FailUpload();
+            FailUpload(recipientId, step);
         }
         catch
         {
-            FailUpload();
+            FailUpload(recipientId, step);
             throw;
         }
     }
@@ -205,28 +207,59 @@ public sealed class BootService : IBootService, IDisposable
         _disposed = true;
     }
 
-    private void BeginUpload(int totalLength)
+    private void BeginUpload(int totalLength, uint recipientId, string step)
     {
+        BootState old;
         lock (_stateLock)
         {
             if (_state == BootState.Uploading)
                 throw new InvalidOperationException(
                     "Upload firmware già in corso.");
+            old = _state;
             _state = BootState.Uploading;
             _currentOffset = 0;
             _totalLength = totalLength;
         }
+        LogTransition(old, BootState.Uploading, recipientId, step);
         EmitProgress(0, totalLength);
     }
 
-    private void CompleteUpload()
+    private void CompleteUpload(uint recipientId, string step)
     {
-        lock (_stateLock) _state = BootState.Completed;
+        BootState old;
+        bool changed;
+        lock (_stateLock)
+        {
+            old = _state;
+            changed = old != BootState.Completed;
+            _state = BootState.Completed;
+        }
+        if (changed) LogTransition(old, BootState.Completed, recipientId, step);
     }
 
-    private void FailUpload()
+    private void FailUpload(uint recipientId, string step)
     {
-        lock (_stateLock) _state = BootState.Failed;
+        BootState old;
+        bool changed;
+        lock (_stateLock)
+        {
+            old = _state;
+            changed = old != BootState.Failed;
+            _state = BootState.Failed;
+        }
+        if (changed) LogTransition(old, BootState.Failed, recipientId, step);
+    }
+
+    private void LogTransition(BootState old, BootState newState, uint recipientId, string step)
+    {
+        using var scope = _logger.BeginScope(new Dictionary<string, object?>
+        {
+            ["Area"] = "Boot",
+            ["Step"] = step,
+            ["Attempt"] = 0,
+            ["Recipient"] = recipientId
+        });
+        _logger.LogInformation("BootState {Old} -> {New}", old, newState);
     }
 
     private async Task RunUploadSequence(
@@ -332,6 +365,15 @@ public sealed class BootService : IBootService, IDisposable
         for (int i = 0; i < retries; i++)
         {
             ct.ThrowIfCancellationRequested();
+            using var scope = _logger.BeginScope(new Dictionary<string, object?>
+            {
+                ["Area"] = "Boot",
+                ["Step"] = command.Name,
+                ["Attempt"] = i + 1,
+                ["Recipient"] = recipientId
+            });
+            if (i > 0)
+                _logger.LogWarning("Retrying {Step}", command.Name);
             bool ok = await _protocol.SendCommandAndWaitReplyAsync(
                 recipientId,
                 command,

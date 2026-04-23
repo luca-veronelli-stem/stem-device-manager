@@ -40,6 +40,7 @@ public sealed class ConnectionManager : IDisposable
     private readonly IPacketDecoder _decoder;
     private readonly IDeviceVariantConfig _variantConfig;
     private readonly ILoggerFactory _loggerFactory;
+    private readonly ILogger<ConnectionManager> _logger;
     private readonly Lock _stateLock = new();
     private IProtocolService? _activeProtocol;
     private IBootService? _activeBoot;
@@ -64,6 +65,7 @@ public sealed class ConnectionManager : IDisposable
         _decoder = decoder;
         _variantConfig = variantConfig;
         _loggerFactory = loggerFactory ?? NullLoggerFactory.Instance;
+        _logger = _loggerFactory.CreateLogger<ConnectionManager>();
         _activeChannel = variantConfig.DefaultChannel;
 
         foreach (var port in _ports.Values)
@@ -202,7 +204,20 @@ public sealed class ConnectionManager : IDisposable
             _activeTelemetry = newTelemetry;
         }
         if (previousChannel != target || oldProtocol is null)
+        {
+            using (_logger.BeginScope(new Dictionary<string, object?>
+            {
+                ["Area"] = "Connection",
+                ["Step"] = "SwitchTo",
+                ["Attempt"] = 0,
+                ["Recipient"] = null
+            }))
+            {
+                _logger.LogInformation(
+                    "ActiveChannel {Previous} -> {Target}", previousChannel, target);
+            }
             ActiveChannelChanged?.Invoke(this, target);
+        }
     }
 
     /// <summary>
@@ -229,6 +244,19 @@ public sealed class ConnectionManager : IDisposable
             _activeTelemetry = null;
         }
         DisposeActiveServices(protocol, boot, telemetry);
+        if (protocol is not null)
+        {
+            using (_logger.BeginScope(new Dictionary<string, object?>
+            {
+                ["Area"] = "Connection",
+                ["Step"] = "Disconnect",
+                ["Attempt"] = 0,
+                ["Recipient"] = null
+            }))
+            {
+                _logger.LogInformation("ActiveChannel {Channel} disconnected", current);
+            }
+        }
         if (_ports.TryGetValue(current, out var port))
             await port.DisconnectAsync(ct).ConfigureAwait(false);
     }
@@ -275,10 +303,18 @@ public sealed class ConnectionManager : IDisposable
 
     private void OnPortStateChanged(object? sender, ConnectionState state)
     {
-        if (sender is ICommunicationPort port)
+        if (sender is not ICommunicationPort port) return;
+        using (_logger.BeginScope(new Dictionary<string, object?>
         {
-            StateChanged?.Invoke(this, new ConnectionStateSnapshot(port.Kind, state));
+            ["Area"] = "Connection",
+            ["Step"] = "PortStateChanged",
+            ["Attempt"] = 0,
+            ["Recipient"] = port.Kind
+        }))
+        {
+            _logger.LogInformation("Port {Channel} state -> {State}", port.Kind, state);
         }
+        StateChanged?.Invoke(this, new ConnectionStateSnapshot(port.Kind, state));
     }
 
     private void OnActiveProtocolAppLayer(object? sender, AppLayerDecodedEvent evt)
