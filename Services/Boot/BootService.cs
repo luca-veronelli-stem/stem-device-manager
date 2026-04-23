@@ -1,3 +1,4 @@
+using Core.Diagnostics;
 using Core.Interfaces;
 using Core.Models;
 using Microsoft.Extensions.Logging;
@@ -205,6 +206,7 @@ public sealed class BootService : IBootService, IDisposable
     {
         if (_disposed) return;
         _disposed = true;
+        ShutdownAuditHook.Record(nameof(BootService), "(self)");
     }
 
     private void BeginUpload(int totalLength, uint recipientId, string step)

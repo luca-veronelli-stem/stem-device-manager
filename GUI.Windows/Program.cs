@@ -33,6 +33,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using StemPC;
 using STEMPM;
+#if DEBUG
+using GUI.Windows.Diagnostics;
+#endif
 
 namespace GUI.Windows
 {
@@ -85,6 +88,17 @@ namespace GUI.Windows
             // Provider di servizi per dependency injection
             var serviceProvider = services.BuildServiceProvider();
 
+#if DEBUG
+            // spec-001 T004 (research.md R8): Debug-only shutdown audit.
+            // Logs every IDisposable owned by ConnectionManager, BootService,
+            // BLEManager at dispose time with stack-trace. Disposing the
+            // service provider on exit ensures singleton IDisposables run
+            // through the audit; Release builds keep the previous behavior.
+            ShutdownAudit.Enable(
+                serviceProvider.GetRequiredService<ILoggerFactory>()
+                    .CreateLogger("GUI.Windows.Diagnostics.ShutdownAudit"));
+#endif
+
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
@@ -99,7 +113,16 @@ namespace GUI.Windows
             Form1 mainForm = new(serviceProvider);
             mainForm.Load += (sender, e) => splash.Close(); // Chiude la splash screen all'avvio del MainForm
 
-            Application.Run(mainForm);
+            try
+            {
+                Application.Run(mainForm);
+            }
+            finally
+            {
+#if DEBUG
+                serviceProvider.Dispose();
+#endif
+            }
         }
     }
 }
