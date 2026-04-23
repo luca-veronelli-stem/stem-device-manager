@@ -4,6 +4,7 @@ using Core.Models;
 using Infrastructure.Protocol.Hardware;
 using Infrastructure.Protocol.Legacy;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Services.Cache;
 using System.Globalization;
 
@@ -87,6 +88,7 @@ namespace StemPC
         public Telemetry_Tab TelemetryTabRef { get; private set; }
         public BLEInterfaceTab BLETabRef { get; private set; }
         public TopLiftTelemetry_Tab TLTTabRef { get; private set; } = null!;
+        public Spark_FirmwareUpdate_WF_Tab? SparkFirmwareTabRef { get; private set; }
 
         public Form1(IServiceProvider serviceProvider)
         {
@@ -229,6 +231,13 @@ namespace StemPC
                 if (_variantConfig.Variant != DeviceVariant.Egicon)
                 {
                     tabControl.TabPages.Add(TelemetryTabRef);
+                }
+                else
+                {
+                    // SPARK firmware-update tab: only on Egicon. Issue #1.
+                    var loggerFactory = _serviceProvider.GetService<ILoggerFactory>();
+                    SparkFirmwareTabRef = new Spark_FirmwareUpdate_WF_Tab(_connMgr, loggerFactory);
+                    tabControl.TabPages.Add(SparkFirmwareTabRef);
                 }
             }
 
