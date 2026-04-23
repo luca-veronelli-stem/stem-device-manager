@@ -44,7 +44,7 @@ Infrastructure.Protocol/    [net10.0;net10.0-windows] — HW ports (CanPort/BleP
 Services/       [net10.0]                            — pure logic (ProtocolService, TelemetryService, BootService, ConnectionManager, DictionaryCache)
 GUI.Windows/            [net10.0-windows, WinForms]          — GUI + DI entry point (no more embedded protocol)
 Tests/          [dual TFM: net10.0 + net10.0-windows] — 292 tests net10.0 / 470 tests net10.0-windows
-Specs/          [Lean 4]                             — formalizations of extracted types (Phase1/)
+Lean/          [Lean 4]                             — formalizations of extracted types (Phase1/)
 ```
 
 Dependencies: `App → {Infrastructure.Persistence, Infrastructure.Protocol, Services} → Core`, `Tests → App, Infrastructure.*, Services, Core`.
@@ -137,17 +137,17 @@ See [`Docs/REFACTOR_PLAN.md`](Docs/REFACTOR_PLAN.md) for the branch-by-branch pl
 
 ## Domain specifications (Lean 4)
 
-Existing formalizations in `Specs/`:
+Existing formalizations in `Lean/`:
 
 | Folder | Branch | Content |
 |--------|--------|---------|
-| `Specs/Phase1/` | `refactor/protocol-abstractions` | Core types and interfaces: `ConnectionState`, `DeviceVariant`, `DeviceVariantConfig` (+ total factory + correctness theorems), `RawPacket`, `AppLayerDecodedEvent`, `TelemetryDataPoint`, `Interfaces` (ICommunicationPort, IPacketDecoder, ITelemetryService, IBootService, IDeviceVariantConfig) |
+| `Lean/Phase1/` | `refactor/protocol-abstractions` | Core types and interfaces: `ConnectionState`, `DeviceVariant`, `DeviceVariantConfig` (+ total factory + correctness theorems), `RawPacket`, `AppLayerDecodedEvent`, `TelemetryDataPoint`, `Interfaces` (ICommunicationPort, IPacketDecoder, ITelemetryService, IBootService, IDeviceVariantConfig) |
 
 Candidate modules for future formalizations (Phase 2–3):
 1. `STEMProtocol/PacketManager` → `PacketDecoder` — packet parsing/encoding logic
 2. `STEMProtocol/STEM_protocol` → `ProtocolService` — application layer stack
 3. `TelemetryManager` → `TelemetryService` — variable reads and sampling
-4. `BootManager` → `BootService` — firmware update sequence (state machine already sketched in `Specs/Phase1/Interfaces.lean`)
+4. `BootManager` → `BootService` — firmware update sequence (state machine already sketched in `Lean/Phase1/Interfaces.lean`)
 
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,

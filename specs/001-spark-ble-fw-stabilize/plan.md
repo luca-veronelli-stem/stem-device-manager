@@ -9,7 +9,7 @@ Stabilize the Spark (Egicon variant) BLE batch firmware update path post-Phase-3
 
 ## Technical Context
 
-**Language/Version**: C# on .NET 10 (dual TFM `net10.0` + `net10.0-windows10.0.19041.0`); Lean 4 (toolchain version TBD in Phase 0) for `Specs/`.
+**Language/Version**: C# on .NET 10 (dual TFM `net10.0` + `net10.0-windows10.0.19041.0`); Lean 4 (toolchain version TBD in Phase 0) for `Lean/`.
 **Primary Dependencies**: xUnit 2.5.3 (already in `Tests/Tests.csproj`), FsCheck (new — exact package + version TBD in Phase 0), Microsoft.Extensions.Logging (already used by `SparkBatchUpdateService`), Plugin.BLE via `Infrastructure.Protocol/Legacy/BLEManager.cs`, Lean 4 + mathlib (new).
 **Storage**: N/A — the app streams firmware bytes over BLE; no persistent store introduced by this feature.
 **Testing**: xUnit for all `Tests/`. FsCheck-derived property tests on `net10.0` for Boot state machine + BLE lifecycle logic that is cross-platform. xUnit `[Fact]`/`[Theory]` integration tests on `net10.0-windows` for code that touches `Infrastructure.Protocol/Legacy/` or WinForms. Manual bench runs (10× close/relaunch, 10× disconnect, 10× upload, 5× timed HMI upload, 10× three-file batch) to validate SC-001..SC-006; a fault-injected harness validates SC-007.
@@ -30,7 +30,7 @@ justification (or N/A) next to each gate; violations must be logged in
 - **I. Pragmatic C#** — PASS. No new interfaces or configuration knobs introduced; the plan reuses `IBootService`, `ICommunicationPort`, `ConnectionManager`, and the existing `SparkBatchUpdateService`. FsCheck is the only new dependency and is testability-driven.
 - **II. Correctness-biased defaults** — PASS. All new test code and any fixes land in a codebase already configured with `Nullable=enable`; fixes MUST preserve `CancellationToken` flow and the `Lock` / `Volatile` thread-safety idioms already in place.
 - **III. Dual-TFM testing** — PASS. Property tests for the Boot state machine and BLE lifecycle derive from Lean models over pure data — they run on `net10.0` and are exercised by GitHub Actions on Linux. Driver-glue regression tests (BLEManager resource lifecycle) are `net10.0-windows` only and documented as such.
-- **IV. Lean 4 formalization (NON-NEGOTIABLE for Core)** — PASS with scope extension. Boot state machine and BLE connection lifecycle are formalized under `Specs/Phase2/`. This is the first Lean work actually committed to the repo — tooling bootstrap (`lean-toolchain`, `lakefile.lean`, mathlib dep) lands as PR #1 of this plan. CLAUDE.md mentioned `Specs/Phase1/` aspirationally; the directory does not exist yet and is created by PR #1.
+- **IV. Lean 4 formalization (NON-NEGOTIABLE for Core)** — PASS with scope extension. Boot state machine and BLE connection lifecycle are formalized under `Lean/Phase2/`. This is the first Lean work actually committed to the repo — tooling bootstrap (`lean-toolchain`, `lakefile.lean`, mathlib dep) lands as PR #1 of this plan. CLAUDE.md mentioned `Lean/Phase1/` aspirationally; the directory does not exist yet and is created by PR #1.
 - **V. Runtime variant selection** — PASS. No `#if` blocks introduced. All fixes stay inside the runtime-variant-selected code path.
 - **VI. English-only artifacts** — PASS. Plan, research, data model, quickstart, contracts, Lean sources, XML comments, commit bodies, PR descriptions all in English.
 - **Domain Constraints** — PASS. `ProtocolService` stays per-channel and DI-free; `ConnectionManager` remains the sole event-forwarding point; `DictionaryCache` is not touched; `Infrastructure.Protocol/Legacy/` scope is preserved; `ICommunicationPort` pass-through-for-BLE convention is unchanged. Fixes live inside these boundaries, never across them.
@@ -88,7 +88,7 @@ Tests/                                   # dual TFM
     └── Boot/
         └── SparkBleStabilizationTests.cs          # NEW — net10.0-windows, bench-adjacent
 
-Specs/                                   # Lean 4 (NEW — directory does not yet exist)
+Lean/                                   # Lean 4 (NEW — directory does not yet exist)
 ├── lean-toolchain                       # NEW (PR #1)
 ├── lakefile.lean                        # NEW (PR #1)
 └── Phase2/                              # NEW (PR #1)
@@ -97,7 +97,7 @@ Specs/                                   # Lean 4 (NEW — directory does not ye
     └── BatchComposition.lean            # ordered sequential composition + all-success / abort-on-fail
 ```
 
-**Structure Decision**: Reuse the existing project layout; add a single new top-level directory `Specs/` for Lean sources. No new .NET projects. Tests grow within existing `Tests/` organized by layer (Unit / Integration). The speckit `specs/` (lowercase) directory remains the authoring home for spec / plan / tasks; the `Specs/` (capital) directory is Lean sources — this matches the convention already declared in `.gitignore` and CLAUDE.md. (Capital-S `Specs/` is the Lean-formalization home per CLAUDE.md; if this double-naming proves confusing on Windows case-insensitive file systems, PR #1 can rename to `Formalization/` before landing.)
+**Structure Decision**: Reuse the existing project layout; add a single new top-level directory `Lean/` for Lean sources. No new .NET projects. Tests grow within existing `Tests/` organized by layer (Unit / Integration). The speckit `specs/` (lowercase) directory remains the authoring home for spec / plan / tasks; the `Lean/` (capital) directory is Lean sources — this matches the convention already declared in `.gitignore` and CLAUDE.md. (Capital-S `Lean/` is the Lean-formalization home per CLAUDE.md; if this double-naming proves confusing on Windows case-insensitive file systems, PR #1 can rename to `Formalization/` before landing.)
 
 ## Complexity Tracking
 

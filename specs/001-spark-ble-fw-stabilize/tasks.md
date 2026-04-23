@@ -25,7 +25,7 @@ description: "Task list for implementing spec 001 Spark BLE Firmware Stabilizati
 - `Infrastructure.Protocol/` — `net10.0;net10.0-windows`: HW ports + legacy drivers
 - `GUI.Windows/` — `net10.0-windows`: WinForms + composition root
 - `Tests/` — dual TFM
-- `Specs/` — Lean 4 sources (NEW — does not exist yet; created by T001)
+- `Lean/` — Lean 4 sources (NEW — does not exist yet; created by T001)
 
 ---
 
@@ -33,7 +33,7 @@ description: "Task list for implementing spec 001 Spark BLE Firmware Stabilizati
 
 **Purpose**: Bootstrap the Lean 4 toolchain (no prior material in repo) and add FsCheck to the test project. Enables every downstream task that produces a Lean definition or a property test.
 
-- [ ] T001 [P] Bootstrap Lean 4 tooling at repo root: create `Specs/lean-toolchain` pinned to `leanprover/lean4:v4.15.0` (per research.md R1); create `Specs/lakefile.lean` with mathlib4 dependency; create empty skeleton files `Specs/Phase2/BootStateMachine.lean`, `Specs/Phase2/BleLifecycle.lean`, `Specs/Phase2/BatchComposition.lean` (module declarations + `import Mathlib` only). Add `Specs/.lake/`, `Specs/lakefile.olean`, and `Specs/lake-packages/` to `.gitignore`.
+- [ ] T001 [P] Bootstrap Lean 4 tooling at repo root: create `Lean/lean-toolchain` pinned to `leanprover/lean4:v4.15.0` (per research.md R1); create `Lean/lakefile.lean` with mathlib4 dependency; create empty skeleton files `Lean/Phase2/BootStateMachine.lean`, `Lean/Phase2/BleLifecycle.lean`, `Lean/Phase2/BatchComposition.lean` (module declarations + `import Mathlib` only). Add `Lean/.lake/`, `Lean/lakefile.olean`, and `Lean/lake-packages/` to `.gitignore`.
 - [ ] T002 [P] Add `FsCheck.Xunit` package version `3.1.0` to `Tests/Tests.csproj` (research.md R2). Add a smoke test `Tests/Unit/FsCheckSmokeTests.cs` on `net10.0` that exercises one trivial `[Property]` to confirm the dependency resolves and xUnit discovers FsCheck tests.
 
 ---
@@ -46,7 +46,7 @@ description: "Task list for implementing spec 001 Spark BLE Firmware Stabilizati
 
 - [ ] T003 Add structured logging scopes (FR-009, research.md R11) to `Services/Boot/BootService.cs` and `Services/Cache/ConnectionManager.cs`: every state transition emits exactly one `LogInformation` line; every retry emits exactly one `LogWarning`; both use `BeginScope` with `{ Area, Step, Attempt, Recipient }`. Depends on: nothing.
 - [ ] T004 [P] Add Debug-configuration shutdown-audit logger `GUI.Windows/Diagnostics/ShutdownAudit.cs` (research.md R8): logs every `IDisposable` owned by `ConnectionManager`, `BootService`, `BLEManager` at dispose time with stack-trace. Wired in `GUI.Windows/Program.cs` under `#if DEBUG`. Depends on: nothing.
-- [ ] T005 Define Lean 4 state-machine types and transitions (no preservation theorems yet) in `Specs/Phase2/BootStateMachine.lean`, `Specs/Phase2/BleLifecycle.lean`, `Specs/Phase2/BatchComposition.lean`. Exact shapes per `data-model.md`. `lake build` MUST pass. Depends on: T001.
+- [ ] T005 Define Lean 4 state-machine types and transitions (no preservation theorems yet) in `Lean/Phase2/BootStateMachine.lean`, `Lean/Phase2/BleLifecycle.lean`, `Lean/Phase2/BatchComposition.lean`. Exact shapes per `data-model.md`. `lake build` MUST pass. Depends on: T001.
 
 **Checkpoint**: After T003–T005, each user story phase can proceed in any order subject to the dependencies noted below.
 
@@ -137,9 +137,9 @@ description: "Task list for implementing spec 001 Spark BLE Firmware Stabilizati
 
 **Purpose**: Lock in the Lean formalization, the drift guard, and the docs.
 
-- [ ] T022 [P] Complete Lean preservation theorems in `Specs/Phase2/BootStateMachine.lean` (T1 offset-total, T2 retry-bounded, T3 terminal stability, T4 phase preservation on abort) per data-model.md. `lake build` MUST pass. Depends on: T005.
-- [ ] T023 [P] Complete Lean preservation theorem T5 (state-protocol biconditional) in `Specs/Phase2/BleLifecycle.lean` per data-model.md. `lake build` MUST pass. Depends on: T005.
-- [ ] T024 [P] Complete Lean batch composition theorem in `Specs/Phase2/BatchComposition.lean` per data-model.md (batch succeeded ⇒ every area completed; batch failed ⇒ failing area ∈ input). `lake build` MUST pass. Depends on: T005.
+- [ ] T022 [P] Complete Lean preservation theorems in `Lean/Phase2/BootStateMachine.lean` (T1 offset-total, T2 retry-bounded, T3 terminal stability, T4 phase preservation on abort) per data-model.md. `lake build` MUST pass. Depends on: T005.
+- [ ] T023 [P] Complete Lean preservation theorem T5 (state-protocol biconditional) in `Lean/Phase2/BleLifecycle.lean` per data-model.md. `lake build` MUST pass. Depends on: T005.
+- [ ] T024 [P] Complete Lean batch composition theorem in `Lean/Phase2/BatchComposition.lean` per data-model.md (batch succeeded ⇒ every area completed; batch failed ⇒ failing area ∈ input). `lake build` MUST pass. Depends on: T005.
 - [ ] T025 [P] Add Lean→FsCheck drift-guard test `Tests/Unit/Generators/LeanDriftGuardTests.cs` on `net10.0` (research.md R3). Test invokes `lake build` to emit the transition-constructor list (e.g. via a small Lean `#eval` producing JSON), diffs against the hand-ported C# generator lists in `Tests/Unit/Generators/BootTransitionGenerator.cs` and `Tests/Unit/Generators/BleLifecycleTransitionGenerator.cs`, fails on any divergence. Depends on: T014, T022, T023.
 - [ ] T026 [P] Update `CHANGELOG.md` with a spec-001 entry under an `Unreleased` heading. Format follows existing CHANGELOG conventions in this repo (one line per change, English).
 - [ ] T027 [P] Update `Docs/REFACTOR_PLAN.md` to reference spec 001 as the Phase 4b stabilization gate.
@@ -221,7 +221,7 @@ Total: ~12 PRs as predicted by R12. Each one independently reviewable and indepe
 - Developer A: Phase 3 (US1) + Phase 5 (US3, after T009 lands).
 - Developer B: Phase 4 (US2) — owns the `TransitionTo` refactor.
 - Developer C: Phase 6 (US4) + Phase 7 (US5 investigation T019).
-- Lean work (Phase 2 T005 + Phase 8 T022/T023/T024) is naturally a single-person subproject since it all lives under `Specs/Phase2/`.
+- Lean work (Phase 2 T005 + Phase 8 T022/T023/T024) is naturally a single-person subproject since it all lives under `Lean/Phase2/`.
 
 ---
 
