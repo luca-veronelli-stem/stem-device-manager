@@ -34,7 +34,7 @@ description: "Task list for implementing spec 001 Spark BLE Firmware Stabilizati
 **Purpose**: Bootstrap the Lean 4 toolchain (no prior material in repo) and add FsCheck to the test project. Enables every downstream task that produces a Lean definition or a property test.
 
 - [x] T001 [P] Bootstrap Lean 4 tooling at repo root: create `Lean/lean-toolchain` pinned to `leanprover/lean4:v4.15.0` (per research.md R1); create `Lean/lakefile.lean` with mathlib4 dependency; create empty skeleton files `Lean/Phase2/BootStateMachine.lean`, `Lean/Phase2/BleLifecycle.lean`, `Lean/Phase2/BatchComposition.lean` (module declarations + `import Mathlib` only). Add `Lean/.lake/`, `Lean/lakefile.olean`, and `Lean/lake-packages/` to `.gitignore`.
-- [ ] T002 [P] Add `FsCheck.Xunit` package version `3.1.0` to `Tests/Tests.csproj` (research.md R2). Add a smoke test `Tests/Unit/FsCheckSmokeTests.cs` on `net10.0` that exercises one trivial `[Property]` to confirm the dependency resolves and xUnit discovers FsCheck tests.
+- [x] T002 [P] Add `FsCheck.Xunit` package version `3.1.0` to `Tests/Tests.csproj` (research.md R2). Add a smoke test `Tests/Unit/FsCheckSmokeTests.cs` on `net10.0` that exercises one trivial `[Property]` to confirm the dependency resolves and xUnit discovers FsCheck tests.
 
 ---
 
