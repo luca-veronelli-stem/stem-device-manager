@@ -1,3 +1,35 @@
+<!--
+SYNC IMPACT REPORT
+==================
+Version change: none (initial publication audit) — stays at 1.0.0
+Ratification: 2026-04-23 (unchanged)
+Last amended: 2026-04-23 (unchanged)
+
+Principles in scope (all initial):
+  I.   Pragmatic C# (works > elegant)
+  II.  Correctness-biased C# defaults
+  III. Dual-TFM testing is mandatory
+  IV.  Lean 4 formalization of domain invariants (NON-NEGOTIABLE for Core)
+  V.   Runtime variant selection, not compile-time
+  VI.  English as the single artifact language
+
+Added sections: none (initial publication).
+Removed sections: none.
+
+Templates audited for alignment:
+  - .specify/templates/plan-template.md       ✅ Constitution Check gates propagated (this sync)
+  - .specify/templates/spec-template.md       ✅ no principle-driven changes required
+  - .specify/templates/tasks-template.md      ✅ no principle-driven changes required
+                                                 (illustrative paths; real task paths come
+                                                  from plan.md structure at /speckit.plan time)
+  - .specify/templates/checklist-template.md  ✅ no principle-driven changes required
+  - CLAUDE.md                                 ✅ aligned with principles I–VI
+  - README.md                                 ✅ no conflicting claims
+  - Docs/REFACTOR_PLAN.md, Docs/PROTOCOL.md   ✅ descriptive, no conflict
+
+Follow-up TODOs: none.
+-->
+
 # Stem.Device.Manager Constitution
 
 This constitution governs the Stem.Device.Manager project: a Windows desktop tool

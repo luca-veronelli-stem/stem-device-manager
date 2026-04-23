@@ -31,7 +31,36 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+Gates derived from `.specify/memory/constitution.md` (v1.0.0). Record a one-line
+justification (or N/A) next to each gate; violations must be logged in
+*Complexity Tracking* below.
+
+- **I. Pragmatic C#** — Does this plan avoid introducing interfaces, abstractions,
+  patterns, or configuration knobs that lack a concrete caller in this feature?
+- **II. Correctness-biased defaults** — `Nullable=enable` respected, exceptions (not
+  `null`) for errors, `CancellationToken` on every blocking `async`, thread-safety
+  via `Lock` + `Volatile.Read/Write`, functions ≤ ~15 LOC.
+- **III. Dual-TFM testing** — New test-worthy code in `Core/`, `Services/`,
+  `Infrastructure.Persistence/`, or the cross-platform portion of
+  `Infrastructure.Protocol/` has `net10.0` tests so CI exercises it. Windows-only
+  code is tested under `net10.0-windows` and documented as such.
+- **IV. Lean 4 formalization (NON-NEGOTIABLE for Core)** — Any domain model or state
+  machine in `Core/` whose correctness matters is formalized in `Specs/PhaseN/`
+  (state → actions → predicates → preservation theorems) and the flow is
+  Lean spec → xUnit test → C# implementation. Changes invalidating a preservation
+  theorem update the Lean spec in the same PR.
+- **V. Runtime variant selection** — Device variants flow through `IDeviceVariantConfig`
+  from the composition root (`Device:Variant` in `appsettings.json`); no
+  `#if TOPLIFT/EDEN/EGICON` blocks are reintroduced.
+- **VI. English-only artifacts** — Code, XML docs, inline comments, markdown, GUI
+  strings, commit bodies, PR descriptions, and CHANGELOG entries are in English
+  unless Luca explicitly requests Italian for a specific artifact.
+- **Domain Constraints** — The plan upholds (or updates in lock-step) every bullet
+  in the *Domain Constraints* section of the constitution: `ICommunicationPort`
+  payload convention, protocol layering ownership in `ProtocolService`,
+  per-channel `ProtocolService` lifecycle, `DictionaryCache` as single source,
+  `FallbackDictionaryProvider` trigger, event forwarding via `ConnectionManager`,
+  `Legacy/` scope.
 
 ## Project Structure
 
