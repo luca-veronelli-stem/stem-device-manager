@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+
+jobs:
+  build-test:
+    name: Build Gate (${{ matrix.tfm }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - tfm: net10.0
+            os: ubuntu-latest
+          - tfm: net10.0-windows10.0.19041.0
+            os: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key:  nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Build.props', '**/Directory.Packages.props') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore Tests/Tests.csproj -p:EnableWindowsTargeting=true
+
+      # Skips two tests that resolve the Infrastructure.Protocol DI graph and P/Invoke
+      # the PEAK `pcanbasic.dll` native driver — not present on GitHub hosted runners.
+      # Tracked in the follow-up issue linked from PR #5.
+      - name: Test (${{ matrix.tfm }})
+        run: >
+          dotnet test Tests/Tests.csproj
+          --framework ${{ matrix.tfm }}
+          -c Release
+          -p:EnableWindowsTargeting=true
+          --filter "FullyQualifiedName!~AddProtocolInfrastructure_RegistersAllThreePortsAsICommunicationPort&FullyQualifiedName!~AddProtocolInfrastructure_ICommunicationPortRegistration_DelegatesToConcreteSingleton"
+          --logger "trx;LogFileName=test-results.trx"
+          --results-directory ./test-results
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.tfm }}
+          path: ./test-results/
