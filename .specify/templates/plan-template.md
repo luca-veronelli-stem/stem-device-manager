@@ -45,7 +45,7 @@ justification (or N/A) next to each gate; violations must be logged in
   `Infrastructure.Protocol/` has `net10.0` tests so CI exercises it. Windows-only
   code is tested under `net10.0-windows` and documented as such.
 - **IV. Lean 4 formalization (NON-NEGOTIABLE for Core)** — Any domain model or state
-  machine in `Core/` whose correctness matters is formalized in `Specs/PhaseN/`
+  machine in `Core/` whose correctness matters is formalized in `Lean/PhaseN/`
   (state → actions → predicates → preservation theorems) and the flow is
   Lean spec → xUnit test → C# implementation. Changes invalidating a preservation
   theorem update the Lean spec in the same PR.

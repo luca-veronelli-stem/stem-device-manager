@@ -68,7 +68,7 @@ with `{Method}_{Scenario}_{ExpectedResult}`.
 
 Domain models and state machines in `Core/` whose correctness matters —
 `ConnectionState`, `DeviceVariantConfig`, `RawPacket`, protocol framing,
-boot sequence, telemetry sampling — are formalized in `Specs/PhaseN/` using
+boot sequence, telemetry sampling — are formalized in `Lean/PhaseN/` using
 the state → actions → predicates → preservation-theorem pattern. The flow is
 Lean spec → xUnit test → C# implementation, in that order. Changes that
 invalidate a preservation theorem require updating the Lean spec in the
@@ -132,7 +132,7 @@ Invariants the code MUST uphold. Violations are bugs, not style issues.
 - **Specs before code.** Non-trivial features go through the spec-kit
   workflow: `/speckit-constitution` (this file) → `/speckit-specify` →
   `/speckit-plan` → `/speckit-tasks` → `/speckit-implement`. For features
-  touching protocol or state machines, a Lean formalization in `Specs/PhaseN/`
+  touching protocol or state machines, a Lean formalization in `Lean/PhaseN/`
   runs in parallel and gates the `dotnet test` runs that close each task.
 
 ## Governance

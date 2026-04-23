@@ -8,7 +8,7 @@ This document maps the conceptual entities from the spec to their concrete C# ty
 
 | Spec entity | C# type (existing or new) | Lean type | Layer |
 |---|---|---|---|
-| Firmware File | `SparkBatchItem` (existing — `Services/Boot/SparkBatchUpdateService.cs`) | `FirmwareFile` (`Specs/Phase2/BatchComposition.lean`) | `Services` |
+| Firmware File | `SparkBatchItem` (existing — `Services/Boot/SparkBatchUpdateService.cs`) | `FirmwareFile` (`Lean/Phase2/BatchComposition.lean`) | `Services` |
 | Batch Upload Job | `IReadOnlyList<SparkBatchItem>` + `SparkBatchUpdateException` on failure (existing) | `Batch` (list of `FirmwareFile`) + `BatchState` (`InProgress _ _ | Succeeded | Failed _ _ _`) | `Services` |
 | BLE Session | `ConnectionManager` state + `ActiveProtocol` (existing) | `BleLifecycle.State` + `Option ProtocolHandle` | `Services/Cache`, `Infrastructure.Protocol` |
 | Boot Step | `BootState` enum (existing `Core/Models/`) | `BootStateMachine.State` | `Core` |
