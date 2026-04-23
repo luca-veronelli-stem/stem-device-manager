@@ -9,6 +9,9 @@
 # copilot related files
 .copilot/*
 
+# Vendor firmware blobs kept locally for bench testing; not source-controlled.
+Docs/Firmwares/
+
 # User-specific files
 *.rsuser
 *.suo
