@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Core.Interfaces;
 using Core.Models;
 using Infrastructure.Protocol.Hardware;
@@ -60,6 +61,72 @@ public class SparkBleStabilizationTests
         await manager.SwitchToAsync(ChannelKind.Ble);
         ble.RaiseConnectionStatusChanged(true);
         await manager.DisconnectAsync();
+    }
+
+    /// <summary>
+    /// Spec-001 US2 / SC-002 / FR-002 / C5: when the BLE stack signals a
+    /// physical power-off (DeviceDisconnected surfaced via
+    /// <see cref="BlePort.StateChanged"/>), the <see cref="ConnectionManager"/>
+    /// must transition to <see cref="ConnectionState.Disconnected"/> within
+    /// ≤ 5 seconds. T010 wires this path synchronously on the port's raise,
+    /// so the measured latency is effectively zero — the test codifies the
+    /// 5 s bound.
+    /// </summary>
+    [Fact]
+    public async Task Us2_PhysicalPowerOff_UiTransitionsWithin_5s()
+    {
+        const int LatencyBudgetMs = 5_000;
+
+        var pcan = new FakePcanDriver();
+        var ble = new FakeBleDriver();
+        var serial = new FakeSerialDriver();
+
+        using var canPort = new CanPort(pcan);
+        using var blePort = new BlePort(ble);
+        using var serialPort = new SerialPort(serial);
+        using var manager = new ConnectionManager(
+            [canPort, blePort, serialPort],
+            new NoopDecoder(),
+            DeviceVariantConfig.Create(DeviceVariant.Egicon));
+
+        // Establish Connected via SwitchToAsync, mirroring the US1 harness.
+        ble.IsConnected = true;
+        await manager.SwitchToAsync(ChannelKind.Ble);
+        ble.RaiseConnectionStatusChanged(true);
+        Assert.Equal(ConnectionState.Connected, manager.State);
+
+        // Wait for the Disconnected transition with a TaskCompletionSource
+        // keyed on the BLE-channel snapshot. The handler fires synchronously
+        // inside the driver's event raise, so the measurement is tight.
+        var tcs = new TaskCompletionSource<TimeSpan>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var stopwatch = new Stopwatch();
+        manager.StateChanged += (_, snapshot) =>
+        {
+            if (snapshot.Channel == ChannelKind.Ble
+                && snapshot.State == ConnectionState.Disconnected)
+            {
+                tcs.TrySetResult(stopwatch.Elapsed);
+            }
+        };
+
+        // Simulate the physical power-off: the BLE stack reports the device
+        // gone (Plugin.BLE DeviceDisconnected → BlePort.StateChanged).
+        stopwatch.Start();
+        ble.RaiseConnectionStatusChanged(false);
+        ble.IsConnected = false;
+
+        var completed = await Task.WhenAny(tcs.Task, Task.Delay(LatencyBudgetMs));
+        stopwatch.Stop();
+
+        Assert.Same(tcs.Task, completed);
+        var latency = await tcs.Task;
+        Assert.True(
+            latency.TotalMilliseconds <= LatencyBudgetMs,
+            $"UI transition took {latency.TotalMilliseconds} ms, "
+            + $"budget is {LatencyBudgetMs} ms.");
+        Assert.Equal(ConnectionState.Disconnected, manager.State);
+        Assert.Null(manager.ActiveProtocol);
     }
 
     private sealed class NoopDecoder : IPacketDecoder
