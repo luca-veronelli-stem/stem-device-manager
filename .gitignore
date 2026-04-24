@@ -107,6 +107,10 @@ StyleCopReport.xml
 *.svclog
 *.scc
 
+# Work-in-progress scratch notes (bench diagnostics, ad-hoc investigation).
+# Never merged; kept in the working tree for long-running branches.
+WIP/
+
 # Chutzpah Test files
 _Chutzpah*
 
