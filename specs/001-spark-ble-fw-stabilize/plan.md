@@ -30,7 +30,7 @@ justification (or N/A) next to each gate; violations must be logged in
 - **I. Pragmatic C#** — PASS. No new interfaces or configuration knobs introduced; the plan reuses `IBootService`, `ICommunicationPort`, `ConnectionManager`, and the existing `SparkBatchUpdateService`. FsCheck is the only new dependency and is testability-driven.
 - **II. Correctness-biased defaults** — PASS. All new test code and any fixes land in a codebase already configured with `Nullable=enable`; fixes MUST preserve `CancellationToken` flow and the `Lock` / `Volatile` thread-safety idioms already in place.
 - **III. Dual-TFM testing** — PASS. Property tests for the Boot state machine and BLE lifecycle derive from Lean models over pure data — they run on `net10.0` and are exercised by GitHub Actions on Linux. Driver-glue regression tests (BLEManager resource lifecycle) are `net10.0-windows` only and documented as such.
-- **IV. Lean 4 formalization (NON-NEGOTIABLE for Core)** — PASS with scope extension. Boot state machine and BLE connection lifecycle are formalized under `Lean/Phase2/`. This is the first Lean work actually committed to the repo — tooling bootstrap (`lean-toolchain`, `lakefile.lean`, mathlib dep) lands as PR #1 of this plan. CLAUDE.md mentioned `Lean/Phase1/` aspirationally; the directory does not exist yet and is created by PR #1.
+- **IV. Lean 4 formalization (NON-NEGOTIABLE for Core)** — PASS with scope extension. Boot state machine and BLE connection lifecycle are formalized under `Lean/Spec001/`. This is the first Lean work actually committed to the repo — tooling bootstrap (`lean-toolchain`, `lakefile.lean`, mathlib dep) lands as PR #1 of this plan. CLAUDE.md mentioned `Lean/Phase1/` aspirationally under a refactor-phase taxonomy that is no longer in use; the Lean tree is now organized by spec id (`Spec001/`, future `Spec002/`, …).
 - **V. Runtime variant selection** — PASS. No `#if` blocks introduced. All fixes stay inside the runtime-variant-selected code path.
 - **VI. English-only artifacts** — PASS. Plan, research, data model, quickstart, contracts, Lean sources, XML comments, commit bodies, PR descriptions all in English.
 - **Domain Constraints** — PASS. `ProtocolService` stays per-channel and DI-free; `ConnectionManager` remains the sole event-forwarding point; `DictionaryCache` is not touched; `Infrastructure.Protocol/Legacy/` scope is preserved; `ICommunicationPort` pass-through-for-BLE convention is unchanged. Fixes live inside these boundaries, never across them.
@@ -91,7 +91,7 @@ Tests/                                   # dual TFM
 Lean/                                   # Lean 4 (NEW — directory does not yet exist)
 ├── lean-toolchain                       # NEW (PR #1)
 ├── lakefile.lean                        # NEW (PR #1)
-└── Phase2/                              # NEW (PR #1)
+└── Spec001/                             # NEW (PR #1)
     ├── BootStateMachine.lean            # boot state machine + preservation theorems
     ├── BleLifecycle.lean                # BLE lifecycle + invariant `ActiveProtocol ⇔ Connected`
     └── BatchComposition.lean            # ordered sequential composition + all-success / abort-on-fail

@@ -1,7 +1,7 @@
 import Mathlib
 
 /-!
-# Boot state machine (spec-001, Phase 2, T005)
+# Boot state machine (spec-001, T005)
 
 Per-area firmware upload state machine. Types and transitions only — the
 preservation theorems T1..T4 are deferred to T022.
@@ -11,7 +11,7 @@ every transition label in this file corresponds to one bullet in the
 "Boot Step (per-area state machine) — Transitions" list there.
 -/
 
-namespace Phase2.BootStateMachine
+namespace Spec001.BootStateMachine
 
 /-- Phase tag attached to `Failed`, identifying which boot step raised
     the failure. One constructor per `IBootService` method. -/
@@ -92,4 +92,4 @@ inductive Reaches : BootState → BootState → Prop where
 /-- A state is reachable from the initial `Idle`. -/
 def Reachable (s : BootState) : Prop := Reaches .Idle s
 
-end Phase2.BootStateMachine
+end Spec001.BootStateMachine

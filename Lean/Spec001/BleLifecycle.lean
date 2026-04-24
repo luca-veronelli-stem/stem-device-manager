@@ -1,7 +1,7 @@
 import Mathlib
 
 /-!
-# BLE session lifecycle (spec-001, Phase 2, T005)
+# BLE session lifecycle (spec-001, T005)
 
 Types and transitions only — the core invariant T5 (protocol-state
 biconditional, `activeProtocol.isSome ↔ state = Connected`) is deferred
@@ -11,7 +11,7 @@ Mirrors `ConnectionManager.ConnectionState` + `ConnectionManager.ActiveProtocol`
 in the C# side. See `specs/001-spark-ble-fw-stabilize/data-model.md`.
 -/
 
-namespace Phase2.BleLifecycle
+namespace Spec001.BleLifecycle
 
 /-- Opaque application-level protocol handle created on `Connect` and
     dropped on `Disconnect`. The Lean model only cares about its *presence*;
@@ -67,4 +67,4 @@ inductive Reaches : AppState → AppState → Prop where
 /-- A state is reachable from the initial `(Disconnected, none)`. -/
 def Reachable (s : AppState) : Prop := Reaches (.Disconnected, none) s
 
-end Phase2.BleLifecycle
+end Spec001.BleLifecycle
