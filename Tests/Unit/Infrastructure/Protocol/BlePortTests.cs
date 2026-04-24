@@ -276,14 +276,19 @@ public class BlePortTests
     }
 
     [Fact]
-    public void Dispose_FromConnected_CallsDriverDisconnect()
+    public void Dispose_FromConnected_DoesNotCallDriverDisconnect()
     {
+        // spec-001 issue #50: Plugin.BLE teardown is owned by BLEManager.Dispose
+        // (the driver). BlePort.Dispose must only unsubscribe and transition
+        // its own state — no fire-and-forget _driver.DisconnectAsync() that
+        // would race with the driver's own Dispose in DI LIFO order.
         var driver = new FakeBleDriver { IsConnected = true };
         var port = new BlePort(driver);
 
         port.Dispose();
 
-        Assert.Equal(1, driver.DisconnectCount);
+        Assert.Equal(0, driver.DisconnectCount);
+        Assert.Equal(ConnectionState.Disconnected, port.State);
     }
 
     [Fact]
@@ -328,7 +333,8 @@ public class BlePortTests
         port.Dispose();
         port.Dispose();
 
-        Assert.Equal(1, driver.DisconnectCount);
+        Assert.Equal(0, driver.DisconnectCount);
+        Assert.Equal(ConnectionState.Disconnected, port.State);
     }
 
     [Fact]

@@ -263,6 +263,67 @@ public class ConnectionManagerTests
         Assert.Null(fixture.Manager.CurrentTelemetry);
     }
 
+    // --- Port → Manager disconnect propagation (spec-001 T010, C3 item 3) ---
+
+    [Fact]
+    public async Task PortDisconnected_WhileConnected_ManagerTransitionsToDisconnected()
+    {
+        using var fixture = new Fixture();
+        fixture.BleDriver.IsConnected = true;
+        await fixture.Manager.SwitchToAsync(ChannelKind.Ble);
+
+        fixture.BleDriver.RaiseConnectionStatusChanged(false);
+
+        Assert.Equal(ConnectionState.Disconnected, fixture.Manager.State);
+        Assert.Null(fixture.Manager.ActiveProtocol);
+        Assert.Null(fixture.Manager.CurrentBoot);
+        Assert.Null(fixture.Manager.CurrentTelemetry);
+    }
+
+    [Fact]
+    public async Task PortDisconnected_WhileConnected_DisposesActiveProtocol()
+    {
+        using var fixture = new Fixture();
+        fixture.BleDriver.IsConnected = true;
+        await fixture.Manager.SwitchToAsync(ChannelKind.Ble);
+        var protocol = fixture.Manager.ActiveProtocol!;
+
+        fixture.BleDriver.RaiseConnectionStatusChanged(false);
+
+        await Assert.ThrowsAsync<ObjectDisposedException>(
+            () => protocol.SendCommandAsync(0, new Command("x", "00", "01"), []));
+    }
+
+    [Fact]
+    public async Task PortDisconnected_NonActiveChannel_ManagerStateUnchanged()
+    {
+        using var fixture = new Fixture();
+        fixture.BleDriver.IsConnected = true;
+        await fixture.Manager.SwitchToAsync(ChannelKind.Ble);
+
+        fixture.PcanDriver.RaiseConnectionStatusChanged(true);
+        fixture.PcanDriver.RaiseConnectionStatusChanged(false);
+
+        Assert.Equal(ConnectionState.Connected, fixture.Manager.State);
+        Assert.NotNull(fixture.Manager.ActiveProtocol);
+    }
+
+    [Fact]
+    public async Task PortDisconnected_StillForwardsStateChangedEvent()
+    {
+        using var fixture = new Fixture();
+        fixture.BleDriver.IsConnected = true;
+        await fixture.Manager.SwitchToAsync(ChannelKind.Ble);
+        var captured = new List<ConnectionStateSnapshot>();
+        fixture.Manager.StateChanged += (_, s) => captured.Add(s);
+
+        fixture.BleDriver.RaiseConnectionStatusChanged(false);
+
+        Assert.Single(captured);
+        Assert.Equal(ChannelKind.Ble, captured[0].Channel);
+        Assert.Equal(ConnectionState.Disconnected, captured[0].State);
+    }
+
     // --- StateOf ---
 
     [Fact]

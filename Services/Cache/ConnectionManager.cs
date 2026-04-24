@@ -398,6 +398,24 @@ public sealed class ConnectionManager : IDisposable
             _logger.LogInformation("Port {Channel} state -> {State}", port.Kind, state);
         }
         StateChanged?.Invoke(this, new ConnectionStateSnapshot(port.Kind, state));
+
+        // spec-001 C3 item 3 — unsolicited port drop on the active channel
+        // must drive the manager to Disconnected (C1 biconditional).
+        if (state != ConnectionState.Disconnected) return;
+        IProtocolService? protocol;
+        IBootService? boot;
+        ITelemetryService? telemetry;
+        lock (_stateLock)
+        {
+            if (_disposed) return;
+            if (port.Kind != _activeChannel) return;
+            if (_state != ConnectionState.Connected) return;
+            protocol = _activeProtocol;
+            boot = _activeBoot;
+            telemetry = _activeTelemetry;
+            TransitionTo(ConnectionState.Disconnected, "PortStateChanged");
+        }
+        DisposeActiveServices(protocol, boot, telemetry);
     }
 
     private void OnActiveProtocolAppLayer(object? sender, AppLayerDecodedEvent evt)
