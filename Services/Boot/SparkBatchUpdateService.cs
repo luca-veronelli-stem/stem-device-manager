@@ -164,9 +164,16 @@ public sealed class SparkBatchUpdateService
 
     private async Task StartBootAsync(SparkAreaDefinition def, CancellationToken ct)
     {
-        bool ok = await _boot.StartBootAsync(def.RecipientId, ct).ConfigureAwait(false);
-        if (!ok)
-            throw Fail(def, SparkBatchPhase.StartBoot, "no reply to CMD_START_PROCEDURE");
+        try
+        {
+            bool ok = await _boot.StartBootAsync(def.RecipientId, ct).ConfigureAwait(false);
+            if (!ok)
+                throw Fail(def, SparkBatchPhase.StartBoot, "no reply to CMD_START_PROCEDURE");
+        }
+        catch (BootSessionLostException ex)
+        {
+            throw FailSessionLost(def, ex);
+        }
     }
 
     private async Task UploadBlocksAsync(
@@ -176,6 +183,10 @@ public sealed class SparkBatchUpdateService
         {
             await _boot.UploadBlocksOnlyAsync(item.Firmware, def.RecipientId, ct)
                 .ConfigureAwait(false);
+        }
+        catch (BootSessionLostException ex)
+        {
+            throw FailSessionLost(def, ex);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -188,9 +199,16 @@ public sealed class SparkBatchUpdateService
 
     private async Task EndBootAsync(SparkAreaDefinition def, CancellationToken ct)
     {
-        bool ok = await _boot.EndBootAsync(def.RecipientId, ct).ConfigureAwait(false);
-        if (!ok)
-            throw Fail(def, SparkBatchPhase.EndBoot, "no reply to CMD_END_PROCEDURE");
+        try
+        {
+            bool ok = await _boot.EndBootAsync(def.RecipientId, ct).ConfigureAwait(false);
+            if (!ok)
+                throw Fail(def, SparkBatchPhase.EndBoot, "no reply to CMD_END_PROCEDURE");
+        }
+        catch (BootSessionLostException ex)
+        {
+            throw FailSessionLost(def, ex);
+        }
     }
 
     private async Task RestartAsync(SparkAreaDefinition def, CancellationToken ct)
@@ -198,6 +216,10 @@ public sealed class SparkBatchUpdateService
         try
         {
             await _boot.RestartAsync(def.RecipientId, ct).ConfigureAwait(false);
+        }
+        catch (BootSessionLostException ex)
+        {
+            throw FailSessionLost(def, ex);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -213,4 +235,13 @@ public sealed class SparkBatchUpdateService
             def.DisplayName, phase, cause);
         return new SparkBatchUpdateException(def, phase, cause, inner);
     }
+
+    /// <summary>
+    /// Wraps a <see cref="BootSessionLostException"/> into the contract-mandated
+    /// <c>SparkBatchUpdateException.Cause = "BLE session lost during &lt;phase&gt;"</c>
+    /// (spec-001 boot-service.md I1).
+    /// </summary>
+    private SparkBatchUpdateException FailSessionLost(
+        SparkAreaDefinition def, BootSessionLostException ex)
+        => Fail(def, ex.Phase, $"BLE session lost during {ex.Phase}", ex);
 }
