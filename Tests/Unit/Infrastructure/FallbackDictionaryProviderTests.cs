@@ -125,6 +125,73 @@ public class FallbackDictionaryProviderTests
             () => provider.LoadProtocolDataAsync(cts.Token));
     }
 
+    // --- Timeout (TaskCanceledException) ---
+
+    [Fact]
+    public async Task LoadProtocolDataAsync_PrimaryTimesOut_ReturnsFallbackData()
+    {
+        var fallbackData = new DictionaryData([], []);
+        var primary = new FailingProvider(
+            new TaskCanceledException("The request was canceled due to the configured HttpClient.Timeout of 30 seconds elapsing."));
+        var fallback = new FakeProvider(fallbackData, []);
+
+        var provider = new global::Infrastructure.Persistence.FallbackDictionaryProvider(
+            primary, fallback);
+
+        var result = await provider.LoadProtocolDataAsync();
+
+        Assert.Same(fallbackData, result);
+        Assert.Contains("HttpClient.Timeout", provider.LastFallbackReason);
+    }
+
+    [Fact]
+    public async Task LoadVariablesAsync_PrimaryTimesOut_ReturnsFallbackVars()
+    {
+        IReadOnlyList<Variable> fallbackVars =
+            [new Variable("Fallback", "0", "0", "Bool")];
+        var primary = new FailingProvider(
+            new TaskCanceledException("The request was canceled due to the configured HttpClient.Timeout of 30 seconds elapsing."));
+        var fallback = new FakeProvider(SampleData, fallbackVars);
+
+        var provider = new global::Infrastructure.Persistence.FallbackDictionaryProvider(
+            primary, fallback);
+
+        var result = await provider.LoadVariablesAsync(0x00080381);
+
+        Assert.Same(fallbackVars, result);
+        Assert.Contains("HttpClient.Timeout", provider.LastFallbackReason);
+    }
+
+    [Fact]
+    public async Task LoadProtocolDataAsync_UserCancelsToken_PropagatesOperationCanceled()
+    {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+        var primary = new FailingProvider(new TaskCanceledException("cancelled"));
+        var fallback = new FakeProvider(SampleData, SampleVars);
+
+        var provider = new global::Infrastructure.Persistence.FallbackDictionaryProvider(
+            primary, fallback);
+
+        await Assert.ThrowsAsync<TaskCanceledException>(
+            () => provider.LoadProtocolDataAsync(cts.Token));
+    }
+
+    [Fact]
+    public async Task LoadVariablesAsync_UserCancelsToken_PropagatesOperationCanceled()
+    {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+        var primary = new FailingProvider(new TaskCanceledException("cancelled"));
+        var fallback = new FakeProvider(SampleData, SampleVars);
+
+        var provider = new global::Infrastructure.Persistence.FallbackDictionaryProvider(
+            primary, fallback);
+
+        await Assert.ThrowsAsync<TaskCanceledException>(
+            () => provider.LoadVariablesAsync(0x00080381, cts.Token));
+    }
+
     // --- Constructor ---
 
     [Fact]

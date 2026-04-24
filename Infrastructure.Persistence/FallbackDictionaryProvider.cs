@@ -43,6 +43,13 @@ public class FallbackDictionaryProvider : IDictionaryProvider
             LastFallbackReason = ex.Message;          // TEMP
             return await _fallback.LoadProtocolDataAsync(ct);
         }
+        catch (OperationCanceledException ex) when (!ct.IsCancellationRequested)
+        {
+            // HttpClient timeout surfaces as TaskCanceledException: fall back to Excel.
+            LastUsedSource = ProviderSource.Fallback; // TEMP
+            LastFallbackReason = ex.Message;          // TEMP
+            return await _fallback.LoadProtocolDataAsync(ct);
+        }
     }
 
     public async Task<IReadOnlyList<Variable>> LoadVariablesAsync(
@@ -57,6 +64,13 @@ public class FallbackDictionaryProvider : IDictionaryProvider
         catch (HttpRequestException)
         {
             LastUsedSource = ProviderSource.Fallback; // TEMP
+            return await _fallback.LoadVariablesAsync(recipientId, ct);
+        }
+        catch (OperationCanceledException ex) when (!ct.IsCancellationRequested)
+        {
+            // HttpClient timeout surfaces as TaskCanceledException: fall back to Excel.
+            LastUsedSource = ProviderSource.Fallback; // TEMP
+            LastFallbackReason = ex.Message;          // TEMP
             return await _fallback.LoadVariablesAsync(recipientId, ct);
         }
     }
