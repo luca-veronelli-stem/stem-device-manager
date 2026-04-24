@@ -10,30 +10,31 @@ using Services.Telemetry;
 namespace Services.Cache;
 
 /// <summary>
-/// Gestore del canale di comunicazione attivo. Sostituisce il pattern
-/// <c>App.Form1.CommunicationPort</c> + <c>SetHardwareChannel(...)</c> sparso
-/// sui manager legacy.
+/// Active communication channel manager. Replaces the legacy
+/// <c>App.Form1.CommunicationPort</c> + <c>SetHardwareChannel(...)</c> pattern
+/// that was scattered across the legacy managers.
 ///
-/// <para><b>Responsabilità:</b></para>
+/// <para><b>Responsibilities:</b></para>
 /// <list type="bullet">
-/// <item><description>Aggrega le 3 <see cref="ICommunicationPort"/> disponibili (CAN, BLE, Serial) — ricevute via DI.</description></item>
-/// <item><description>Espone <see cref="ActiveChannel"/> (canale scelto), <see cref="ActiveProtocol"/> (facade protocollo), <see cref="CurrentBoot"/> e <see cref="CurrentTelemetry"/> (servizi di dominio agganciati al protocol).</description></item>
-/// <item><description>Su <see cref="SwitchToAsync"/>: <see cref="IDisposable.Dispose"/> dei vecchi servizi (telemetry → boot → protocol) e della port vecchia, <see cref="ICommunicationPort.ConnectAsync"/> della nuova, ricrea protocol + boot + telemetry.</description></item>
-/// <item><description>Forwarda <see cref="AppLayerDecoded"/> dal protocol attivo: i consumer si iscrivono una sola volta al <c>ConnectionManager</c> e non gestiscono il re-binding ad ogni switch.</description></item>
-/// <item><description>Notifica stato via <see cref="StateChanged"/> (per ogni canale) e <see cref="ActiveChannelChanged"/> (transizione active).</description></item>
+/// <item><description>Aggregates the 3 available <see cref="ICommunicationPort"/> instances (CAN, BLE, Serial) — received via DI.</description></item>
+/// <item><description>Exposes <see cref="ActiveChannel"/> (selected channel), <see cref="State"/> (lifecycle), <see cref="ActiveProtocol"/> (protocol facade), <see cref="CurrentBoot"/> and <see cref="CurrentTelemetry"/> (domain services bound to the current protocol).</description></item>
+/// <item><description>On <see cref="SwitchToAsync"/>: disposes the old services (telemetry → boot → protocol) and the old port, calls <see cref="ICommunicationPort.ConnectAsync"/> on the new port, rebuilds protocol + boot + telemetry.</description></item>
+/// <item><description>Forwards <see cref="AppLayerDecoded"/> from the active protocol: consumers subscribe once to the <c>ConnectionManager</c> and never re-bind across switches.</description></item>
+/// <item><description>Notifies state via <see cref="StateChanged"/> (per-channel port state) and <see cref="ActiveChannelChanged"/> (active-channel transition).</description></item>
 /// </list>
 ///
-/// <para><b>Factory di <see cref="IProtocolService"/>/<see cref="IBootService"/>/<see cref="ITelemetryService"/>:</b>
-/// ConnectionManager è il punto naturale di creazione perché unisce port +
-/// decoder + senderId e lega i servizi di dominio al protocol corrente.
-/// Allinea alla decisione che questi servizi non stanno in DI (dipendono dalla
-/// port runtime).</para>
+/// <para><b>State contract (spec-001 C1/C2):</b>
+/// Every mutation of <see cref="State"/> plus <see cref="ActiveProtocol"/> /
+/// <see cref="CurrentBoot"/> / <see cref="CurrentTelemetry"/> goes through the
+/// single private <c>TransitionTo</c> mutator. The biconditional
+/// <c>ActiveProtocol != null ⇔ State == Connected</c> holds by construction.
+/// </para>
 ///
-/// <para><b>Stato iniziale:</b> <see cref="ActiveChannel"/> = <see cref="IDeviceVariantConfig.DefaultChannel"/>;
-/// <see cref="ActiveProtocol"/>/<see cref="CurrentBoot"/>/<see cref="CurrentTelemetry"/>
-/// sono <c>null</c> finché <see cref="SwitchToAsync"/> non viene chiamato.
-/// Nessun auto-connect nel ctor (scelta architetturale: il consumer controlla
-/// il timing).</para>
+/// <para><b>Initial state:</b> <see cref="ActiveChannel"/> = <see cref="IDeviceVariantConfig.DefaultChannel"/>;
+/// <see cref="State"/> = <see cref="ConnectionState.Disconnected"/>;
+/// <see cref="ActiveProtocol"/> / <see cref="CurrentBoot"/> / <see cref="CurrentTelemetry"/>
+/// are <c>null</c> until <see cref="SwitchToAsync"/> succeeds. No auto-connect
+/// in the ctor (architectural choice: the consumer controls timing).</para>
 /// </summary>
 public sealed class ConnectionManager : IDisposable
 {
@@ -43,6 +44,7 @@ public sealed class ConnectionManager : IDisposable
     private readonly ILoggerFactory _loggerFactory;
     private readonly ILogger<ConnectionManager> _logger;
     private readonly Lock _stateLock = new();
+    private ConnectionState _state = ConnectionState.Disconnected;
     private IProtocolService? _activeProtocol;
     private IBootService? _activeBoot;
     private ITelemetryService? _activeTelemetry;
@@ -61,7 +63,7 @@ public sealed class ConnectionManager : IDisposable
 
         _ports = ports.ToDictionary(p => p.Kind);
         if (_ports.Count == 0)
-            throw new ArgumentException("Almeno una ICommunicationPort richiesta.", nameof(ports));
+            throw new ArgumentException("At least one ICommunicationPort is required.", nameof(ports));
 
         _decoder = decoder;
         _variantConfig = variantConfig;
@@ -76,8 +78,8 @@ public sealed class ConnectionManager : IDisposable
     }
 
     /// <summary>
-    /// Canale attualmente selezionato. Valore iniziale =
-    /// <see cref="IDeviceVariantConfig.DefaultChannel"/>; aggiornato da
+    /// Currently selected channel. Initial value =
+    /// <see cref="IDeviceVariantConfig.DefaultChannel"/>; updated by
     /// <see cref="SwitchToAsync"/>.
     /// </summary>
     public ChannelKind ActiveChannel
@@ -86,8 +88,19 @@ public sealed class ConnectionManager : IDisposable
     }
 
     /// <summary>
-    /// <see cref="IProtocolService"/> wrappante la port attiva. <c>null</c>
-    /// finché non viene chiamato <see cref="SwitchToAsync"/>.
+    /// Lifecycle state of this manager. The biconditional
+    /// <c>ActiveProtocol != null ⇔ State == Connected</c> is enforced at
+    /// every mutation site (spec-001 C1).
+    /// </summary>
+    public ConnectionState State
+    {
+        get { lock (_stateLock) return _state; }
+    }
+
+    /// <summary>
+    /// <see cref="IProtocolService"/> wrapping the active port. <c>null</c>
+    /// when <see cref="State"/> is not <see cref="ConnectionState.Connected"/>
+    /// (spec-001 C1).
     /// </summary>
     public IProtocolService? ActiveProtocol
     {
@@ -95,9 +108,10 @@ public sealed class ConnectionManager : IDisposable
     }
 
     /// <summary>
-    /// <see cref="IBootService"/> agganciato al <see cref="ActiveProtocol"/>
-    /// corrente. <c>null</c> finché non viene chiamato <see cref="SwitchToAsync"/>.
-    /// Ricreato ad ogni switch insieme al protocol.
+    /// <see cref="IBootService"/> bound to the current
+    /// <see cref="ActiveProtocol"/>. <c>null</c> when
+    /// <see cref="State"/> is not <see cref="ConnectionState.Connected"/>.
+    /// Rebuilt on every successful switch.
     /// </summary>
     public IBootService? CurrentBoot
     {
@@ -105,127 +119,130 @@ public sealed class ConnectionManager : IDisposable
     }
 
     /// <summary>
-    /// <see cref="ITelemetryService"/> agganciato al <see cref="ActiveProtocol"/>
-    /// corrente. <c>null</c> finché non viene chiamato <see cref="SwitchToAsync"/>.
-    /// Ricreato ad ogni switch insieme al protocol.
+    /// <see cref="ITelemetryService"/> bound to the current
+    /// <see cref="ActiveProtocol"/>. <c>null</c> when
+    /// <see cref="State"/> is not <see cref="ConnectionState.Connected"/>.
+    /// Rebuilt on every successful switch.
     /// </summary>
     public ITelemetryService? CurrentTelemetry
     {
         get { lock (_stateLock) return _activeTelemetry; }
     }
 
-    /// <summary>Notifica del cambio di <see cref="ActiveChannel"/>.</summary>
+    /// <summary>Notification fired when <see cref="ActiveChannel"/> changes.</summary>
     public event EventHandler<ChannelKind>? ActiveChannelChanged;
 
     /// <summary>
-    /// Notifica dello stato di connessione di una port. Sollevato ogni volta
-    /// che una delle 3 port emette il proprio <c>StateChanged</c>.
+    /// Port-level connection-state notification. Raised every time one of the
+    /// 3 ports emits its own <c>StateChanged</c>.
     /// </summary>
     public event EventHandler<ConnectionStateSnapshot>? StateChanged;
 
     /// <summary>
-    /// Evento applicativo decodificato, forwardato dal <see cref="ActiveProtocol"/>
-    /// corrente. Sopravvive agli switch: i consumer si iscrivono una volta sola.
+    /// Decoded application-layer event forwarded from the current
+    /// <see cref="ActiveProtocol"/>. Survives switches: consumers subscribe
+    /// once.
     /// </summary>
     public event EventHandler<AppLayerDecodedEvent>? AppLayerDecoded;
 
     /// <summary>
-    /// Campione di telemetria forwardato dal <see cref="CurrentTelemetry"/> corrente.
-    /// Sopravvive agli switch (re-binding interno automatico).
+    /// Telemetry sample forwarded from the current <see cref="CurrentTelemetry"/>.
+    /// Survives switches (internal re-binding is automatic).
     /// </summary>
     public event EventHandler<TelemetryDataPoint>? TelemetryDataReceived;
 
     /// <summary>
-    /// Progresso di upload firmware forwardato dal <see cref="CurrentBoot"/> corrente.
-    /// Sopravvive agli switch (re-binding interno automatico).
+    /// Firmware-upload progress forwarded from the current <see cref="CurrentBoot"/>.
+    /// Survives switches (internal re-binding is automatic).
     /// </summary>
     public event EventHandler<BootProgress>? BootProgressChanged;
 
     /// <summary>
-    /// Stato corrente della port per il canale indicato.
+    /// Current state of the port for the given channel.
     /// </summary>
     public ConnectionState StateOf(ChannelKind channel)
         => _ports.TryGetValue(channel, out var p) ? p.State : ConnectionState.Disconnected;
 
     /// <summary>
-    /// Passa al canale indicato:
+    /// Switch to the given channel:
     /// <list type="number">
-    /// <item><description>Dispose del <see cref="ActiveProtocol"/> precedente (se presente).</description></item>
-    /// <item><description><see cref="ICommunicationPort.DisconnectAsync"/> della port precedente (se differente).</description></item>
-    /// <item><description><see cref="ICommunicationPort.ConnectAsync"/> della nuova port.</description></item>
-    /// <item><description>Crea nuovo <see cref="IProtocolService"/> wrappante la port.</description></item>
-    /// <item><description>Emette <see cref="ActiveChannelChanged"/>.</description></item>
+    /// <item><description>Transition to <see cref="ConnectionState.Connecting"/> and dispose the previous <see cref="ActiveProtocol"/> (if any).</description></item>
+    /// <item><description><see cref="ICommunicationPort.DisconnectAsync"/> on the previous port (if different from the new one).</description></item>
+    /// <item><description><see cref="ICommunicationPort.ConnectAsync"/> on the new port.</description></item>
+    /// <item><description>Build a new <see cref="IProtocolService"/> wrapping the port and transition to <see cref="ConnectionState.Connected"/>.</description></item>
+    /// <item><description>Raise <see cref="ActiveChannelChanged"/>.</description></item>
     /// </list>
+    /// On connect failure the state rolls back to <see cref="ConnectionState.Disconnected"/>
+    /// and the exception propagates.
     /// </summary>
     public async Task SwitchToAsync(ChannelKind target, CancellationToken ct = default)
     {
         ThrowIfDisposed();
         if (!_ports.TryGetValue(target, out var newPort))
             throw new ArgumentException(
-                $"Nessuna ICommunicationPort registrata per canale {target}.", nameof(target));
+                $"No ICommunicationPort registered for channel {target}.", nameof(target));
 
         IProtocolService? oldProtocol;
         IBootService? oldBoot;
         ITelemetryService? oldTelemetry;
         ICommunicationPort? oldPort;
         ChannelKind previousChannel;
+        bool wasConnected;
         lock (_stateLock)
         {
             oldProtocol = _activeProtocol;
             oldBoot = _activeBoot;
             oldTelemetry = _activeTelemetry;
             previousChannel = _activeChannel;
-            oldPort = oldProtocol is not null
-                ? _ports.GetValueOrDefault(previousChannel)
-                : null;
+            wasConnected = _state == ConnectionState.Connected;
+            oldPort = wasConnected ? _ports.GetValueOrDefault(previousChannel) : null;
+            TransitionTo(ConnectionState.Connecting, "SwitchTo");
         }
 
         DisposeActiveServices(oldProtocol, oldBoot, oldTelemetry);
 
-        // Disconnect vecchia port solo se diversa dalla nuova.
         if (oldPort is not null && !ReferenceEquals(oldPort, newPort))
         {
             await oldPort.DisconnectAsync(ct).ConfigureAwait(false);
         }
 
-        // Connect nuova port. Se già Connected è no-op (contratto adapter).
-        await newPort.ConnectAsync(ct).ConfigureAwait(false);
+        try
+        {
+            await newPort.ConnectAsync(ct).ConfigureAwait(false);
 
-        var newProtocol = CreateProtocolService(newPort);
-        newProtocol.AppLayerDecoded += OnActiveProtocolAppLayer;
-        var newBoot = new BootService(newProtocol, _loggerFactory.CreateLogger<BootService>());
-        newBoot.ProgressChanged += OnActiveBootProgress;
-        var newTelemetry = new TelemetryService(newProtocol);
-        newTelemetry.DataReceived += OnActiveTelemetryData;
-        lock (_stateLock)
-        {
-            _activeChannel = target;
-            _activeProtocol = newProtocol;
-            _activeBoot = newBoot;
-            _activeTelemetry = newTelemetry;
-        }
-        if (previousChannel != target || oldProtocol is null)
-        {
-            using (_logger.BeginScope(new Dictionary<string, object?>
+            var newProtocol = CreateProtocolService(newPort);
+            newProtocol.AppLayerDecoded += OnActiveProtocolAppLayer;
+            var newBoot = new BootService(newProtocol, _loggerFactory.CreateLogger<BootService>());
+            newBoot.ProgressChanged += OnActiveBootProgress;
+            var newTelemetry = new TelemetryService(newProtocol);
+            newTelemetry.DataReceived += OnActiveTelemetryData;
+
+            bool channelChanged;
+            lock (_stateLock)
             {
-                ["Area"] = "Connection",
-                ["Step"] = "SwitchTo",
-                ["Attempt"] = 0,
-                ["Recipient"] = null
-            }))
-            {
-                _logger.LogInformation(
-                    "ActiveChannel {Previous} -> {Target}", previousChannel, target);
+                _activeChannel = target;
+                TransitionTo(
+                    ConnectionState.Connected, "SwitchTo",
+                    newProtocol, newBoot, newTelemetry);
+                channelChanged = previousChannel != target || !wasConnected;
             }
-            ActiveChannelChanged?.Invoke(this, target);
+
+            if (channelChanged)
+                ActiveChannelChanged?.Invoke(this, target);
+        }
+        catch
+        {
+            lock (_stateLock)
+                TransitionTo(ConnectionState.Disconnected, "SwitchTo");
+            throw;
         }
     }
 
     /// <summary>
-    /// Disconnette il canale attivo e azzera <see cref="ActiveProtocol"/>/
-    /// <see cref="CurrentBoot"/>/<see cref="CurrentTelemetry"/>.
-    /// <see cref="ActiveChannel"/> resta invariato (il consumer sceglierà il
-    /// canale alla prossima <see cref="SwitchToAsync"/>).
+    /// Disconnect the active channel and transition to
+    /// <see cref="ConnectionState.Disconnected"/>. <see cref="ActiveChannel"/>
+    /// is unchanged (the consumer picks a channel on the next
+    /// <see cref="SwitchToAsync"/>).
     /// </summary>
     public async Task DisconnectAsync(CancellationToken ct = default)
     {
@@ -240,24 +257,10 @@ public sealed class ConnectionManager : IDisposable
             boot = _activeBoot;
             telemetry = _activeTelemetry;
             current = _activeChannel;
-            _activeProtocol = null;
-            _activeBoot = null;
-            _activeTelemetry = null;
+            if (_state != ConnectionState.Disconnected)
+                TransitionTo(ConnectionState.Disconnected, "Disconnect");
         }
         DisposeActiveServices(protocol, boot, telemetry);
-        if (protocol is not null)
-        {
-            using (_logger.BeginScope(new Dictionary<string, object?>
-            {
-                ["Area"] = "Connection",
-                ["Step"] = "Disconnect",
-                ["Attempt"] = 0,
-                ["Recipient"] = null
-            }))
-            {
-                _logger.LogInformation("ActiveChannel {Channel} disconnected", current);
-            }
-        }
         if (_ports.TryGetValue(current, out var port))
             await port.DisconnectAsync(ct).ConfigureAwait(false);
     }
@@ -271,25 +274,86 @@ public sealed class ConnectionManager : IDisposable
         {
             port.StateChanged -= OnPortStateChanged;
         }
-        DisposeActiveServices(_activeProtocol, _activeBoot, _activeTelemetry);
-        _activeProtocol = null;
-        _activeBoot = null;
-        _activeTelemetry = null;
+
+        IProtocolService? protocol;
+        IBootService? boot;
+        ITelemetryService? telemetry;
+        lock (_stateLock)
+        {
+            protocol = _activeProtocol;
+            boot = _activeBoot;
+            telemetry = _activeTelemetry;
+            if (_state != ConnectionState.Disconnected)
+                TransitionTo(ConnectionState.Disconnected, "Dispose");
+        }
+        DisposeActiveServices(protocol, boot, telemetry);
         ShutdownAuditHook.Record(nameof(ConnectionManager), "(self)");
     }
 
     /// <summary>
-    /// Hook di creazione dell'<see cref="IProtocolService"/>. Isolato in un
-    /// metodo privato per eventuale override futuro (es. swap a
-    /// <c>Stem.Communication</c> in Fase 5).
+    /// Hook for building the <see cref="IProtocolService"/>. Isolated in a
+    /// private method so it can be overridden in the future (e.g. swapping to
+    /// <c>Stem.Communication</c> in Phase 5).
     /// </summary>
     private IProtocolService CreateProtocolService(ICommunicationPort port)
         => new ProtocolService(port, _decoder, _variantConfig.SenderId);
 
     /// <summary>
-    /// Dispose ordinato dei servizi agganciati al protocol: prima i consumer
-    /// (telemetry, boot) — sgancia i forwarding event — poi dispose, infine
-    /// dispose del protocol stesso (che sgancia i propri handler dalla port).
+    /// Single state-mutation site (spec-001 C2). All four state fields plus
+    /// <see cref="_state"/> are written atomically here. The C1 biconditional
+    /// — <c>ActiveProtocol != null ⇔ State == Connected</c> — is enforced by
+    /// the precondition check on the service trio.
+    /// </summary>
+    /// <remarks>
+    /// Callers MUST hold <see cref="_stateLock"/>. The method emits exactly one
+    /// <see cref="LoggerExtensions.LogInformation(ILogger, string, object?[])"/>
+    /// line scoped with <c>{ Kind, Prev, Next, Source }</c>.
+    /// </remarks>
+    private void TransitionTo(
+        ConnectionState next,
+        string source,
+        IProtocolService? protocol = null,
+        IBootService? boot = null,
+        ITelemetryService? telemetry = null)
+    {
+        bool shouldBeConnected = next == ConnectionState.Connected;
+        if (shouldBeConnected != (protocol is not null)
+            || shouldBeConnected != (boot is not null)
+            || shouldBeConnected != (telemetry is not null))
+        {
+            throw new InvalidOperationException(
+                $"C1 biconditional violation: next={next} requires "
+                + (shouldBeConnected ? "non-null" : "null")
+                + " protocol/boot/telemetry trio.");
+        }
+
+        var prev = _state;
+        _state = next;
+        _activeProtocol = protocol;
+        _activeBoot = boot;
+        _activeTelemetry = telemetry;
+
+        using (_logger.BeginScope(new Dictionary<string, object?>
+        {
+            ["Area"] = "Connection",
+            ["Step"] = "TransitionTo",
+            ["Kind"] = _activeChannel,
+            ["Prev"] = prev,
+            ["Next"] = next,
+            ["Source"] = source,
+        }))
+        {
+            _logger.LogInformation(
+                "State {Prev} -> {Next} on {Channel} (source: {Source})",
+                prev, next, _activeChannel, source);
+        }
+    }
+
+    /// <summary>
+    /// Ordered disposal of the services bound to a protocol: first the
+    /// consumers (telemetry, boot) — detaches the forwarded events — then
+    /// disposes them; finally disposes the protocol itself (which detaches
+    /// its own handlers from the port).
     /// </summary>
     private void DisposeActiveServices(
         IProtocolService? protocol, IBootService? boot, ITelemetryService? telemetry)
@@ -350,10 +414,10 @@ public sealed class ConnectionManager : IDisposable
 }
 
 /// <summary>
-/// Snapshot dello stato di una singola port, emesso da
+/// Snapshot of a single port's state, emitted by
 /// <see cref="ConnectionManager.StateChanged"/>.
 /// </summary>
-/// <param name="Channel">Canale che ha cambiato stato.</param>
-/// <param name="State">Nuovo stato del canale.</param>
+/// <param name="Channel">Channel that changed state.</param>
+/// <param name="State">New state of the channel.</param>
 public readonly record struct ConnectionStateSnapshot(
     ChannelKind Channel, ConnectionState State);

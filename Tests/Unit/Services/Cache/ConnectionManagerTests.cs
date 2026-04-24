@@ -71,6 +71,15 @@ public class ConnectionManagerTests
     }
 
     [Fact]
+    public void InitialState_StateIsDisconnected()
+    {
+        using var fixture = new Fixture();
+
+        Assert.Equal(ConnectionState.Disconnected, fixture.Manager.State);
+        Assert.Null(fixture.Manager.ActiveProtocol);
+    }
+
+    [Fact]
     public void InitialState_Generic_DefaultsToBle()
     {
         using var fixture = new Fixture(variant: DeviceVariant.Generic);
@@ -171,6 +180,35 @@ public class ConnectionManagerTests
     }
 
     [Fact]
+    public async Task SwitchToAsync_FirstCall_StateBecomesConnected()
+    {
+        using var fixture = new Fixture();
+        fixture.BleDriver.IsConnected = true;
+
+        await fixture.Manager.SwitchToAsync(ChannelKind.Ble);
+
+        Assert.Equal(ConnectionState.Connected, fixture.Manager.State);
+        Assert.NotNull(fixture.Manager.ActiveProtocol);
+    }
+
+    [Fact]
+    public async Task SwitchToAsync_Cancelled_StateRollsBackToDisconnected()
+    {
+        using var fixture = new Fixture();
+        fixture.BleDriver.IsConnected = true;
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => fixture.Manager.SwitchToAsync(ChannelKind.Ble, cts.Token));
+
+        Assert.Equal(ConnectionState.Disconnected, fixture.Manager.State);
+        Assert.Null(fixture.Manager.ActiveProtocol);
+        Assert.Null(fixture.Manager.CurrentBoot);
+        Assert.Null(fixture.Manager.CurrentTelemetry);
+    }
+
+    [Fact]
     public async Task SwitchToAsync_EmitsActiveChannelChanged()
     {
         using var fixture = new Fixture();
@@ -197,6 +235,19 @@ public class ConnectionManagerTests
 
         Assert.Null(fixture.Manager.ActiveProtocol);
         Assert.Equal(1, fixture.BleDriver.DisconnectCount);
+    }
+
+    [Fact]
+    public async Task DisconnectAsync_StateBecomesDisconnected()
+    {
+        using var fixture = new Fixture();
+        fixture.BleDriver.IsConnected = true;
+        await fixture.Manager.SwitchToAsync(ChannelKind.Ble);
+
+        await fixture.Manager.DisconnectAsync();
+
+        Assert.Equal(ConnectionState.Disconnected, fixture.Manager.State);
+        Assert.Null(fixture.Manager.ActiveProtocol);
     }
 
     [Fact]
@@ -279,6 +330,20 @@ public class ConnectionManagerTests
         // Dopo Dispose il protocol è disposed: SendCommandAsync lancia ObjectDisposedException.
         await Assert.ThrowsAsync<ObjectDisposedException>(
             () => protocol.SendCommandAsync(0, new Command("x", "00", "01"), []));
+        fixture.Dispose();
+    }
+
+    [Fact]
+    public async Task Dispose_StateBecomesDisconnected()
+    {
+        var fixture = new Fixture();
+        fixture.BleDriver.IsConnected = true;
+        await fixture.Manager.SwitchToAsync(ChannelKind.Ble);
+
+        fixture.Manager.Dispose();
+
+        Assert.Equal(ConnectionState.Disconnected, fixture.Manager.State);
+        Assert.Null(fixture.Manager.ActiveProtocol);
         fixture.Dispose();
     }
 
