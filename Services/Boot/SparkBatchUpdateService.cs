@@ -94,6 +94,20 @@ public sealed class SparkBatchUpdateService
         ArgumentNullException.ThrowIfNull(items);
         if (items.Count == 0) return;
 
+        foreach (var item in items)
+        {
+            if (item.Firmware.Length == 0)
+            {
+                var emptyDef = SparkAreas.Get(item.Area);
+                _logger.LogError(
+                    "SPARK batch rejected: empty firmware for area {Area}",
+                    emptyDef.DisplayName);
+                throw new ArgumentException(
+                    $"Empty firmware for area '{emptyDef.DisplayName}'.",
+                    nameof(items));
+            }
+        }
+
         var ordered = items
             .Select(i => (Item: i, Def: SparkAreas.Get(i.Area)))
             .OrderBy(x => x.Def.Order)
