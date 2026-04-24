@@ -1,7 +1,9 @@
-﻿using GUI.Windows;
+﻿using Core.Models;
+using GUI.Windows;
 
 using GUI.Windows.Properties;
 using Infrastructure.Protocol.Legacy;
+using Services.Cache;
 
 public partial class BLEInterfaceTab : TabPage
 {
@@ -17,10 +19,17 @@ public partial class BLEInterfaceTab : TabPage
     // non vede il ConnectionStatusChanged emesso dopo connect e SendAsync fallisce.
     public BLEManager bleManager;
 
-    public BLEInterfaceTab(BLEManager bleManager)
+    // Needed so the BLE device-select flow routes through SwitchToAsync — the single
+    // C3 source into ConnectionState.Connected. Without this the manager stays at
+    // Disconnected / ActiveProtocol=null after a reconnect post-drop (spec-001 #55).
+    private readonly ConnectionManager _connMgr;
+
+    public BLEInterfaceTab(BLEManager bleManager, ConnectionManager connMgr)
     {
         ArgumentNullException.ThrowIfNull(bleManager);
+        ArgumentNullException.ThrowIfNull(connMgr);
         this.bleManager = bleManager;
+        _connMgr = connMgr;
         InitializeComponent();
     }
 
@@ -131,7 +140,26 @@ public partial class BLEInterfaceTab : TabPage
 
             // Passa il parametro al metodo di connessione
             if (deviceName != null)
+            {
                 await bleManager.ConnectToAsync(deviceName, withResponse);
+
+                // After the driver is connected, route through SwitchToAsync so the
+                // ConnectionManager rebuilds ActiveProtocol/CurrentBoot/CurrentTelemetry.
+                // Covers the reconnect-after-drop case where the port goes Disconnected →
+                // Connected via the BLE tab, not SwitchToAsync (spec-001 #55).
+                try
+                {
+                    await _connMgr.SwitchToAsync(ChannelKind.Ble);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(
+                        $"Switch canale fallito: {ex.Message}",
+                        "Errore",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+            }
         }
     }
 }

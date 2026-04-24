@@ -309,6 +309,40 @@ public class ConnectionManagerTests
     }
 
     [Fact]
+    public async Task SwitchToAsync_AfterPortDropAndReconnect_RebuildsActiveProtocol()
+    {
+        // spec-001 #55: BLE device re-selection after a drop must rebuild the
+        // protocol/boot/telemetry trio. The tab calls SwitchToAsync(Ble) after
+        // the driver reconnects; the manager should produce a fresh trio even
+        // though the port is already Connected.
+        using var fixture = new Fixture();
+        fixture.BleDriver.IsConnected = true;
+        await fixture.Manager.SwitchToAsync(ChannelKind.Ble);
+        var firstProtocol = fixture.Manager.ActiveProtocol!;
+        var firstBoot = fixture.Manager.CurrentBoot!;
+        var firstTelemetry = fixture.Manager.CurrentTelemetry!;
+
+        // Drop: T010 pulls the manager back to Disconnected + null trio.
+        fixture.BleDriver.RaiseConnectionStatusChanged(false);
+        Assert.Equal(ConnectionState.Disconnected, fixture.Manager.State);
+        Assert.Null(fixture.Manager.ActiveProtocol);
+
+        // Reconnect: driver + port back to Connected (would be the tab's
+        // ConnectToAsync path in prod).
+        fixture.BleDriver.IsConnected = true;
+        fixture.BleDriver.RaiseConnectionStatusChanged(true);
+        await fixture.Manager.SwitchToAsync(ChannelKind.Ble);
+
+        Assert.Equal(ConnectionState.Connected, fixture.Manager.State);
+        Assert.NotNull(fixture.Manager.ActiveProtocol);
+        Assert.NotNull(fixture.Manager.CurrentBoot);
+        Assert.NotNull(fixture.Manager.CurrentTelemetry);
+        Assert.NotSame(firstProtocol, fixture.Manager.ActiveProtocol);
+        Assert.NotSame(firstBoot, fixture.Manager.CurrentBoot);
+        Assert.NotSame(firstTelemetry, fixture.Manager.CurrentTelemetry);
+    }
+
+    [Fact]
     public async Task PortDisconnected_StillForwardsStateChangedEvent()
     {
         using var fixture = new Fixture();

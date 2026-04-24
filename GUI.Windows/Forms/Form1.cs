@@ -140,7 +140,7 @@ namespace StemPC
             //crea e aggiungi il ble manager. Il tab riceve la stessa istanza BLEManager
             //registrata in DI come IBleDriver del BlePort: scan+connect sul tab → BlePort
             //vede ConnectionStatusChanged → port Connected → SendAsync funziona.
-            BLETabRef = new BLEInterfaceTab(_bleManager);
+            BLETabRef = new BLEInterfaceTab(_bleManager, _connMgr);
             tabControl.TabPages.Add(BLETabRef);
 
             // Sottoscrivi log driver BLE al terminale UI + errori driver BLE/Serial al MessageBox.
