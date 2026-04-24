@@ -391,8 +391,12 @@ namespace Infrastructure.Protocol.Legacy
                     Debug.WriteLine("Dispositivo disconnesso con successo");
                 }
             }
-            catch (Exception ex)
+            catch (ObjectDisposedException ex)
             {
+                // Known-safe: Plugin.BLE internally disposes the IDevice /
+                // ICharacteristic structures of the previous device when a new
+                // connect is initiated, so touching the stale references here
+                // raises ObjectDisposedException. Logging only; no rethrow.
                 Debug.WriteLine($"Errore durante la disconnessione: {ex.Message}");
             }
         }
@@ -420,16 +424,34 @@ namespace Infrastructure.Protocol.Legacy
         }
 
         /// <summary>
-        /// Minimal <see cref="IDisposable"/> implementation wired for spec-001
-        /// T004 (research.md R8): allows the Debug-only shutdown audit to
-        /// observe BLEManager's disposal. Actual cleanup of Plugin.BLE adapter
-        /// event handlers and connected-device handles is deferred to T007
-        /// (US1 root-cause fix).
+        /// Tears down the Plugin.BLE event subscriptions wired in the ctor so
+        /// callbacks can no longer fire on this instance, then nulls out the
+        /// device/characteristic references. The actual
+        /// <c>adapter.DisconnectDeviceAsync</c> is intentionally *not* awaited
+        /// in dispose: blocking-wait on async work in a <see cref="Dispose"/>
+        /// risks a sync-context deadlock, and the OS tears the BLE adapter
+        /// down on process exit anyway. Synchronous unsubscription is enough
+        /// to stop stale events racing with dispose (spec-001 T007, H-B).
         /// </summary>
         public void Dispose()
         {
             if (_disposed) return;
             _disposed = true;
+
+            adapter.DeviceDiscovered -= Adapter_DeviceDiscovered;
+            adapter.ScanTimeoutElapsed -= Adapter_ScanTimeoutElapsed;
+            ble.StateChanged -= Ble_StateChanged;
+
+            if (txCharacteristic is not null)
+            {
+                try { txCharacteristic.ValueUpdated -= TxCharacteristic_ValueUpdated; }
+                catch (ObjectDisposedException) { /* Plugin.BLE already torn down */ }
+            }
+            connectedDevice = null;
+            nordicUartService = null;
+            rxCharacteristic = null;
+            txCharacteristic = null;
+
             ShutdownAuditHook.Record(nameof(BLEManager), "(self)");
         }
     }

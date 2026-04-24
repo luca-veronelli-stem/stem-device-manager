@@ -60,8 +60,8 @@ description: "Task list for implementing spec 001 Spark BLE Firmware Stabilizati
 
 ### Implementation for User Story 1
 
-- [ ] T006 [US1] Run shutdown-audit diagnostic (T004) across 10 close/relaunch cycles on the reference bench; record findings in a PR description or a temporary scratch file (not merged). Identify the disposed object(s) and the reuse site(s).
-- [ ] T007 [US1] Apply the root-cause fix identified in T006. Expected location: `Services/Cache/ConnectionManager.cs` (event unsubscription on dispose) and/or `Infrastructure.Protocol/Legacy/BLEManager.cs` (Plugin.BLE adapter handle release). Keep the change surgical — no refactor beyond what the fix requires. Depends on: T006.
+- [x] T006 [US1] Run shutdown-audit diagnostic (T004) across 10 close/relaunch cycles on the reference bench; record findings in a PR description or a temporary scratch file (not merged). Identify the disposed object(s) and the reuse site(s).
+- [x] T007 [US1] Apply the root-cause fix identified in T006. Expected location: `Services/Cache/ConnectionManager.cs` (event unsubscription on dispose) and/or `Infrastructure.Protocol/Legacy/BLEManager.cs` (Plugin.BLE adapter handle release). Keep the change surgical — no refactor beyond what the fix requires. Depends on: T006.
 - [ ] T008 [P] [US1] Add integration test `Tests/Integration/Boot/SparkBleStabilizationTests.Us1_CloseRelaunch_NoDisposed_Errors` on `net10.0-windows` that simulates 10 rapid close/relaunch cycles and asserts 0 `ObjectDisposedException` thrown + 0 in captured logs. Depends on: T007.
 
 **Checkpoint**: US1 is complete when T008 passes on the reference bench. PR description links the SC-001 bench log from `Docs/BenchLog-Spec001.md` (see T027).
