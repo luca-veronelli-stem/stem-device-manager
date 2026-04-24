@@ -7,41 +7,54 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Services.Boot;
 
 /// <summary>
-/// Servizio di upload firmware. Implementa <see cref="IBootService"/> usando
-/// <see cref="IProtocolService"/> come facade.
+/// Firmware upload service. Implements <see cref="IBootService"/> using
+/// <see cref="IProtocolService"/> as a facade.
 ///
-/// <para><b>Sequenza upload (parità con <c>App.STEMProtocol.BootManager.UploadFirmware</c>):</b></para>
+/// <para><b>Upload sequence (parity with
+/// <c>App.STEMProtocol.BootManager.UploadFirmware</c>):</b></para>
 /// <list type="number">
-/// <item><description><c>CMD_START_PROCEDURE (0x0005)</c> — wait reply, retry <see cref="StartRetries"/>.</description></item>
-/// <item><description>Per ogni blocco da <see cref="FirmwareBlockSize"/> byte (ultimo paddato a 0xFF):
+/// <item><description><c>CMD_START_PROCEDURE (0x0005)</c> — wait reply, retry up to <see cref="RetryBudget"/>.</description></item>
+/// <item><description>For each <see cref="FirmwareBlockSize"/>-byte block (last one padded to 0xFF):
 /// payload = <c>[fwType_BE(2) + pageNum_BE(4) + pageSize_BE(4) + 0x00000000(4) + block(1024)]</c>.
-/// <c>CMD_PROGRAM_BLOCK (0x0007)</c> con wait reply, retry <see cref="BlockRetries"/>.</description></item>
-/// <item><description><c>CMD_END_PROCEDURE (0x0006)</c> — wait reply, retry <see cref="EndRetries"/>.</description></item>
-/// <item><description><c>CMD_RESTART_MACHINE (0x000A)</c> x <see cref="RestartCount"/> — fire-and-forget, intervallo <see cref="RestartInterval"/>.</description></item>
+/// <c>CMD_PROGRAM_BLOCK (0x0007)</c> with wait reply, retry up to <see cref="RetryBudget"/>.</description></item>
+/// <item><description><c>CMD_END_PROCEDURE (0x0006)</c> — wait reply, retry up to <see cref="RetryBudget"/>.</description></item>
+/// <item><description><c>CMD_RESTART_MACHINE (0x000A)</c> x <see cref="RestartCount"/> — fire-and-forget, interval <see cref="_restartInterval"/>.</description></item>
 /// </list>
 ///
-/// <para>Il <c>fwType</c> viene letto dai byte 14..15 del firmware in
-/// little-endian (parità col legacy <c>BootManager.SetFirmwarePath</c>).</para>
+/// <para>The <c>fwType</c> is read from firmware bytes 14..15 little-endian
+/// (parity with legacy <c>BootManager.SetFirmwarePath</c>).</para>
 ///
-/// <para><b>Reply matching:</b> usa la convenzione STEM "bit alto di CodeHigh = 1
-/// indica risposta": ad esempio <c>CMD_START_PROCEDURE (00 05)</c> attende
-/// <c>(80 05)</c>. L'implementazione concreta di <see cref="IProtocolService"/>
-/// deve essere costruita con un <see cref="IPacketDecoder"/> il cui dizionario
-/// contiene i comandi di reply.</para>
+/// <para><b>Reply matching:</b> uses the STEM convention "top bit of CodeHigh = 1
+/// means reply": e.g. <c>CMD_START_PROCEDURE (00 05)</c> waits for
+/// <c>(80 05)</c>. The concrete <see cref="IProtocolService"/> implementation
+/// must be built with an <see cref="IPacketDecoder"/> whose dictionary
+/// contains the reply commands.</para>
 ///
-/// <para><b>State machine:</b> Idle → Uploading → (Completed | Failed). Una nuova
-/// chiamata a <see cref="StartFirmwareUploadAsync"/> mentre lo stato non è Idle
-/// lancia <see cref="InvalidOperationException"/>.</para>
+/// <para><b>State machine:</b> Idle → Uploading → (Completed | Failed). Calling
+/// <see cref="StartFirmwareUploadAsync"/> while the state is not Idle throws
+/// <see cref="InvalidOperationException"/>.</para>
+///
+/// <para><b>spec-001 contract hooks</b> (see
+/// <c>specs/001-spark-ble-fw-stabilize/contracts/boot-service.md</c>):</para>
+/// <list type="bullet">
+/// <item><description>Q1 — every waited step is bounded by <see cref="RetryBudget"/> (default <see cref="DefaultRetryBudget"/>, constructor-configurable, enforced inside <c>SendWithRetry</c>).</description></item>
+/// <item><description>P3 — <see cref="CancellationToken"/> is observed at the top of each retry iteration and before each block send.</description></item>
+/// <item><description>I1 — the optional <see cref="Func{TResult}"/> session-alive probe is evaluated every retry iteration; when it returns <c>false</c> the step aborts immediately with <see cref="BootSessionLostException"/> (transient reply timeouts still retry; only a lost BLE session short-circuits the loop).</description></item>
+/// </list>
 /// </summary>
 public sealed class BootService : IBootService, IDisposable
 {
+    /// <summary>
+    /// Default per-step retry budget (spec-001 R10/Q1). Applies independently to
+    /// StartBoot, UploadBlocks, EndBoot. Configurable via the constructor so
+    /// integration tests and diagnostic harnesses can shrink the budget.
+    /// </summary>
+    public const int DefaultRetryBudget = 3;
+
     private const int FirmwareBlockSize = 1024;
     private const int FwTypeOffsetLow = 14;
     private const int FwTypeOffsetHigh = 15;
     private const int MinFirmwareLength = 16;
-    private const int StartRetries = 1;
-    private const int BlockRetries = 10;
-    private const int EndRetries = 5;
     private const int RestartCount = 2;
     private const string ReplyCodeHigh = "80";
     private static readonly TimeSpan DefaultResponseTimeout = TimeSpan.FromMilliseconds(4000);
@@ -61,31 +74,75 @@ public sealed class BootService : IBootService, IDisposable
     private readonly ILogger<BootService> _logger;
     private readonly TimeSpan _responseTimeout;
     private readonly TimeSpan _restartInterval;
+    private readonly int _retryBudget;
+    private readonly Func<bool>? _isSessionAlive;
     private readonly Lock _stateLock = new();
     private BootState _state = BootState.Idle;
     private int _currentOffset;
     private int _totalLength;
     private bool _disposed;
 
-    public BootService(IProtocolService protocol, ILogger<BootService>? logger = null)
-        : this(protocol, DefaultResponseTimeout, DefaultRestartInterval, logger) { }
+    /// <summary>
+    /// Production constructor. <paramref name="retryBudget"/> defaults to
+    /// <see cref="DefaultRetryBudget"/> (spec-001 R10). <paramref name="isSessionAlive"/>
+    /// is the optional I1 probe: when provided and it returns <c>false</c>
+    /// mid-step, the step aborts with <see cref="BootSessionLostException"/>.
+    /// </summary>
+    public BootService(
+        IProtocolService protocol,
+        int retryBudget = DefaultRetryBudget,
+        Func<bool>? isSessionAlive = null,
+        ILogger<BootService>? logger = null)
+        : this(
+            protocol,
+            DefaultResponseTimeout,
+            DefaultRestartInterval,
+            retryBudget,
+            isSessionAlive,
+            logger)
+    { }
 
     /// <summary>
-    /// Overload interno per i test: consente di iniettare timeout più aggressivi
-    /// (es. 50ms invece di 4000ms) per accelerare le suite.
+    /// Legacy convenience overload (kept for the <see cref="Cache.ConnectionManager"/>
+    /// call site that passes only protocol + logger). Uses
+    /// <see cref="DefaultRetryBudget"/> and no session probe.
+    /// </summary>
+    public BootService(IProtocolService protocol, ILogger<BootService>? logger)
+        : this(protocol, DefaultRetryBudget, null, logger) { }
+
+    /// <summary>
+    /// Internal overload for tests: allows injecting tighter timeouts
+    /// (e.g. 50 ms instead of 4000 ms), plus a custom retry budget and
+    /// the I1 session-alive probe.
     /// </summary>
     internal BootService(
         IProtocolService protocol,
         TimeSpan responseTimeout,
         TimeSpan restartInterval,
+        int retryBudget = DefaultRetryBudget,
+        Func<bool>? isSessionAlive = null,
         ILogger<BootService>? logger = null)
     {
         ArgumentNullException.ThrowIfNull(protocol);
+        if (retryBudget < 1)
+            throw new ArgumentOutOfRangeException(
+                nameof(retryBudget),
+                retryBudget,
+                "RetryBudget must be >= 1 (spec-001 R10).");
         _protocol = protocol;
         _logger = logger ?? NullLogger<BootService>.Instance;
         _responseTimeout = responseTimeout;
         _restartInterval = restartInterval;
+        _retryBudget = retryBudget;
+        _isSessionAlive = isSessionAlive;
     }
+
+    /// <summary>
+    /// Retry budget applied per waited step (StartBoot, UploadBlocks block,
+    /// EndBoot). Set at construction time from the <c>retryBudget</c> ctor
+    /// parameter; default <see cref="DefaultRetryBudget"/>.
+    /// </summary>
+    public int RetryBudget => _retryBudget;
 
     /// <inheritdoc/>
     public event EventHandler<BootProgress>? ProgressChanged;
@@ -127,11 +184,19 @@ public sealed class BootService : IBootService, IDisposable
             FailUpload(recipientId, step);
             throw;
         }
+        catch (BootSessionLostException)
+        {
+            // I1: session drop mid-step. Transition to Failed and rethrow so
+            // SparkBatchUpdateService can wrap the cause as
+            // "BLE session lost during <phase>" per contract.
+            FailUpload(recipientId, step);
+            throw;
+        }
         catch (BootProtocolException)
         {
-            // Fallimento di protocollo (timeout reply) — stato Failed, niente
-            // rethrow (parità col legacy BootManager che mostrava MessageBox e
-            // ritornava). L'osservabilità del fallimento avviene tramite State.
+            // Protocol failure (reply timeout after RetryBudget exhausted) —
+            // Failed state, no rethrow (parity with legacy BootManager that
+            // showed a MessageBox and returned). Observability via State.
             FailUpload(recipientId, step);
         }
         catch
@@ -145,14 +210,18 @@ public sealed class BootService : IBootService, IDisposable
     public Task<bool> StartBootAsync(uint recipientId, CancellationToken ct = default)
     {
         ThrowIfDisposed();
-        return SendWithRetry(recipientId, CmdStartProcedure, EmptyPayload, StartRetries, ct);
+        return SendWithRetry(
+            recipientId, CmdStartProcedure, EmptyPayload,
+            _retryBudget, SparkBatchPhase.StartBoot, ct);
     }
 
     /// <inheritdoc/>
     public Task<bool> EndBootAsync(uint recipientId, CancellationToken ct = default)
     {
         ThrowIfDisposed();
-        return SendWithRetry(recipientId, CmdEndProcedure, EmptyPayload, EndRetries, ct);
+        return SendWithRetry(
+            recipientId, CmdEndProcedure, EmptyPayload,
+            _retryBudget, SparkBatchPhase.EndBoot, ct);
     }
 
     /// <inheritdoc/>
@@ -178,6 +247,12 @@ public sealed class BootService : IBootService, IDisposable
         }
         catch (OperationCanceledException)
         {
+            FailUpload(recipientId, step);
+            throw;
+        }
+        catch (BootSessionLostException)
+        {
+            // I1: session drop mid-step. See StartFirmwareUploadAsync comment.
             FailUpload(recipientId, step);
             throw;
         }
@@ -277,13 +352,16 @@ public sealed class BootService : IBootService, IDisposable
     {
         _logger.LogInformation(
             "Boot start: sending CMD_START_PROCEDURE to {Recipient:X8}", recipientId);
-        if (!await SendWithRetry(recipientId, CmdStartProcedure, EmptyPayload, StartRetries, ct))
+        bool ok = await SendWithRetry(
+            recipientId, CmdStartProcedure, EmptyPayload,
+            _retryBudget, SparkBatchPhase.StartBoot, ct).ConfigureAwait(false);
+        if (!ok)
         {
             _logger.LogError(
                 "Boot start failed: no reply from {Recipient:X8} after {Retries} retries",
-                recipientId, StartRetries);
+                recipientId, _retryBudget);
             throw new BootProtocolException(
-                "Avvio procedura bootloader fallito (CMD_START_PROCEDURE senza reply).");
+                $"Bootloader start failed (CMD_START_PROCEDURE, no reply after {_retryBudget} attempts).");
         }
     }
 
@@ -302,14 +380,17 @@ public sealed class BootService : IBootService, IDisposable
             ct.ThrowIfCancellationRequested();
             var block = BuildPaddedBlock(firmware, offset);
             var payload = BuildProgramBlockPayload(fwType, pageNum, FirmwareBlockSize, block);
-            if (!await SendWithRetry(recipientId, CmdProgramBlock, payload, BlockRetries, ct))
+            bool ok = await SendWithRetry(
+                recipientId, CmdProgramBlock, payload,
+                _retryBudget, SparkBatchPhase.UploadBlocks, ct).ConfigureAwait(false);
+            if (!ok)
             {
                 _logger.LogError(
                     "Boot blocks failed: block {PageNum}/{TotalBlocks} not acknowledged " +
                     "after {Retries} retries (recipient {Recipient:X8})",
-                    pageNum, totalBlocks, BlockRetries, recipientId);
+                    pageNum, totalBlocks, _retryBudget, recipientId);
                 throw new BootProtocolException(
-                    $"Programmazione blocco {pageNum} fallita dopo {BlockRetries} tentativi.");
+                    $"Block {pageNum} programming failed after {_retryBudget} attempts.");
             }
             LogBlockProgress(pageNum, totalBlocks);
             pageNum++;
@@ -336,13 +417,16 @@ public sealed class BootService : IBootService, IDisposable
     {
         _logger.LogInformation(
             "Boot end: sending CMD_END_PROCEDURE to {Recipient:X8}", recipientId);
-        if (!await SendWithRetry(recipientId, CmdEndProcedure, EmptyPayload, EndRetries, ct))
+        bool ok = await SendWithRetry(
+            recipientId, CmdEndProcedure, EmptyPayload,
+            _retryBudget, SparkBatchPhase.EndBoot, ct).ConfigureAwait(false);
+        if (!ok)
         {
             _logger.LogError(
                 "Boot end failed: no reply from {Recipient:X8} after {Retries} retries",
-                recipientId, EndRetries);
+                recipientId, _retryBudget);
             throw new BootProtocolException(
-                "Chiusura procedura bootloader fallita (CMD_END_PROCEDURE senza reply).");
+                $"Bootloader end failed (CMD_END_PROCEDURE, no reply after {_retryBudget} attempts).");
         }
     }
 
@@ -361,12 +445,35 @@ public sealed class BootService : IBootService, IDisposable
         }
     }
 
+    /// <summary>
+    /// Core retry loop. Honours the three spec-001 clauses in one place:
+    /// <list type="bullet">
+    /// <item><description>Q1 — iteration count is capped at <paramref name="retries"/> (always <see cref="_retryBudget"/> for the waited steps).</description></item>
+    /// <item><description>P3 — <paramref name="ct"/> is observed at the top of every iteration.</description></item>
+    /// <item><description>I1 — <see cref="_isSessionAlive"/> is evaluated every iteration; on <c>false</c> the loop short-circuits with <see cref="BootSessionLostException"/>, distinguishing a session drop from a transient reply timeout.</description></item>
+    /// </list>
+    /// Returns <c>true</c> on the first acknowledged attempt; returns
+    /// <c>false</c> when the budget is exhausted with only transient
+    /// (reply-timeout) failures; throws on cancellation or session loss.
+    /// </summary>
     private async Task<bool> SendWithRetry(
-        uint recipientId, Command command, byte[] payload, int retries, CancellationToken ct)
+        uint recipientId,
+        Command command,
+        byte[] payload,
+        int retries,
+        SparkBatchPhase phase,
+        CancellationToken ct)
     {
         for (int i = 0; i < retries; i++)
         {
+            // P3: cancellation observed at every iteration, before any I/O.
             ct.ThrowIfCancellationRequested();
+
+            // I1: session-drop check — fail immediately, do NOT consume the
+            // transient-error retry budget for something that is not transient.
+            if (_isSessionAlive is not null && !_isSessionAlive())
+                throw new BootSessionLostException(phase);
+
             using var scope = _logger.BeginScope(new Dictionary<string, object?>
             {
                 ["Area"] = "Boot",
@@ -385,6 +492,8 @@ public sealed class BootService : IBootService, IDisposable
                 ct).ConfigureAwait(false);
             if (ok) return true;
         }
+        // Q1: budget exhausted. Return false so the caller can surface a
+        // BootProtocolException with the explicit attempt count.
         return false;
     }
 
@@ -434,11 +543,35 @@ public sealed class BootService : IBootService, IDisposable
 }
 
 /// <summary>
-/// Eccezione interna usata per propagare un fallimento di protocollo
-/// (timeout reply esaurito) attraverso lo stack di <see cref="BootService"/>
-/// fino al catch che imposta <see cref="BootState.Failed"/>.
+/// Internal exception used to propagate a protocol failure (reply timeout
+/// after the retry budget is exhausted) up the <see cref="BootService"/>
+/// stack to the catch that sets <see cref="BootState.Failed"/>.
 /// </summary>
 internal sealed class BootProtocolException : Exception
 {
     public BootProtocolException(string message) : base(message) { }
+}
+
+/// <summary>
+/// Raised by <see cref="BootService"/> when the I1 session-alive probe reports
+/// that <c>ConnectionManager.ActiveProtocol</c> is no longer the one the boot
+/// step was launched against (spec-001 boot-service.md I1). Distinct from
+/// <see cref="BootProtocolException"/>: a session loss is NOT a transient
+/// error and must not consume the retry budget — it short-circuits the loop.
+/// </summary>
+/// <remarks>
+/// Callers that orchestrate multiple boot steps (e.g.
+/// <c>SparkBatchUpdateService</c>) observe this type to build the contract-mandated
+/// <c>SparkBatchUpdateException.Cause = "BLE session lost during &lt;phase&gt;"</c>.
+/// </remarks>
+public sealed class BootSessionLostException : Exception
+{
+    public BootSessionLostException(SparkBatchPhase phase)
+        : base($"BLE session lost during {phase}.")
+    {
+        Phase = phase;
+    }
+
+    /// <summary>Phase at which the session loss was detected.</summary>
+    public SparkBatchPhase Phase { get; }
 }

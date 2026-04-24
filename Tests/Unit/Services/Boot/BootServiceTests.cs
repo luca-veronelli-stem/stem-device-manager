@@ -173,16 +173,17 @@ public class BootServiceTests
     [Fact]
     public async Task Start_NoReplyForBlock_TransitionsToFailedAfterRetries()
     {
-        using var fixture = new Fixture(replyForCommandLo: 0x05); // reply solo a START
+        using var fixture = new Fixture(replyForCommandLo: 0x05); // only START gets a reply
         var firmware = BuildFirmware(length: 16, fwTypeLow: 0x05, fwTypeHigh: 0x00);
 
         await fixture.Service.StartFirmwareUploadAsync(firmware, TargetRecipientId);
 
         Assert.Equal(BootState.Failed, fixture.Service.State);
-        // START 1 volta (riuscito), BLOCK 10 volte (10 retry, falliti), no END, no RESTART
+        // START once (succeeded), BLOCK RetryBudget times (all failed), no END, no RESTART.
+        // spec-001 R10/Q1: RetryBudget default = 3, shared across steps.
         var codes = fixture.GetSentCommandCodes();
         int blockAttempts = codes.Count(c => c.Item2 == 0x07);
-        Assert.Equal(10, blockAttempts);
+        Assert.Equal(BootService.DefaultRetryBudget, blockAttempts);
         Assert.DoesNotContain((0x00, 0x06), codes);
         Assert.DoesNotContain((0x00, 0x0A), codes);
     }
@@ -298,6 +299,111 @@ public class BootServiceTests
         fixture.Dispose();
     }
 
+    // --- spec-001 T013: RetryBudget + P3/Q1/I1 invariants ---
+
+    [Fact]
+    public void Ctor_DefaultRetryBudget_IsThree()
+    {
+        // R10 / contract Q1: default is 3 per-step attempts.
+        using var fixture = new Fixture();
+        Assert.Equal(3, fixture.Service.RetryBudget);
+        Assert.Equal(BootService.DefaultRetryBudget, fixture.Service.RetryBudget);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Ctor_RetryBudgetLessThanOne_Throws(int invalid)
+    {
+        using var port = new FakeCommunicationPort(ChannelKind.Ble);
+        var decoder = new PacketDecoder(ReplyCommands, [], []);
+        using var protocol = new ProtocolService(port, decoder, OwnRecipientId);
+
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new BootService(protocol, retryBudget: invalid));
+    }
+
+    [Fact]
+    public async Task Q1_StartBootAsync_NoReply_StopsAtRetryBudget()
+    {
+        // Q1: budget is per-step and exactly capped — not capped + 1.
+        using var fixture = new Fixture(autoReply: false, retryBudget: 2);
+
+        bool ok = await fixture.Service.StartBootAsync(TargetRecipientId);
+
+        Assert.False(ok);
+        int attempts = fixture.GetSentCommandCodes().Count(c => c.Item2 == 0x05);
+        Assert.Equal(2, attempts);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(3)]
+    [InlineData(7)]
+    public async Task Q1_EndBootAsync_NoReply_StopsAtRetryBudget(int budget)
+    {
+        using var fixture = new Fixture(autoReply: false, retryBudget: budget);
+
+        bool ok = await fixture.Service.EndBootAsync(TargetRecipientId);
+
+        Assert.False(ok);
+        int attempts = fixture.GetSentCommandCodes().Count(c => c.Item2 == 0x06);
+        Assert.Equal(budget, attempts);
+    }
+
+    [Fact]
+    public async Task P3_SendWithRetry_CancellationObservedEachIteration()
+    {
+        // P3: ct.ThrowIfCancellationRequested at the top of every iteration.
+        // Pre-cancel before the first send — no bytes must leave the port.
+        using var fixture = new Fixture(autoReply: false, retryBudget: 5);
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => fixture.Service.StartBootAsync(TargetRecipientId, cts.Token));
+
+        Assert.Empty(fixture.GetSentCommandCodes());
+    }
+
+    [Fact]
+    public async Task I1_SessionAliveFalse_ThrowsBootSessionLostImmediately()
+    {
+        // I1: when the session-alive probe reports false, the step aborts with
+        // BootSessionLostException without consuming the retry budget.
+        using var fixture = new Fixture(
+            autoReply: false,
+            retryBudget: 5,
+            isSessionAlive: () => false);
+
+        var ex = await Assert.ThrowsAsync<BootSessionLostException>(
+            () => fixture.Service.StartBootAsync(TargetRecipientId));
+
+        Assert.Equal(SparkBatchPhase.StartBoot, ex.Phase);
+        Assert.Empty(fixture.GetSentCommandCodes());
+    }
+
+    [Fact]
+    public async Task I1_SessionDropsMidUpload_StartFirmwareUpload_FailedAndRethrows()
+    {
+        // I1: session drops after one good block — the next retry iteration
+        // sees the probe flip to false and aborts immediately. State = Failed.
+        bool alive = true;
+        using var fixture = new Fixture(
+            retryBudget: 5,
+            isSessionAlive: () => alive);
+        // Firmware with enough bytes to trigger >1 block + make the "drop after
+        // first block" meaningful.
+        var firmware = BuildFirmware(length: 1500, fwTypeLow: 0x05, fwTypeHigh: 0x00);
+        fixture.OnBlockSent = count => { if (count == 1) alive = false; };
+
+        var ex = await Assert.ThrowsAsync<BootSessionLostException>(
+            () => fixture.Service.StartFirmwareUploadAsync(firmware, TargetRecipientId));
+
+        Assert.Equal(SparkBatchPhase.UploadBlocks, ex.Phase);
+        Assert.Equal(BootState.Failed, fixture.Service.State);
+    }
+
     // --- Helpers ---
 
     private static byte[] BuildFirmware(int length, byte fwTypeLow, byte fwTypeHigh)
@@ -319,14 +425,21 @@ public class BootServiceTests
         private readonly Dictionary<int, (byte CmdHi, byte CmdLo, uint Recipient)> _packetTracker = new();
         private int _blocksSent;
 
-        public Fixture(bool autoReply = true, byte? replyForCommandLo = null)
+        public Fixture(
+            bool autoReply = true,
+            byte? replyForCommandLo = null,
+            int retryBudget = BootService.DefaultRetryBudget,
+            Func<bool>? isSessionAlive = null)
         {
             AutoReplyEnabled = autoReply;
             ReplyForCommandLo = replyForCommandLo;
             Port = new FakeCommunicationPort(ChannelKind.Ble);
             var decoder = new PacketDecoder(ReplyCommands, [], []);
             Protocol = new ProtocolService(Port, decoder, OwnRecipientId);
-            Service = new BootService(Protocol, FastResponseTimeout, FastRestartInterval);
+            Service = new BootService(
+                Protocol, FastResponseTimeout, FastRestartInterval,
+                retryBudget: retryBudget,
+                isSessionAlive: isSessionAlive);
             Port.OnSent = OnPortSent;
         }
 

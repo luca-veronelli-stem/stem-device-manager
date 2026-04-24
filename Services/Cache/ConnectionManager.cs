@@ -212,7 +212,17 @@ public sealed class ConnectionManager : IDisposable
 
             var newProtocol = CreateProtocolService(newPort);
             newProtocol.AppLayerDecoded += OnActiveProtocolAppLayer;
-            var newBoot = new BootService(newProtocol, _loggerFactory.CreateLogger<BootService>());
+            // spec-001 I1: BootService gets an I1 probe that returns true only
+            // while *this* protocol is still the ActiveProtocol. A port drop or
+            // SwitchToAsync replaces the protocol trio via TransitionTo, the
+            // probe flips to false and the running boot step aborts with
+            // BootSessionLostException instead of consuming the retry budget.
+            var capturedProtocol = newProtocol;
+            var newBoot = new BootService(
+                newProtocol,
+                retryBudget: BootService.DefaultRetryBudget,
+                isSessionAlive: () => ReferenceEquals(ActiveProtocol, capturedProtocol),
+                logger: _loggerFactory.CreateLogger<BootService>());
             newBoot.ProgressChanged += OnActiveBootProgress;
             var newTelemetry = new TelemetryService(newProtocol);
             newTelemetry.DataReceived += OnActiveTelemetryData;
