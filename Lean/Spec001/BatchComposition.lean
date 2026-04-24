@@ -1,8 +1,8 @@
 import Mathlib
-import Phase2.BootStateMachine
+import Spec001.BootStateMachine
 
 /-!
-# Batch firmware-update composition (spec-001, Phase 2, T005)
+# Batch firmware-update composition (spec-001, T005)
 
 Types and transitions only — the composition preservation theorem
 (batch-succeeded ⇒ every area completed; batch-failed ⇒ failing area
@@ -12,9 +12,9 @@ Mirrors `SparkBatchUpdateService` in the C# side. See
 `specs/001-spark-ble-fw-stabilize/data-model.md`.
 -/
 
-namespace Phase2.BatchComposition
+namespace Spec001.BatchComposition
 
-open Phase2.BootStateMachine (BootPhase)
+open Spec001.BootStateMachine (BootPhase)
 
 /-- On-device target area. The concrete set (HMI / Motor1 / Motor2 /
     Scrolling) is a domain detail; the Lean model only needs area values
@@ -77,4 +77,4 @@ inductive Reaches : BatchState → BatchState → Prop where
 def ReachableFrom (initial : List FirmwareFile) (s : BatchState) : Prop :=
   Reaches (.InProgress [] initial) s
 
-end Phase2.BatchComposition
+end Spec001.BatchComposition
