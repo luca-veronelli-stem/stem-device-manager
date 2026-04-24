@@ -146,6 +146,72 @@ public class SparkBatchUpdateServiceTests
     }
 
     [Fact]
+    public async Task Execute_SecondAreaFailsAfterRetries_AbortsAndNamesArea()
+    {
+        // Three areas with DISTINCT recipient ids, in canonical order:
+        // Motor1 (Order=3) → Motor2 (Order=4) → Rostrum (Order=5).
+        // The fake is configured to fail UploadBlocks for the SECOND area
+        // (Motor2), so the first must complete fully and the third must never
+        // be StartBoot-ed.
+        var fake = new FakeBootService
+        {
+            UploadBlocksFailsForRecipient = SparkAreas.Get(SparkFirmwareArea.Motor2).RecipientId,
+        };
+        var orchestrator = new SparkBatchUpdateService(fake);
+        var items = new List<SparkBatchItem>
+        {
+            new(SparkFirmwareArea.Motor1, Fw),
+            new(SparkFirmwareArea.Motor2, Fw),
+            new(SparkFirmwareArea.Rostrum, Fw),
+        };
+
+        var ex = await Assert.ThrowsAsync<SparkBatchUpdateException>(
+            () => orchestrator.ExecuteAsync(items));
+
+        Assert.Equal(SparkFirmwareArea.Motor2, ex.Area.Area);
+        Assert.Equal(SparkBatchPhase.UploadBlocks, ex.Phase);
+
+        // Third area (Rostrum) must never have been StartBoot-ed.
+        var rostrumRecipient = SparkAreas.Get(SparkFirmwareArea.Rostrum).RecipientId;
+        Assert.DoesNotContain(
+            fake.Calls,
+            c => c.Kind == FakeBootCallKind.StartBoot && c.Recipient == rostrumRecipient);
+
+        // First area (Motor1) must have all four call kinds observed.
+        var motor1Recipient = SparkAreas.Get(SparkFirmwareArea.Motor1).RecipientId;
+        var motor1Kinds = fake.Calls
+            .Where(c => c.Recipient == motor1Recipient)
+            .Select(c => c.Kind)
+            .ToList();
+        Assert.Contains(FakeBootCallKind.StartBoot,        motor1Kinds);
+        Assert.Contains(FakeBootCallKind.UploadBlocksOnly, motor1Kinds);
+        Assert.Contains(FakeBootCallKind.EndBoot,          motor1Kinds);
+        Assert.Contains(FakeBootCallKind.Restart,          motor1Kinds);
+    }
+
+    [Fact]
+    public async Task Execute_EmptyFirmwareAtStart_ThrowsBeforeAnyDeviceCall()
+    {
+        // First item has zero-length firmware → precondition must reject
+        // BEFORE any device call, regardless of the rest of the batch.
+        var fake = new FakeBootService();
+        var orchestrator = new SparkBatchUpdateService(fake);
+        var offendingArea = SparkFirmwareArea.Motor1;
+        var items = new List<SparkBatchItem>
+        {
+            new(offendingArea,               Array.Empty<byte>()),
+            new(SparkFirmwareArea.Motor2,    Fw),
+            new(SparkFirmwareArea.Rostrum,   Fw),
+        };
+
+        var ex = await Assert.ThrowsAsync<ArgumentException>(
+            () => orchestrator.ExecuteAsync(items));
+
+        Assert.Empty(fake.Calls);
+        Assert.Contains(SparkAreas.Get(offendingArea).DisplayName, ex.Message);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_RaisesAreaStartedAndCompletedEvents()
     {
         var fake = new FakeBootService();
