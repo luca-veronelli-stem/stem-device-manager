@@ -171,6 +171,30 @@ public class ConnectionManagerTests
     }
 
     [Fact]
+    public async Task SwitchToAsync_AlreadyActiveAndConnected_IsNoOp()
+    {
+        // issue #51: clicking the currently-active channel menu item while the
+        // protocol trio is live must be a no-op. Must NOT dispose/recreate the
+        // services (ShutdownAudit records) nor raise ActiveChannelChanged.
+        using var fixture = new Fixture();
+        fixture.BleDriver.IsConnected = true;
+        await fixture.Manager.SwitchToAsync(ChannelKind.Ble);
+        var protocolBefore = fixture.Manager.ActiveProtocol!;
+        var bootBefore = fixture.Manager.CurrentBoot!;
+        var telemetryBefore = fixture.Manager.CurrentTelemetry!;
+        var channelChangedCount = 0;
+        fixture.Manager.ActiveChannelChanged += (_, _) => channelChangedCount++;
+
+        await fixture.Manager.SwitchToAsync(ChannelKind.Ble);
+
+        Assert.Same(protocolBefore, fixture.Manager.ActiveProtocol);
+        Assert.Same(bootBefore, fixture.Manager.CurrentBoot);
+        Assert.Same(telemetryBefore, fixture.Manager.CurrentTelemetry);
+        Assert.Equal(ConnectionState.Connected, fixture.Manager.State);
+        Assert.Equal(0, channelChangedCount);
+    }
+
+    [Fact]
     public async Task SwitchToAsync_InvalidChannel_Throws()
     {
         using var fixture = new Fixture();

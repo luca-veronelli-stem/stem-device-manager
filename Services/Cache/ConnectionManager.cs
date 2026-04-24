@@ -166,6 +166,7 @@ public sealed class ConnectionManager : IDisposable
     /// <summary>
     /// Switch to the given channel:
     /// <list type="number">
+    /// <item><description>No-op early return when <paramref name="target"/> is already the <see cref="ActiveChannel"/> and <see cref="ActiveProtocol"/> is live (spec-001 C1: <c>ActiveProtocol != null ⇔ State == Connected</c>).</description></item>
     /// <item><description>Transition to <see cref="ConnectionState.Connecting"/> and dispose the previous <see cref="ActiveProtocol"/> (if any).</description></item>
     /// <item><description><see cref="ICommunicationPort.DisconnectAsync"/> on the previous port (if different from the new one).</description></item>
     /// <item><description><see cref="ICommunicationPort.ConnectAsync"/> on the new port.</description></item>
@@ -190,6 +191,16 @@ public sealed class ConnectionManager : IDisposable
         bool wasConnected;
         lock (_stateLock)
         {
+            // issue #51: clicking the already-active channel menu item must be
+            // a no-op. Guard precedes any TransitionTo so no Connecting log and
+            // no ShutdownAudit dispose record are emitted. Check is inside the
+            // lock to serialize against concurrent SwitchToAsync / port drops;
+            // ActiveProtocol is not null is the C1 biconditional phrasing of
+            // State == Connected, so a dropped-but-still-on-Ble state still
+            // rebuilds the trio (covered by SwitchToAsync_AfterPortDrop test).
+            if (target == _activeChannel && _activeProtocol is not null)
+                return;
+
             oldProtocol = _activeProtocol;
             oldBoot = _activeBoot;
             oldTelemetry = _activeTelemetry;
