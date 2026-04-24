@@ -116,6 +116,13 @@ public sealed class BlePort : ICommunicationPort
     }
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// Does not call <see cref="IBleDriver.DisconnectAsync"/>: Plugin.BLE
+    /// teardown is owned by the driver's own <c>Dispose</c> (see
+    /// <c>BLEManager.Dispose</c>), invoked later in the DI LIFO order.
+    /// Dispatching a fire-and-forget DisconnectAsync here used to race with
+    /// the driver Dispose on app shutdown (spec-001 issue #50 / H-A).
+    /// </remarks>
     public void Dispose()
     {
         if (_disposed) return;
@@ -123,11 +130,7 @@ public sealed class BlePort : ICommunicationPort
         _driver.PacketReceived -= OnDriverPacketReceived;
         _driver.ConnectionStatusChanged -= OnDriverConnectionChanged;
         if (State != ConnectionState.Disconnected)
-        {
-            try { _ = _driver.DisconnectAsync(); }
-            catch { /* best effort */ }
             Transition(ConnectionState.Disconnected);
-        }
     }
 
     private void OnDriverPacketReceived(object? sender, BlePacketEventArgs e)
