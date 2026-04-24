@@ -97,6 +97,23 @@ namespace GUI.Windows
             ShutdownAudit.Enable(
                 serviceProvider.GetRequiredService<ILoggerFactory>()
                     .CreateLogger("GUI.Windows.Diagnostics.ShutdownAudit"));
+
+            // spec-001 T007 (US1): a cycle-9 bench run exited with code
+            // 0xffffffff and no dispose trail, suggesting an unhandled
+            // exception on a non-UI thread (Plugin.BLE notification thread is
+            // the likely source). Log crashes so the next occurrence leaves
+            // evidence.
+            var crashLogger = serviceProvider.GetRequiredService<ILoggerFactory>()
+                .CreateLogger("GUI.Windows.Diagnostics.UnhandledException");
+            AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+                crashLogger.LogError(e.ExceptionObject as Exception,
+                    "Unhandled AppDomain exception (IsTerminating={Terminating})",
+                    e.IsTerminating);
+            TaskScheduler.UnobservedTaskException += (_, e) =>
+            {
+                crashLogger.LogError(e.Exception, "Unobserved Task exception");
+                e.SetObserved();
+            };
 #endif
 
             // To customize application configuration such as set high DPI settings or default font,
