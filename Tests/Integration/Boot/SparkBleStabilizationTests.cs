@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Core.Interfaces;
 using Core.Models;
 using Infrastructure.Protocol.Hardware;
+using Services.Boot;
 using Services.Cache;
 using Tests.Unit.Infrastructure.Protocol;
 
@@ -136,5 +137,143 @@ public class SparkBleStabilizationTests
             IReadOnlyList<Command> commands,
             IReadOnlyList<Variable> variables,
             IReadOnlyList<ProtocolAddress> addresses) { }
+    }
+
+    // --- US4 batch orchestration integration test ---------------------------
+
+    private static readonly byte[] Fw = new byte[16];
+
+    // Canonical three-file batch with three distinct recipient IDs so the
+    // fake can target each area precisely: HmiApplication (HMI recipient),
+    // Motor1 (right motor), Rostrum. BootloaderHmi/HmiApplication/HmiImages
+    // share a recipient, so we pick only one of them.
+    private static readonly SparkFirmwareArea[] CanonicalBatch =
+    [
+        SparkFirmwareArea.HmiApplication,
+        SparkFirmwareArea.Motor1,
+        SparkFirmwareArea.Rostrum,
+    ];
+
+    /// <summary>
+    /// Spec-001 US4 / SC-006 + SC-007 integration: drive the
+    /// <see cref="SparkBatchUpdateService"/> orchestrator across the canonical
+    /// three-file batch against a manual fake <see cref="IBootService"/>.
+    ///
+    /// Two logical halves in one <c>[Fact]</c>:
+    /// SC-006 — 10 nominal batches: every area completes (3 areas × 4 boot
+    /// steps = 12 calls recorded, 3 <c>AreaCompleted</c> events per run).
+    /// SC-007 — 5 fault-injected batches where the second canonical area
+    /// fails at <c>UploadBlocks</c>: orchestrator throws
+    /// <see cref="SparkBatchUpdateException"/>, aborts before touching the
+    /// third area, and the first area completes fully. The "corrupted
+    /// WEMOTOR1.corrupt.bin" from the bench runbook maps to the fake
+    /// injecting a failure on Motor1's recipient — bytes stay valid because
+    /// the orchestrator never inspects payload.
+    /// </summary>
+    [Fact]
+    public async Task Us4_CanonicalBatch_And_FaultInjected_Abort()
+    {
+        // SC-006: 10 nominal batches, all three areas succeed.
+        for (int run = 0; run < 10; run++)
+        {
+            var fake = new FakeBootService();
+            var orchestrator = new SparkBatchUpdateService(fake);
+            var completed = new List<SparkFirmwareArea>();
+            orchestrator.AreaCompleted += (_, def) => completed.Add(def.Area);
+
+            await orchestrator.ExecuteAsync(MakeBatch());
+
+            Assert.Equal(CanonicalBatch.Length * 4, fake.Calls.Count);
+            Assert.Equal(CanonicalBatch, completed.ToArray());
+        }
+
+        // SC-007: 5 fault-injected batches, second area fails at UploadBlocks.
+        var secondArea = CanonicalBatch[1];
+        var secondRecipient = SparkAreas.Get(secondArea).RecipientId;
+        var firstArea = CanonicalBatch[0];
+        var thirdRecipient = SparkAreas.Get(CanonicalBatch[2]).RecipientId;
+
+        for (int run = 0; run < 5; run++)
+        {
+            var fake = new FakeBootService
+            {
+                UploadBlocksFailsForRecipient = secondRecipient,
+            };
+            var orchestrator = new SparkBatchUpdateService(fake);
+            var completed = new List<SparkFirmwareArea>();
+            orchestrator.AreaCompleted += (_, def) => completed.Add(def.Area);
+
+            var ex = await Assert.ThrowsAsync<SparkBatchUpdateException>(
+                () => orchestrator.ExecuteAsync(MakeBatch()));
+
+            Assert.Equal(secondArea, ex.Area.Area);
+            Assert.Equal(SparkBatchPhase.UploadBlocks, ex.Phase);
+            // Third area must never have been StartBoot-ed.
+            Assert.DoesNotContain(
+                fake.Calls,
+                c => c.Kind == FakeBootCallKind.StartBoot
+                     && c.Recipient == thirdRecipient);
+            // First area completed fully (emitted AreaCompleted).
+            Assert.Contains(firstArea, completed);
+        }
+    }
+
+    private static List<SparkBatchItem> MakeBatch()
+        => CanonicalBatch.Select(a => new SparkBatchItem(a, Fw)).ToList();
+
+    private enum FakeBootCallKind { StartBoot, UploadBlocksOnly, EndBoot, Restart }
+    private sealed record FakeBootCall(FakeBootCallKind Kind, uint Recipient);
+
+    /// <summary>
+    /// Manual fake <see cref="IBootService"/>. Mirrors the unit-test fake in
+    /// <c>SparkBatchUpdateServiceTests</c>; duplicated here because private
+    /// test fakes are not reusable across files and Luca's rules forbid
+    /// making them public just for test sharing.
+    /// </summary>
+    private sealed class FakeBootService : IBootService
+    {
+        public List<FakeBootCall> Calls { get; } = new();
+        public uint? UploadBlocksFailsForRecipient { get; set; }
+
+        public BootState State { get; private set; } = BootState.Idle;
+        public double Progress => 0;
+        public event EventHandler<BootProgress>? ProgressChanged;
+
+        public Task StartFirmwareUploadAsync(
+            byte[] firmware, uint recipientId, CancellationToken ct = default)
+            => throw new NotSupportedException(
+                "SparkBatchUpdateService should never call StartFirmwareUploadAsync.");
+
+        public Task<bool> StartBootAsync(uint recipientId, CancellationToken ct = default)
+        {
+            Calls.Add(new(FakeBootCallKind.StartBoot, recipientId));
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> EndBootAsync(uint recipientId, CancellationToken ct = default)
+        {
+            Calls.Add(new(FakeBootCallKind.EndBoot, recipientId));
+            return Task.FromResult(true);
+        }
+
+        public Task RestartAsync(uint recipientId, CancellationToken ct = default)
+        {
+            Calls.Add(new(FakeBootCallKind.Restart, recipientId));
+            return Task.CompletedTask;
+        }
+
+        public Task UploadBlocksOnlyAsync(
+            byte[] firmware, uint recipientId, CancellationToken ct = default)
+        {
+            Calls.Add(new(FakeBootCallKind.UploadBlocksOnly, recipientId));
+            ProgressChanged?.Invoke(this, new BootProgress(firmware.Length, firmware.Length));
+            if (UploadBlocksFailsForRecipient == recipientId)
+            {
+                State = BootState.Failed;
+                return Task.CompletedTask;
+            }
+            State = BootState.Completed;
+            return Task.CompletedTask;
+        }
     }
 }
