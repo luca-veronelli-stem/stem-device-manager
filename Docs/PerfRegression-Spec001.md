@@ -1,11 +1,15 @@
 # Perf-Regression Investigation — Spec 001 / US5
 
-> **Status:** scaffold only. Bench measurements pending.
+> **Status:** investigation closed without identified root cause. Regression
+> appears resolved between the original measurement (~26 min) and the
+> 2026-04-27 bench (3 runs, all 13–15 min, within SC-004 budget). T020
+> (root-cause fix) **skipped** — nothing to fix. T021 (≤ 16 min single-run
+> guard test) is the safety net against recurrence.
 >
 > **Spec:** [spec.md](../specs/001-spark-ble-fw-stabilize/spec.md) — US5, SC-004
 > **Research:** [research.md](../specs/001-spark-ble-fw-stabilize/research.md) — R7 (H1–H4)
 > **Bench runbook:** [quickstart.md](../specs/001-spark-ble-fw-stabilize/quickstart.md) — SC-004 procedure
-> **Tracks:** spec-001 T019 (this doc) → T020 (root-cause fix) → T021 (≤ 16 min single-run regression test)
+> **Tracks:** spec-001 T019 (this doc) → ~~T020~~ → T021 (≤ 16 min single-run regression test, issue #31)
 
 ---
 
@@ -105,13 +109,22 @@ the cause; if it doesn't, H4 is ruled out and H1–H3 split the evidence.
 
 ### 5.1 Per-step wall-clock (seconds; 3 runs per build)
 
-| Step                | v2.15 r1 | v2.15 r2 | v2.15 r3 | v2.15 mean | main r1 | main r2 | main r3 | main mean | Δ (main − v2.15) | Δ %   |
-| ------------------- | -------- | -------- | -------- | ---------- | ------- | ------- | ------- | --------- | ---------------- | ----- |
-| `StartProcedure`    | _t.b.f._ |          |          |            |         |         |         |           |                  |       |
-| `ProgramBlock` loop | _t.b.f._ |          |          |            |         |         |         |           |                  |       |
-| `EndProcedure`      | _t.b.f._ |          |          |            |         |         |         |           |                  |       |
-| `RestartMachine` ×2 | _t.b.f._ |          |          |            |         |         |         |           |                  |       |
-| **Total**           |          |          |          |            |         |         |         |           |                  |       |
+**Not captured.** The bench session on 2026-04-27 measured aggregate wall-clock
+only (3 runs, all in the 13–15 min band against SPARK-UC SN 2225998 with
+`WORKCODE_HMI_RSC.bin` HMI v8.2). Per-step breakdown was not recorded because
+once the aggregate landed inside the SC-004 budget the investigation pivoted
+to T021 (guard) instead of root-cause attribution.
+
+If the regression resurfaces and SC-004 fails again, this is the table to
+fill from FR-009 structured-scope log scrape on the failing run + a
+matching baseline from the v2.15 worktree (recreate it with
+`git worktree add ../Stem.Device.Manager-v215 80bf9c6` — see §8).
+
+### 5.0 Aggregate observation (2026-04-27)
+
+| Build  | Runs | Wall-clock band | SC-004 status                                |
+| ------ | ---- | --------------- | -------------------------------------------- |
+| `main` | 3    | 13–15 min       | Within budget (mean ≤ 14 min, no run > 16 min) |
 
 ### 5.2 Per-chunk ack latency (milliseconds; aggregate across the 3 runs)
 
@@ -135,44 +148,77 @@ flat text, no need to keep the script after analysis).
 
 ---
 
-## 6. Hypothesis ranking (fill after §5 is populated)
+## 6. Hypothesis ranking — not performed
 
-Rank by strength of evidence. One sentence per row pointing at the §5
-data that argues for or against the hypothesis. The top of the list is
-the proposed root cause that T020 fixes.
+Per-step deltas were never captured (see §5.1) so the H1–H4 evidence
+matrix in §4 cannot be applied. The four hypotheses remain the right
+checklist if the regression resurfaces; the matrix is preserved as-is
+for future use.
 
-| Rank | Hypothesis | Evidence                |
-| ---- | ---------- | ----------------------- |
-| 1    | _t.b.f._   |                         |
-| 2    | _t.b.f._   |                         |
-| 3    | _t.b.f._   |                         |
-| 4    | _t.b.f._   |                         |
+The merges between the original 26-min measurement and the 2026-04-27
+re-measurement were:
+
+| PR | Subject | Plausible runtime impact |
+| --- | ------- | ------------------------ |
+| #63 | `FallbackDictionaryProvider` falls back to Excel on HttpClient timeout | Negligible (dictionary path only, not boot) |
+| #64 | T013 BootService retry-logic audit (P3/Q1/I1) | Possible — changed cancellation/session-loss semantics around `SendWithRetry` |
+| #65 | Skip dispose-recreate when switching to already-active channel | **Most-likely candidate** — if a spurious channel switch was happening mid-upload before this PR, the dispose-recreate cost is exactly the kind of hidden ~2× overhead consistent with the original symptom |
+| #66 | T014 FsCheck property tests for `BootStateMachine` | Test-only, no runtime impact |
+| #67 | CI mirror-to-Bitbucket workflow | CI-only, no runtime impact |
+
+#65 is the load-bearing guess. **Not verified** by bisection; the bench
+cost (3+ uploads × 13–15 min each at minimum to disambiguate from
+variance) was judged not worth it given the regression is gone and
+T021 is the safety net.
 
 ---
 
-## 7. Conclusion and handoff to T020
+## 7. Conclusion
 
-_T.b.f. once §5 and §6 are filled in._ Expected output of this section:
+The ~2× regression that motivated US5 / SC-004 is **not reproducing on
+`main` as of 2026-04-27**. Three uploads on the canonical bench
+(SPARK-UC SN 2225998, `WORKCODE_HMI_RSC.bin` HMI v8.2) all completed
+inside the 13–15 min band, satisfying SC-004 (mean ≤ 14 min, no single
+run > 16 min) without any targeted intervention.
 
-- Identified root cause (one of H1–H4, or a fifth hypothesis surfaced by
-  the profiler).
-- Concrete code location to fix in T020 (most likely candidates per
-  research.md R7: `Services/Boot/BootService.cs` chunk loop /
-  `Infrastructure.Protocol/Hardware/BlePort.cs` MTU handling /
-  `Infrastructure.Protocol/Legacy/BLEManager.cs` notification vs
-  indication wiring).
-- Predicted wall-clock improvement on `main` after the T020 fix and the
-  T021 regression-guard threshold (≤ 16 min single-run, mean ≤ 14 min /
-  spec SC-004).
+**Root cause:** unidentified. Most-likely candidate is PR #65
+(skip dispose-recreate for already-active channel) but this is a guess,
+not a verified attribution. Other plausible explanations — bench
+environment differences, Plugin.BLE / Windows BLE stack behaviour
+changes, or simple BLE-link variance (RF environment can swing
+upload time 30–50 % run-to-run on its own) — cannot be ruled out
+without a controlled bisection that was judged not worth the bench cost.
+
+**T020 (root-cause fix) is skipped.** Nothing to fix.
+
+**T021 (≤ 16 min single-run regression test, issue #31)** is the safety
+net. With deterministic auto-reply fakes the assertion is trivially
+true (a fake-driven upload completes in seconds), so the test is
+functionally a tripwire against any future refactor that introduces
+artificial delays in the boot orchestration. Real-bench enforcement
+remains the SC-004 procedure in `quickstart.md`.
+
+**If the regression returns:** §4 (hypothesis matrix), §5.1 (per-step
+table), and §8 (worktree recreation) provide the playbook.
 
 ---
 
 ## 8. Cleanup after the investigation
 
+The investigation closed without populating §5 / §6, so the v2.15
+worktree is no longer load-bearing. Remove it:
+
 ```powershell
-# Remove the v2.15 worktree once T020 is merged and the deltas are no longer needed.
 git worktree remove ../Stem.Device.Manager-v215
 ```
 
-The throw-away `Stopwatch` instrumentation in the v2.15 worktree is
-discarded with the worktree itself.
+If the regression resurfaces and §5.1 needs to be filled, recreate
+with:
+
+```powershell
+git worktree add ../Stem.Device.Manager-v215 80bf9c6
+```
+
+The pre-refactor flat WinForms layout (no `Services/` or
+`Infrastructure.*` namespaces) is what the `BootManager.UploadFirmware`
+baseline lives in.
