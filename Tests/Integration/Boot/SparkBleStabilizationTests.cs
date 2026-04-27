@@ -1,10 +1,13 @@
+using System.Buffers.Binary;
 using System.Diagnostics;
 using Core.Interfaces;
 using Core.Models;
 using Infrastructure.Protocol.Hardware;
 using Services.Boot;
 using Services.Cache;
+using Services.Protocol;
 using Tests.Unit.Infrastructure.Protocol;
+using Tests.Unit.Services.Protocol;
 
 namespace Tests.Integration.Boot;
 
@@ -137,6 +140,175 @@ public class SparkBleStabilizationTests
             IReadOnlyList<Command> commands,
             IReadOnlyList<Variable> variables,
             IReadOnlyList<ProtocolAddress> addresses) { }
+    }
+
+    // --- US3 single-file upload survives full session -----------------------
+
+    /// <summary>HMI application recipient on SPARK; matches
+    /// <c>SparkAreas.Get(SparkFirmwareArea.HmiApplication).RecipientId</c>.</summary>
+    private const uint HmiRecipient = 0x000702C1u;
+
+    /// <summary>Reply commands the receiving decoder must know about so the
+    /// auto-replier's "80 0X" frames decode into <see cref="AppLayerDecodedEvent"/>
+    /// and unblock <see cref="BootService"/>'s wait-for-reply.</summary>
+    private static readonly Command[] BootReplyCommands =
+    [
+        new("StartProcedureReply", "80", "05"),
+        new("EndProcedureReply",   "80", "06"),
+        new("ProgramBlockReply",   "80", "07"),
+    ];
+
+    /// <summary>
+    /// Spec-001 US3 / SC-003 + SC-005 integration: drives 10 single-file HMI
+    /// uploads through the real <see cref="ConnectionManager"/> +
+    /// <see cref="BlePort"/> + <see cref="BootService"/> chain, with a fake
+    /// <see cref="IBleDriver"/> that auto-replies to every chunked
+    /// <c>StartProcedure</c> / <c>ProgramBlock</c> / <c>EndProcedure</c>. For
+    /// each run the test counts <see cref="ConnectionState.Disconnected"/>
+    /// transitions emitted on the BLE channel during the upload window.
+    ///
+    /// SC-003: every run completes with zero mid-upload disconnect events.
+    /// SC-005: ≥ 95 % upload-success rate. The auto-reply path is deterministic
+    /// so 10/10 = 100 % is the actual measurement; the threshold is asserted
+    /// explicitly so the test fails loud if the codepath ever introduces
+    /// non-determinism (e.g. real bench wiring).
+    ///
+    /// Firmware payload is 50 KB of synthetic bytes — large enough that the
+    /// upload spends sustained time on the BLE port (50 blocks × auto-reply
+    /// round trip) without making the test slow.
+    /// </summary>
+    [Fact]
+    public async Task Us3_Hmi_Upload_SurvivesFullSession()
+    {
+        const int RunCount = 10;
+        const double SuccessRateThreshold = 0.95;
+        var firmware = BuildFirmwareMock(length: 50 * 1024);
+
+        var disconnectsByRun = new int[RunCount];
+        var completedByRun = new bool[RunCount];
+
+        for (int run = 0; run < RunCount; run++)
+        {
+            (disconnectsByRun[run], completedByRun[run]) =
+                await RunOneHmiUpload(firmware);
+        }
+
+        Assert.All(
+            disconnectsByRun,
+            count => Assert.Equal(0, count));
+
+        int successes = completedByRun.Count(c => c);
+        Assert.True(
+            successes >= RunCount * SuccessRateThreshold,
+            $"Upload success rate {successes}/{RunCount} below SC-005 "
+            + $"threshold ({SuccessRateThreshold:P0}).");
+    }
+
+    private static async Task<(int Disconnects, bool Completed)> RunOneHmiUpload(
+        byte[] firmware)
+    {
+        var pcan = new FakePcanDriver();
+        var ble = new FakeBleDriver();
+        var serial = new FakeSerialDriver();
+
+        using var canPort = new CanPort(pcan);
+        using var blePort = new BlePort(ble);
+        using var serialPort = new SerialPort(serial);
+        using var manager = new ConnectionManager(
+            [canPort, blePort, serialPort],
+            new PacketDecoder(BootReplyCommands, [], []),
+            DeviceVariantConfig.Create(DeviceVariant.Egicon));
+
+        ble.IsConnected = true;
+        await manager.SwitchToAsync(ChannelKind.Ble);
+        ble.RaiseConnectionStatusChanged(true);
+        Assert.Equal(ConnectionState.Connected, manager.State);
+
+        ConfigureAutoReply(ble, ownSenderId: DeviceVariantConfig.DefaultSenderId);
+
+        int disconnects = 0;
+        EventHandler<ConnectionStateSnapshot> handler = (_, snap) =>
+        {
+            if (snap.Channel == ChannelKind.Ble
+                && snap.State == ConnectionState.Disconnected)
+                Interlocked.Increment(ref disconnects);
+        };
+        manager.StateChanged += handler;
+
+        var boot = manager.CurrentBoot!;
+        try
+        {
+            await boot.StartFirmwareUploadAsync(firmware, HmiRecipient);
+        }
+        finally
+        {
+            manager.StateChanged -= handler;
+        }
+
+        bool completed = boot.State == BootState.Completed;
+
+        await manager.DisconnectAsync();
+        ble.RaiseConnectionStatusChanged(false);
+        ble.IsConnected = false;
+
+        return (disconnects, completed);
+    }
+
+    private static byte[] BuildFirmwareMock(int length)
+    {
+        var fw = new byte[length];
+        for (int i = 0; i < length; i++) fw[i] = (byte)(i & 0xFF);
+        // fwType bytes 14..15 little-endian — mirrors BootServiceTests pattern.
+        fw[14] = 0x05;
+        fw[15] = 0x00;
+        return fw;
+    }
+
+    /// <summary>
+    /// Hooks <see cref="FakeBleDriver.SendResult"/> so that every chunked
+    /// command's last frame triggers a properly-encoded reply packet
+    /// (<c>CodeHigh = "80"</c>) injected back via
+    /// <see cref="FakeBleDriver.RaisePacketReceived"/>. Mirrors the auto-reply
+    /// pattern in <c>BootServiceTests.Fixture</c>; the difference is that the
+    /// reply is fed into the driver layer instead of the
+    /// <see cref="ICommunicationPort"/> layer, so the full BLE port + protocol
+    /// + boot-service stack is exercised end-to-end.
+    /// </summary>
+    private static void ConfigureAutoReply(FakeBleDriver driver, uint ownSenderId)
+    {
+        var packetTracker = new Dictionary<int, (byte CmdHi, byte CmdLo, uint Recipient)>();
+
+        driver.SendResult = frame =>
+        {
+            var ni = NetInfo.Parse(frame[0], frame[1]);
+            if (ni.SetLength)
+            {
+                uint recipient = BinaryPrimitives.ReadUInt32LittleEndian(
+                    frame.AsSpan(2, 4));
+                packetTracker[ni.PacketId] = (frame[13], frame[14], recipient);
+            }
+            if (ni.RemainingChunks != 0) return true;
+            if (!packetTracker.TryGetValue(ni.PacketId, out var info)) return true;
+            packetTracker.Remove(ni.PacketId);
+
+            // RESTART (00, 0A) is fire-and-forget — no reply on the wire.
+            if (info.CmdLo == 0x0A) return true;
+
+            FireReply(driver, info.Recipient, info.CmdLo, ownSenderId);
+            return true;
+        };
+    }
+
+    private static void FireReply(
+        FakeBleDriver driver, uint originalRecipient, byte cmdLo, uint ownSenderId)
+    {
+        var replyCmd = new Command("Reply", "80", cmdLo.ToString("X2"));
+        using var replyPort = new FakeCommunicationPort(ChannelKind.Ble);
+        var replyDecoder = new PacketDecoder([], [], []);
+        using var replySvc = new ProtocolService(replyPort, replyDecoder, originalRecipient);
+        replySvc.SendCommandAsync(ownSenderId, replyCmd, []).GetAwaiter().GetResult();
+        foreach (var chunk in replyPort.SentPayloads)
+            driver.RaisePacketReceived(chunk, DateTime.UtcNow);
     }
 
     // --- US4 batch orchestration integration test ---------------------------
