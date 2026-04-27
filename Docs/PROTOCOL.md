@@ -403,6 +403,15 @@ fwType = (ushort)((firmwareData[15] << 8) | firmwareData[14]);
 hard-coded in `SendCANAndWaitForResponseAsync` (il parametro `timeoutMs=600`
 è ignorato).
 
+> **Multi-area batch deviation (SPARK).** The four-step sequence above describes a
+> single-file upload. For a multi-area batch via `Services.Boot.SparkBatchUpdateService`,
+> step 4 (`CMD_RESTART_MACHINE`) is hoisted out of the per-area sequence and fires
+> **once at the end of the whole batch**, addressed to the HMI board recipient
+> (`0x000702C1`). Per-area execution stops at step 3. The SPARK firmware shuts the
+> device down on `RESTART_MACHINE`, so a per-area restart would prevent areas
+> 2..N from running. On the abort path (any area fails), no `RESTART_MACHINE` fires
+> at all — recovery from a half-flashed device is operator-driven. Issue #74.
+
 ---
 
 ## 9. Telemetria veloce (TelemetryManager)

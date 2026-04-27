@@ -83,10 +83,14 @@ public sealed class SparkBatchUpdateService
     public event EventHandler<SparkAreaDefinition>? AreaCompleted;
 
     /// <summary>
-    /// Run the selected areas in canonical order. Each area runs the full
-    /// bootloader sequence (StartBoot → UploadBlocks → EndBoot → Restart).
-    /// On the first failure, throws <see cref="SparkBatchUpdateException"/>;
-    /// remaining areas are not attempted.
+    /// Run the selected areas in canonical order. Each area runs
+    /// <c>StartBoot → UploadBlocks → EndBoot</c>; <c>RESTART_MACHINE</c> is
+    /// hoisted out of the per-area sequence and fires exactly once at the
+    /// end of the batch, addressed to the HMI board (issue #74). On the
+    /// first area failure, throws <see cref="SparkBatchUpdateException"/>;
+    /// remaining areas are not attempted, and the end-of-batch restart is
+    /// also skipped — the device is in a partially-flashed state and
+    /// rebooting could leave it inconsistent. Recovery is operator-driven.
     /// </summary>
     public async Task ExecuteAsync(
         IReadOnlyList<SparkBatchItem> items, CancellationToken ct = default)
@@ -150,6 +154,13 @@ public sealed class SparkBatchUpdateService
             _boot.ProgressChanged -= OnBootProgress;
         }
 
+        // End-of-batch restart, addressed to the HMI board (issue #74,
+        // STEM firmware-team confirmation 2026-04-27). Only reached when
+        // every area completed without throwing — on the abort path the
+        // SparkBatchUpdateException propagates above and this line never
+        // runs, so a half-flashed device is not auto-rebooted.
+        await RestartAtEndOfBatchAsync(ct).ConfigureAwait(false);
+
         _logger.LogInformation("SPARK batch end: all selected areas completed");
     }
 
@@ -159,7 +170,30 @@ public sealed class SparkBatchUpdateService
         await StartBootAsync(def, ct).ConfigureAwait(false);
         await UploadBlocksAsync(item, def, ct).ConfigureAwait(false);
         await EndBootAsync(def, ct).ConfigureAwait(false);
-        await RestartAsync(def, ct).ConfigureAwait(false);
+    }
+
+    private async Task RestartAtEndOfBatchAsync(CancellationToken ct)
+    {
+        var hmiRecipient = SparkAreas.Get(SparkFirmwareArea.HmiApplication).RecipientId;
+        _logger.LogInformation(
+            "SPARK batch restart: addressing CMD_RESTART_MACHINE to HMI {Recipient:X8}",
+            hmiRecipient);
+        try
+        {
+            await _boot.RestartAsync(hmiRecipient, ct).ConfigureAwait(false);
+        }
+        catch (BootSessionLostException ex)
+        {
+            // I1: session lost on the final restart. Surface it as a Restart-phase
+            // failure addressed to HMI (the recipient we just talked to).
+            throw FailSessionLost(SparkAreas.Get(SparkFirmwareArea.HmiApplication), ex);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            throw Fail(
+                SparkAreas.Get(SparkFirmwareArea.HmiApplication),
+                SparkBatchPhase.Restart, ex.Message, ex);
+        }
     }
 
     private async Task StartBootAsync(SparkAreaDefinition def, CancellationToken ct)
@@ -208,22 +242,6 @@ public sealed class SparkBatchUpdateService
         catch (BootSessionLostException ex)
         {
             throw FailSessionLost(def, ex);
-        }
-    }
-
-    private async Task RestartAsync(SparkAreaDefinition def, CancellationToken ct)
-    {
-        try
-        {
-            await _boot.RestartAsync(def.RecipientId, ct).ConfigureAwait(false);
-        }
-        catch (BootSessionLostException ex)
-        {
-            throw FailSessionLost(def, ex);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            throw Fail(def, SparkBatchPhase.Restart, ex.Message, ex);
         }
     }
 
