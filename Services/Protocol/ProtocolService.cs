@@ -3,6 +3,8 @@ using System.Collections.Immutable;
 using System.Globalization;
 using Core.Interfaces;
 using Core.Models;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Services.Protocol;
 
@@ -43,6 +45,7 @@ public sealed class ProtocolService : IProtocolService
     private readonly ICommunicationPort _port;
     private readonly IPacketDecoder _decoder;
     private readonly PacketReassembler _reassembler;
+    private readonly ILogger<ProtocolService> _logger;
     private readonly uint _senderId;
     private readonly int _chunkSize;
     private int _nextPacketId;
@@ -51,12 +54,14 @@ public sealed class ProtocolService : IProtocolService
     public ProtocolService(
         ICommunicationPort port,
         IPacketDecoder decoder,
-        uint senderId)
+        uint senderId,
+        ILogger<ProtocolService>? logger = null)
     {
         ArgumentNullException.ThrowIfNull(port);
         ArgumentNullException.ThrowIfNull(decoder);
         _port = port;
         _decoder = decoder;
+        _logger = logger ?? NullLogger<ProtocolService>.Instance;
         _reassembler = new PacketReassembler();
         _senderId = senderId;
         _chunkSize = ChunkSizeFor(port.Kind);
@@ -169,15 +174,47 @@ public sealed class ProtocolService : IProtocolService
 
     private void OnPortPacketReceived(object? sender, RawPacket raw)
     {
-        if (_disposed || raw.IsEmpty) return;
+        if (_disposed) return;
+        if (raw.IsEmpty)
+        {
+            _logger.LogWarning(
+                "Discarded empty {Channel} frame at {Timestamp:O}",
+                _port.Kind, raw.Timestamp);
+            return;
+        }
         var normalized = StripChannelFraming(raw.Payload.AsSpan(), _port.Kind);
-        if (normalized.IsEmpty) return;
+        if (normalized.IsEmpty)
+        {
+            // Issue #76: a SPARK firmware error response or BLE notification truncated by
+            // Plugin.BLE arrives here and gets dropped because it's smaller than the
+            // channel framing minimum. Log it so the next bench failure with a malformed
+            // reply (e.g. the 1-byte 0xFF observed during the 2026-04-27 SC-006 attempts)
+            // is diagnosable in one log pass instead of needing the raw chunk dump.
+            _logger.LogWarning(
+                "Discarded short {Channel} frame: {Length} bytes (need ≥ {Min} for NetInfo + framing). Bytes: {Hex}",
+                _port.Kind, raw.Payload.Length, MinFrameSizeFor(_port.Kind),
+                BitConverter.ToString(raw.Payload.AsSpan().ToArray()));
+            return;
+        }
         var merged = _reassembler.Accept(normalized);
         if (merged is null) return;
         var applicationPacket = new RawPacket(merged.ToImmutableArray(), raw.Timestamp);
         var evt = _decoder.Decode(applicationPacket);
         if (evt is not null) AppLayerDecoded?.Invoke(this, evt);
     }
+
+    /// <summary>
+    /// Minimum on-wire frame size before <see cref="StripChannelFraming"/> can produce
+    /// a non-empty NetInfo+chunk: 4 bytes for CAN (arbId prefix), 6 for BLE/Serial
+    /// (recipient prefix). Used only for the discard-warning text in
+    /// <see cref="OnPortPacketReceived"/>.
+    /// </summary>
+    private static int MinFrameSizeFor(ChannelKind kind) => kind switch
+    {
+        ChannelKind.Can => 4,
+        ChannelKind.Ble or ChannelKind.Serial => 6,
+        _ => 0,
+    };
 
     /// <summary>
     /// Normalizza il frame in input a <c>[NetInfo(2) + chunk(N)]</c> secondo
