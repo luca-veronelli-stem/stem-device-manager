@@ -311,6 +311,43 @@ public class SparkBleStabilizationTests
             driver.RaisePacketReceived(chunk, DateTime.UtcNow);
     }
 
+    // --- US5 single-file upload within v2.15 budget -------------------------
+
+    /// <summary>
+    /// Spec-001 US5 / SC-004 / FR-004 regression-guard: a single HMI v8.2
+    /// upload through the real <see cref="ConnectionManager"/> +
+    /// <see cref="BlePort"/> + <see cref="BootService"/> chain, against the
+    /// auto-replying <see cref="FakeBleDriver"/>, completes in ≤ 16 minutes.
+    ///
+    /// With deterministic auto-reply this assertion is trivially true (the
+    /// fake-driven upload completes in seconds — see <see cref="Us3_Hmi_Upload_SurvivesFullSession"/>
+    /// which runs 10 of these in ~10 s). The 16-minute budget exists not as
+    /// a tight bound on this test but as a tripwire against any future
+    /// refactor that introduces an artificial delay (e.g. a stray
+    /// <c>Task.Delay</c>, a runaway retry loop, a sync-over-async deadlock
+    /// resolved by a long timeout) in the boot orchestration. Real-bench
+    /// SC-004 enforcement is the procedure in <c>quickstart.md</c>, run
+    /// against SPARK-UC SN 2225998 with <c>WORKCODE_HMI_RSC.bin</c>.
+    ///
+    /// Five-run mean check (mean ≤ 14 min) is the bench runbook's job per
+    /// tasks.md T021 — tests must be deterministic, so single-run only here.
+    /// </summary>
+    [Fact]
+    public async Task Us5_Hmi_Upload_WithinV215_Budget()
+    {
+        var firmware = BuildFirmwareMock(length: 50 * 1024);
+        var stopwatch = Stopwatch.StartNew();
+
+        await RunOneHmiUpload(firmware);
+
+        stopwatch.Stop();
+
+        Assert.True(
+            stopwatch.Elapsed <= TimeSpan.FromMinutes(16),
+            $"Upload took {stopwatch.Elapsed.TotalMinutes:F2} min, "
+            + "exceeds SC-004 single-run budget of 16 min.");
+    }
+
     // --- US4 batch orchestration integration test ---------------------------
 
     private static readonly byte[] Fw = new byte[16];
