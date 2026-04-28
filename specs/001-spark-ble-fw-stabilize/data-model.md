@@ -56,9 +56,19 @@ Transitions (all from `InProgress`):
 
 In English: if the batch succeeded, every area was completed; if it failed, the failing area is one of the submitted areas.
 
+> **Issue #74 / SPARK firmware constraint.** In batch context the per-area machine
+> below terminates at `AwaitingEnd → Succeeded` (skipping `Restarting`), and the
+> batch composition has a single terminal `BatchRestart` step that fires
+> `RESTART_MACHINE` once at the end of the whole batch, addressed to the HMI
+> board recipient. On the abort path no restart fires at all. The single-file
+> `IBootService.StartFirmwareUploadAsync` entry point still drives the full
+> per-area machine including `Restarting → Succeeded` — that path is unchanged.
+> The Lean encoding of the batch terminal `Restart` step belongs to T024
+> (`BatchComposition.lean`), not formalised here.
+
 ## Boot Step (per-area state machine)
 
-The per-area machine (existing fields captured from `SparkBatchUpdateService.RunAreaAsync` + `BootService.cs`):
+The per-area machine (single-file path, captured from `IBootService.StartFirmwareUploadAsync` + `BootService.cs` — the batch path `SparkBatchUpdateService.RunAreaAsync` terminates one transition earlier per the issue #74 note above):
 
 ```lean
 inductive BootState

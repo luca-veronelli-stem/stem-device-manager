@@ -50,7 +50,8 @@ public class SparkBatchUpdateServiceTests
 
         await orchestrator.ExecuteAsync(items);
 
-        // Each area = 4 calls: StartBoot, UploadBlocksOnly, EndBoot, Restart.
+        // Each area = 3 calls: StartBoot, UploadBlocksOnly, EndBoot. RESTART_MACHINE
+        // is hoisted to the batch end (issue #74) and not part of the per-area sequence.
         // The "Start" calls (one per area) reveal the order.
         var startedAreas = fake.Calls
             .Where(c => c.Kind == FakeBootCallKind.StartBoot)
@@ -177,7 +178,9 @@ public class SparkBatchUpdateServiceTests
             fake.Calls,
             c => c.Kind == FakeBootCallKind.StartBoot && c.Recipient == rostrumRecipient);
 
-        // First area (Motor1) must have all four call kinds observed.
+        // First area (Motor1) must have the three per-area call kinds observed —
+        // but NOT Restart, since RESTART_MACHINE is hoisted to the batch end
+        // and the abort path skips it entirely (issue #74).
         var motor1Recipient = SparkAreas.Get(SparkFirmwareArea.Motor1).RecipientId;
         var motor1Kinds = fake.Calls
             .Where(c => c.Recipient == motor1Recipient)
@@ -186,7 +189,36 @@ public class SparkBatchUpdateServiceTests
         Assert.Contains(FakeBootCallKind.StartBoot,        motor1Kinds);
         Assert.Contains(FakeBootCallKind.UploadBlocksOnly, motor1Kinds);
         Assert.Contains(FakeBootCallKind.EndBoot,          motor1Kinds);
-        Assert.Contains(FakeBootCallKind.Restart,          motor1Kinds);
+        // Issue #74: on the abort path, no RESTART_MACHINE fires anywhere
+        // — half-flashed devices must not be auto-rebooted.
+        Assert.DoesNotContain(FakeBootCallKind.Restart, fake.Calls.Select(c => c.Kind));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_NominalBatch_FiresSingleRestartAtEndAddressedToHmi()
+    {
+        // Issue #74: SPARK firmware requires RESTART_MACHINE only at the end of the
+        // batch, addressed to the HMI board. The orchestrator must hoist the per-area
+        // restart out of RunAreaAsync and emit exactly one CMD_RESTART_MACHINE
+        // (recipient = HMI) after the last area completes.
+        var fake = new FakeBootService();
+        var orchestrator = new SparkBatchUpdateService(fake);
+        var items = new List<SparkBatchItem>
+        {
+            new(SparkFirmwareArea.HmiApplication, Fw),
+            new(SparkFirmwareArea.Motor1,         Fw),
+            new(SparkFirmwareArea.Rostrum,        Fw),
+        };
+        var hmiRecipient = SparkAreas.Get(SparkFirmwareArea.HmiApplication).RecipientId;
+
+        await orchestrator.ExecuteAsync(items);
+
+        var restartCalls = fake.Calls.Where(c => c.Kind == FakeBootCallKind.Restart).ToList();
+        Assert.Single(restartCalls);
+        Assert.Equal(hmiRecipient, restartCalls[0].Recipient);
+
+        // Restart must be the LAST call: no further per-area work after it.
+        Assert.Equal(FakeBootCallKind.Restart, fake.Calls[^1].Kind);
     }
 
     [Fact]

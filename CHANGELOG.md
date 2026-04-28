@@ -226,6 +226,7 @@ e Fase 2 (in corso) — services layer + HW adapter + rinomina a pattern Stem.
 
 ### Fixed
 
+- **spec-001 / issue #74 — `SparkBatchUpdateService` end-of-batch restart only.** `RESTART_MACHINE` (CMD `0x000A`) was firing once per area in a multi-area batch, but SPARK firmware shuts the device down on restart, preventing areas 2..N from running. Per STEM firmware-team confirmation (2026-04-27), `RESTART_MACHINE` is hoisted out of `RunAreaAsync` and fires exactly once at the end of the batch, addressed to the HMI board recipient (`0x000702C1`). On the abort path no restart fires — recovery from a half-flashed device is operator-driven. Single-file `IBootService.StartFirmwareUploadAsync` is unchanged. Tests + `Docs/PROTOCOL.md` §8 + `specs/001-spark-ble-fw-stabilize/data-model.md` updated to reflect the batch composition.
 - Blocchi `#if BUTTONPANEL` rimossi da `Form1.cs` (righe ~156, ~344)
 - Blocchi `#if BUTTONPANEL` rimossi da `SplashScreen.cs` (riga ~12)
 - ExcelHandler decoupled da Form1: nessun più chiamate dirette a `hExcel.EstraiDizionario()`

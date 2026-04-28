@@ -369,20 +369,27 @@ public class SparkBleStabilizationTests
     /// three-file batch against a manual fake <see cref="IBootService"/>.
     ///
     /// Two logical halves in one <c>[Fact]</c>:
-    /// SC-006 — 10 nominal batches: every area completes (3 areas × 4 boot
-    /// steps = 12 calls recorded, 3 <c>AreaCompleted</c> events per run).
+    /// SC-006 — 10 nominal batches: every area completes (3 areas × 3 per-area
+    /// boot steps + 1 batch-final <c>RESTART_MACHINE</c> to HMI = 10 calls recorded;
+    /// 3 <c>AreaCompleted</c> events per run). The single restart at the end
+    /// is the issue #74 fix: SPARK firmware shuts down on restart, so a
+    /// per-area restart would prevent areas 2..N from running.
     /// SC-007 — 5 fault-injected batches where the second canonical area
     /// fails at <c>UploadBlocks</c>: orchestrator throws
     /// <see cref="SparkBatchUpdateException"/>, aborts before touching the
-    /// third area, and the first area completes fully. The "corrupted
-    /// WEMOTOR1.corrupt.bin" from the bench runbook maps to the fake
-    /// injecting a failure on Motor1's recipient — bytes stay valid because
-    /// the orchestrator never inspects payload.
+    /// third area, **fires zero <c>RESTART_MACHINE</c> commands** (a half-flashed
+    /// device must not be auto-rebooted), and the first area completes
+    /// fully. The "corrupted WEMOTOR1.corrupt.bin" from the bench runbook
+    /// maps to the fake injecting a failure on Motor1's recipient — bytes
+    /// stay valid because the orchestrator never inspects payload.
     /// </summary>
     [Fact]
     public async Task Us4_CanonicalBatch_And_FaultInjected_Abort()
     {
         // SC-006: 10 nominal batches, all three areas succeed.
+        // 3 areas × 3 per-area calls (StartBoot, UploadBlocksOnly, EndBoot)
+        // + 1 end-of-batch Restart (to HMI) = 10 calls per run (issue #74).
+        var hmiRecipient = SparkAreas.Get(SparkFirmwareArea.HmiApplication).RecipientId;
         for (int run = 0; run < 10; run++)
         {
             var fake = new FakeBootService();
@@ -392,8 +399,14 @@ public class SparkBleStabilizationTests
 
             await orchestrator.ExecuteAsync(MakeBatch());
 
-            Assert.Equal(CanonicalBatch.Length * 4, fake.Calls.Count);
+            Assert.Equal(CanonicalBatch.Length * 3 + 1, fake.Calls.Count);
             Assert.Equal(CanonicalBatch, completed.ToArray());
+
+            // Issue #74: exactly one RESTART_MACHINE, addressed to HMI, last call.
+            var restartCalls = fake.Calls.Where(c => c.Kind == FakeBootCallKind.Restart).ToList();
+            Assert.Single(restartCalls);
+            Assert.Equal(hmiRecipient, restartCalls[0].Recipient);
+            Assert.Equal(FakeBootCallKind.Restart, fake.Calls[^1].Kind);
         }
 
         // SC-007: 5 fault-injected batches, second area fails at UploadBlocks.
@@ -424,6 +437,9 @@ public class SparkBleStabilizationTests
                      && c.Recipient == thirdRecipient);
             // First area completed fully (emitted AreaCompleted).
             Assert.Contains(firstArea, completed);
+            // Issue #74: zero RESTART_MACHINE on the abort path — a half-flashed
+            // device must not be auto-rebooted, recovery is operator-driven.
+            Assert.DoesNotContain(FakeBootCallKind.Restart, fake.Calls.Select(c => c.Kind));
         }
     }
 
