@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using Core.Models;
+using Microsoft.Extensions.Logging;
 using Services.Protocol;
 
 namespace Tests.Unit.Services.Protocol;
@@ -325,5 +326,88 @@ public class ProtocolServiceTests
         using var senderSvc = new ProtocolService(senderPort, decoder, senderId);
         senderSvc.SendCommandAsync(recipientId, command, alPayload).GetAwaiter().GetResult();
         return senderPort.SentPayloads;
+    }
+
+    // --- Issue #76: short/malformed frame discard logging --------------------
+
+    /// <summary>
+    /// Issue #76: a 1-byte BLE notification (the 0xFF observed during the
+    /// 2026-04-27 SC-006 bench attempts on PR #75) gets dropped by
+    /// <c>StripChannelFraming</c> because BLE/Serial requires ≥ 6 bytes
+    /// (NetInfo + recipient prefix). Before this fix the drop was silent
+    /// and the only symptom was a downstream <see cref="TimeoutException"/>
+    /// in <c>BootService.SendWithRetry</c>. The single <c>LogWarning</c>
+    /// asserted here is what makes the next bench failure diagnosable in
+    /// one log pass.
+    /// </summary>
+    [Fact]
+    public void OnPortPacketReceived_ShortBleFrame_LogsWarningAndDiscards()
+    {
+        using var port = new FakeCommunicationPort(ChannelKind.Ble);
+        var decoder = new PacketDecoder([], [], []);
+        var logger = new ListLogger<ProtocolService>();
+        using var svc = new ProtocolService(port, decoder, senderId: 0u, logger);
+        var decoded = new List<AppLayerDecodedEvent>();
+        svc.AppLayerDecoded += (_, e) => decoded.Add(e);
+
+        port.RaisePacketReceived([0xFF], DateTime.UtcNow);
+
+        Assert.Empty(decoded);
+        var warning = Assert.Single(logger.Entries.Where(e => e.Level == LogLevel.Warning));
+        Assert.Contains("Discarded short Ble frame", warning.Message);
+        Assert.Contains("1 bytes", warning.Message);
+        Assert.Contains("FF", warning.Message);
+    }
+
+    /// <summary>
+    /// Issue #76 negative: a valid multi-chunk reassembly must NOT emit the
+    /// short-frame warning. Mid-buffer accumulation is a normal flow, not a
+    /// discard. Builds a real CAN packet (one chunk per arbId frame), feeds
+    /// chunk-by-chunk, asserts zero warnings.
+    /// </summary>
+    [Fact]
+    public void OnPortPacketReceived_ValidMultiChunkReassembly_DoesNotLog()
+    {
+        using var port = new FakeCommunicationPort(ChannelKind.Can);
+        var decoder = new PacketDecoder([ReadVariableReply], [], []);
+        var logger = new ListLogger<ProtocolService>();
+        using var svc = new ProtocolService(port, decoder, senderId: 0u, logger);
+
+        // Build a multi-chunk CAN reply (≥ 2 frames) and feed each chunk to the port.
+        var chunks = BuildCanChunkSequence(
+            senderId: 0xDEADBEEFu,
+            recipientId: 0u,
+            command: ReadVariableReply,
+            alPayload: new byte[64]);
+        Assert.True(chunks.Count >= 2, "Test premise broken: payload must produce ≥ 2 chunks.");
+
+        foreach (var chunk in chunks)
+            port.RaisePacketReceived(chunk, DateTime.UtcNow);
+
+        Assert.Empty(logger.Entries.Where(e => e.Level == LogLevel.Warning));
+    }
+
+    /// <summary>
+    /// Manual <see cref="ILogger{T}"/> fake (no mocking library, per Luca's
+    /// rules). Captures every emitted entry with its level + formatted message
+    /// so tests can assert on log content. Scope tracking is not implemented:
+    /// no test in this file needs it.
+    /// </summary>
+    private sealed class ListLogger<T> : ILogger<T>
+    {
+        public List<(LogLevel Level, string Message)> Entries { get; } = [];
+
+        IDisposable? ILogger.BeginScope<TState>(TState state) => null;
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+            Entries.Add((logLevel, formatter(state, exception)));
+        }
     }
 }

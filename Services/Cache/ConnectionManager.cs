@@ -317,7 +317,9 @@ public sealed class ConnectionManager : IDisposable
     /// <c>Stem.Communication</c> in Phase 5).
     /// </summary>
     private IProtocolService CreateProtocolService(ICommunicationPort port)
-        => new ProtocolService(port, _decoder, _variantConfig.SenderId);
+        => new ProtocolService(
+            port, _decoder, _variantConfig.SenderId,
+            _loggerFactory.CreateLogger<ProtocolService>());
 
     /// <summary>
     /// Single state-mutation site (spec-001 C2). All four state fields plus
