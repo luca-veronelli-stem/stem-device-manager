@@ -96,6 +96,27 @@ public static class BootTransitionGenerator
     }
 
     /// <summary>
+    /// Lean-side constructor names of <c>Spec001.BootStateMachine.Step</c>, in
+    /// declaration order. Single source of truth on the C# side for spec-001
+    /// T025 (Lean → FsCheck drift-guard); <see cref="LeanDriftGuardTests"/>
+    /// parses the Lean file and asserts this list matches.
+    /// </summary>
+    public static readonly IReadOnlyList<string> LeanStepConstructorNames =
+    [
+        "startBootInvoked",
+        "startBootAcked",
+        "startBootExhausted",
+        "chunkAcked",
+        "chunkRetry",
+        "chunkExhausted",
+        "uploadComplete",
+        "endBootAcked",
+        "endBootExhausted",
+        "restartAcked",
+        "restartExhausted",
+    ];
+
+    /// <summary>
     /// Discriminator over the 11 Lean transition constructors. Each case maps
     /// 1:1 to a constructor of <c>Spec001.BootStateMachine.Step</c>. The
     /// generator draws from this enum and <see cref="TryApply"/> filters out
