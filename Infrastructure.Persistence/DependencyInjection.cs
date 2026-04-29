@@ -46,7 +46,7 @@ public static class DependencyInjection
                 client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
                 client.DefaultRequestHeaders.Add("X-Api-Key", options.ApiKey);
                 client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
-            });
+            }).SetHandlerLifetime(TimeSpan.FromMinutes(10));
 
             services.AddSingleton<IDictionaryProvider>(sp =>
             {
