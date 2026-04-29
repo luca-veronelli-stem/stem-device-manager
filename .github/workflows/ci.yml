@@ -48,16 +48,12 @@ jobs:
       - name: Restore
         run: dotnet restore Tests/Tests.csproj -p:EnableWindowsTargeting=true
 
-      # Skips two tests that resolve the Infrastructure.Protocol DI graph and P/Invoke
-      # the PEAK `pcanbasic.dll` native driver — not present on GitHub hosted runners.
-      # Tracked in the follow-up issue linked from PR #5.
       - name: Test (${{ matrix.tfm }})
         run: >
           dotnet test Tests/Tests.csproj
           --framework ${{ matrix.tfm }}
           -c Release
           -p:EnableWindowsTargeting=true
-          --filter "FullyQualifiedName!~AddProtocolInfrastructure_RegistersAllThreePortsAsICommunicationPort&FullyQualifiedName!~AddProtocolInfrastructure_ICommunicationPortRegistration_DelegatesToConcreteSingleton"
           --logger "trx;LogFileName=test-results.trx"
           --results-directory ./test-results
 
