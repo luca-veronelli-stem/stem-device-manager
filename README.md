@@ -1,167 +1,212 @@
-# Stem.Device.Manager
+﻿# Stem.Device.Manager
 
-[![Version](https://img.shields.io/badge/version-2.15-blue)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.3.0-blue)](./CHANGELOG.md)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
-[![Tests](https://img.shields.io/badge/tests-274-brightgreen)](./Tests/)
-[![License](https://img.shields.io/badge/license-Proprietary-red)](#licenza)
+[![Tests](https://img.shields.io/badge/tests-292%20%2F%20470-brightgreen)](./Tests/)
+[![License](https://img.shields.io/badge/license-Proprietary-red)](#license)
 
-> **Applicativo desktop per la gestione, diagnostica e comunicazione dei dispositivi STEM via protocollo proprietario multi-canale (CAN, BLE, Serial).**  
-> **Ultimo aggiornamento:** 2026-04-20
-
----
-
-## Panoramica
-
-Stem Device Manager è un tool Windows desktop utilizzato per:
-
-- **Comunicare** con i dispositivi via protocollo proprietario (CAN, BLE, Serial)
-- **Leggere/scrivere** variabili e comandi tramite dizionari Azure API
-- **Aggiornare firmware** via bootloader proprietario (classico e smart)
-- **Monitorare telemetria** in tempo reale con grafici OxyPlot
-- **Generare codice** configurazione (`sp_config.h`)
-
-### Stato Attuale
-
-Il progetto è un **monolite legacy** in fase di modernizzazione incrementale:  
-- `Form1.cs` è un God Object (~54k LOC con Designer) — usa `IDictionaryProvider` per i dizionari  
-- **274 test automatizzati** (xUnit) — unit + integration, di cui 132 cross-platform (CI Linux)  
-- Architettura multi-progetto:
-  - **Core** (net10.0) — modelli dominio + interfacce  
-  - **Infrastructure.Persistence** (net10.0) — provider dati (API Azure + Excel + Fallback)  
-  - **Infrastructure.Protocol** (dual TFM) — adapter HW CAN/BLE/Serial + driver PCAN  
-  - **Services** (net10.0) — logica pura (PacketDecoder, DictionarySnapshot, ...)  
-  - **App** (net10.0-windows, WinForms) — entry point + GUI + legacy STEMProtocol  
-- Refactor architetturale (vedi [`Docs/REFACTOR_PLAN.md`](./Docs/REFACTOR_PLAN.md)):
-  - Fase 1 — protocol abstractions in Core ✅
-  - Fase 2 — services layer + HW adapter (Step 1-2 completati, in corso) 🚧
-  - Fase 3 — decomposizione Form1 ⏳
+> **Desktop application for managing, diagnosing and communicating with STEM devices over the proprietary multi-channel protocol (CAN, BLE, Serial).**
+> **Last updated:** 2026-04-29
 
 ---
 
-## Caratteristiche
+## Overview
 
-| Feature | Stato | Descrizione |
-|---------|-------|-------------|
-| **Protocollo STEM** | ✅ | Layer stack proprietario (Application, Network, Transport) |
-| **CAN (PCAN)** | ✅ | Comunicazione via Peak PCAN USB |
+Stem Device Manager is a Windows desktop tool used to:
+
+- **Communicate** with STEM devices via the proprietary protocol (CAN, BLE, Serial).
+- **Read / write** variables and commands using dictionaries served by the Azure REST API (with embedded Excel fallback).
+- **Update firmware** via the proprietary bootloader (classic + Spark batch).
+- **Monitor telemetry** in real time with OxyPlot charts (slow + fast streams).
+- **Generate code** for protocol configuration (`sp_config.h`).
+
+### Current state
+
+The codebase is being modernized incrementally. Phases 1–4 of the refactor are complete:
+
+- `Form1.cs` has been reduced to a thin shell (~731 LOC) on top of `ConnectionManager` + `DictionaryCache`.
+- **292 cross-platform tests** + **470 Windows-only tests** (xUnit).
+- Multi-project layout:
+  - **Core** (`net10.0`) — domain models + interfaces.
+  - **Infrastructure.Persistence** (`net10.0`) — dictionary providers (Azure API + Excel + Fallback).
+  - **Infrastructure.Protocol** (dual TFM) — HW adapters for CAN/BLE/Serial + legacy drivers.
+  - **Services** (`net10.0`) — pure logic (`ProtocolService`, `TelemetryService`, `BootService`, `ConnectionManager`, `DictionaryCache`).
+  - **GUI.Windows** (`net10.0-windows`, WinForms) — entry point + GUI.
+- Architectural roadmap in [`Docs/REFACTOR_PLAN.md`](./Docs/REFACTOR_PLAN.md):
+  - Phase 1 — protocol abstractions in Core ✅
+  - Phase 2 — services layer + HW adapters ✅
+  - Phase 3 — Form1 decomposition ✅
+  - Phase 4 — switch to the new stack, removal of legacy `STEMProtocol/` ✅
+  - Phase 5 — migration to the `Stem.Communication` NuGet (when available) ⏳
+
+---
+
+## Features
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| **STEM protocol** | ✅ | Proprietary stack (Application, Network, Transport) |
+| **CAN (PCAN)** | ✅ | Communication via Peak PCAN USB |
 | **BLE** | ✅ | Bluetooth Low Energy via Plugin.BLE |
-| **Seriale** | ✅ | Comunicazione via porta COM |
-| **Dizionari Azure API** | ✅ | Provider API REST con fallback Excel (DI) |
-| **Bootloader** | ✅ | Aggiornamento firmware (classico + smart) |
-| **Telemetria** | ✅ | Lettura variabili + grafici OxyPlot (lenta + veloce) |
-| **Code Generator** | ✅ | Genera sp_config.h |
-| **Test Automatizzati** | ✅ | 274 test (unit + integration) — xUnit |
+| **Serial** | ✅ | Communication over a COM port |
+| **Azure dictionary API** | ✅ | REST provider with embedded Excel fallback (DI) |
+| **Bootloader** | ✅ | Firmware update (classic + Spark batch) |
+| **Telemetry** | ✅ | Variable reads + OxyPlot charts (slow + fast) |
+| **Code generator** | ✅ | Generates `sp_config.h` |
+| **Automated tests** | ✅ | 292 cross-platform + 470 Windows (xUnit) |
 
 ---
 
-## Requisiti
+## Requirements
 
-- **.NET 10.0** (Windows 10+ x64)
-- **Visual Studio 2022/2026** con workload Desktop Development
-- **PCAN USB** (opzionale, per comunicazione CAN)
+- **.NET 10.0** (Windows 10+ x64).
+- **Visual Studio 2022/2026** with the *Desktop development with .NET* workload.
+- **PCAN USB** (optional, only required for CAN communication).
 
-### Dipendenze
+### Dependencies
 
-| Package | Versione | Uso |
-|---------|----------|-----|
-| ClosedXML | 0.105.0 | Lettura dizionari Excel (Infrastructure) |
-| DocumentFormat.OpenXml | 3.5.1 | Supporto formati Excel |
-| OxyPlot.WindowsForms | 2.2.0 | Grafici telemetria |
-| Peak.PCANBasic.NET | 5.0.1 | Interfaccia CAN PCAN |
+| Package | Version | Use |
+|---------|---------|-----|
+| ClosedXML | 0.105.0 | Excel dictionary reader (Infrastructure.Persistence) |
+| DocumentFormat.OpenXml | 3.5.1 | Excel format support |
+| OxyPlot.WindowsForms | 2.2.0 | Telemetry charts |
+| Peak.PCANBasic.NET | 5.0.1 | PCAN CAN interface |
 | Plugin.BLE | 3.2.0 | Bluetooth Low Energy |
-| System.IO.Ports | 10.0.5 | Comunicazione seriale |
+| System.IO.Ports | 10.0.5 | Serial communication |
 | Microsoft.Extensions.DependencyInjection | 10.0.5 | DI container |
 
 ---
 
 ## Quick Start
 
-```bash
-# Clona il repository
+```powershell
+# Clone
 git clone https://bitbucket.org/stem-fw/stem-device-manager
 
 # Build
-dotnet build
+dotnet build Stem.Device.Manager.slnx
 
-# Test
-dotnet test Tests/Tests.csproj
+# Test (cross-platform only — matches CI)
+dotnet test Tests/Tests.csproj --framework net10.0
 
-# Esegui
+# Run
 dotnet run --project GUI.Windows/GUI.Windows.csproj
 ```
 
-### Build Configurations
+### Build configurations
 
-| Configurazione | Descrizione |
-|----------------|-------------|
-| `Debug` | Default, tutte le feature |
-| `Release` | Build di rilascio |
-| `TOPLIFT-A2-Debug/Release` | Solo funzionalità TopLift A2 |
-| `EDEN-Debug/Release` | Solo funzionalità Eden XP |
-| `EGICON-Debug/Release` | Solo funzionalità Spark |
+Two configurations: `Debug` and `Release`. The device variant (TopLift / Eden / Egicon / Generic) is selected at runtime via `Device:Variant` in [`GUI.Windows/appsettings.json`](./GUI.Windows/appsettings.json) — the historical `#if TOPLIFT/EDEN/EGICON` blocks were removed in Phase 3.
+
+### Single-file publish (field-test executable)
+
+For field tests, publish a self-contained single-file executable that bundles the embedded Excel fallback dictionary (no external files required):
+
+```powershell
+dotnet publish GUI.Windows/GUI.Windows.csproj `
+    -c Release `
+    -r win-x64 `
+    --self-contained true `
+    -p:PublishSingleFile=true `
+    -p:IncludeNativeLibrariesForSelfExtract=true `
+    -p:EnableCompressionInSingleFile=true `
+    -o publish/v0.3.0
+```
+
+The Excel dictionary (`Resources/Dizionari STEM.xlsx`) is already an embedded resource, so the fallback works without shipping a separate file. `appsettings.json` is the only loose file copied next to the `.exe`; if you want it embedded too, set `Device:Variant` and `DictionaryApi:*` via environment variables (see [Configuration](#configuration)) and remove the `appsettings.json` from the publish folder.
 
 ---
 
-## Struttura Soluzione
+## Configuration
+
+`GUI.Windows/appsettings.json` (committed defaults):
+
+```json
+{
+  "DictionaryApi": {
+    "BaseUrl": "https://app-dictionaries-manager-prod.azurewebsites.net/",
+    "ApiKey": "<api-key>",
+    "TimeoutSeconds": 30
+  },
+  "Device": {
+    "Variant": "Generic",
+    "SenderId": 8
+  }
+}
+```
+
+Any value can be overridden at runtime via environment variables (use `__` for the section separator):
+
+```powershell
+$env:DictionaryApi__ApiKey   = "<api-key>"
+$env:DictionaryApi__BaseUrl  = "https://..."
+$env:Device__Variant         = "TopLift"
+```
+
+### Security note (v0.3.0 field test)
+
+- The Azure dictionary API requires an API key. v0.3.0 ships with the test key in `appsettings.json` to keep the field-test loop fast.
+- Risk is low: the API only serves dictionaries (commands / addresses / variables) — no device control, no PII.
+- Mitigations applied for the field test:
+  1. Single-file publish bundles `appsettings.json` next to the `.exe` — no separate config file to leak in transit.
+  2. The Excel fallback works offline: a temporary key revocation does not brick the tool.
+  3. The key can be overridden at runtime via the `DictionaryApi__ApiKey` env var, so each technician's machine can be moved to a per-user key without rebuilding.
+- Before v1.0: rotate the key, remove it from `appsettings.json`, require it from `DPAPI`-encrypted user secrets or Windows Credential Manager (`CredRead`/`CredWrite`).
+
+---
+
+## Solution Structure
 
 ```
 Stem.Device.Manager/
-├── Stem.Device.Manager.slnx          Solution file (XML moderno)
-├── Core/                             Modelli dominio + interfacce (net10.0, zero deps)
-│   ├── Models/                       Dizionario + protocol abstractions
-│   │                                 (Variable, Command, ProtocolAddress, DictionaryData,
-│   │                                  ConnectionState, DeviceVariant, DeviceVariantConfig,
-│   │                                  RawPacket, AppLayerDecodedEvent, TelemetryDataPoint)
-│   └── Interfaces/                   IDictionaryProvider, ICommunicationPort, IPacketDecoder,
-│                                     ITelemetryService, IBootService, IDeviceVariantConfig
-├── Infrastructure.Persistence/       Provider dati dizionario (net10.0)
-│   ├── Api/                          DictionaryApiProvider + DTO (REST Azure)
-│   ├── Excel/                        ExcelDictionaryProvider (fallback embedded)
-│   ├── FallbackDictionaryProvider    Decorator API→Excel
-│   └── DependencyInjection.cs        AddDictionaryProvider()
-├── Infrastructure.Protocol/          Adapter HW (dual TFM: net10.0 + net10.0-windows)
-│   └── Hardware/                     CanPort, BlePort, SerialPort (ICommunicationPort)
-│                                     + PCANManager driver + IPcanDriver/IBleDriver/ISerialDriver
-├── Services/                         Logica applicativa pura (net10.0 — cross-platform)
-│   └── Protocol/                     PacketDecoder, DictionarySnapshot
-├── GUI.Windows/                              Windows Forms (net10.0-windows)
-│   ├── Program.cs                    Entry point + DI + IConfiguration
-│   ├── Form1.cs                      Main form (God Object ~54k LOC)
-│   ├── STEMProtocol/                 Protocollo legacy (da migrare in Fase 4)
-│   ├── BLE_Manager.cs                Driver BLE (implementa IBleDriver)
-│   ├── SerialPort_Manager.cs         Driver seriale (implementa ISerialDriver)
-│   └── GUI/                          Tab pages WinForms
-├── Specs/                            Formalizzazioni Lean 4
-│   └── Phase1/                       Tipi/interfacce protocol (Fase 1)
-├── Tests/                            274 test (xUnit, dual TFM)
-│   ├── Unit/                         Core, Infrastructure.Persistence, Infrastructure.Protocol, Services, Terminal
-│   └── Integration/                  DI, ExcelHandler, CodeGenerator, Form1
-└── Docs/                             REFACTOR_PLAN, PROTOCOL, PREPROCESSOR_DIRECTIVES, Standards
+├── Stem.Device.Manager.slnx              Solution file (modern XML)
+├── Directory.Build.props                 Centralized version + author metadata
+├── Core/                                 Domain models + interfaces (net10.0, zero deps)
+├── Infrastructure.Persistence/           Dictionary providers (net10.0)
+│   ├── Api/                              DictionaryApiProvider + DTOs (Azure REST)
+│   ├── Excel/                            ExcelDictionaryProvider (embedded fallback)
+│   ├── FallbackDictionaryProvider        API → Excel decorator
+│   └── DependencyInjection.cs            AddDictionaryProvider()
+├── Infrastructure.Protocol/              HW adapters (dual TFM)
+│   ├── Hardware/                         CanPort, BlePort, SerialPort + driver abstractions
+│   └── Legacy/                           BLEManager, SerialPortManager (Windows-only)
+├── Services/                             Pure cross-platform logic (net10.0)
+│   ├── Protocol/                         ProtocolService, PacketDecoder, DictionarySnapshot
+│   ├── Telemetry/                        TelemetryService
+│   ├── Boot/                             BootService, SparkBatchUpdateService
+│   └── Cache/                            DictionaryCache, ConnectionManager
+├── GUI.Windows/                          Windows Forms entry point (net10.0-windows)
+│   ├── Program.cs                        DI + IConfiguration
+│   ├── Forms/Form1.cs                    Main form (thin shell)
+│   ├── Tabs/                             WinForms tab pages
+│   └── Resources/                        Icons + embedded Excel dictionary
+├── Lean/Spec001/                         Lean 4 invariants for Spark BLE stabilization
+├── Tests/                                xUnit, dual TFM (292 / 470)
+└── Docs/                                 REFACTOR_PLAN, PROTOCOL, Standards
 ```
 
 ---
 
-## Documentazione
+## Documentation
 
-- [App — Progetto principale](./GUI.Windows/README.md)
-- [Core — Modelli dominio e interfacce](./Core/README.md)
-- [Infrastructure.Persistence — Provider dati dizionario (API + Excel)](./Infrastructure.Persistence/README.md)
-- [Infrastructure.Protocol — Adapter HW CAN/BLE/Serial](./Infrastructure.Protocol/README.md)
-- [Services — Logica applicativa pura](./Services/README.md)
-- [Tests — Test automatizzati](./Tests/README.md)
-- [Standards e Templates](./Docs/Standards/)
-- [Piano di refactoring architetturale](./Docs/REFACTOR_PLAN.md)
-- [Protocollo STEM — funzionamento interno](./Docs/PROTOCOL.md)
-- [Direttive preprocessore (#if)](./Docs/PREPROCESSOR_DIRECTIVES.md)
-- [Lean/Spec001 — formalizzazioni Lean 4](./Lean/Spec001/)
+- [GUI.Windows — main project](./GUI.Windows/README.md)
+- [Core — domain models and interfaces](./Core/README.md)
+- [Infrastructure.Persistence — dictionary providers (API + Excel)](./Infrastructure.Persistence/README.md)
+- [Infrastructure.Protocol — HW adapters CAN/BLE/Serial](./Infrastructure.Protocol/README.md)
+- [Services — pure application logic](./Services/README.md)
+- [Tests — automated tests](./Tests/README.md)
+- [Standards & templates](./Docs/Standards/)
+- [Architectural refactoring plan](./Docs/REFACTOR_PLAN.md)
+- [STEM protocol — internal workings](./Docs/PROTOCOL.md)
+- [Preprocessor directives — historical map](./Docs/PREPROCESSOR_DIRECTIVES.md)
+- [Lean/Spec001 — Lean 4 formalizations](./Lean/Spec001/)
 - [CHANGELOG](./CHANGELOG.md)
 - [LICENSE](./LICENSE)
 
 ---
 
-## Licenza
+## License
 
-- **Proprietario:** STEM E.m.s.
-- **Autore:** Michele Pignedoli, Luca Veronelli
-- **Data di Creazione:** 2024-06-27
-- **Licenza:** Proprietaria - Tutti i diritti riservati
+- **Owner:** STEM E.m.s.
+- **Authors:** Michele Pignedoli, Luca Veronelli
+- **Creation date:** 2024-06-27
+- **License:** Proprietary — All rights reserved

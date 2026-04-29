@@ -1,387 +1,394 @@
 ﻿# Changelog
 
-Tutte le modifiche rilevanti a questo progetto sono documentate in questo file.
+All notable changes to this project are documented in this file.
 
-Il formato si basa su [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
+project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-### Legenda
+### Legend
 
-- **Added**: Nuove funzionalità
-- **Changed**: Modifiche a funzionalità esistenti
-- **Deprecated**: Funzionalità che verranno rimosse
-- **Removed**: Funzionalità rimosse
-- **Fixed**: Bug corretti
-- **Security**: Vulnerabilità corrette
+- **Added**: new features
+- **Changed**: changes to existing functionality
+- **Deprecated**: features marked for removal
+- **Removed**: features removed
+- **Fixed**: bug fixes
+- **Security**: vulnerability fixes
 
 ---
 
 ## [Unreleased]
 
-Modernizzazione: documentazione, standard, riorganizzazione progetto, test coverage,
-architettura multi-progetto, migrazione dizionari Excel → API Azure,
-Fase 3 disaccoppiamento Form1 (Branch 1+2 completati), rimozione funzionalità ButtonPanel e ExcelHandler,
-refactor architetturale (REFACTOR_PLAN) con Fase 1 — protocol abstractions in Core —
-e Fase 2 (in corso) — services layer + HW adapter + rinomina a pattern Stem.
-
-### Added
-
-- **spec-001 — Spark BLE Firmware Stabilization** (see `specs/001-spark-ble-fw-stabilize/`). Closes the post-Phase 4 stabilization debt against the SPARK-UC reference bench. Five user stories landed across PRs #41..#85:
-  - **US1 — Close/relaunch is crash-free**: structured `ShutdownAudit` (Debug-only) + event-handler unsubscription fixes in `ConnectionManager`/`BLEManager`. Bench acceptance: 0 `ObjectDisposedException` over 10 close/relaunch cycles.
-  - **US2 — UI state matches reality**: `ConnectionManager.TransitionTo` private mutator funnels every state change through a single site so the C1 biconditional (`ActiveProtocol != null ⇔ State == Connected`) holds by construction. `BlePort.StateChanged` wired into `TransitionTo(Disconnected)`. `BlePort.Dispose` now awaits driver disconnect (closes #50). FsCheck `C1_StateProtocolBiconditional` + `C3_NoUnexpectedTransitions` codify the contract.
-  - **US3 — BLE session survives a full upload**: `BootService` retry-budget audit against contract Q1/Q2/Q3/I1; transient errors retry up to `RetryBudget`, session-drop fails immediately. FsCheck property tests Q1/Q2/Q3/I1 in `BootStateMachinePropertyTests`.
-  - **US4 — Multi-file batch is all-success or abort-on-first-failure**: FR-010 empty-firmware precondition rejects batches up-front; `SparkBatchUpdateService` end-of-batch `RESTART_MACHINE` only (closes #74) — STEM firmware shuts down on restart, so the per-area restart broke areas 2..N.
-  - **US5 — HMI upload time budget (SC-004)**: bench investigation `Docs/PerfRegression-Spec001.md` recorded that the ~2× regression motivating SC-004 is no longer reproducing on `main` as of 2026-04-27. T020 root-cause fix skipped; T021 single-run guard (`Us5_Hmi_Upload_WithinV215_Budget`) is the safety net.
-  - **Lean 4 formalization** (`Lean/Spec001/`): `BootStateMachine` (T1 offset-total, T2 retry-bounded, T3 terminal stability, T4 phase preservation), `BleLifecycle` (T5 state-protocol biconditional), `BatchComposition` (succeeded → all-completed, failed → area-in-input). `lake build` green, no `sorry`/`admit`.
-  - **Lean → C# drift guard** (`LeanDriftGuardTests`): parses the `inductive Step` declarations in each Lean file and asserts the constructor list matches the hand-ported C# arrays in `BootTransitionGenerator`/`BleLifecycleTransitionGenerator`. Fails CI on any divergence.
-  - **Observability (FR-009)**: structured `ILogger.BeginScope` `{ Area, Step, Attempt, Recipient }` in `BootService` + `ConnectionManager`; one `LogInformation` per state transition, one `LogWarning` per retry. Discard-frame logging in `ProtocolService` receive path (#76 / PR #77).
-  - **Bench operations**: `Docs/BenchLog-Spec001.md` seeded for chronological per-run logging across SC-001..SC-007.
-- **REFACTOR_PLAN Fase 3 — Branch 2 `refactor/phase-3-tab-decoupling`** (in corso, secondo sub-branch di Fase 3):
-  - `Services/Cache/DictionaryCache.SetCurrentRecipientId(uint)` — mutazione pura di `CurrentRecipientId` senza HTTP call né `DictionaryUpdated` event (per loop multi-board in `Boot_Smart_Tab` dove il dizionario variabili non cambia)
-  - `Boot_Interface_Tab` — ctor injection di `DictionaryCache`, legge `_cache.CurrentRecipientId` invece di `Form1.FormRef.RecipientId`
-  - `Boot_Smart_Tab` — ctor injection di `DictionaryCache`, sottoscrive `DictionaryUpdated` per aggiornare `MachineDictionary`, rimosso metodo pubblico `UpdateDictionary(IReadOnlyList<Variable>)`. Nel loop multi-board line 300 chiama sia `_cache.SetCurrentRecipientId(X)` (nuovo) sia `Form1.FormRef.RecipientId = X` (parità legacy: `STEM_protocol.cs` legge ancora `FormRef.RecipientId`, rimosso in Phase 4)
-  - `Telemetry_Tab` — ctor injection di `DictionaryCache`, sottoscrive `DictionaryUpdated` (marshalling BeginInvoke per aggiornare ComboBox), rimosso `UpdateDictionary`
-  - `TopLiftTelemetry_Tab` — ctor injection di `DictionaryCache`, sottoscrive `DictionaryUpdated`, rimosso `UpdateDictionary`
-  - `Form1.cs` — resolve `DictionaryCache` via DI, passa la cache al ctor dei 4 tab. `LoadDictionaryDataAsync` usa ora `_dictionaryCache.LoadAsync`/`_dictionaryCache.SelectByRecipientAsync` (una singola chiamata HTTP, notifica tab via `DictionaryUpdated`). Rimosse tutte le chiamate a `TelemetryTabRef.UpdateDictionary(Dizionario)`/`BootSmartTabRef.UpdateDictionary(Dizionario)`/`TLTTabRef.UpdateDictionary(Dizionario)` (5 call-site in Form1)
-  - `Tests/Unit/Tabs/TabDependencyInjectionTests.cs` — 5 smoke test Windows-only: null-ctor throw per 4 tab + propagation `DictionaryCache.LoadAsync` → `DictionaryUpdated`
-  - Test: **+5 test Windows-only** → suite **270 net10.0** / **448 net10.0-windows**
-  - `Tests/Tests.csproj` — esclude `Unit/Tabs/**` dal target net10.0 (tab referenziano WinForms)
-  - **Scope skip:** `BLE_WF_Tab.cs` e `CAN_WF_Tab.cs` esclusi dal refactor (nessun consumer dizionario, nessun ref a `Form1.FormRef.RecipientId`)
-  - **Scope legacy:** `TelemetryManager`/`BootManager` dentro i tab restano invariati (Phase 4 rimuoverà lo stack `STEMProtocol/`)
-- **REFACTOR_PLAN Fase 3 — Branch 1 `refactor/phase-3-dictionary-cache`** (in corso, primo sub-branch di Fase 3):
-  - `Core/Interfaces/IDeviceVariantConfig.DefaultChannel` — nuova proprietà `ChannelKind` (TOPLIFT→Can, altre varianti→Ble per parità legacy)
-  - `Core/Models/DeviceVariantConfig` — aggiunto record param + helper `DefaultChannelFor(variant)`; factory aggiornata
-  - `Core/Interfaces/IPacketDecoder.UpdateDictionary` — promosso al contratto (era solo su `PacketDecoder` concreto). Necessario per `DictionaryCache`
-  - `Services/Cache/DictionaryCache.cs` — singleton centralizzato per dizionario STEM:
-    - properties `Commands`/`Addresses`/`Variables`/`CurrentRecipientId` thread-safe
-    - `LoadAsync` (commands+addresses), `SelectByRecipientAsync` (variables per uint), `SelectByDeviceBoardAsync` (lookup device+board → recipient)
-    - aggiorna automaticamente lo snapshot di `IPacketDecoder` ad ogni mutazione
-    - emette evento `DictionaryUpdated` per i consumer (tab Phase 3)
-    - parità legacy: niente cache LRU sulle variabili
-  - `Services/Cache/ConnectionManager.cs` — gestore canale attivo + factory `IProtocolService` runtime:
-    - aggrega `IEnumerable<ICommunicationPort>` (3 port da `AddProtocolInfrastructure`)
-    - `ActiveChannel`/`ActiveProtocol` (null finché `SwitchToAsync` non chiamato)
-    - `SwitchToAsync(ChannelKind)`: dispose protocol vecchio → disconnect vecchia port → connect nuova → crea nuovo `ProtocolService`
-    - eventi `ActiveChannelChanged` + `StateChanged` (snapshot `(ChannelKind, ConnectionState)`)
-    - stato iniziale = `IDeviceVariantConfig.DefaultChannel`, nessun auto-connect (consumer controlla timing)
-  - `Services/DependencyInjection.cs` — registra `DictionaryCache` + `ConnectionManager` come singleton
-  - `Infrastructure.Protocol/DependencyInjection.cs` — espone `CanPort`/`BlePort`/`SerialPort` anche come `ICommunicationPort` (factory delegata ai singleton concreti per identità)
-  - Test: **+47 test** (4 DeviceVariantConfig.DefaultChannel + 14 DictionaryCache + 18 ConnectionManager + 5 wiring DI) → suite **268 net10.0** / **441 net10.0-windows**
-  - `ConnectionManagerTests` Windows-only (richiede real `CanPort`/`BlePort`/`SerialPort` con fake driver) — file escluso esplicitamente da target net10.0 in `Tests.csproj`
-- **REFACTOR_PLAN — Branch `refactor/protocol-interface`** (merged in main, PR #28, prerequisite di Fase 3 + chiusura debito Fase 2 integration tests):
-  - `Core/Interfaces/IProtocolService.cs` — nuovo contratto del facade protocollo (`SenderId`, `AppLayerDecoded`, `SendCommandAsync`, `SendCommandAndWaitReplyAsync`, estende `IDisposable`)
-  - `Services/Protocol/ProtocolService` implementa `IProtocolService` (nessun cambio signature pubblica)
-  - `TelemetryService` e `BootService` ctor — dipendenza da `IProtocolService` invece di `ProtocolService` concreto. Suite test esistente verde senza modifiche
-  - `Tests/Unit/Services/DependencyInjection/AddServicesTests.cs` — **11 test cross-platform** per `Services.AddServices(IConfiguration)`: smoke resolve, override `Device:Variant`/`Device:SenderId`, fallback su SenderId invalido, singleton lifetime, null guards
-  - `Tests/Unit/Infrastructure/Protocol/AddProtocolInfrastructureTests.cs` — **8 test Windows-only** per `Infrastructure.Protocol.AddProtocolInfrastructure()`: ServiceDescriptor per IPcanDriver/CanPort/BlePort/SerialPort, resolve con fake driver registrati esternamente, conferma contratto "host registra IBleDriver/ISerialDriver prima"
-  - Test: **+19 test** (11 cross-platform + 8 Windows-only) → suite **247 net10.0** / **400 net10.0-windows**
-- **REFACTOR_PLAN Fase 2 — Branch C `refactor/services-di-integration`** (merged in main, PR #27, Step 7 completato — chiude Fase 2):
-  - `Core/Interfaces/IDeviceVariantConfig.SenderId` — nuova proprietà uint (indirizzo STEM del mittente, default `8` per parità legacy)
-  - `Core/Models/DeviceVariantConfig` — record esteso con `SenderId`; `DefaultSenderId = 8` costante; nuovo overload `Create(variant, senderId)`; il single-arg delega al default
-  - `Services/Configuration/DeviceVariantConfigFactory.FromString(variant, senderId)` — overload per host DI che legge SenderId da appsettings
-  - `Services/DependencyInjection.cs` — `AddServices(IConfiguration)`: registra `IDeviceVariantConfig` (da `Device:Variant` + `Device:SenderId`) e `IPacketDecoder` vuoto (UpdateDictionary chiamato dal consumer post-load Azure)
-  - `Infrastructure.Protocol/DependencyInjection.cs` — `AddProtocolInfrastructure()`: registra `PCANManager` come `IPcanDriver`, e `CanPort`/`BlePort`/`SerialPort` come singleton concreti (NON come `ICommunicationPort`: scelta runtime gestita in Phase 3 da `ConnectionManager`)
-  - `Services.csproj` + `Infrastructure.Protocol.csproj` — aggiunti PackageRef `Microsoft.Extensions.DependencyInjection.Abstractions 10.0.5` (e `Configuration.Abstractions` per Services)
-  - `App/appsettings.json` — `Device.SenderId = 8`
-  - `App/Program.cs` — wiring DI completo: `AddDictionaryProvider` + driver BLE/Serial registrati come `IBleDriver`/`ISerialDriver` + `AddProtocolInfrastructure()` + `AddServices(config)`. Nessun consumer cambiato (Form1 continua a usare `STEMProtocol/` legacy — rimozione in Phase 3)
-  - **Servizi NON registrati per scelta architetturale**: `ProtocolService`, `ITelemetryService`, `IBootService` dipendono dalla port runtime (CAN/BLE/Serial scelta a menu) — creati dal `ConnectionManager` in Phase 3
-  - `Docs/PREPROCESSOR_DIRECTIVES.md` — documentato debito Phase 3: `BLE_Manager.FormRef` da rimpiazzare con evento o `ILogger`
-  - Test: **+8 test** (6 DeviceVariantConfig SenderId + 2 DeviceVariantConfigFactory) → suite **236 net10.0** / **381 net10.0-windows**
-- **REFACTOR_PLAN Fase 2 — Branch B `refactor/services-business`** (merged in main 2026-04-20, PR #26, Step 3-5 completati):
-  - `Services/Configuration/DeviceVariantConfigFactory.cs` — factory totale: parsing case-insensitive da stringa di configurazione (default Generic per null/vuoto/sconosciuto), helper `CanonicalName` per round-trip
-  - `App/appsettings.json` — sezione `Device:Variant` (default `"Generic"`)
-  - `Services/Telemetry/TelemetryService.cs` — implementa `ITelemetryService` usando `ProtocolService` come facade (zero ref a `ICommunicationPort`/`IPacketDecoder` diretti, zero ref a Form1):
-    - protocollo CMD_CONFIGURE_TELEMETRY (0x0015) / CMD_START_TELEMETRY (0x0016) / CMD_STOP_TELEMETRY (0x0017)
-    - decode CMD_TELEMETRY_DATA (0x0018) per uint8/uint16/uint32 LE — variabili a DataType ignoto saltate
-    - state machine stopped/running con `Lock`, `UpdateDictionary` atomico, pacchetti a telemetria spenta ignorati
-  - `Services/Boot/BootService.cs` — implementa `IBootService` usando `ProtocolService.SendCommandAndWaitReplyAsync` per il pattern request/reply:
-    - sequenza upload: CMD_START_PROCEDURE → loop blocchi 1024B (paddati 0xFF) di CMD_PROGRAM_BLOCK con 10 retry → CMD_END_PROCEDURE con 5 retry → CMD_RESTART_MACHINE x 2
-    - reply matching tramite convenzione "CodeHigh=80 → risposta"
-    - fwType estratto da byte 14-15 little-endian del firmware
-    - state machine Idle → Uploading → (Completed | Failed) con `Lock`; `BootProtocolException` interna assorbita (parità legacy: stato Failed osservabile, niente rethrow)
-    - `CancellationToken` rispettato fra blocchi
-    - ctor interno con `responseTimeout` + `restartInterval` configurabili (per test veloci)
-  - `Core/Interfaces/IBootService` — aggiunto parametro `uint recipientId` a `StartFirmwareUploadAsync` (target device)
-  - `Services/Protocol/ProtocolService.SenderId` — getter pubblico per accesso al senderId interno (usato da TelemetryService per payload CONFIGURE)
-  - `Tests/Unit/Services/Protocol/FakeCommunicationPort` — hook `OnSent` opzionale per auto-reply nei test BootService
-  - Test: **+56 test** (25 DeviceVariantConfigFactory + 18 TelemetryService + 13 BootService), tutti cross-platform → suite **228 net10.0** / **373 net10.0-windows**
-- **REFACTOR_PLAN Fase 2 — Branch A `refactor/protocol-service`** (merged in main 2026-04-20, PR #25, Step 6 completato):
-  - `Core/Models/ChannelKind.cs` — enum Can/Ble/Serial per discriminare il framing atteso dal protocollo
-  - `Core/Interfaces/ICommunicationPort` — aggiunta proprietà `ChannelKind Kind { get; }` (i 3 adapter esistenti la espongono)
-  - `Services/Protocol/NetInfo.cs` — struct immutable (readonly record struct) per parsing/encoding dei 2 byte Network Layer (remainingChunks 10 bit, setLength 1 bit, packetId 3 bit, version 2 bit)
-  - `Services/Protocol/PacketReassembler.cs` — riassembly multi-chunk thread-safe per packetId con `Reset()` e `PendingPacketCount` per diagnostica
-  - `Services/Protocol/ProtocolService.cs` — facade del protocollo: encode command → TP con CRC16 Modbus → chunking per canale → wire frame; decode + reassembly + evento `AppLayerDecoded`; pattern `SendCommandAndWaitReplyAsync` con validator custom e timeout
-  - Mantenuto quirk storico senderId byte-swap (parità con legacy TransportLayer, vedi PROTOCOL.md §3.1)
-  - Test: +49 test (13 NetInfo + 13 PacketReassembler + 13 ProtocolService + 3 Kind adapter + 7 altri), tutti cross-platform tranne Kind per adapter (Windows-only)
-- **REFACTOR_PLAN Fase 2 — Branch `refactor/services-foundation`** (merged in main 2026-04-20, PR #24, Step 1-2 completati):
-  - **Rinomina** progetto `Infrastructure` → `Infrastructure.Persistence` per allineamento al pattern Stem (`Infrastructure.<Concern>` — vedi `Stem.Production.Tracker`, `Stem.ButtonPanel.Tester`)
-  - **Nuovo progetto** `Infrastructure.Protocol` (dual TFM `net10.0;net10.0-windows10.0.19041.0`) — adapter hardware CAN/BLE/Serial:
-    - `Hardware/CanPort.cs` — implementa `ICommunicationPort` con convention A (arbitration ID LE prefisso nei payload) wrappando `PCANManager` via `IPcanDriver`
-    - `Hardware/BlePort.cs` — implementa `ICommunicationPort` con convention pass-through, wrappa `App.BLEManager` via `IBleDriver`
-    - `Hardware/SerialPort.cs` — implementa `ICommunicationPort` con convention pass-through, wrappa `App.SerialPortManager` via `ISerialDriver`
-    - `Hardware/IPcanDriver.cs` / `IBleDriver.cs` / `ISerialDriver.cs` — abstraction per testability + dependency inversion (`BLEManager` e `SerialPortManager` restano in `App/` per Form1/MessageBox refs)
-    - `Hardware/BlePacketEventArgs.cs` / `SerialPacketEventArgs.cs` — event args centralizzati
-    - `Hardware/PCANManager.cs` — driver PCAN-USB spostato da `App/` (auto-reconnect, baud rate runtime)
-  - **`Services/` ora popolato** (target `net10.0` puro, cross-platform):
-    - `Services/Protocol/PacketDecoder.cs` — `IPacketDecoder` puro con thread-safe `UpdateDictionary` (Volatile.Read/Write su snapshot)
-    - `Services/Protocol/DictionarySnapshot.cs` — snapshot immutabile con lookup comandi/variabili/indirizzi (hex case-insensitive)
-  - `Docs/PROTOCOL.md` — nuova documentazione completa del protocollo STEM (3 livelli AL/TL/NL, NetInfo bit layout, CRC16 Modbus, chunking per canale, 10 comandi noti, 6 known quirks, pipeline send/receive per canale, roadmap migrazione Fase 4)
-  - Test coverage: **274 test** totali (era 209), **132 cross-platform** (era 86): +27 PacketDecoder, +21 DictionarySnapshot, +22 CanPort, +21 BlePort, +21 SerialPort, +7 PacketEventArgs, +18 gap-fill (Dispose idempotency, connect timeout, state cycle, null validation)
-  - `CanPort` / `BlePort` / `SerialPort` tests usano fake driver manuali (`FakePcanDriver`, `FakeBleDriver`, `FakeSerialDriver`) in `Tests/Unit/Infrastructure/Protocol/`
-  - README progetti: `Infrastructure.Protocol/README.md`, `Services/README.md`; `Infrastructure.Persistence/README.md` aggiornato post-rename
-- **REFACTOR_PLAN Fase 1 — Protocol abstractions in Core** (branch `refactor/protocol-abstractions`):
-  - `Core/Interfaces/` — 5 nuove interfacce: `ICommunicationPort` (astrazione CAN/BLE/Serial), `IPacketDecoder` (decoder puro `RawPacket → AppLayerDecodedEvent`), `ITelemetryService`, `IBootService` (+ enum `BootState`, record `BootProgress`), `IDeviceVariantConfig`
-  - `Core/Models/` — 6 nuovi modelli: `ConnectionState` (enum), `DeviceVariant` (enum), `DeviceVariantConfig` (record + factory totale `Create(DeviceVariant)`), `RawPacket`, `AppLayerDecodedEvent`, `TelemetryDataPoint`
-  - `Core/Models/ImmutableArrayEquality.cs` — helper interno per equality strutturale di `ImmutableArray<byte>` (necessario perché `ImmutableArray<T>.Equals` è reference-based)
-  - `Specs/Phase1/` — pianificati 7 file Lean 4 (formalizzazione dei tipi + teoremi di correttezza della factory `DeviceVariantConfig.Create`); **non committati**, superati dalla formalizzazione viva in `Lean/Spec001/` (spec-001).
-  - `Tests/Unit/Core/Models/` — 6 nuovi file test (33 test): `ConnectionStateTests`, `DeviceVariantTests`, `DeviceVariantConfigTests`, `RawPacketTests`, `AppLayerDecodedEventTests`, `TelemetryDataPointTests`
-  - `Docs/PREPROCESSOR_DIRECTIVES.md` — sezione "Nota Fase 1 — IDeviceVariantConfig (TODO per Fase 3)" che elenca i feature flag booleani da aggiungere in Fase 3 per eliminare i blocchi `#if`
-- `.copilot/` — Istruzioni Copilot con memoria a lungo termine, 5 agent files (CODING, TEST, DOCS, ISSUES, FORMAL)
-- `Docs/Standards/` — Template standard (README, ISSUES, STANDARD, TEMPLATE_STANDARD)
-- `README.md` — Documentazione root del progetto
-- `CHANGELOG.md` — Questo file
-- `LICENSE` — Licenza proprietaria
-- `Stem.Device.Manager.slnx` — Solution file migrato a formato XML moderno (da `.sln`)
-- `Tests/` — Progetto test xUnit con 176 test (xUnit 2.5.3)
-  - **Unit test** (68): Core Models, Infrastructure providers (API/Excel/Fallback), Terminal, Protocol, CodeGenerator, CircularProgressBar
-  - **Integration test** (34): DI wiring con IDictionaryProvider, CodeGenerator E2E, Form1 IDictionaryProvider integration
-  - **Manual mocks**: MockHttpMessageHandler, MockDictionaryProvider
-- `App/README.md` — Documentazione progetto App
-- `Tests/README.md` — Documentazione progetto Tests
-- `Core/README.md` — Documentazione progetto Core
-- `Infrastructure/README.md` — Documentazione progetto Infrastructure
-- `Docs/PREPROCESSOR_DIRECTIVES.md` — Documentazione blocchi `#if` nel codice, strategia Fase 3
-- `InternalsVisibleTo("Tests")` in `App.csproj` per testare tipi `internal`
-- **Architettura multi-progetto** — Migrazione da monolite a 4 progetti separati:
-  - `Core/` (net10.0) — Modelli dominio, interfacce (`IDictionaryProvider`)
-  - `Infrastructure/` (net10.0) — Provider dati (API Azure + Excel + Fallback decorator)
-  - `Services/` (net10.0-windows) — Pronto per logica business futura
-  - `App/` (net10.0-windows) — Windows Forms, DI configurato con `IConfiguration`
-- **Migrazione dizionari Excel → API Azure** (Fase 2 completata):
-  - `Core/Models/` — 4 record dominio: `Variable`, `Command`, `ProtocolAddress`, `DictionaryData`
-  - `Core/Interfaces/IDictionaryProvider` — Astrazione async con `CancellationToken`
-  - `Infrastructure/Excel/ExcelDictionaryProvider` — Legge da Excel embedded, ora unica implementazione Excel
-  - `Infrastructure/Api/DictionaryApiProvider` — Chiama API REST Stem.Dictionaries.Manager
-  - `Infrastructure/Api/Dtos/` — 5 DTO deserializzazione (struttura JSON reale dell'API)
-  - `Infrastructure/Api/DictionaryApiOptions` — Configurazione: BaseUrl, ApiKey, TimeoutSeconds
-  - `Infrastructure/FallbackDictionaryProvider` — Decorator: API → catch HttpRequestException → Excel
-  - `Infrastructure/DependencyInjection.cs` — Extension method `AddDictionaryProvider(IConfiguration)`
-  - `App/appsettings.json` — Sezione `DictionaryApi` (vuota = Excel, popolata = API con fallback)
-  - `Docs/MIGRATION_API.md` — Piano migrazione completo con 6 branch documentati
-- **Fase 3 Branch 1: `refactor/type-swap-core-models`** — Sostituzione tipi ExcelHandler con Core.Models
-  - `App/Form1.cs`, `App/TelemetryManager.cs`, `App/*_WF_Tab.cs` — Rinominate proprietà (es. `AddrH→AddressHigh`)
-- **Fase 3 Branch 2: `refactor/source-swap-idictionary-provider`** — Sostituzione ExcelHandler come sorgente dati
-  - `App/Form1.cs` — Iniettato `IDictionaryProvider`, estratto `LoadDictionaryDataAsync(CancellationToken)`,
-    `comboBoxBoard_SelectedIndexChanged` reso `async void`
-  - Eliminati 6 blocchi `#if TOPLIFT/#else` relativi al caricamento
-  - `Docs/PREPROCESSOR_DIRECTIVES.md` — Documentati 9 blocchi `#if` rimasti con strategia di refactoring
-  - `Tests/Integration/Form1/` — 9 test di integrazione + `MockDictionaryProvider` per il contratto IDictionaryProvider
-
-### Changed
-
-- **Migrazione .NET 8 → .NET 10** — TFM `net10.0-windows10.0.19041.0` per App e Tests
-- `bitbucket-pipelines.yml` — image `sdk:10.0`, build via `.slnx` (supportato da SDK 10)
-- Rinominato progetto da `STEMPM` ad `App` (cartella `App/`, file `App.csproj`)
-- Migrato solution file da `.sln` (legacy) a `.slnx` (XML moderno, ~58% riduzione righe)
-- Build configurations ridotte da 10 a 8 (rimossa `STEMDM`, rimossa `BUTTONPANEL`)
-- `bitbucket-pipelines.yml` — aggiunto step Test dopo Build
-- `README.md` — aggiornato badge test (0 → 176), struttura soluzione multi-progetto, caratteristiche, build config
-- `App/Program.cs` — Aggiunto `IConfiguration` (appsettings.json + env vars) e `AddDictionaryProvider()`
-- `App/App.csproj` — Aggiunto `ProjectReference` a Core e Infrastructure, pacchetti Configuration, rimosso BUTTONPANEL config
-- Namespace `App.Core.*` → `Core.*` per modelli e interfacce spostati in Core/
-- `App/README.md` — Rimosso ButtonPanel e ExcelHandler da struttura e build config, LOC 56k → 54k
-- `Core/README.md` — Rimosso ButtonPanel da modelli e interfacce
-- `Tests/README.md` — Aggiornato test count 272 → 176, rimosso ButtonPanel test suite, rimosso ExcelHandler test suite
-- `Docs/PREPROCESSOR_DIRECTIVES.md` — Rimosso BUTTONPANEL da simboli attivi, documentata rimozione nella sezione "Eliminati"
-- `CLAUDE.md` — Rimosso ButtonPanel da componenti chiave, aggiornato numero configurazioni build 9 → 8
-- `README.md` (root) — Rimosso "Dizionari Excel embedded", aggiornato a "Dizionari Azure API"
-
-### Removed
-
-- **Removed**: legacy `Boot_Interface_Tab` (`Boot_WF_Tab.cs`) and its 3 null-arg DI tests; `Spark_FirmwareUpdate_WF_Tab` is the canonical bootloader UI. Closes #78, closes #57.
-- Configurazione `STEMDM` — mai usata, nessun `#if STEMDM` nel codice
-- **Configurazione build `BUTTONPANEL`** — Funzionalità test pulsantiere rimossa interamente
-- **Modulo ButtonPanel completo** — Rimozione in 6 fasi:
-  - Fase 1: Test ButtonPanel (7 file, 34 test unit, 8 test integration)
-  - Fase 2: Disconnessione da Form1 e Program.cs (metodi, blocchi `#if BUTTONPANEL`, registrazione DI)
-  - Fase 3: Interfaccia e servizi (IButtonPanelTestService, ButtonPanelTestService, MVP presenter/view)
-  - Fase 4: Modelli core (ButtonPanel, ButtonPanelTestResult, ButtonPanelEnums, ButtonIndicator)
-  - Fase 5: Configurazione build (rimosso da `<Configurations>` in App.csproj)
-  - Fase 6: Risorse e documentazione (cartella images/ButtonPanels/, aggiornamento README)
-- **ExcelHandler.cs rimosso completamente** — Migrato a Infrastructure.ExcelDictionaryProvider
-  - Rimozione logica da Form1, tab WinForms e TelemetryManager
-  - Eliminazione di ExcelHandler.cs, ExcelHandler test (8 unit + 1 integration)
-  - Semplificazione: nessun più ExcelfilePath, isStreamBased, MessageBox per errori Excel
-  - IDictionaryProvider unificato: form usa infrastructure provider
-- `Core/Models/ButtonPanel.cs` — Factory e maschere bit
-- `Core/Models/ButtonPanelTestResult.cs` — DTO risultato test
-- `Core/Models/ButtonIndicator.cs` — Indicatore visuale stato pulsante
-- `Core/Enums/ButtonPanelEnums.cs` — 6 enum (ButtonPanelType, TestType, IndicatorState, pulsanti)
-- `Core/Interfaces/IButtonPanelTestService.cs` — Contratto servizio collaudo
-- `App/Services/ButtonPanelTestService.cs` — Implementazione servizio (~250 LOC)
-- `App/GUI/Presenters/ButtonPanelTestPresenter.cs` — Presenter MVP (157 LOC)
-- `App/GUI/Views/ButtonPanelTestTabControl.cs` — UserControl WinForms (579 LOC)
-- `App/GUI/Views/ButtonPanelTestTabControl.Designer.cs` — Auto-generated WinForms
-- `App/Core/Interfaces/IButtonPanelTestTab.cs` — Contratto vista
-- `App/images/ButtonPanels/` — Cartella con 4 immagini JPG (risorse pulsantiere)
-- Test ButtonPanel:
-  - `Tests/Unit/Core/Models/ButtonPanelTests.cs` (10 test)
-  - `Tests/Unit/Core/Models/ButtonPanelTestResultTests.cs` (3 test)
-  - `Tests/Unit/Core/Models/ButtonIndicatorTests.cs` (2 test)
-  - `Tests/Unit/Core/Enums/ButtonPanelEnumsTests.cs` (8 test)
-  - `Tests/Integration/Presenter/ButtonPanelTestPresenterTests.cs` (8+ test)
-  - `Tests/Integration/Presenter/Mocks/MockButtonPanelTestTab.cs`
-  - `Tests/Integration/Presenter/Mocks/MockButtonPanelTestService.cs`
-- `Stem.Device.Manager.sln` — sostituito da `.slnx`
-
-### Fixed
-
-- **spec-001 / issue #74 — `SparkBatchUpdateService` end-of-batch restart only.** `RESTART_MACHINE` (CMD `0x000A`) was firing once per area in a multi-area batch, but SPARK firmware shuts the device down on restart, preventing areas 2..N from running. Per STEM firmware-team confirmation (2026-04-27), `RESTART_MACHINE` is hoisted out of `RunAreaAsync` and fires exactly once at the end of the batch, addressed to the HMI board recipient (`0x000702C1`). On the abort path no restart fires — recovery from a half-flashed device is operator-driven. Single-file `IBootService.StartFirmwareUploadAsync` is unchanged. Tests + `Docs/PROTOCOL.md` §8 + `specs/001-spark-ble-fw-stabilize/data-model.md` updated to reflect the batch composition.
-- Blocchi `#if BUTTONPANEL` rimossi da `Form1.cs` (righe ~156, ~344)
-- Blocchi `#if BUTTONPANEL` rimossi da `SplashScreen.cs` (riga ~12)
-- ExcelHandler decoupled da Form1: nessun più chiamate dirette a `hExcel.EstraiDizionario()`
+_No unreleased changes yet._
 
 ---
 
-### Statistiche rimozione ButtonPanel e ExcelHandler
+## [0.3.0] - 2026-04-29
 
-- **File eliminati**: 27 (19 ButtonPanel + 8 ExcelHandler-related)
-- **File modificati**: 15 (Form1, SplashScreen, Program, App.csproj, ServiceRegistrationTests, + 6 README, CLAUDE.md, CHANGELOG, etc.)
-- **Test rimossi**: 142 (34 ButtonPanel + 8 ExcelHandler)
-- **Test rimanenti**: 176 ✅ (tutti passanti)
-- **Linee di codice rimosse**: ~1.500
-- **LOC App**: 56k → 54k
-- **Build configurations**: 9 → 8
-- **Codice semplificato**: Form1 no longer references ExcelHandler, IDictionaryProvider unico entry point
+First SemVer release after the modernization wave (legacy versioning was `2.x`,
+reset to `0.3.0` to align with SemVer and reflect the still-evolving public surface).
+
+This release covers everything between the legacy `0.2.15` (commit `80bf9c6`) snapshot
+and today: full modernization (multi-project architecture, Azure dictionary API,
+Form1 decomposition, removal of `#if`-based device variants, Spark BLE firmware
+stabilization, Lean 4 invariants, dual-TFM tests).
+
+### Added
+
+- **spec-001 — Spark BLE Firmware Stabilization** (see `specs/001-spark-ble-fw-stabilize/`).
+  Closes the post-Phase 4 stabilization debt against the SPARK-UC reference bench. Five
+  user stories landed across PRs #41..#85:
+  - **US1 — Close/relaunch is crash-free**: structured `ShutdownAudit` (Debug-only) +
+    event-handler unsubscription fixes in `ConnectionManager`/`BLEManager`. Bench
+    acceptance: 0 `ObjectDisposedException` over 10 close/relaunch cycles.
+  - **US2 — UI state matches reality**: `ConnectionManager.TransitionTo` private
+    mutator funnels every state change through a single site so the C1 biconditional
+    (`ActiveProtocol != null ⇔ State == Connected`) holds by construction.
+    `BlePort.StateChanged` wired into `TransitionTo(Disconnected)`. `BlePort.Dispose`
+    now awaits driver disconnect (closes #50). FsCheck `C1_StateProtocolBiconditional`
+    + `C3_NoUnexpectedTransitions` codify the contract.
+  - **US3 — BLE session survives a full upload**: `BootService` retry-budget audit
+    against contract Q1/Q2/Q3/I1; transient errors retry up to `RetryBudget`,
+    session-drop fails immediately. FsCheck property tests Q1/Q2/Q3/I1 in
+    `BootStateMachinePropertyTests`.
+  - **US4 — Multi-file batch is all-success or abort-on-first-failure**: FR-010
+    empty-firmware precondition rejects batches up-front; `SparkBatchUpdateService`
+    end-of-batch `RESTART_MACHINE` only (closes #74) — STEM firmware shuts down on
+    restart, so the per-area restart broke areas 2..N.
+  - **US5 — HMI upload time budget (SC-004)**: bench investigation
+    `Docs/PerfRegression-Spec001.md` recorded that the ~2× regression motivating
+    SC-004 is no longer reproducing on `main` as of 2026-04-27. T020 root-cause fix
+    skipped; T021 single-run guard (`Us5_Hmi_Upload_WithinV215_Budget`) is the
+    safety net.
+  - **Lean 4 formalization** (`Lean/Spec001/`): `BootStateMachine` (T1
+    offset-total, T2 retry-bounded, T3 terminal stability, T4 phase preservation),
+    `BleLifecycle` (T5 state-protocol biconditional), `BatchComposition` (succeeded
+    → all-completed, failed → area-in-input). `lake build` green, no `sorry`/`admit`.
+  - **Lean → C# drift guard** (`LeanDriftGuardTests`): parses the `inductive Step`
+    declarations in each Lean file and asserts the constructor list matches the
+    hand-ported C# arrays in `BootTransitionGenerator` /
+    `BleLifecycleTransitionGenerator`. Fails CI on any divergence.
+  - **Observability (FR-009)**: structured `ILogger.BeginScope`
+    `{ Area, Step, Attempt, Recipient }` in `BootService` + `ConnectionManager`;
+    one `LogInformation` per state transition, one `LogWarning` per retry.
+    Discard-frame logging in `ProtocolService` receive path (#76 / PR #77).
+  - **Bench operations**: `Docs/BenchLog-Spec001.md` seeded for chronological
+    per-run logging across SC-001..SC-007.
+
+- **REFACTOR_PLAN Phase 4 — `refactor/phase-4-switch-to-new-stack`** (merged):
+  switched `Form1` and the WinForms tabs to the new stack
+  (`ConnectionManager.ActiveProtocol`, `CurrentBoot`, `CurrentTelemetry`); removed
+  the legacy `GUI.Windows/STEMProtocol/` folder (~2590 LOC) and the corresponding
+  `BootManager` / `TelemetryManager` shims. Drivers `BLEManager` /
+  `SerialPortManager` moved to `Infrastructure.Protocol/Legacy/`.
+
+- **REFACTOR_PLAN Phase 3** (merged in main, PRs #29–#32):
+  - **Branch 1 — `refactor/phase-3-dictionary-cache`**: `DictionaryCache` singleton
+    (commands + addresses + variables + `CurrentRecipientId`), `ConnectionManager`
+    aggregating the three ports and exposing `ActiveChannel` / `ActiveProtocol` /
+    `StateChanged`. `IDeviceVariantConfig.DefaultChannel` (TopLift→CAN, others→BLE
+    for legacy parity). DI registration in `Services/DependencyInjection.cs` +
+    factory bridges in `Infrastructure.Protocol/DependencyInjection.cs`.
+  - **Branch 2 — `refactor/phase-3-tab-decoupling`**: WinForms tabs receive
+    `DictionaryCache` via constructor injection and subscribe to
+    `DictionaryUpdated`; the legacy public `UpdateDictionary(...)` methods on tabs
+    were removed and replaced by event-driven updates.
+    `Form1.LoadDictionaryDataAsync` is now a single HTTP call funneled through the
+    cache.
+  - **Branch 3 — `refactor/phase-3-form1-thin-shell`**: `Form1` reduced to a thin
+    shell (~731 LOC), composition of `ConnectionManager` + `DictionaryCache` +
+    `IDeviceVariantConfig` from the service provider; `SendPS_Async` uses
+    `ConnectionManager.ActiveProtocol`; RX path subscribes to
+    `ConnectionManager.AppLayerDecoded`.
+  - **Branch 4 — `refactor/remove-ifs`**: removal of all `#if TOPLIFT/EDEN/EGICON`
+    blocks. The device variant is now selected at runtime via `Device:Variant` in
+    `appsettings.json` consumed by `IDeviceVariantConfig`. Build configurations
+    reduced to `Debug` and `Release` only.
+
+- **REFACTOR_PLAN — `refactor/protocol-interface`** (merged, PR #28):
+  prerequisite for Phase 3 + closure of the Phase 2 integration-test debt.
+  - `Core/Interfaces/IProtocolService.cs` — facade contract (`SenderId`,
+    `AppLayerDecoded`, `SendCommandAsync`, `SendCommandAndWaitReplyAsync`,
+    `IDisposable`).
+  - `Services/Protocol/ProtocolService` implements `IProtocolService`.
+  - `TelemetryService` and `BootService` now depend on `IProtocolService`.
+  - **+19 tests** for `Services.AddServices(IConfiguration)` and
+    `Infrastructure.Protocol.AddProtocolInfrastructure()`.
+
+- **REFACTOR_PLAN Phase 2** (merged in main 2026-04-20, PRs #24–#27):
+  - **Branch A — `refactor/protocol-service`**: `ChannelKind` enum,
+    `ICommunicationPort.Kind`, `NetInfo` struct (NL bit layout), thread-safe
+    `PacketReassembler`, and the `ProtocolService` facade (encode/decode TP +
+    CRC16 Modbus + per-channel chunking + request/reply pattern). +49 cross-platform
+    tests.
+  - **Branch B — `refactor/services-business`**: `TelemetryService`
+    (CMD_CONFIGURE/START/STOP_TELEMETRY + decoding of CMD_TELEMETRY_DATA) and
+    `BootService` (CMD_START_PROCEDURE → 1024-byte blocks → CMD_END_PROCEDURE →
+    CMD_RESTART_MACHINE x2, retry budget, `CancellationToken` honored between
+    blocks). +56 cross-platform tests.
+  - **Branch C — `refactor/services-di-integration`**:
+    `IDeviceVariantConfig.SenderId` (default 8 for legacy parity);
+    `Services.AddServices(IConfiguration)` +
+    `Infrastructure.Protocol.AddProtocolInfrastructure()`. `ProtocolService`,
+    `ITelemetryService`, `IBootService` are intentionally **not** registered — they
+    depend on the runtime-selected port and are created by `ConnectionManager`.
+  - **Branch — `refactor/services-foundation`**: renamed `Infrastructure` →
+    `Infrastructure.Persistence`; new `Infrastructure.Protocol` project (dual TFM)
+    hosting `CanPort` / `BlePort` / `SerialPort`; `Services/` populated with
+    `PacketDecoder` (thread-safe `UpdateDictionary` via `Volatile.Read/Write` on
+    snapshots) and `DictionarySnapshot`. `Docs/PROTOCOL.md` written from scratch.
+    Test count rose from 209 to 274.
+
+- **REFACTOR_PLAN Phase 1 — Protocol abstractions in Core**
+  (branch `refactor/protocol-abstractions`):
+  - 5 new `Core/Interfaces/`: `ICommunicationPort`, `IPacketDecoder`,
+    `ITelemetryService`, `IBootService` (+ `BootState` enum, `BootProgress`
+    record), `IDeviceVariantConfig`.
+  - 6 new `Core/Models/`: `ConnectionState`, `DeviceVariant`, `DeviceVariantConfig`
+    (record + total factory `Create(DeviceVariant)`), `RawPacket`,
+    `AppLayerDecodedEvent`, `TelemetryDataPoint`.
+  - `Core/Models/ImmutableArrayEquality.cs` — internal helper for structural
+    equality of `ImmutableArray<byte>`.
+  - `Tests/Unit/Core/Models/` — 6 new test files (33 tests).
+
+- **Excel → Azure dictionary API migration** (Phase 2):
+  - `Core/Models/`: 4 domain records (`Variable`, `Command`, `ProtocolAddress`,
+    `DictionaryData`).
+  - `Core/Interfaces/IDictionaryProvider` — async abstraction with
+    `CancellationToken`.
+  - `Infrastructure.Persistence/Excel/ExcelDictionaryProvider` — reads from the
+    embedded Excel resource.
+  - `Infrastructure.Persistence/Api/DictionaryApiProvider` — calls the
+    Stem.Dictionaries.Manager REST API; 5 DTOs match the real JSON shape.
+  - `Infrastructure.Persistence/FallbackDictionaryProvider` — decorator
+    (API → catch `HttpRequestException` → Excel).
+  - `AddDictionaryProvider(IConfiguration)` extension method.
+  - `appsettings.json` — `DictionaryApi` section.
+
+- **Multi-project architecture** — migration from a monolith to four/five projects
+  (`Core`, `Infrastructure.Persistence`, `Infrastructure.Protocol`, `Services`,
+  `GUI.Windows`).
+
+- **`.copilot/`** — Copilot long-term-memory instructions, 5 agent files
+  (CODING, TEST, DOCS, ISSUES, FORMAL).
+- **`Docs/Standards/`** — reusable standards (README, ISSUES, STANDARD,
+  TEMPLATE_STANDARD).
+- **`README.md`** — project root documentation.
+- **`CHANGELOG.md`** — this file.
+- **`LICENSE`** — proprietary license.
+- **`Stem.Device.Manager.slnx`** — solution file migrated to the modern XML format.
+- **`Tests/`** — xUnit project, dual TFM (`net10.0` + `net10.0-windows`).
+- **Per-project `README.md`** for `Core/`, `Infrastructure.Persistence/`,
+  `Infrastructure.Protocol/`, `Services/`, `GUI.Windows/`, `Tests/`.
+- **`Docs/PREPROCESSOR_DIRECTIVES.md`** — historical map of the `#if` blocks that
+  used to drive the device variant.
+
+### Changed
+
+- **.NET 8 → .NET 10 migration** — TFM `net10.0-windows10.0.19041.0` for the
+  WinForms project, `net10.0` for the cross-platform projects.
+- `bitbucket-pipelines.yml` — image `sdk:10.0`, build via `.slnx`, added a `Test`
+  step after `Build`.
+- Renamed the WinForms project from `STEMPM` → `App` → `GUI.Windows`.
+- Migrated the solution file from `.sln` (legacy) to `.slnx` (modern XML, ~58%
+  fewer lines).
+- Build configurations reduced from 10 → 8 (removed `STEMDM`, `BUTTONPANEL`) and
+  finally to 2 (`Debug`, `Release`) once the runtime device-variant selection
+  landed.
+- `README.md` — multi-project structure, runtime device variant, single-file
+  publish recipe.
+- `Program.cs` — `IConfiguration` (`appsettings.json` + env vars) and
+  `AddDictionaryProvider()` / `AddProtocolInfrastructure()` /
+  `AddServices(config)`.
+- Namespaces `App.Core.*` → `Core.*` for the models / interfaces moved to `Core/`.
+
+### Removed
+
+- **Legacy `Boot_Interface_Tab`** (`Boot_WF_Tab.cs`) and its 3 null-arg DI tests;
+  `Spark_FirmwareUpdate_WF_Tab` is the canonical bootloader UI. Closes #78,
+  closes #57.
+- **`STEMDM` build configuration** — never used, no `#if STEMDM` in code.
+- **`BUTTONPANEL` build configuration** and the entire ButtonPanel module —
+  removed in 6 phases (test suite, Form1 wiring, MVP services / presenter / view,
+  core models, build config, resources). 27 files deleted, 142 tests removed,
+  ~1500 LOC dropped.
+- **`ExcelHandler.cs`** — replaced by
+  `Infrastructure.Persistence.ExcelDictionaryProvider`.
+- **`Stem.Device.Manager.sln`** — replaced by `.slnx`.
+- **`STEMProtocol/`** legacy folder (Phase 4) — ~2590 LOC removed once tabs were
+  switched to `ConnectionManager` / `ProtocolService`.
+- **All `#if TOPLIFT/EDEN/EGICON` blocks** — runtime selection via
+  `IDeviceVariantConfig`.
+
+### Fixed
+
+- **spec-001 / issue #74 — `SparkBatchUpdateService` end-of-batch restart only.**
+  `RESTART_MACHINE` (CMD `0x000A`) used to fire once per area in a multi-area
+  batch, but the SPARK firmware shuts the device down on restart, preventing
+  areas 2..N from running. Per STEM firmware-team confirmation (2026-04-27),
+  `RESTART_MACHINE` is hoisted out of `RunAreaAsync` and fires exactly once at
+  the end of the batch, addressed to the HMI board recipient (`0x000702C1`). On
+  the abort path no restart fires — recovery from a half-flashed device is
+  operator-driven. The single-file `IBootService.StartFirmwareUploadAsync` is
+  unchanged. Tests + `Docs/PROTOCOL.md` §8 +
+  `specs/001-spark-ble-fw-stabilize/data-model.md` updated to reflect the batch
+  composition.
+- `#if BUTTONPANEL` blocks removed from `Form1.cs` (~lines 156, 344) and
+  `SplashScreen.cs` (~line 12).
+- `ExcelHandler` decoupled from `Form1`: no more direct calls to
+  `hExcel.EstraiDizionario()`.
+
+### Removal statistics (cumulative across the modernization wave)
+
+- Files deleted: 27 (19 ButtonPanel + 8 ExcelHandler-related) + the legacy
+  `STEMProtocol/` folder.
+- Tests removed: 142 (34 ButtonPanel + 8 ExcelHandler).
+- LOC removed: ~1500 (legacy modules) + ~2590 (`STEMProtocol/`).
+- Build configurations: 10 → 8 → 2.
 
 ---
 
 ## [0.2.15] - 2026-04-14
 
-Stato dell'arte del progetto legacy pre-modernizzazione. ~330 commit, ~56k LOC, 0 test automatizzati.
+State of the legacy project before the modernization wave. ~330 commits, ~56k LOC,
+0 automated tests.
 
-### Protocollo STEM
+### STEM protocol
 
-- Layer stack proprietario completo: Application Layer, Network Layer, Transport Layer, Protocol Manager
-- Supporto multi-canale: CAN (PCAN USB), BLE (Plugin.BLE), Seriale (System.IO.Ports)
-- `PacketManager` per gestione pacchetti multi-canale con ricomposizione chunk e eventi
-- Sniffer application layer per debug comunicazione
-- `SPRollingCode` per sicurezza rolling code
-- CAN baudrate selezionabile (100 kbps / 250 kbps)
+- Full proprietary stack: Application Layer, Network Layer, Transport Layer,
+  Protocol Manager.
+- Multi-channel support: CAN (PCAN USB), BLE (Plugin.BLE), Serial
+  (`System.IO.Ports`).
+- `PacketManager` for multi-channel packet handling with chunk reassembly and
+  events.
+- Application-layer sniffer for communication debug.
+- `SPRollingCode` for rolling-code security.
+- Selectable CAN baud rate (100 kbps / 250 kbps).
 
 ### Bootloader
 
-- `BootManager` classico: aggiornamento firmware via CAN/BLE/Serial con barra progresso
-- `Boot_Smart_Tab`: bootloader smart con gestione canale hardware dinamica
-- Supporto filtro numero pagina, invio blocchi da 1024 byte
-- Lettura tipo firmware da file per invio corretto alla scheda
-- Start/End procedure, restart machine, program block
+- Classic `BootManager`: firmware update over CAN/BLE/Serial with progress bar.
+- `Boot_Smart_Tab`: smart bootloader with dynamic HW channel handling.
+- Page-number filter, 1024-byte block transfer.
+- Reads firmware type from the file to send the correct one to the board.
+- Start / End procedure, restart machine, program block.
 
-### Telemetria
+### Telemetry
 
-- Telemetria lenta: lettura singole variabili via comando Read Variable (0x0001)
-- Telemetria veloce: configurazione (0x0015), start (0x0016), stop (0x0017), ricezione dati (0x0018)
-- Grafici in tempo reale con OxyPlot (zoom custom asse X)
-- Tab telemetria standard + tab telemetria TopLift dedicata (~42k LOC)
+- Slow telemetry: single-variable reads via Read Variable command (0x0001).
+- Fast telemetry: configure (0x0015), start (0x0016), stop (0x0017), data
+  receive (0x0018).
+- Real-time charts via OxyPlot (custom X-axis zoom).
+- Standard telemetry tab + dedicated TopLift telemetry tab (~42k LOC).
 
-### Dizionari Excel
+### Excel dictionaries
 
-- `ExcelHandler`: lettura dizionari da file Excel embedded (`Dizionari STEM.xlsx` ~187k)
-- Supporto stream-based (risorsa embedded via `MemoryStream`)
-- 3 tipi dati: `RowData` (indirizzi protocollo), `CommandData` (comandi), `VariableData` (variabili)
-- Lettura fogli: indirizzi macchina/scheda, lista comandi, dizionario variabili per device
+- `ExcelHandler`: reads dictionaries from an embedded Excel file
+  (`Dizionari STEM.xlsx`, ~187k).
+- Stream-based support (embedded resource via `MemoryStream`).
+- 3 data types: `RowData` (protocol addresses), `CommandData` (commands),
+  `VariableData` (variables).
+- Sheets: machine/board addresses, command list, per-device variable dictionary.
 
-### Test Pulsantiere (Banco Collaudo)
+### Button panel test (test bench)
 
-- Architettura pulita MVP: `IButtonPanelTestService` → `ButtonPanelTestPresenter` → `ButtonPanelTestTabControl`
-- Dependency Injection con `Microsoft.Extensions.DependencyInjection`
-- 4 tipi pulsantiera: DIS0023789, DIS0025205, DIS0026166, DIS0026182
-- 4 tipi collaudo: Completo, Pulsanti, LED, Buzzer
-- `ButtonPanel` factory method con maschere bit per ogni tipo
-- Test pulsanti: attesa pressione con timeout 10s, verifica maschera bit
-- Test LED: accensione verde/rosso con conferma operatore
-- Test buzzer: attivazione con conferma operatore
-- `CancellationToken` per interruzione collaudo
-- Download risultati collaudo
-- Indicatori visivi per stato pulsante (Idle, Waiting, Success, Failed)
-- Messaggi colorati in RichTextBox per feedback visivo
-- Gestione errori in vista, presenter e servizio (PR #9)
+- Clean MVP architecture: `IButtonPanelTestService` →
+  `ButtonPanelTestPresenter` → `ButtonPanelTestTabControl`.
+- Dependency injection via `Microsoft.Extensions.DependencyInjection`.
+- 4 panel types: DIS0023789, DIS0025205, DIS0026166, DIS0026182.
+- 4 test types: full, buttons, LEDs, buzzer.
+- `ButtonPanel` factory method with bit masks per panel type.
+- Button test: wait-press with 10s timeout, bit-mask check.
+- LED test: green / red on with operator confirm.
+- Buzzer test: activation with operator confirm.
+- `CancellationToken` for test interruption.
+- Download of test results.
+- Visual indicators per button (Idle, Waiting, Success, Failed).
+- Colored RichTextBox messages for visual feedback.
+- Error handling in view, presenter and service (PR #9).
 
-### Code Generator
+### Code generator
 
-- `SP_Code_Generator`: generazione file `sp_config.h` con configurazioni protocollo
-- Lista configurazioni: CAN channels, serial buffers, router, device table, logs, ecc.
+- `SP_Code_Generator`: generates `sp_config.h` with protocol configuration
+  values (CAN channels, serial buffers, router, device table, logs, …).
 
 ### GUI (Windows Forms)
 
-- Form principale con TabControl multi-pagina
-- Tab BLE Scanner con scansione dispositivi e connessione
-- Tab CAN con gestione TX/RX e stato connessione PCAN
-- Tab Bootloader (classico + smart)
-- Tab Telemetria (standard + TopLift dedicata)
-- Tab Test Pulsantiere (MVP)
-- SplashScreen all'avvio
-- Barra di stato con stato connessione PCAN
-- 10 build configurations: Debug, Release, TOPLIFT-A2-Debug/Release, EDEN-Debug/Release, EGICON-Debug/Release, STEMDM, BUTTONPANEL
-- Configurazioni device via `#if` preprocessor (TOPLIFT, EDEN, EGICON, BUTTONPANEL)
-- Titolo form dinamico per configurazione
-- Selezione canale comunicazione CAN/BLE/Serial via menu
-- Dimensione minima form impostata
-- Logger basico (`Terminal`) con StringBuilder
+- Main form with multi-page TabControl.
+- BLE Scanner tab (device scan + connect).
+- CAN tab (TX/RX, PCAN connection state).
+- Bootloader tab (classic + smart).
+- Telemetry tab (standard + dedicated TopLift).
+- Button panel test tab (MVP).
+- SplashScreen at startup.
+- Status bar with PCAN connection state.
+- 10 build configurations: Debug, Release, TOPLIFT-A2-Debug/Release,
+  EDEN-Debug/Release, EGICON-Debug/Release, STEMDM, BUTTONPANEL.
+- Device-variant configuration via `#if` preprocessor (TOPLIFT, EDEN, EGICON,
+  BUTTONPANEL).
+- Dynamic form title per configuration.
+- Communication channel selection (CAN/BLE/Serial) via menu.
+- Minimum form size set.
+- Basic logger (`Terminal`) backed by `StringBuilder`.
 
-### Utilità
+### Utilities
 
-- `CircularProgressBar`: custom control per barra progresso circolare
-- `SerialPortManager`: scansione e gestione porte seriali
-- `PCAN_Manager`: gestione hardware PCAN USB
-- `BLE_Manager`: gestione Bluetooth Low Energy (escluso da compilazione)
+- `CircularProgressBar`: custom control for a circular progress bar.
+- `SerialPortManager`: serial port scan and management.
+- `PCAN_Manager`: PCAN USB hardware management.
+- `BLE_Manager`: Bluetooth Low Energy management (excluded from compilation in
+  some configs).
 
-### Dipendenze
+### Dependencies
 
-- ClosedXML 0.105.0, DocumentFormat.OpenXml 3.5.1 (Excel)
-- OxyPlot.WindowsForms 2.2.0 (grafici)
-- Peak.PCANBasic.NET 5.0.1 (CAN)
-- Plugin.BLE 3.2.0 (Bluetooth)
-- System.IO.Ports 10.0.5 (seriale)
-- Microsoft.Extensions.DependencyInjection 10.0.5
-- Microsoft.Windows.SDK.BuildTools 10.0.28000.1721
+- ClosedXML 0.105.0, DocumentFormat.OpenXml 3.5.1 (Excel).
+- OxyPlot.WindowsForms 2.2.0 (charts).
+- Peak.PCANBasic.NET 5.0.1 (CAN).
+- Plugin.BLE 3.2.0 (Bluetooth).
+- System.IO.Ports 10.0.5 (serial).
+- Microsoft.Extensions.DependencyInjection 10.0.5.
+- Microsoft.Windows.SDK.BuildTools 10.0.28000.1721.
 
-### Note
+### Notes
 
-- Progetto monolitico: singolo `App.csproj` (ex `STEMPM.csproj`), nessuna separazione in librerie
-- `Form1.cs` è un God Object (~55k LOC con Designer) — contiene GUI + logica protocollo + telemetria
-- 0 test automatizzati
-- 0 documentazione formale (README vuoti fino a v2.15)
-- Target: `net8.0-windows10.0.19041.0`, `win-x64`
-- Autore originale: Michele Pignedoli
-- Modernizzazione iniziata da: Luca Veronelli (branch `test/copertura-iniziale`)
+- Monolithic project: a single `App.csproj` (formerly `STEMPM.csproj`), no
+  separation into libraries.
+- `Form1.cs` is a God Object (~55k LOC including the Designer file) — GUI +
+  protocol logic + telemetry mixed together.
+- 0 automated tests.
+- 0 formal documentation (READMEs empty up to v2.15).
+- Target: `net8.0-windows10.0.19041.0`, `win-x64`.
+- Original author: Michele Pignedoli.
+- Modernization started by: Luca Veronelli (branch `test/copertura-iniziale`).
 
 ---
 
-## Storico Versioni Precedenti (da commit messages)
+## Earlier version history (from commit messages)
 
-| Versione | SemVer | Milestone |
-|----------|--------|-----------|
-| 1.0 | 0.1.0 | Protocollo STEM impacchettato, sniffer completato |
-| 1.1 | 0.1.1 | Riordino per gestione risposte |
-| 1.2 | 0.1.2 | Primo bootloader funzionante |
-| 1.3 | 0.1.3 | Fix pack ID, accelerazione boot |
-| 1.4 | 0.1.4 | Aggiornamento scheda madre TopLift |
-| 1.5 | 0.1.5 | Gestione tastiere + accelerazione boot |
-| 1.6 | 0.1.6 | Risposta pacchetti funzionante |
-| 1.7 | 0.1.7 | Filtro pagina bootloader |
-| 1.8 | 0.1.8 | Barra stato connessione PCAN, dizionario variabili logiche |
-| 2.1 | 0.2.1 | Telemetria funzionante |
+| Version | SemVer | Milestone |
+|---------|--------|-----------|
+| 1.0 | 0.1.0 | STEM protocol packaged, sniffer completed |
+| 1.1 | 0.1.1 | Reorder for response handling |
+| 1.2 | 0.1.2 | First working bootloader |
+| 1.3 | 0.1.3 | Pack ID fix, faster boot |
+| 1.4 | 0.1.4 | TopLift mainboard update |
+| 1.5 | 0.1.5 | Keypad handling + faster boot |
+| 1.6 | 0.1.6 | Packet response working |
+| 1.7 | 0.1.7 | Bootloader page filter |
+| 1.8 | 0.1.8 | PCAN connection status bar, logical-variables dictionary |
+| 2.1 | 0.2.1 | Telemetry working |
 | 2.7 | 0.2.7 | BLE with/without response |
-| 2.8 | 0.2.8 | Lettura tipo firmware da file |
-| 2.10 | 0.2.10 | Semplificazione per distributori internazionali |
-| 2.11 | 0.2.11 | Versioni Complete/Spark/Eden/TopLiftA2, decodifica fault |
-| 2.14 | 0.2.14 | Seriale + CAN baudrate selezionabile (100/250 kbps) |
-| 2.15 | 0.2.15 | Fix telemetria lenta + attivazione telemetria veloce |
+| 2.8 | 0.2.8 | Read firmware type from file |
+| 2.10 | 0.2.10 | Simplification for international distributors |
+| 2.11 | 0.2.11 | Complete/Spark/Eden/TopLiftA2 variants, fault decoding |
+| 2.14 | 0.2.14 | Serial + selectable CAN baud rate (100/250 kbps) |
+| 2.15 | 0.2.15 | Slow-telemetry fix + fast-telemetry activation |
 
 ---
 
-## Storico URL versioni
+## Version URLs
 
-[Unreleased]: https://bitbucket.org/stem-fw/stem-device-manager/branches
+[Unreleased]: https://github.com/luca-veronelli-stem/stem-device-manager/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.3.0
+[0.2.15]: https://bitbucket.org/stem-fw/stem-device-manager/src/80bf9c6/
