@@ -449,6 +449,9 @@ Branch eseguito dopo merge di `phase-4-switch-to-new-stack` per tenere quella PR
 - Nessuna modifica a Core/Services/tab/Form1.
 - Eliminare `Infrastructure.Protocol/Legacy/` e aggiungere `PackageReference Stem.Communication`.
 
+**Acceptance criteria for the new NuGet** (deferred from spec-001):
+- **Connection hold ≥ 60 s idle** (issue #70). The current `Plugin.BLE`-based `BLEManager` lets the BLE link drop within ~5–10 s of idle because `MonitorDeviceConnection` is purely passive. `Stem.Communication`'s BLE adapter must keep the link alive (e.g. periodic descriptor read or connection-parameter refresh) so the operator workaround "click Start upload within ~5 s of connect" can be retired. Validation: ≥ 60 s idle hold on SPARK-UC SN 2225998 with no traffic, no spurious disconnect.
+
 **Valutazione parallela:** migrazione UI da WinForms a WPF (o altro). Questione separata, non blocca l'integrazione NuGet.
 
 ---

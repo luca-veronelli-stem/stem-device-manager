@@ -26,6 +26,10 @@ Firmware binaries live under the team-shared `Docs/Firmwares/` folder (git-ignor
 - SPARK-UC is powered, in advertising range, and not currently connected to any other host.
 - No Visual Studio instance is attached as a debugger during timed runs (it distorts the measurements).
 
+## Known constraints
+
+- **BLE idle-drop window (issue #70).** After the "Connesso al dispositivo" message appears, the BLE link drops within ~5–10 s if no traffic flows. This is a `Plugin.BLE`-on-Windows behavior — the link supervision-timeout fires because nothing keeps it alive. **Operator workaround until the `Stem.Communication` NuGet (Phase 5) lands**: click "Start upload" within ~5 s of connect. Once a firmware upload is in progress, the chunk traffic itself acts as keepalive and the link holds for the full upload, so SC-003 / SC-004 / SC-006 / SC-007 are unaffected. SC-001 / SC-002 are also unaffected (they don't rely on idle-hold).
+
 ## Runbook
 
 Each section maps one-to-one to an SC in the spec.
