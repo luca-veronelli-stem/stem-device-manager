@@ -7,10 +7,10 @@ namespace Tests.Unit.Tabs;
 
 /// <summary>
 /// Smoke test dell'injection di <see cref="DictionaryCache"/> e
-/// <see cref="ConnectionManager"/> nei 4 tab refattorizzati in Phase 4
+/// <see cref="ConnectionManager"/> nei tab refattorizzati in Phase 4
 /// (<c>refactor/phase-4-switch-to-new-stack</c>):
-/// <see cref="Boot_Interface_Tab"/>, <see cref="Boot_Smart_Tab"/>,
-/// <see cref="Telemetry_Tab"/>, <see cref="TopLiftTelemetry_Tab"/>.
+/// <see cref="Boot_Smart_Tab"/>, <see cref="Telemetry_Tab"/>,
+/// <see cref="TopLiftTelemetry_Tab"/>.
 ///
 /// <para><b>Windows-only:</b> i tab referenziano WinForms + risorse embedded nell'assembly
 /// App, quindi girano solo sul target <c>net10.0-windows</c>. Tests.csproj esclude
@@ -22,32 +22,6 @@ namespace Tests.Unit.Tabs;
 /// </summary>
 public class TabDependencyInjectionTests
 {
-    [Fact]
-    public void BootInterfaceTab_NullCache_Throws()
-    {
-        using var fixture = new Fixture();
-        var variant = DeviceVariantConfig.Create(DeviceVariant.Generic);
-        Assert.Throws<ArgumentNullException>(
-            () => new Boot_Interface_Tab(null!, fixture.Manager, variant));
-    }
-
-    [Fact]
-    public void BootInterfaceTab_NullConnMgr_Throws()
-    {
-        using var fixture = new Fixture();
-        var variant = DeviceVariantConfig.Create(DeviceVariant.Generic);
-        Assert.Throws<ArgumentNullException>(
-            () => new Boot_Interface_Tab(fixture.Cache, null!, variant));
-    }
-
-    [Fact]
-    public void BootInterfaceTab_NullVariant_Throws()
-    {
-        using var fixture = new Fixture();
-        Assert.Throws<ArgumentNullException>(
-            () => new Boot_Interface_Tab(fixture.Cache, fixture.Manager, null!));
-    }
-
     [Fact]
     public void BootSmartTab_NullCache_Throws()
     {
