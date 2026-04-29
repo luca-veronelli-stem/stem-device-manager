@@ -13,6 +13,13 @@ public class DictionaryApiProvider : IDictionaryProvider
 {
     private readonly HttpClient _http;
 
+    // Cached device + board catalog. Lives for the lifetime of this provider
+    // (registered as DI singleton, i.e. one app session). The catalog is
+    // server-side metadata and does not change during a session, so there is
+    // no invalidation API — restart the app to pick up server-side changes.
+    private readonly SemaphoreSlim _catalogLock = new(1, 1);
+    private List<(DeviceSummaryDto Device, BoardSummaryDto Board)>? _catalog;
+
     public DictionaryApiProvider(HttpClient httpClient)
     {
         ArgumentNullException.ThrowIfNull(httpClient);
@@ -22,24 +29,15 @@ public class DictionaryApiProvider : IDictionaryProvider
     public async Task<DictionaryData> LoadProtocolDataAsync(
         CancellationToken ct = default)
     {
-        // Carica tutti i device
-        var devices = await _http.GetFromJsonAsync<List<DeviceSummaryDto>>(
-            "api/devices", ct) ?? [];
+        var catalog = await GetCatalogAsync(ct).ConfigureAwait(false);
 
-        // Per ogni device, carica le board e raccogli gli indirizzi
         var addresses = new List<ProtocolAddress>();
-        foreach (var device in devices)
+        foreach (var (device, board) in catalog)
         {
-            var boards = await _http.GetFromJsonAsync<List<BoardSummaryDto>>(
-                $"api/devices/{device.Id}/boards", ct) ?? [];
-
-            foreach (var board in boards)
+            if (!string.IsNullOrWhiteSpace(board.ProtocolAddress))
             {
-                if (!string.IsNullOrWhiteSpace(board.ProtocolAddress))
-                {
-                    addresses.Add(new ProtocolAddress(
-                        device.Name, board.Name, board.ProtocolAddress));
-                }
+                addresses.Add(new ProtocolAddress(
+                    device.Name, board.Name, board.ProtocolAddress));
             }
         }
 
@@ -82,29 +80,65 @@ public class DictionaryApiProvider : IDictionaryProvider
 
     /// <summary>
     /// Cerca tra tutti i device/board quella con ProtocolAddress
-    /// corrispondente al RecipientId hex.
+    /// corrispondente al RecipientId hex. Usa il catalog cached.
     /// </summary>
     private async Task<BoardSummaryDto?> FindBoardByRecipientIdAsync(
         uint recipientId, CancellationToken ct)
     {
         var recipientHex = $"0x{recipientId:X8}";
+        var catalog = await GetCatalogAsync(ct).ConfigureAwait(false);
 
-        var devices = await _http.GetFromJsonAsync<List<DeviceSummaryDto>>(
-            "api/devices", ct) ?? [];
-
-        foreach (var device in devices)
+        foreach (var (_, board) in catalog)
         {
-            var boards = await _http.GetFromJsonAsync<List<BoardSummaryDto>>(
-                $"api/devices/{device.Id}/boards", ct) ?? [];
-
-            var match = boards.FirstOrDefault(b =>
-                string.Equals(b.ProtocolAddress, recipientHex,
-                    StringComparison.OrdinalIgnoreCase));
-
-            if (match is not null)
-                return match;
+            if (string.Equals(board.ProtocolAddress, recipientHex,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return board;
+            }
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Loads the device + board catalog once and caches it for the lifetime
+    /// of this provider. Concurrent first-time callers are serialized via a
+    /// semaphore with a double-check so the fan-out runs exactly once.
+    /// </summary>
+    private async Task<IReadOnlyList<(DeviceSummaryDto Device, BoardSummaryDto Board)>>
+        GetCatalogAsync(CancellationToken ct)
+    {
+        if (_catalog is not null) return _catalog;
+
+        await _catalogLock.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            if (_catalog is not null) return _catalog;
+
+            var devices = await _http.GetFromJsonAsync<List<DeviceSummaryDto>>(
+                "api/devices", ct).ConfigureAwait(false) ?? [];
+
+            var boardTasks = devices
+                .Select(d => _http.GetFromJsonAsync<List<BoardSummaryDto>>(
+                    $"api/devices/{d.Id}/boards", ct))
+                .ToArray();
+            var boardLists = await Task.WhenAll(boardTasks).ConfigureAwait(false);
+
+            var catalog = new List<(DeviceSummaryDto, BoardSummaryDto)>();
+            for (var i = 0; i < devices.Count; i++)
+            {
+                foreach (var board in boardLists[i] ?? [])
+                {
+                    catalog.Add((devices[i], board));
+                }
+            }
+
+            _catalog = catalog;
+            return catalog;
+        }
+        finally
+        {
+            _catalogLock.Release();
+        }
     }
 }
