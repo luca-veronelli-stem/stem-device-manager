@@ -424,6 +424,22 @@ Branch eseguito dopo merge di `phase-4-switch-to-new-stack` per tenere quella PR
 
 ---
 
+## Stabilization Gate — `spec-001-spark-ble-fw-stabilize` ✅ Completata (2026-04-29)
+
+**Obiettivo:** Validate the new post-Phase 4 stack on the SPARK-UC reference bench (SN 2225998) through 7 success criteria (SC-001..SC-007), formalize the critical state machines in Lean 4, and codify the invariants as FsCheck property tests. Closes the stabilization debt that Phase 4 left open and gates Phase 5 (`Stem.Communication`).
+
+**Esito** (full detail in [`specs/001-spark-ble-fw-stabilize/`](../specs/001-spark-ble-fw-stabilize/)):
+
+- **User stories US1..US5** closed: close/relaunch crash-free (US1), UI state truthful (US2 — `ConnectionManager.TransitionTo` mutator + C1 biconditional), BLE session-stable across HMI upload (US3), multi-file batch correctness (US4 — FR-010 precondition + #74 end-of-batch `RESTART_MACHINE` fix), HMI time budget (US5 — `Docs/PerfRegression-Spec001.md` records the regression as not reproducing on bench).
+- **Lean 4 formalization** in `Lean/Spec001/`: `BootStateMachine` (T1..T4), `BleLifecycle` (T5 state-protocol biconditional), `BatchComposition` (composition preservation theorem). `lake build` green, no `sorry`/`admit`.
+- **FsCheck property tests**: Q1/Q2/Q3/I1 (`BootStateMachinePropertyTests`), C1/C3 (`ConnectionManagerPropertyTests`), Lean ↔ C# drift guard (`LeanDriftGuardTests`).
+- **Observability (FR-009)**: structured logging scopes in `BootService` + `ConnectionManager`; discard-frame logging in `ProtocolService` (#76).
+- **Bench log**: `Docs/BenchLog-Spec001.md` chronological per-run record for SC-001..SC-007.
+
+**Phase 5 prerequisite:** suite green on both TFMs, `lake build` green, bench validation rows in `Docs/BenchLog-Spec001.md` for each SC. The stable `ICommunicationPort` contract + the now-formalized `BootStateMachine` / `BleLifecycle` mean the Phase 5 swap can be evaluated against a machine-checked spec.
+
+---
+
 ## Fase 5 — Integrazione `Stem.Communication` NuGet (quando disponibile)
 
 **Obiettivo:** Sostituire i driver in `Infrastructure.Protocol/Legacy/` con adapter `Stem.Communication`.

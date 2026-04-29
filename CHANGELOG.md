@@ -27,6 +27,16 @@ e Fase 2 (in corso) — services layer + HW adapter + rinomina a pattern Stem.
 
 ### Added
 
+- **spec-001 — Spark BLE Firmware Stabilization** (see `specs/001-spark-ble-fw-stabilize/`). Closes the post-Phase 4 stabilization debt against the SPARK-UC reference bench. Five user stories landed across PRs #41..#85:
+  - **US1 — Close/relaunch is crash-free**: structured `ShutdownAudit` (Debug-only) + event-handler unsubscription fixes in `ConnectionManager`/`BLEManager`. Bench acceptance: 0 `ObjectDisposedException` over 10 close/relaunch cycles.
+  - **US2 — UI state matches reality**: `ConnectionManager.TransitionTo` private mutator funnels every state change through a single site so the C1 biconditional (`ActiveProtocol != null ⇔ State == Connected`) holds by construction. `BlePort.StateChanged` wired into `TransitionTo(Disconnected)`. `BlePort.Dispose` now awaits driver disconnect (closes #50). FsCheck `C1_StateProtocolBiconditional` + `C3_NoUnexpectedTransitions` codify the contract.
+  - **US3 — BLE session survives a full upload**: `BootService` retry-budget audit against contract Q1/Q2/Q3/I1; transient errors retry up to `RetryBudget`, session-drop fails immediately. FsCheck property tests Q1/Q2/Q3/I1 in `BootStateMachinePropertyTests`.
+  - **US4 — Multi-file batch is all-success or abort-on-first-failure**: FR-010 empty-firmware precondition rejects batches up-front; `SparkBatchUpdateService` end-of-batch `RESTART_MACHINE` only (closes #74) — STEM firmware shuts down on restart, so the per-area restart broke areas 2..N.
+  - **US5 — HMI upload time budget (SC-004)**: bench investigation `Docs/PerfRegression-Spec001.md` recorded that the ~2× regression motivating SC-004 is no longer reproducing on `main` as of 2026-04-27. T020 root-cause fix skipped; T021 single-run guard (`Us5_Hmi_Upload_WithinV215_Budget`) is the safety net.
+  - **Lean 4 formalization** (`Lean/Spec001/`): `BootStateMachine` (T1 offset-total, T2 retry-bounded, T3 terminal stability, T4 phase preservation), `BleLifecycle` (T5 state-protocol biconditional), `BatchComposition` (succeeded → all-completed, failed → area-in-input). `lake build` green, no `sorry`/`admit`.
+  - **Lean → C# drift guard** (`LeanDriftGuardTests`): parses the `inductive Step` declarations in each Lean file and asserts the constructor list matches the hand-ported C# arrays in `BootTransitionGenerator`/`BleLifecycleTransitionGenerator`. Fails CI on any divergence.
+  - **Observability (FR-009)**: structured `ILogger.BeginScope` `{ Area, Step, Attempt, Recipient }` in `BootService` + `ConnectionManager`; one `LogInformation` per state transition, one `LogWarning` per retry. Discard-frame logging in `ProtocolService` receive path (#76 / PR #77).
+  - **Bench operations**: `Docs/BenchLog-Spec001.md` seeded for chronological per-run logging across SC-001..SC-007.
 - **REFACTOR_PLAN Fase 3 — Branch 2 `refactor/phase-3-tab-decoupling`** (in corso, secondo sub-branch di Fase 3):
   - `Services/Cache/DictionaryCache.SetCurrentRecipientId(uint)` — mutazione pura di `CurrentRecipientId` senza HTTP call né `DictionaryUpdated` event (per loop multi-board in `Boot_Smart_Tab` dove il dizionario variabili non cambia)
   - `Boot_Interface_Tab` — ctor injection di `DictionaryCache`, legge `_cache.CurrentRecipientId` invece di `Form1.FormRef.RecipientId`
