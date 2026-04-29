@@ -325,4 +325,63 @@ public class DictionaryApiProviderTests
         Assert.Single(variables);
         Assert.Equal("EdenVar", variables[0].Name);
     }
+
+    // --- Catalog caching (issue #72) ---
+
+    [Fact]
+    public async Task LoadProtocolData_CalledTwice_FetchesDevicesAndBoardsOnce()
+    {
+        var handler = CreateStandardHandler();
+        var provider = CreateProvider(handler);
+
+        var first = await provider.LoadProtocolDataAsync();
+        var second = await provider.LoadProtocolDataAsync();
+
+        Assert.Equal(1, CountListDevicesCalls(handler));
+        Assert.Equal(1, handler.GetCallCount("api/devices/1/boards"));
+        Assert.Equal(1, handler.GetCallCount("api/devices/2/boards"));
+
+        Assert.Equal(first.Addresses.Count, second.Addresses.Count);
+        Assert.Equal(first.Commands.Count, second.Commands.Count);
+    }
+
+    [Fact]
+    public async Task FindBoardByRecipientId_AfterLoadProtocolData_DoesNotRefetchCatalog()
+    {
+        var handler = CreateStandardHandler();
+        var provider = CreateProvider(handler);
+
+        await provider.LoadProtocolDataAsync();
+        var variables = await provider.LoadVariablesAsync(0x00080381);
+
+        Assert.Equal(1, CountListDevicesCalls(handler));
+        Assert.Equal(1, handler.GetCallCount("api/devices/1/boards"));
+        Assert.Equal(1, handler.GetCallCount("api/devices/2/boards"));
+        Assert.Equal(1, handler.GetCallCount("api/dictionaries/100/resolved"));
+        Assert.Equal(2, variables.Count);
+    }
+
+    [Fact]
+    public async Task Concurrent_LoadProtocolData_FetchesDevicesAndBoardsOnce()
+    {
+        var handler = CreateStandardHandler();
+        var provider = CreateProvider(handler);
+
+        var t1 = Task.Run(() => provider.LoadProtocolDataAsync());
+        var t2 = Task.Run(() => provider.LoadProtocolDataAsync());
+        await Task.WhenAll(t1, t2);
+
+        Assert.Equal(1, CountListDevicesCalls(handler));
+        Assert.Equal(1, handler.GetCallCount("api/devices/1/boards"));
+        Assert.Equal(1, handler.GetCallCount("api/devices/2/boards"));
+    }
+
+    // The bare "api/devices" substring also matches "api/devices/{id}/boards".
+    // Count only the listing endpoint by excluding URLs with a trailing path.
+    private static int CountListDevicesCalls(MockHttpMessageHandler handler)
+    {
+        var withSlash = handler.GetCallCount("api/devices/");
+        var total = handler.GetCallCount("api/devices");
+        return total - withSlash;
+    }
 }
