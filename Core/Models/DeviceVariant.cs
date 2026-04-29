@@ -4,8 +4,6 @@ namespace Core.Models;
 /// Variante del device. Rimpiazza i simboli di preprocessore
 /// <c>#if TOPLIFT/EDEN/EGICON</c> con un valore a runtime letto da
 /// <c>appsettings.json</c>.
-///
-/// Vedi <c>Specs/Phase1/DeviceVariant.lean</c> per la formalizzazione.
 /// </summary>
 public enum DeviceVariant
 {

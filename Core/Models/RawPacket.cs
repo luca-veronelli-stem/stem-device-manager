@@ -6,8 +6,6 @@ namespace Core.Models;
 /// Pacchetto raw ricevuto da una <c>ICommunicationPort</c>.
 /// Non ancora decodificato a livello applicativo (per quello vedi
 /// <see cref="AppLayerDecodedEvent"/>).
-///
-/// Vedi <c>Specs/Phase1/RawPacket.lean</c> per la formalizzazione.
 /// </summary>
 /// <param name="Payload">Byte del pacchetto. Equality strutturale garantita da <see cref="Equals(RawPacket)"/>.</param>
 /// <param name="Timestamp">Istante di ricezione.</param>

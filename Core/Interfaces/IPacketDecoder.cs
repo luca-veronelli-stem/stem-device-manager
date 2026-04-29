@@ -7,9 +7,6 @@ namespace Core.Interfaces;
 /// Non ha stato né side effect, deve essere deterministico.
 ///
 /// Implementazione concreta in Fase 2: <c>Services/Protocol/PacketDecoder</c>.
-///
-/// Formalizzazione: <c>Specs/Phase1/Interfaces.lean</c> (teorema
-/// <c>decoder_is_deterministic</c>).
 /// </summary>
 public interface IPacketDecoder
 {

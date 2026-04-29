@@ -13,8 +13,6 @@ namespace Core.Models;
 /// a one-shot read (<c>CMD_READ_VARIABLE</c> reply) lo invia in big-endian. Usare
 /// <see cref="NumericValueLittleEndian"/> o <see cref="NumericValueBigEndian"/> per
 /// decodificare secondo l'origine del campione.</para>
-///
-/// Vedi <c>Specs/Phase1/TelemetryDataPoint.lean</c> per la formalizzazione.
 /// </summary>
 /// <param name="Variable">Variabile dizionario a cui il campione si riferisce.</param>
 /// <param name="RawValue">Valore grezzo. Equality strutturale garantita da <see cref="Equals(TelemetryDataPoint)"/>.</param>

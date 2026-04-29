@@ -134,7 +134,7 @@ e Fase 2 (in corso) — services layer + HW adapter + rinomina a pattern Stem.
   - `Core/Interfaces/` — 5 nuove interfacce: `ICommunicationPort` (astrazione CAN/BLE/Serial), `IPacketDecoder` (decoder puro `RawPacket → AppLayerDecodedEvent`), `ITelemetryService`, `IBootService` (+ enum `BootState`, record `BootProgress`), `IDeviceVariantConfig`
   - `Core/Models/` — 6 nuovi modelli: `ConnectionState` (enum), `DeviceVariant` (enum), `DeviceVariantConfig` (record + factory totale `Create(DeviceVariant)`), `RawPacket`, `AppLayerDecodedEvent`, `TelemetryDataPoint`
   - `Core/Models/ImmutableArrayEquality.cs` — helper interno per equality strutturale di `ImmutableArray<byte>` (necessario perché `ImmutableArray<T>.Equals` è reference-based)
-  - `Specs/Phase1/` — 7 file Lean 4 (formalizzazione dei tipi + teoremi di correttezza della factory `DeviceVariantConfig.Create`)
+  - `Specs/Phase1/` — pianificati 7 file Lean 4 (formalizzazione dei tipi + teoremi di correttezza della factory `DeviceVariantConfig.Create`); **non committati**, superati dalla formalizzazione viva in `Lean/Spec001/` (spec-001).
   - `Tests/Unit/Core/Models/` — 6 nuovi file test (33 test): `ConnectionStateTests`, `DeviceVariantTests`, `DeviceVariantConfigTests`, `RawPacketTests`, `AppLayerDecodedEventTests`, `TelemetryDataPointTests`
   - `Docs/PREPROCESSOR_DIRECTIVES.md` — sezione "Nota Fase 1 — IDeviceVariantConfig (TODO per Fase 3)" che elenca i feature flag booleani da aggiungere in Fase 3 per eliminare i blocchi `#if`
 - `.copilot/` — Istruzioni Copilot con memoria a lungo termine, 5 agent files (CODING, TEST, DOCS, ISSUES, FORMAL)

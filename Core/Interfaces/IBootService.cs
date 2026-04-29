@@ -6,8 +6,6 @@ namespace Core.Interfaces;
 /// <see cref="BootState.Completed"/> oppure <see cref="BootState.Failed"/>.
 ///
 /// Implementazione concreta in Fase 2: <c>Services/Boot/BootService</c>.
-///
-/// Formalizzazione: <c>Specs/Phase1/Interfaces.lean</c>.
 /// </summary>
 public interface IBootService
 {

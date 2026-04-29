@@ -5,7 +5,6 @@ namespace Tests.Unit.Core.Models;
 
 /// <summary>
 /// Test per DeviceVariantConfig e la factory Create.
-/// Verifica la corrispondenza con la formalizzazione Lean in Specs/Phase1/DeviceVariantConfig.lean.
 /// </summary>
 public class DeviceVariantConfigTests
 {

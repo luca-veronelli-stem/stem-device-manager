@@ -8,7 +8,7 @@ namespace Core.Models;
 /// (vedi <c>Docs/PREPROCESSOR_DIRECTIVES.md</c> blocco #7).
 ///
 /// In Fase 1 sono esposte solo le 4 proprietà base. I feature flag booleani
-/// saranno aggiunti in Fase 3. Vedi <c>Specs/Phase1/DeviceVariantConfig.lean</c>.
+/// saranno aggiunti in Fase 3.
 /// </summary>
 /// <param name="Variant">Variante del device.</param>
 /// <param name="DefaultRecipientId">RecipientId fisso. 0 = risolvere per nome a runtime.</param>

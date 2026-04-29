@@ -41,7 +41,7 @@ Ogni branch: PR → review → squash merge in main. Non procedere alla fase suc
 
 **Obiettivo:** Estrarre interfacce e contratti nel layer Core per comunicazione e hardware.
 
-**Esito:** branch eseguito come `refactor/protocol-abstractions`. Aggiunti 5 interfacce + 6 modelli + helper di equality strutturale in `Core/`, 33 test in `Tests/Unit/Core/Models/`, 7 file Lean 4 in `Specs/Phase1/`. Build + test verdi (86 net10.0 / 138 net10.0-windows). I feature flag booleani su `IDeviceVariantConfig` sono rimandati a Fase 3 — vedi nota in `Docs/PREPROCESSOR_DIRECTIVES.md`.
+**Esito:** branch eseguito come `refactor/protocol-abstractions`. Aggiunti 5 interfacce + 6 modelli + helper di equality strutturale in `Core/`, 33 test in `Tests/Unit/Core/Models/`. La formalizzazione Lean 4 di `Specs/Phase1/` (7 file) era prevista ma **non è mai stata committata**; la formalizzazione viva è ora in `Lean/Spec001/` (spec-001 — boot/BLE/batch state machines + preservation theorems). Build + test verdi (86 net10.0 / 138 net10.0-windows). I feature flag booleani su `IDeviceVariantConfig` sono rimandati a Fase 3 — vedi nota in `Docs/PREPROCESSOR_DIRECTIVES.md`.
 
 ### 1.1 Interfacce Core
 
