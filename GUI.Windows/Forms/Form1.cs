@@ -25,6 +25,7 @@ namespace StemPC
         // propaga ConnectionStatusChanged al port.
         private readonly SerialPortManager _serialPortManager;
         private readonly BLEManager _bleManager;
+        private readonly ILogger<Form1> _logger;
 
         public const string Software_Version = "2.15";
 
@@ -100,6 +101,7 @@ namespace StemPC
             _variantConfig = serviceProvider.GetRequiredService<IDeviceVariantConfig>();
             _serialPortManager = serviceProvider.GetRequiredService<SerialPortManager>();
             _bleManager = serviceProvider.GetRequiredService<BLEManager>();
+            _logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Form1>();
 
             // Canale hardware di default dalla variante.
             CurrentChannel = _variantConfig.DefaultChannel;
@@ -139,7 +141,9 @@ namespace StemPC
             //crea e aggiungi il ble manager. Il tab riceve la stessa istanza BLEManager
             //registrata in DI come IBleDriver del BlePort: scan+connect sul tab → BlePort
             //vede ConnectionStatusChanged → port Connected → SendAsync funziona.
-            BLETabRef = new BLEInterfaceTab(_bleManager, _connMgr);
+            BLETabRef = new BLEInterfaceTab(
+                _bleManager, _connMgr,
+                _serviceProvider.GetService<ILoggerFactory>());
             tabControl.TabPages.Add(BLETabRef);
 
             // Sottoscrivi log driver BLE al terminale UI + errori driver BLE/Serial al MessageBox.
@@ -454,6 +458,7 @@ namespace StemPC
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "SendPS_Async failed.");
                 ShowDriverError("Errore invio",
                     $"Invio fallito ({ex.GetType().Name}): {ex.Message}");
             }
@@ -735,6 +740,7 @@ namespace StemPC
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "SwitchChannelAsync failed for channel {Channel}.", kind);
                 MessageBox.Show($"Switch canale fallito: {ex.Message}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }

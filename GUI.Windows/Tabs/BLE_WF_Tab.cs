@@ -3,6 +3,8 @@ using GUI.Windows;
 
 using GUI.Windows.Properties;
 using Infrastructure.Protocol.Legacy;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Services.Cache;
 
 public partial class BLEInterfaceTab : TabPage
@@ -23,13 +25,19 @@ public partial class BLEInterfaceTab : TabPage
     // C3 source into ConnectionState.Connected. Without this the manager stays at
     // Disconnected / ActiveProtocol=null after a reconnect post-drop (spec-001 #55).
     private readonly ConnectionManager _connMgr;
+    private readonly ILogger<BLEInterfaceTab> _logger;
 
-    public BLEInterfaceTab(BLEManager bleManager, ConnectionManager connMgr)
+    public BLEInterfaceTab(
+        BLEManager bleManager,
+        ConnectionManager connMgr,
+        ILoggerFactory? loggerFactory = null)
     {
         ArgumentNullException.ThrowIfNull(bleManager);
         ArgumentNullException.ThrowIfNull(connMgr);
         this.bleManager = bleManager;
         _connMgr = connMgr;
+        _logger = (loggerFactory ?? NullLoggerFactory.Instance)
+            .CreateLogger<BLEInterfaceTab>();
         InitializeComponent();
     }
 
@@ -153,6 +161,9 @@ public partial class BLEInterfaceTab : TabPage
                 }
                 catch (Exception ex)
                 {
+                    _logger.LogError(ex,
+                        "SwitchToAsync(Ble) failed after connecting to {DeviceName}.",
+                        deviceName);
                     MessageBox.Show(
                         $"Switch canale fallito: {ex.Message}",
                         "Errore",

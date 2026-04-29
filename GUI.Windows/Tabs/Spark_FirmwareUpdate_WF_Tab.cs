@@ -14,6 +14,7 @@ public sealed class Spark_FirmwareUpdate_WF_Tab : TabPage
 {
     private readonly ConnectionManager _connMgr;
     private readonly ILoggerFactory _loggerFactory;
+    private readonly ILogger<Spark_FirmwareUpdate_WF_Tab> _logger;
     private readonly Dictionary<SparkFirmwareArea, AreaRow> _rows = new();
     private Button _btnUpdate = null!;
     private Label _lblStatus = null!;
@@ -26,6 +27,7 @@ public sealed class Spark_FirmwareUpdate_WF_Tab : TabPage
         ArgumentNullException.ThrowIfNull(connMgr);
         _connMgr = connMgr;
         _loggerFactory = loggerFactory ?? NullLoggerFactory.Instance;
+        _logger = _loggerFactory.CreateLogger<Spark_FirmwareUpdate_WF_Tab>();
 
         Name = "tabPageSparkFirmware";
         Text = "SPARK Firmware Update";
@@ -269,6 +271,7 @@ public sealed class Spark_FirmwareUpdate_WF_Tab : TabPage
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Unexpected error during SPARK firmware update.");
             SetStatus("Unexpected error.");
             MessageBox.Show(
                 $"Unexpected error during firmware update:\n\n{ex.Message}",

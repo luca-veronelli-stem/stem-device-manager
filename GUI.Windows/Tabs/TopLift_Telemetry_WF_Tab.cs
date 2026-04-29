@@ -833,7 +833,7 @@ public class TopLiftTelemetry_Tab : TabPage
                 MessageBox.Show("Parameters saved succesfully:\n" + sfd.FileName,
                                 "Save Parameters", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
                 MessageBox.Show("Errore in saving parameters:\n" + ex.Message,
                                 "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -884,7 +884,7 @@ public class TopLiftTelemetry_Tab : TabPage
                 MessageBox.Show("Parameters loaded succesfully from:\n" + ofd.FileName,
                                 "Load Parameters", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
                 MessageBox.Show("Error loading parameters:\n" + ex.Message,
                                 "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
