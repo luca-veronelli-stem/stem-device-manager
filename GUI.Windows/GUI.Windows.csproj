@@ -83,10 +83,27 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
+	<None Update="Properties\Settings.settings">
+	  <Generator>SettingsSingleFileGenerator</Generator>
+	  <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+	</None>
   </ItemGroup>
+
+  <!-- File da includere nella cartella di publish -->
+  <ItemGroup>
+	<None Include="..\Docs\SHIPPED_README.txt">
+	  <Link>README.txt</Link>
+	  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+	</None>
+  </ItemGroup>
+
+  <!-- Copia e rinomina README durante build/publish -->
+  <Target Name="CopyReadmeToOutput" AfterTargets="Build">
+	<Copy SourceFiles="..\Docs\SHIPPED_README.txt" DestinationFiles="$(OutputPath)README.txt" />
+  </Target>
+
+  <Target Name="CopyReadmeToPublish" AfterTargets="Publish">
+	<Copy SourceFiles="..\Docs\SHIPPED_README.txt" DestinationFiles="$(PublishDir)README.txt" />
+  </Target>
 
 </Project>

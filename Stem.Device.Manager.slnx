@@ -1,23 +1,9 @@
 <Solution>
-  <Configurations>
-    <BuildType Name="Debug" />
-    <BuildType Name="Release" />
-  </Configurations>
-  <Folder Name="/.copilot/">
-    <File Path=".copilot/copilot-instructions.md" />
-    <File Path=".copilot/sample-instructions.md" />
-  </Folder>
-  <Folder Name="/.copilot/agents/">
-    <File Path=".copilot/agents/coding-agent.md" />
-    <File Path=".copilot/agents/docs-agent.md" />
-    <File Path=".copilot/agents/formal-spec-agent.md" />
-    <File Path=".copilot/agents/issues-agent.md" />
-    <File Path=".copilot/agents/test-agent.md" />
-  </Folder>
   <Folder Name="/Docs/">
     <File Path="Docs/PREPROCESSOR_DIRECTIVES.md" />
     <File Path="Docs/PROTOCOL.md" />
     <File Path="Docs/REFACTOR_PLAN.md" />
+    <File Path="Docs/SHIPPED_README.txt" />
   </Folder>
   <Folder Name="/Docs/Standards/">
     <File Path="Docs/Standards/TEMPLATE_STANDARD.md" />
@@ -37,8 +23,8 @@
     <File Path="LICENSE" />
     <File Path="README.md" />
   </Folder>
-  <Project Path="GUI.Windows/GUI.Windows.csproj" />
   <Project Path="Core/Core.csproj" Id="3557f077-7abe-4f0b-a393-bfdca9acdf43" />
+  <Project Path="GUI.Windows/GUI.Windows.csproj" />
   <Project Path="Infrastructure.Persistence/Infrastructure.Persistence.csproj" Id="ef04ae12-ec87-4b4f-ba6a-206b085d18ba" />
   <Project Path="Infrastructure.Protocol/Infrastructure.Protocol.csproj" />
   <Project Path="Services/Services.csproj" Id="33cf0a23-a550-487b-a737-7c4c1c4e2d78" />
