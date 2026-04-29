@@ -8,18 +8,22 @@ using Services;
 /// <summary>
 ///*****************************************************************************
 /// @file    Program.cs
-/// @author  Michele Pignedoli
-///@version  2.15
+/// @author  Michele Pignedoli, Luca Veronelli
+///@version  0.3.0
 /// @date    20/10/2025
 /// @brief   STEM Device Manager Main program body
 ///*****************************************************************************
 ///
-/// 2.10: + TopLift A2 and Eden XP activation
-/// 2.11: + Read firmware version activation for mainboard
-/// 2.14: + CAN baud rate variable
-///       + uart suport
-/// 2.15: + Fix telemetria lenta
-///       + attivazione telemetria veloce
+/// 2.10:  + TopLift A2 and Eden XP activation
+/// 2.11:  + Read firmware version activation for mainboard
+/// 2.14:  + CAN baud rate variable
+///        + uart support
+/// 2.15:  + Slow telemetry fix
+///        + fast telemetry activation
+/// 0.3.0: + SemVer reset, multi-project architecture, Azure dictionary API,
+///          ProtocolService/TelemetryService/BootService, ConnectionManager,
+///          DictionaryCache, removal of #if device variants (runtime selection),
+///          Spark BLE firmware stabilization (spec-001), Lean 4 invariants.
 ///
 /// TODO:
 /// - Completare decodifica faults
