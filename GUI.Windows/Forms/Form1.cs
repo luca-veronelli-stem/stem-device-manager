@@ -83,7 +83,6 @@ namespace StemPC
         //******************************
         //  public Elements instances
         //******************************
-        public Boot_Interface_Tab BootTabRef { get; private set; }
         public Boot_Smart_Tab BootSmartTabRef { get; private set; }
         public Telemetry_Tab TelemetryTabRef { get; private set; }
         public BLEInterfaceTab BLETabRef { get; private set; }
@@ -151,18 +150,6 @@ namespace StemPC
             // Sottoscrizioni forward da ConnectionManager: stato connessione per canale + app layer decodificato.
             _connMgr.StateChanged += OnConnectionStateChanged;
             _connMgr.AppLayerDecoded += OnAppLayerDecodedFromConnMgr;
-
-            //crea e aggiungi il bootloader manager
-            BootTabRef = new Boot_Interface_Tab(_dictionaryCache, _connMgr, _variantConfig);
-
-            // Il tab bootloader classico appare solo su varianti non-TOPLIFT e non-EDEN
-            // (blocco #3 in PREPROCESSOR_DIRECTIVES.md): TOPLIFT e EDEN usano il solo
-            // bootloader smart; per Egicon e Generic il classico rimane visibile.
-            if (_variantConfig.Variant != DeviceVariant.TopLift
-                && _variantConfig.Variant != DeviceVariant.Eden)
-            {
-                tabControl.TabPages.Add(BootTabRef);
-            }
 
             //crea e aggiungi il bootloader manager smart
             BootSmartTabRef = new Boot_Smart_Tab(_dictionaryCache, _connMgr);

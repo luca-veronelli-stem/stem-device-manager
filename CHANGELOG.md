@@ -189,6 +189,7 @@ e Fase 2 (in corso) — services layer + HW adapter + rinomina a pattern Stem.
 
 ### Removed
 
+- **Removed**: legacy `Boot_Interface_Tab` (`Boot_WF_Tab.cs`) and its 3 null-arg DI tests; `Spark_FirmwareUpdate_WF_Tab` is the canonical bootloader UI. Closes #78, closes #57.
 - Configurazione `STEMDM` — mai usata, nessun `#if STEMDM` nel codice
 - **Configurazione build `BUTTONPANEL`** — Funzionalità test pulsantiere rimossa interamente
 - **Modulo ButtonPanel completo** — Rimozione in 6 fasi:

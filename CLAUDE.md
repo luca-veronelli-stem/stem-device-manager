@@ -70,7 +70,7 @@ Dependencies: `App → {Infrastructure.Persistence, Infrastructure.Protocol, Ser
 
 **GUI.Windows/Forms/Form1.cs** — WinForms shell (731 LOC post-Phase 4). Uses `IServiceProvider` to obtain `DictionaryCache`, `ConnectionManager`, `IDeviceVariantConfig`. `SendPS_Async` sends via `ConnectionManager.ActiveProtocol`; RX handler subscribed to `ConnectionManager.AppLayerDecoded`. Channel menu → `SwitchToAsync`.
 
-**GUI.Windows/*_WF_Tab.cs** — WinForms tabs (`Boot_Interface_Tab`, `Boot_Smart_Tab`, `Telemetry_Tab`, `TopLiftTelemetry_Tab`, `BLEInterfaceTab`). Constructor DI of `DictionaryCache` + `ConnectionManager`. Tabs consume `_connMgr.CurrentBoot`/`CurrentTelemetry` and subscribe to the forwarded events.
+**GUI.Windows/*_WF_Tab.cs** — WinForms tabs (`Boot_Smart_Tab`, `Telemetry_Tab`, `TopLiftTelemetry_Tab`, `BLEInterfaceTab`, `Spark_FirmwareUpdate_WF_Tab`). Constructor DI of `DictionaryCache` + `ConnectionManager`. Tabs consume `_connMgr.CurrentBoot`/`CurrentTelemetry` and subscribe to the forwarded events.
 
 ### Dual TFM test strategy
 
