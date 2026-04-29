@@ -282,7 +282,9 @@ public class PCANManager : IPcanDriver
         }
         catch (Exception ex)
         {
-            throw new Exception($"Errore durante l'invio del pacchetto {canMessage.DATA}: {ex.Message}");
+            throw new IOException(
+                $"Failed to write CAN frame (ID 0x{canMessage.ID:X}, {canMessage.LEN} bytes).",
+                ex);
         }
         return result;
     }
