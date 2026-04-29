@@ -8,8 +8,6 @@ namespace Core.Interfaces;
 ///
 /// In Fase 1 espone solo le proprietà base. In Fase 3 saranno aggiunti
 /// feature flag booleani — vedi <c>Docs/PREPROCESSOR_DIRECTIVES.md</c>.
-///
-/// Formalizzazione: <c>Specs/Phase1/Interfaces.lean</c>.
 /// </summary>
 public interface IDeviceVariantConfig
 {

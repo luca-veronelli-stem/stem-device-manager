@@ -19,8 +19,6 @@ namespace Core.Interfaces;
 /// <item><see cref="PacketReceived"/>: emesso per ogni pacchetto ricevuto.</item>
 /// <item><see cref="StateChanged"/>: emesso a ogni transizione di stato.</item>
 /// </list>
-///
-/// Formalizzazione: <c>Specs/Phase1/Interfaces.lean</c>.
 /// </summary>
 public interface ICommunicationPort : IDisposable
 {

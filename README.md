@@ -153,7 +153,7 @@ Stem.Device.Manager/
 - [Piano di refactoring architetturale](./Docs/REFACTOR_PLAN.md)
 - [Protocollo STEM — funzionamento interno](./Docs/PROTOCOL.md)
 - [Direttive preprocessore (#if)](./Docs/PREPROCESSOR_DIRECTIVES.md)
-- [Specs/Phase1 — formalizzazioni Lean 4](./Specs/Phase1/README.md)
+- [Lean/Spec001 — formalizzazioni Lean 4](./Lean/Spec001/)
 - [CHANGELOG](./CHANGELOG.md)
 - [LICENSE](./LICENSE)
 

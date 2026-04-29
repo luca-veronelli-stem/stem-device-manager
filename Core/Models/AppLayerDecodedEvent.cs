@@ -6,8 +6,6 @@ namespace Core.Models;
 /// Evento applicativo decodificato, emesso da <c>IPacketDecoder</c>.
 /// Contiene il comando, la variabile opzionale, il payload raw e
 /// l'identità del mittente.
-///
-/// Vedi <c>Specs/Phase1/AppLayerDecodedEvent.lean</c> per la formalizzazione.
 /// </summary>
 /// <param name="Command">Comando decodificato dal pacchetto.</param>
 /// <param name="Variable">Variabile associata (solo per comandi di read/write variabile). Null negli altri casi.</param>

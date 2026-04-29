@@ -122,17 +122,11 @@ var packet = new RawPacket(
 
 ## Formalizzazioni Lean 4
 
-I tipi introdotti in Fase 1 sono formalizzati in [`Specs/Phase1/`](../Specs/Phase1/README.md) (Lean 4):
-
-| File Lean | Corrispettivo C# |
-|-----------|------------------|
-| `ConnectionState.lean` | `Models/ConnectionState.cs` |
-| `DeviceVariant.lean` | `Models/DeviceVariant.cs` |
-| `DeviceVariantConfig.lean` | `Models/DeviceVariantConfig.cs` |
-| `RawPacket.lean` | `Models/RawPacket.cs` |
-| `AppLayerDecodedEvent.lean` | `Models/AppLayerDecodedEvent.cs` |
-| `TelemetryDataPoint.lean` | `Models/TelemetryDataPoint.cs` |
-| `Interfaces.lean` | `Interfaces/*.cs` |
+The Phase 1 Lean files were never committed; the live formalization lives under
+[`Lean/Spec001/`](../Lean/Spec001/) (spec-001 — Spark BLE Firmware Stabilization)
+and covers the boot state machine, BLE lifecycle, and batch composition with
+preservation theorems. See `specs/001-spark-ble-fw-stabilize/data-model.md` for
+the entity → Lean type mapping.
 
 ---
 
@@ -147,6 +141,6 @@ I tipi introdotti in Fase 1 sono formalizzati in [`Specs/Phase1/`](../Specs/Phas
 - [README Soluzione](../README.md)
 - [Infrastructure.Persistence](../Infrastructure.Persistence/README.md)
 - [Tests](../Tests/README.md)
-- [Specs/Phase1](../Specs/Phase1/README.md)
+- [Lean/Spec001 — Lean 4 formalizations](../Lean/Spec001/)
 - [REFACTOR_PLAN](../Docs/REFACTOR_PLAN.md)
 - [PREPROCESSOR_DIRECTIVES](../Docs/PREPROCESSOR_DIRECTIVES.md)

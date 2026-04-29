@@ -7,8 +7,6 @@ namespace Core.Interfaces;
 /// e l'emissione di <see cref="TelemetryDataPoint"/>.
 ///
 /// Implementazione concreta in Fase 2: <c>Services/Telemetry/TelemetryService</c>.
-///
-/// Formalizzazione: <c>Specs/Phase1/Interfaces.lean</c>.
 /// </summary>
 public interface ITelemetryService
 {
