@@ -191,7 +191,9 @@ public sealed class TelemetryService : ITelemetryService, IDisposable
         uint sourceAddr;
         lock (_stateLock)
         {
-            if (!_isRunning) return;
+            // No _isRunning short-circuit on purpose (issue #104): a fresh
+            // instance built after BLE reconnect has _isRunning = false but
+            // the device may still be streaming. Send the stop unconditionally.
             _isRunning = false;
             sourceAddr = _sourceRecipientId;
         }

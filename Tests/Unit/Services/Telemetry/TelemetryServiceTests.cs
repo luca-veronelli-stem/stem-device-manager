@@ -128,14 +128,19 @@ public class TelemetryServiceTests
     }
 
     [Fact]
-    public async Task StopTelemetryAsync_WhenStopped_NoOp()
+    public async Task StopTelemetryAsync_WhenNotRunning_StillSendsStop()
     {
+        // Issue #104: after a BLE reconnect ConnectionManager builds a fresh
+        // TelemetryService with _isRunning = false, but the device may still
+        // be streaming. Stop must reach the device regardless of local state.
         using var fixture = new Fixture();
+        fixture.Service.UpdateSourceAddress(SourceRecipientId);
 
         await fixture.Service.StopTelemetryAsync();
 
         Assert.False(fixture.Service.IsRunning);
-        Assert.Empty(fixture.Port.SentPayloads);
+        Assert.Single(fixture.Port.SentPayloads);
+        AssertCommandIs(fixture.Port.SentPayloads[0], cmdHi: 0x00, cmdLo: 0x17);
     }
 
     [Fact]
