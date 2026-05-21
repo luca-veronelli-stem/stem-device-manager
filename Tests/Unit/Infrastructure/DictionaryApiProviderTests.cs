@@ -181,8 +181,12 @@ public class DictionaryApiProviderTests
     [InlineData("UInt8", "uint8_t")]
     [InlineData("UInt16", "uint16_t")]
     [InlineData("UInt32", "uint32_t")]
+    [InlineData("Int8", "int8_t")]
+    [InlineData("Int16", "int16_t")]
+    [InlineData("Int32", "int32_t")]
     [InlineData("uint8", "uint8_t")]   // case-insensitive future-proofing
     [InlineData("UINT16", "uint16_t")]
+    [InlineData("INT16", "int16_t")]
     public async Task LoadVariablesAsync_NormalizesApiDataTypeToCStyle(
         string apiDataType, string expectedCStyle)
     {
