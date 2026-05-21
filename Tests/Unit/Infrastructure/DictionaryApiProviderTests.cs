@@ -170,7 +170,58 @@ public class DictionaryApiProviderTests
         Assert.Equal("Firmware macchina", variables[0].Name);
         Assert.Equal("00", variables[0].AddressHigh);
         Assert.Equal("00", variables[0].AddressLow);
-        Assert.Equal("UInt16", variables[0].DataType);
+        // Issue #96: API emits .NET-style "UInt16"; we normalize to the
+        // C-style name TelemetryService.DataTypeWidth recognizes.
+        Assert.Equal("uint16_t", variables[0].DataType);
+    }
+
+    // --- Issue #96: DataType normalization ---
+
+    [Theory]
+    [InlineData("UInt8", "uint8_t")]
+    [InlineData("UInt16", "uint16_t")]
+    [InlineData("UInt32", "uint32_t")]
+    [InlineData("uint8", "uint8_t")]   // case-insensitive future-proofing
+    [InlineData("UINT16", "uint16_t")]
+    public async Task LoadVariablesAsync_NormalizesApiDataTypeToCStyle(
+        string apiDataType, string expectedCStyle)
+    {
+        var handler = new MockHttpMessageHandler();
+        handler.SetJsonResponse("api/devices",
+            """[{"id":1,"name":"Dev","machineCode":1}]""");
+        handler.SetJsonResponse("api/devices/1/boards",
+            """[{"id":10,"name":"Board","isPrimary":true,"firmwareType":1,"boardNumber":1,"protocolAddress":"0x00080381","dictionaryId":50}]""");
+        handler.SetJsonResponse("api/dictionaries/50/resolved",
+            $$"""{"id":50,"name":"T","variables":[{"name":"V","addressHigh":0,"addressLow":0,"dataType":"{{apiDataType}}","isStandard":false}]}""");
+        var provider = CreateProvider(handler);
+
+        var variables = await provider.LoadVariablesAsync(0x00080381);
+
+        Assert.Single(variables);
+        Assert.Equal(expectedCStyle, variables[0].DataType);
+    }
+
+    [Theory]
+    [InlineData("Bitmapped[2]")]    // legacy gap, see investigation doc
+    [InlineData("Bool")]
+    [InlineData("")]
+    [InlineData("custom_type")]
+    public async Task LoadVariablesAsync_UnknownDataType_PassesThroughUnchanged(
+        string apiDataType)
+    {
+        var handler = new MockHttpMessageHandler();
+        handler.SetJsonResponse("api/devices",
+            """[{"id":1,"name":"Dev","machineCode":1}]""");
+        handler.SetJsonResponse("api/devices/1/boards",
+            """[{"id":10,"name":"Board","isPrimary":true,"firmwareType":1,"boardNumber":1,"protocolAddress":"0x00080381","dictionaryId":50}]""");
+        handler.SetJsonResponse("api/dictionaries/50/resolved",
+            $$"""{"id":50,"name":"T","variables":[{"name":"V","addressHigh":0,"addressLow":0,"dataType":"{{apiDataType}}","isStandard":false}]}""");
+        var provider = CreateProvider(handler);
+
+        var variables = await provider.LoadVariablesAsync(0x00080381);
+
+        Assert.Single(variables);
+        Assert.Equal(apiDataType, variables[0].DataType);
     }
 
     [Fact]
