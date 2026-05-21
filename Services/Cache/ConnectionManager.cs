@@ -235,7 +235,9 @@ public sealed class ConnectionManager : IDisposable
                 isSessionAlive: () => ReferenceEquals(ActiveProtocol, capturedProtocol),
                 logger: _loggerFactory.CreateLogger<BootService>());
             newBoot.ProgressChanged += OnActiveBootProgress;
-            var newTelemetry = new TelemetryService(newProtocol);
+            var newTelemetry = new TelemetryService(
+                newProtocol,
+                logger: _loggerFactory.CreateLogger<TelemetryService>());
             newTelemetry.DataReceived += OnActiveTelemetryData;
 
             bool channelChanged;

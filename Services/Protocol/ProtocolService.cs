@@ -200,7 +200,21 @@ public sealed class ProtocolService : IProtocolService
         if (merged is null) return;
         var applicationPacket = new RawPacket(merged.ToImmutableArray(), raw.Timestamp);
         var evt = _decoder.Decode(applicationPacket);
-        if (evt is not null) AppLayerDecoded?.Invoke(this, evt);
+        if (evt is not null)
+        {
+            AppLayerDecoded?.Invoke(this, evt);
+            return;
+        }
+        // Decoder rejected the frame. Reproduce its null-return conditions so the log
+        // distinguishes "too short for the TP+AL header" from "command code not in the
+        // dictionary" — the latter is how a missing reply-code registration surfaces
+        // (e.g. an API/Excel parity gap silently dropping the device's reply).
+        string reason = merged.Length < PacketDecoder.MinPayloadLength
+            ? $"length({merged.Length}) < {PacketDecoder.MinPayloadLength}"
+            : $"unknown-cmd(0x{merged[PacketDecoder.CommandHighIndex]:X2}{merged[PacketDecoder.CommandLowIndex]:X2})";
+        _logger.LogWarning(
+            "Decoder dropped {Channel} frame: {Reason} len={Len}",
+            _port.Kind, reason, merged.Length);
     }
 
     /// <summary>

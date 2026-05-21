@@ -33,13 +33,11 @@ using Services;
 /// <h2><center>&copy; COPYRIGHT 2025 STEM </center></h2>
 ///
 /// </summary>
+using GUI.Windows.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using StemPC;
 using STEMPM;
-#if DEBUG
-using GUI.Windows.Diagnostics;
-#endif
 
 namespace GUI.Windows
 {
@@ -61,10 +59,18 @@ namespace GUI.Windows
             // Configurazione della dependency injection
             var services = new ServiceCollection();
 
-            // Logging: Debug sink (visible in Output window when running under VS)
-            // is enough for now; a file/event sink can be added later if bring-up
-            // sessions need persistent logs.
-            services.AddLogging(b => b.AddDebug().SetMinimumLevel(LogLevel.Debug));
+            // Logging: Debug sink (visible in Output window when running under VS) +
+            // per-process file sink under logs/ so bench sessions and post-mortems can
+            // tail/inspect what happened without a debugger attached.
+            var logPath = Path.Combine(
+                AppContext.BaseDirectory,
+                "logs",
+                $"app-{DateTime.Now:yyyyMMdd-HHmmss}.log");
+            var fileLoggerProvider = new FileLoggerProvider(logPath);
+            services.AddLogging(b => b
+                .AddDebug()
+                .AddProvider(fileLoggerProvider)
+                .SetMinimumLevel(LogLevel.Debug));
 
             // Provider dizionari (API Azure con fallback Excel, o solo Excel)
             services.AddDictionaryProvider(configuration);
@@ -143,6 +149,9 @@ namespace GUI.Windows
 #if DEBUG
                 serviceProvider.Dispose();
 #endif
+                // AddProvider(instance) does not transfer ownership to the DI container,
+                // so the file logger must be disposed explicitly to flush + close.
+                fileLoggerProvider.Dispose();
             }
         }
     }

@@ -26,11 +26,11 @@ namespace Services.Protocol;
 /// </summary>
 public sealed class PacketDecoder : IPacketDecoder
 {
-    private const int MinPayloadLength = 9;
+    internal const int MinPayloadLength = 9;
     private const int CrcTailLength = 2;
     private const int ApplicationPayloadStart = 9;
-    private const int CommandHighIndex = 7;
-    private const int CommandLowIndex = 8;
+    internal const int CommandHighIndex = 7;
+    internal const int CommandLowIndex = 8;
     private const int VariableHighIndex = 9;
     private const int VariableLowIndex = 10;
 
