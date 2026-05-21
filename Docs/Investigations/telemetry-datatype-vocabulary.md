@@ -2,7 +2,7 @@
 
 **Tracking issue:** [#96](https://github.com/luca-veronelli-stem/stem-device-manager/issues/96)
 **Started:** 2026-05-21
-**Status:** **Confirmed by 2026-05-21 bench run.** `TelemetryService.LogWarning` on `width == 0` (landed in [#101](https://github.com/luca-veronelli-stem/stem-device-manager/pull/101)) fired continuously for fast-stream variables with `dataType` ∈ {`UInt8`, `UInt16`, `UInt32`}, matching the hypothesis exactly. Awaiting normalization-approach decision.
+**Status:** **Resolved.** Normalization landed at the API boundary in `DictionaryApiProvider` (option 1 of the three sketched below): `UInt8`/`UInt16`/`UInt32` are mapped to the C-style names `TelemetryService.DataTypeWidth` recognizes, with passthrough for anything else. `Bitmapped[2]` and `due word uint16_t bitmapped` remain a legacy gap — the previous Excel-backed path didn't handle them either, and they continue to surface via the `LogWarning` added in [#101](https://github.com/luca-veronelli-stem/stem-device-manager/pull/101). The bench-confirmed reproduction is preserved below for posterity.
 
 ---
 
@@ -81,3 +81,4 @@ v2.15 (`80bf9c6`) read variables only from the Excel via `ExcelHandler`, which r
 |---|---|
 | 2026-05-21 | Filed [#96](https://github.com/luca-veronelli-stem/stem-device-manager/issues/96); initial findings from code reading + API/Excel diff. |
 | 2026-05-21 | Bench-confirmed on Optimus-XP/Madre. `TelemetryService.LogWarning` (added in [#101](https://github.com/luca-veronelli-stem/stem-device-manager/pull/101)) fired continuously for `UInt8`/`UInt16`/`UInt32`. Status moved from hypothesis to confirmed. |
+| 2026-05-21 | Fixed at the API boundary in `DictionaryApiProvider.NormalizeDataType` (option 1). xUnit coverage in `DictionaryApiProviderTests` (theory + passthrough cases). `Bitmapped[2]` left unhandled — matches legacy behaviour. |
