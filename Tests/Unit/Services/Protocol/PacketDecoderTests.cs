@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Core.Models;
+using Microsoft.Extensions.Logging;
 using Services.Protocol;
 
 namespace Tests.Unit.Services.Protocol;
@@ -34,12 +35,45 @@ public class PacketDecoderTests
     }
 
     [Fact]
-    public void Decode_ComandoSconosciuto_ReturnsNull()
+    public void Decode_UnknownFireSideCommand_ReturnsNullWithoutLogging()
     {
-        var decoder = new PacketDecoder([ReadVariable], [], []);
-        var packet = MakePacket(cmdHigh: 0xAA, cmdLow: 0xBB);
+        // Fire-side codes (high bit clear) are still rejected. Accepting them
+        // would mask legitimately corrupt frames — only reply-shaped unknowns
+        // (high bit set) get a synthesized placeholder. See #100.
+        var logger = new RecordingLogger<PacketDecoder>();
+        var decoder = new PacketDecoder([ReadVariable], [], [], logger);
+        var packet = MakePacket(cmdHigh: 0x00, cmdLow: 0x2B);
 
         Assert.Null(decoder.Decode(packet));
+        Assert.Empty(logger.Entries);
+    }
+
+    [Fact]
+    public void Decode_UnknownReplyCommand_SynthesizesPlaceholderAndLogsWarning()
+    {
+        // Bench instance 2026-05-21: BLE reply 0x802B from Optimus-XP/Madre
+        // (sender 0x000A0441) was silently dropped because 0x802B is not registered
+        // in the Azure dictionary. The consumer-side fix synthesizes a placeholder
+        // command so the event still fires, and logs a warning for bench visibility.
+        var logger = new RecordingLogger<PacketDecoder>();
+        var decoder = new PacketDecoder([], [], [], logger);
+        var packet = MakePacket(
+            senderId: 0x000A0441u,
+            cmdHigh: 0x80,
+            cmdLow: 0x2B);
+
+        var evt = decoder.Decode(packet);
+
+        Assert.NotNull(evt);
+        Assert.Equal("Unknown reply 0x802B", evt.Command.Name);
+        Assert.Equal("80", evt.Command.CodeHigh);
+        Assert.Equal("2B", evt.Command.CodeLow);
+
+        var entry = Assert.Single(logger.Entries);
+        Assert.Equal(LogLevel.Warning, entry.Level);
+        Assert.Equal((byte)0x80, entry.State["High"]);
+        Assert.Equal((byte)0x2B, entry.State["Low"]);
+        Assert.Equal(0x000A0441u, entry.State["SenderId"]);
     }
 
     [Fact]
@@ -382,5 +416,38 @@ public class PacketDecoderTests
         builder.Add(0xCC); // crc byte 1
         builder.Add(0xCD); // crc byte 2
         return builder.ToImmutable();
+    }
+
+    private sealed class RecordingLogger<T> : ILogger<T>
+    {
+        public List<LogEntry> Entries { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+            var props = new Dictionary<string, object?>();
+            if (state is IReadOnlyList<KeyValuePair<string, object?>> kv)
+            {
+                foreach (var pair in kv)
+                {
+                    props[pair.Key] = pair.Value;
+                }
+            }
+            Entries.Add(new LogEntry(logLevel, formatter(state, exception), props, exception));
+        }
+
+        public sealed record LogEntry(
+            LogLevel Level,
+            string Message,
+            IReadOnlyDictionary<string, object?> State,
+            Exception? Exception);
     }
 }

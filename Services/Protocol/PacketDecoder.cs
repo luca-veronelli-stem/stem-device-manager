@@ -1,6 +1,8 @@
 using System.Collections.Immutable;
 using Core.Interfaces;
 using Core.Models;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Services.Protocol;
 
@@ -35,13 +37,16 @@ public sealed class PacketDecoder : IPacketDecoder
     private const int VariableLowIndex = 10;
 
     private DictionarySnapshot _snapshot;
+    private readonly ILogger<PacketDecoder> _logger;
 
     public PacketDecoder(
         IReadOnlyList<Command> commands,
         IReadOnlyList<Variable> variables,
-        IReadOnlyList<ProtocolAddress> addresses)
+        IReadOnlyList<ProtocolAddress> addresses,
+        ILogger<PacketDecoder>? logger = null)
     {
         _snapshot = Build(commands, variables, addresses);
+        _logger = logger ?? NullLogger<PacketDecoder>.Instance;
     }
 
     /// <summary>
@@ -62,10 +67,11 @@ public sealed class PacketDecoder : IPacketDecoder
     {
         if (packet.IsEmpty || packet.Length < MinPayloadLength) return null;
         var snapshot = Volatile.Read(ref _snapshot);
-        var command = ResolveCommand(packet.Payload, snapshot);
+        var senderId = ReadSenderIdBigEndian(packet.Payload);
+        var command = ResolveCommand(packet.Payload, snapshot)
+            ?? SynthesizeUnknownReplyCommand(packet.Payload, senderId);
         if (command is null) return null;
         var variable = ResolveVariable(command, packet.Payload, snapshot);
-        var senderId = ReadSenderIdBigEndian(packet.Payload);
         var sender = snapshot.FindSender(senderId);
         var appPayload = ExtractApplicationPayload(packet.Payload);
         return new AppLayerDecodedEvent(
@@ -75,6 +81,27 @@ public sealed class PacketDecoder : IPacketDecoder
             sender?.DeviceName ?? "",
             sender?.BoardName ?? "",
             senderId);
+    }
+
+    /// <summary>
+    /// Defense in depth for incomplete dictionaries: when a reply-shaped command
+    /// (high bit set on cmdHigh) is unknown, synthesize a placeholder so the
+    /// AppLayerDecoded event still fires and bench observers see the frame
+    /// instead of a silent drop. Fire-side unknowns (high bit clear) stay
+    /// rejected to avoid masking corrupt frames. See #100.
+    /// </summary>
+    private Command? SynthesizeUnknownReplyCommand(ImmutableArray<byte> payload, uint senderId)
+    {
+        byte h = payload[CommandHighIndex];
+        byte l = payload[CommandLowIndex];
+        if ((h & 0x80) == 0) return null;
+        _logger.LogWarning(
+            "Unknown reply command 0x{High:X2}{Low:X2} from sender 0x{SenderId:X8}; synthesizing placeholder.",
+            h, l, senderId);
+        return new Command(
+            $"Unknown reply 0x{h:X2}{l:X2}",
+            h.ToString("X2"),
+            l.ToString("X2"));
     }
 
     private static DictionarySnapshot Build(
