@@ -2,7 +2,7 @@
 
 **Tracking issue:** [#96](https://github.com/luca-veronelli-stem/stem-device-manager/issues/96)
 **Started:** 2026-05-21
-**Status:** **Resolved.** Normalization landed at the API boundary in `DictionaryApiProvider` (option 1 of the three sketched below): `UInt8`/`UInt16`/`UInt32` are mapped to the C-style names `TelemetryService.DataTypeWidth` recognizes, with passthrough for anything else. `Bitmapped[2]` and `due word uint16_t bitmapped` remain a legacy gap — the previous Excel-backed path didn't handle them either, and they continue to surface via the `LogWarning` added in [#101](https://github.com/luca-veronelli-stem/stem-device-manager/pull/101). The bench-confirmed reproduction is preserved below for posterity.
+**Status:** **Resolved.** Normalization landed at the API boundary in `DictionaryApiProvider` (option 1 of the three sketched below). The surface covered is `UInt8`/`UInt16`/`UInt32` and `Int8`/`Int16`/`Int32`; on the consumer side `TelemetryService.DataTypeWidth` was extended to recognize the matching `int8_t`/`int16_t`/`int32_t` widths. Anything else (e.g. `Bitmapped[2]`, `due word uint16_t bitmapped`) passes through unchanged and continues to surface via the `LogWarning` added in [#101](https://github.com/luca-veronelli-stem/stem-device-manager/pull/101) — that gap matches the previous Excel-backed behaviour. The bench-confirmed reproduction is preserved below for posterity.
 
 ---
 
@@ -81,4 +81,5 @@ v2.15 (`80bf9c6`) read variables only from the Excel via `ExcelHandler`, which r
 |---|---|
 | 2026-05-21 | Filed [#96](https://github.com/luca-veronelli-stem/stem-device-manager/issues/96); initial findings from code reading + API/Excel diff. |
 | 2026-05-21 | Bench-confirmed on Optimus-XP/Madre. `TelemetryService.LogWarning` (added in [#101](https://github.com/luca-veronelli-stem/stem-device-manager/pull/101)) fired continuously for `UInt8`/`UInt16`/`UInt32`. Status moved from hypothesis to confirmed. |
-| 2026-05-21 | Fixed at the API boundary in `DictionaryApiProvider.NormalizeDataType` (option 1). xUnit coverage in `DictionaryApiProviderTests` (theory + passthrough cases). `Bitmapped[2]` left unhandled — matches legacy behaviour. |
+| 2026-05-21 | Fixed at the API boundary in `DictionaryApiProvider.NormalizeDataType` (option 1) for `UInt8/16/32`. xUnit coverage in `DictionaryApiProviderTests` (theory + passthrough cases). `Bitmapped[2]` left unhandled — matches legacy behaviour. |
+| 2026-05-21 | Post-merge bench session on a second board surfaced `Int16` (`Position I Reference`) being silently dropped — the API also emits signed types and the consumer-side `DataTypeWidth` only knew the unsigned widths. Extended normalization to `Int8/16/32 → int8_t/int16_t/int32_t` and added the three signed widths to `TelemetryService.DataTypeWidth`. New `OnTelemetryData_SignedTypeVariables_EmitsDataPointsForEach` test in `TelemetryServiceTests` exercises the consumer end. |
