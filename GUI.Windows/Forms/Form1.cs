@@ -84,6 +84,7 @@ namespace StemPC
         //******************************
         //  public Elements instances
         //******************************
+        public Boot_Interface_Tab BootTabRef { get; private set; }
         public Boot_Smart_Tab BootSmartTabRef { get; private set; }
         public Telemetry_Tab TelemetryTabRef { get; private set; }
         public BLEInterfaceTab BLETabRef { get; private set; }
@@ -154,6 +155,14 @@ namespace StemPC
             // Sottoscrizioni forward da ConnectionManager: stato connessione per canale + app layer decodificato.
             _connMgr.StateChanged += OnConnectionStateChanged;
             _connMgr.AppLayerDecoded += OnAppLayerDecodedFromConnMgr;
+
+            // Classic single-file bootloader UI. Restored by #95 after #80 over-removed it
+            // assuming Spark_FirmwareUpdate_WF_Tab was the only firmware-upload path;
+            // that holds only for SPARK. Every non-SPARK variant (TopLift, Eden, Optimus,
+            // R3L, Eden-BS8, Sherpa, Gradino, Sally-Cab, O3Z-Tech) needs this tab to flash.
+            // Added unconditionally — harmless on SPARK, required everywhere else.
+            BootTabRef = new Boot_Interface_Tab(_dictionaryCache, _connMgr, _variantConfig);
+            tabControl.TabPages.Add(BootTabRef);
 
             //crea e aggiungi il bootloader manager smart
             BootSmartTabRef = new Boot_Smart_Tab(_dictionaryCache, _connMgr);
