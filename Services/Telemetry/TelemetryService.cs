@@ -428,9 +428,9 @@ public sealed class TelemetryService : ITelemetryService, IDisposable
 
     private static int DataTypeWidth(string? dataType) => dataType?.Trim() switch
     {
-        "uint8_t" => 1,
-        "uint16_t" => 2,
-        "uint32_t" => 4,
+        "uint8_t" or "int8_t" => 1,
+        "uint16_t" or "int16_t" => 2,
+        "uint32_t" or "int32_t" => 4,
         _ => 0
     };
 

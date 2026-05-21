@@ -79,16 +79,20 @@ public class DictionaryApiProvider : IDictionaryProvider
     }
 
     // Issue #96: the dictionaries-manager API emits .NET-canonical type names
-    // ("UInt8"/"UInt16"/"UInt32"), while TelemetryService.DataTypeWidth and
-    // the Excel provider use the C-style names. Normalize at the API boundary
-    // so the rest of the stack stays vocabulary-agnostic. Unknown values
-    // (e.g. "Bitmapped[2]") pass through unchanged.
+    // ("UInt8"/"UInt16"/"UInt32", "Int8"/"Int16"/"Int32"), while
+    // TelemetryService.DataTypeWidth and the Excel provider use the C-style
+    // names. Normalize at the API boundary so the rest of the stack stays
+    // vocabulary-agnostic. Unknown values (e.g. "Bitmapped[2]") pass through
+    // unchanged.
     private static string NormalizeDataType(string dataType)
     {
         var s = dataType.Trim();
         if (s.Equals("UInt8", StringComparison.OrdinalIgnoreCase)) return "uint8_t";
         if (s.Equals("UInt16", StringComparison.OrdinalIgnoreCase)) return "uint16_t";
         if (s.Equals("UInt32", StringComparison.OrdinalIgnoreCase)) return "uint32_t";
+        if (s.Equals("Int8", StringComparison.OrdinalIgnoreCase)) return "int8_t";
+        if (s.Equals("Int16", StringComparison.OrdinalIgnoreCase)) return "int16_t";
+        if (s.Equals("Int32", StringComparison.OrdinalIgnoreCase)) return "int32_t";
         return s;
     }
 

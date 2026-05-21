@@ -25,6 +25,12 @@ public class TelemetryServiceTests
         new("Temperature", "01", "01", "uint16_t");
     private static readonly Variable VarUInt32 =
         new("EncoderTicks", "01", "02", "uint32_t");
+    private static readonly Variable VarInt8 =
+        new("PressureDelta", "02", "00", "int8_t");
+    private static readonly Variable VarInt16 =
+        new("PositionRef", "02", "01", "int16_t");
+    private static readonly Variable VarInt32 =
+        new("TorqueRaw", "02", "02", "int32_t");
 
     // --- Ctor ---
 
@@ -192,6 +198,35 @@ public class TelemetryServiceTests
         Assert.Equal([0x42], samples[0].RawValue);
         Assert.Equal([0xCD, 0xAB], samples[1].RawValue);
         Assert.Equal([0xEF, 0xBE, 0xAD, 0xDE], samples[2].RawValue);
+    }
+
+    [Fact]
+    public async Task OnTelemetryData_SignedTypeVariables_EmitsDataPointsForEach()
+    {
+        // Issue #96 follow-up: bench observed Int16 variables (e.g. 'Position I Reference')
+        // skipped because DataTypeWidth only knew uint*_t. Signed widths must match
+        // their unsigned counterparts; the raw bytes flow through unchanged.
+        using var fixture = new Fixture(receiverDecoderCommands: [CmdTelemetryData]);
+        fixture.Service.UpdateSourceAddress(SourceRecipientId);
+        fixture.Service.UpdateDictionary([VarInt8, VarInt16, VarInt32]);
+        await fixture.Service.StartFastTelemetryAsync();
+
+        var samples = new List<TelemetryDataPoint>();
+        fixture.Service.DataReceived += (_, dp) => samples.Add(dp);
+
+        byte[] alPayload =
+        [
+            0x00, 0x00, 0x00, 0x00,           // telemetry type
+            0x80,                              // int8_t = -128
+            0x00, 0x80,                        // int16_t LE = -32768
+            0xFF, 0xFF, 0xFF, 0x7F             // int32_t LE = int.MaxValue
+        ];
+        InjectTelemetryDataPacket(fixture, alPayload);
+
+        Assert.Equal(3, samples.Count);
+        Assert.Equal([0x80], samples[0].RawValue);
+        Assert.Equal([0x00, 0x80], samples[1].RawValue);
+        Assert.Equal([0xFF, 0xFF, 0xFF, 0x7F], samples[2].RawValue);
     }
 
     [Fact]
