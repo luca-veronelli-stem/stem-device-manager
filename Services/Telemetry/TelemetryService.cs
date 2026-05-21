@@ -2,6 +2,8 @@ using System.Collections.Immutable;
 using System.Globalization;
 using Core.Interfaces;
 using Core.Models;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Services.Telemetry;
 
@@ -56,6 +58,7 @@ public sealed class TelemetryService : ITelemetryService, IDisposable
         new("StopTelemetry", "00", "17");
 
     private readonly IProtocolService _protocol;
+    private readonly ILogger<TelemetryService> _logger;
     private readonly Lock _stateLock = new();
     private readonly List<Variable> _dict = [];
     private readonly List<string> _writeValues = [];
@@ -63,10 +66,13 @@ public sealed class TelemetryService : ITelemetryService, IDisposable
     private bool _isRunning;
     private bool _disposed;
 
-    public TelemetryService(IProtocolService protocol)
+    public TelemetryService(
+        IProtocolService protocol,
+        ILogger<TelemetryService>? logger = null)
     {
         ArgumentNullException.ThrowIfNull(protocol);
         _protocol = protocol;
+        _logger = logger ?? NullLogger<TelemetryService>.Instance;
         _protocol.AppLayerDecoded += OnAppLayerDecoded;
     }
 
@@ -323,7 +329,13 @@ public sealed class TelemetryService : ITelemetryService, IDisposable
             if (ParseHexByte(variable.AddressHigh) != addrH) continue;
             if (ParseHexByte(variable.AddressLow) != addrL) continue;
             int width = DataTypeWidth(variable.DataType);
-            if (width == 0) return;
+            if (width == 0)
+            {
+                _logger.LogWarning(
+                    "Read-reply dropped: variable '{Name}' addr={AddrH:X2}{AddrL:X2} has unrecognized dataType '{DataType}'",
+                    variable.Name, addrH, addrL, variable.DataType ?? "(null)");
+                return;
+            }
             if (payload.Length < ReadReplyHeaderSize + width) return;
             var builder = ImmutableArray.CreateBuilder<byte>(width);
             for (int i = 0; i < width; i++) builder.Add(payload[ReadReplyHeaderSize + i]);
@@ -340,7 +352,13 @@ public sealed class TelemetryService : ITelemetryService, IDisposable
         foreach (var variable in variables)
         {
             int width = DataTypeWidth(variable.DataType);
-            if (width == 0) continue;
+            if (width == 0)
+            {
+                _logger.LogWarning(
+                    "Fast-stream variable skipped: '{Name}' has unrecognized dataType '{DataType}'",
+                    variable.Name, variable.DataType ?? "(null)");
+                continue;
+            }
             if (pos + width > payload.Length) break;
             var rawValue = ImmutableArray.CreateBuilder<byte>(width);
             for (int i = 0; i < width; i++) rawValue.Add(payload[pos + i]);
