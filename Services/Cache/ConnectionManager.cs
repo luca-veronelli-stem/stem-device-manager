@@ -49,6 +49,7 @@ public sealed class ConnectionManager : IDisposable
     private IBootService? _activeBoot;
     private ITelemetryService? _activeTelemetry;
     private ChannelKind _activeChannel;
+    private uint _lastSourceRecipient;
     private bool _disposed;
 
     public ConnectionManager(
@@ -189,6 +190,7 @@ public sealed class ConnectionManager : IDisposable
         ICommunicationPort? oldPort;
         ChannelKind previousChannel;
         bool wasConnected;
+        uint carriedSourceRecipient;
         lock (_stateLock)
         {
             // issue #51: clicking the already-active channel menu item must be
@@ -204,6 +206,15 @@ public sealed class ConnectionManager : IDisposable
             oldProtocol = _activeProtocol;
             oldBoot = _activeBoot;
             oldTelemetry = _activeTelemetry;
+            // issue #104: the telemetry source recipient is the logical address
+            // of the board the user is talking to; it must survive a port-drop
+            // rebuild, otherwise StopTelemetryAsync (and the rest of the
+            // telemetry API) sends to recipient 0 and the device ignores it.
+            // DisposeActiveServices snapshots _lastSourceRecipient on every
+            // tear-down (explicit switch + implicit port-drop), so by this
+            // point it carries the most recent value even if a drop already
+            // nulled _activeTelemetry.
+            carriedSourceRecipient = _lastSourceRecipient;
             previousChannel = _activeChannel;
             wasConnected = _state == ConnectionState.Connected;
             oldPort = wasConnected ? _ports.GetValueOrDefault(previousChannel) : null;
@@ -238,6 +249,8 @@ public sealed class ConnectionManager : IDisposable
             var newTelemetry = new TelemetryService(
                 newProtocol,
                 logger: _loggerFactory.CreateLogger<TelemetryService>());
+            if (carriedSourceRecipient != 0u)
+                newTelemetry.UpdateSourceAddress(carriedSourceRecipient);
             newTelemetry.DataReceived += OnActiveTelemetryData;
 
             bool channelChanged;
@@ -383,7 +396,13 @@ public sealed class ConnectionManager : IDisposable
     private void DisposeActiveServices(
         IProtocolService? protocol, IBootService? boot, ITelemetryService? telemetry)
     {
-        if (telemetry is not null) telemetry.DataReceived -= OnActiveTelemetryData;
+        if (telemetry is not null)
+        {
+            // issue #104: remember the source recipient before disposal so the
+            // next SwitchToAsync rebuild can restore it on the new instance.
+            lock (_stateLock) _lastSourceRecipient = telemetry.SourceRecipientId;
+            telemetry.DataReceived -= OnActiveTelemetryData;
+        }
         if (boot is not null) boot.ProgressChanged -= OnActiveBootProgress;
         if (telemetry is IDisposable td)
         {
