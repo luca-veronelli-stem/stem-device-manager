@@ -2,7 +2,7 @@
 
 **Tracking issue:** [#96](https://github.com/luca-veronelli-stem/stem-device-manager/issues/96)
 **Started:** 2026-05-21
-**Status:** Hypothesis with mechanical proof from code reading + dictionary diff. Bench confirmation pending.
+**Status:** **Confirmed by 2026-05-21 bench run.** `TelemetryService.LogWarning` on `width == 0` (landed in [#101](https://github.com/luca-veronelli-stem/stem-device-manager/pull/101)) fired continuously for fast-stream variables with `dataType` ∈ {`UInt8`, `UInt16`, `UInt32`}, matching the hypothesis exactly. Awaiting normalization-approach decision.
 
 ---
 
@@ -45,6 +45,14 @@ v2.15 (`80bf9c6`) read variables only from the Excel via `ExcelHandler`, which r
 - **2026-05-21** — API vs Excel diff on TopLift-A2 Madre (`0x00080381`): 32 of the common variables have mismatched DataType strings.
 - API endpoint queried: `GET /api/dictionaries/10/resolved` (TopLift-A2 Madre).
 - The DataType field is consumed only by `DataTypeWidth`. No other call site uses the string.
+- **2026-05-21 bench (Optimus-XP/Madre, `0x000A0441`)** — first run after [#101](https://github.com/luca-veronelli-stem/stem-device-manager/pull/101) added a `LogWarning` on `width == 0`. The warning fired every fast-stream tick during a telemetry session, e.g.:
+
+  ```
+  14:32:05.228 [WARN] Services.Telemetry.TelemetryService: Fast-stream variable skipped: 'Firmware macchina' has unrecognized dataType 'UInt16'
+  14:32:05.228 [WARN] Services.Telemetry.TelemetryService: Fast-stream variable skipped: 'Stato EVA' has unrecognized dataType 'UInt8'
+  ```
+
+  Distinct `dataType` values observed in one session: `UInt8`, `UInt16`, `UInt32`. End-to-end behaviour matches the hypothesis: no `DataReceived` events fire for affected variables; UI stays blank for them. Hypothesis is no longer speculative.
 
 ## Open questions before patching
 
@@ -57,10 +65,10 @@ v2.15 (`80bf9c6`) read variables only from the Excel via `ExcelHandler`, which r
 
 ## Next bench actions
 
-- [ ] Enumerate every distinct `dataType` string the API returns across all boards.
+- [ ] Enumerate every distinct `dataType` string the API returns across all boards. (3 seen on Optimus-XP: `UInt8`/`UInt16`/`UInt32`; still need a full sweep + the `Bitmapped[2]` confirmation.)
 - [ ] Capture one telemetry session with `DictionaryApi__ApiKey=""` env override (forces Excel fallback) — confirm telemetry decodes correctly under Excel-only.
-- [ ] Capture the same session with API enabled — confirm zero decoded values.
-- [ ] If both confirm: pick a normalization approach with the dictionaries-manager owner.
+- [x] Capture the same session with API enabled — confirm zero decoded values. **Done 2026-05-21 (Optimus-XP/Madre).**
+- [ ] Pick a normalization approach with the dictionaries-manager owner.
 
 ## Not the cause of
 
@@ -72,3 +80,4 @@ v2.15 (`80bf9c6`) read variables only from the Excel via `ExcelHandler`, which r
 | Date | Note |
 |---|---|
 | 2026-05-21 | Filed [#96](https://github.com/luca-veronelli-stem/stem-device-manager/issues/96); initial findings from code reading + API/Excel diff. |
+| 2026-05-21 | Bench-confirmed on Optimus-XP/Madre. `TelemetryService.LogWarning` (added in [#101](https://github.com/luca-veronelli-stem/stem-device-manager/pull/101)) fired continuously for `UInt8`/`UInt16`/`UInt32`. Status moved from hypothesis to confirmed. |
