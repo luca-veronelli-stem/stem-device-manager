@@ -74,6 +74,11 @@ namespace StemPC
         List<Command> Comandi = new();
         List<Variable> Dizionario = new();
 
+        // Commands currently visible in comboBoxCommand, in display order
+        // (after the reply filter). comboBoxCommand.SelectedIndex indexes this
+        // list to recover the underlying Command at send time.
+        private readonly List<Command> _displayedCommands = new();
+
         //**********************************
         //  STEM Protocol variables/classes
         //**********************************
@@ -407,13 +412,16 @@ namespace StemPC
 
             _terminal.WriteLog("--------------------------------------------------------------------");
             comboBoxCommand.Items.Clear();
+            _displayedCommands.Clear();
             foreach (Command item in Comandi)
             {
                 UpdateTerminal($"Comando: {item.Name}, codeH: {item.CodeHigh}, codeL: {item.CodeLow}");
-                if (!comboBoxCommand.Items.Contains(item.Name)
-                    && !item.Name.Contains("risposta")
-                    && !item.Name.Contains("Risposta"))
-                    comboBoxCommand.Items.Add(item.Name);
+                if (item.Name.Contains("risposta") || item.Name.Contains("Risposta"))
+                    continue;
+                if (comboBoxCommand.Items.Contains(item.Name))
+                    continue;
+                comboBoxCommand.Items.Add(item.Name);
+                _displayedCommands.Add(item);
             }
 
             // Pre-selezione device/board iniziale (blocco #7 in PREPROCESSOR_DIRECTIVES.md):
@@ -482,9 +490,15 @@ namespace StemPC
                 return;
             }
 
-            byte cmdHi = (byte)(this.SelectedCommand >> 8);
-            byte cmdLo = (byte)this.SelectedCommand;
-            var command = new Command("UserSend", cmdHi.ToString("X2"), cmdLo.ToString("X2"));
+            // Resolve the command bytes from the actual selected Command, not
+            // from the dropdown index (see issue #107: index != CodeHigh/Low).
+            var bytes = CommandSelection.ResolveBytes(_displayedCommands, comboBoxCommand.SelectedIndex);
+            if (bytes is null)
+            {
+                MessageBox.Show("Select a command first!");
+                return;
+            }
+            var command = new Command("UserSend", bytes.Value.High.ToString("X2"), bytes.Value.Low.ToString("X2"));
 
             var byteList = new List<byte>();
 
