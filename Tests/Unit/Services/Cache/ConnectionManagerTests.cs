@@ -367,6 +367,28 @@ public class ConnectionManagerTests
     }
 
     [Fact]
+    public async Task SwitchToAsync_AfterPortDropAndReconnect_PreservesSourceRecipient()
+    {
+        // Issue #104: the BLE-tab reconnect path (BLE_WF_Tab → SwitchToAsync)
+        // does not re-call UpdateSourceAddress on the new TelemetryService, so
+        // a Stop button click after a drop+reconnect was sending the stop to
+        // recipient 0 (device ignored it). The manager itself must carry the
+        // source recipient across the rebuild.
+        const uint sourceRecipient = 0xCAFEBABEu;
+        using var fixture = new Fixture();
+        fixture.BleDriver.IsConnected = true;
+        await fixture.Manager.SwitchToAsync(ChannelKind.Ble);
+        fixture.Manager.CurrentTelemetry!.UpdateSourceAddress(sourceRecipient);
+
+        fixture.BleDriver.RaiseConnectionStatusChanged(false);
+        fixture.BleDriver.IsConnected = true;
+        fixture.BleDriver.RaiseConnectionStatusChanged(true);
+        await fixture.Manager.SwitchToAsync(ChannelKind.Ble);
+
+        Assert.Equal(sourceRecipient, fixture.Manager.CurrentTelemetry!.SourceRecipientId);
+    }
+
+    [Fact]
     public async Task PortDisconnected_StillForwardsStateChangedEvent()
     {
         using var fixture = new Fixture();
