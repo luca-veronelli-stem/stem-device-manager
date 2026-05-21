@@ -2,6 +2,7 @@ using Core.Interfaces;
 using Core.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Services.Cache;
 using Services.Configuration;
 using Services.Protocol;
@@ -56,7 +57,9 @@ public static class DependencyInjection
         // PacketDecoder vuoto: UpdateDictionary verrà chiamato dalla DictionaryCache
         // dopo IDictionaryProvider.LoadProtocolDataAsync(). Pattern consolidato dalla
         // Fase 1 — il dizionario arriva async da Azure, non sincronizzabile in DI.
-        services.AddSingleton<IPacketDecoder>(_ => new PacketDecoder([], [], []));
+        services.AddSingleton<IPacketDecoder>(sp => new PacketDecoder(
+            [], [], [],
+            sp.GetService<ILogger<PacketDecoder>>()));
 
         // Cache del dizionario + gestore del canale attivo (Fase 3).
         services.AddSingleton<DictionaryCache>();
