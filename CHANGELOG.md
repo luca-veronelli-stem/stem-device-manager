@@ -20,7 +20,13 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-_No unreleased changes yet._
+### Added
+
+- **Restored Boot Interface tab** for non-SPARK firmware uploads (#95). PR #80 removed
+  `Boot_Interface_Tab` on the premise that `Spark_FirmwareUpdate_WF_Tab` was the only
+  used path — true for SPARK, but every other variant (TopLift, Eden, Optimus,
+  R3L, Eden-BS8, Sherpa Slim, Gradino, Sally-Cab, O3Z-Tech) has no other firmware-upload
+  UI. The tab now ships unconditionally; SPARK users can simply ignore it.
 
 ---
 
