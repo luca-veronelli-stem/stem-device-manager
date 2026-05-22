@@ -1,6 +1,6 @@
 ﻿# Stem.Device.Manager
 
-[![Version](https://img.shields.io/badge/version-0.4.1-blue)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.4.2-blue)](./CHANGELOG.md)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![Tests](https://img.shields.io/badge/tests-350%20%2F%20552-brightgreen)](./Tests/)
 [![License](https://img.shields.io/badge/license-Proprietary-red)](#license)
@@ -99,9 +99,17 @@ Two configurations: `Debug` and `Release`. The device variant (TopLift / Eden / 
 
 ### Single-file publish (field-test executable)
 
-The **recommended** path is the [`Release` GitHub Actions workflow](./.github/workflows/release.yml): pushing a `v*.*.*` tag (after creating the GitHub Release with `gh release create`) automatically builds the self-contained single-file exe and attaches it to the release. The workflow can also be re-run on demand via `gh workflow run release.yml -f tag=v0.4.0` to attach the exe to a release that was cut before the workflow existed. The workflow is marked **temporary** until this repo adopts the STEM standards — see [issue #111](https://github.com/luca-veronelli-stem/stem-device-manager/issues/111).
+The **recommended** path is the [`Release` GitHub Actions workflow](./.github/workflows/release.yml): pushing a `v*.*.*` tag (after creating the GitHub Release with `gh release create`) automatically builds the self-contained single-file exe and attaches **three artifacts** to the release page:
 
-For local field tests (or when Actions is unavailable), the same recipe runs by hand:
+| Artifact | Purpose |
+|---|---|
+| `GUI.Windows.exe` | the self-contained app (~80–100 MB) |
+| `appsettings.json` | provides `DictionaryApi:BaseUrl` + `Device:Variant` defaults that the env-var route can't supply |
+| `README.txt` | technician-facing config procedure (Italian — sourced from [`Docs/SHIPPED_README.txt`](./Docs/SHIPPED_README.txt)) |
+
+The technician downloads all three into the same folder, follows `README.txt` to set the API key (env var or `appsettings.Production.json`), then launches `GUI.Windows.exe`. The workflow can also be re-run on demand via `gh workflow run release.yml -f tag=vX.Y.Z` to refresh artifacts on a previously cut release. The workflow is marked **temporary** until this repo adopts the STEM standards — see [issue #111](https://github.com/luca-veronelli-stem/stem-device-manager/issues/111).
+
+For local field tests (or when Actions is unavailable), the same recipe runs by hand. The Excel dictionary (`Resources/Dizionari STEM.xlsx`) is already an embedded resource, so no separate file ships for the fallback:
 
 ```powershell
 dotnet publish GUI.Windows/GUI.Windows.csproj `
@@ -111,10 +119,12 @@ dotnet publish GUI.Windows/GUI.Windows.csproj `
     -p:PublishSingleFile=true `
     -p:IncludeNativeLibrariesForSelfExtract=true `
     -p:EnableCompressionInSingleFile=true `
-    -o publish/v0.4.1
+    -o publish/v0.4.2
+
+Copy-Item Docs/SHIPPED_README.txt publish/v0.4.2/README.txt
 ```
 
-The Excel dictionary (`Resources/Dizionari STEM.xlsx`) is already an embedded resource, so the fallback works without shipping a separate file. `appsettings.json` is the only loose file copied next to the `.exe`; if you want it embedded too, set `Device:Variant` and `DictionaryApi:*` via environment variables (see [Configuration](#configuration)) and remove the `appsettings.json` from the publish folder.
+`publish/v0.4.2/` then contains the same three files the workflow uploads. `appsettings.json` is copied there automatically by `dotnet publish` (content files aren't bundled into the single-file exe).
 
 ---
 
