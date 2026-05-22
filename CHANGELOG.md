@@ -22,6 +22,42 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.4.2] - 2026-05-22
+
+Same-day follow-up to v0.4.1. The v0.4.1 release page attached only
+`GUI.Windows.exe`; the technician was expected to run it from a folder
+containing `appsettings.json` (which provides `DictionaryApi:BaseUrl` +
+`Device:Variant` defaults). Downloading the lone exe and launching it
+silently dropped to the Excel-only DI branch — env-var and
+`appsettings.Production.json` routes both became dead paths because
+`baseUrl` was null, the `AddDictionaryProvider` guard short-circuited,
+and no `HttpClient` was registered. The technician saw a gold "Excel"
+chip with no fallback subtext and no Azure HTTP log lines to diagnose
+from.
+
+**Recommendation:** use v0.4.2 or later. The v0.4.1 release page has
+been amended with a warning pointing here.
+
+### Fixed
+
+- **Release artifacts: ship `appsettings.json` and `README.txt` alongside
+  the exe.** `.github/workflows/release.yml` now copies
+  `Docs/SHIPPED_README.txt` into `publish/<tag>/README.txt` and uploads
+  all three files (`GUI.Windows.exe`, `appsettings.json`, `README.txt`)
+  in a single `gh release upload --clobber` call. `dotnet publish` already
+  drops `appsettings.json` into the publish folder as a loose content
+  file — the workflow change just stops dropping it on the floor.
+
+### Changed
+
+- **README "Single-file publish" section** now documents the three-file
+  release artifact set (exe + config + technician README) and updates the
+  manual `dotnet publish` recipe with a matching `Copy-Item` step for
+  parity between local builds and the GitHub Release output.
+- **`Docs/SHIPPED_README.txt`** header bumped to v0.4.2.
+
+---
+
 ## [0.4.1] - 2026-05-22
 
 Patch release closing the docs/code drift introduced by the v0.4.0 security
@@ -516,7 +552,8 @@ State of the legacy project before the modernization wave. ~330 commits, ~56k LO
 
 ## Version URLs
 
-[Unreleased]: https://github.com/luca-veronelli-stem/stem-device-manager/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/luca-veronelli-stem/stem-device-manager/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.4.2
 [0.4.1]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.4.1
 [0.4.0]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.4.0
 [0.3.0]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.3.0
