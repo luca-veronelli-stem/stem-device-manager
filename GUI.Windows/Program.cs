@@ -77,11 +77,11 @@ namespace GUI.Windows
             var services = new ServiceCollection();
 
             // Logging: Debug sink (visible in Output window when running under VS) +
-            // per-process file sink under logs/ so bench sessions and post-mortems can
-            // tail/inspect what happened without a debugger attached.
+            // per-process file sink under %LocalAppData%\Stem\DeviceManager\logs\ so
+            // bench sessions and post-mortems can tail/inspect what happened without a
+            // debugger attached. Location resolves via StemAppData per APP_DATA v1.9.0.
             var logPath = Path.Combine(
-                AppContext.BaseDirectory,
-                "logs",
+                Diagnostics.StemAppData.GetLogsDir(),
                 $"app-{DateTime.Now:yyyyMMdd-HHmmss}.log");
             var fileLoggerProvider = new FileLoggerProvider(logPath);
             services.AddLogging(b => b
