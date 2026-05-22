@@ -9,7 +9,7 @@ using Services;
 ///*****************************************************************************
 /// @file    Program.cs
 /// @author  Michele Pignedoli, Luca Veronelli
-///@version  0.4.2
+///@version  0.4.3
 /// @date    20/10/2025
 /// @brief   STEM Device Manager Main program body
 ///*****************************************************************************
@@ -40,6 +40,14 @@ using Services;
 ///          README.txt (technician config + procedure) alongside the exe.
 ///          v0.4.1 release shipped exe-only, leaving DictionaryApi:BaseUrl
 ///          null at runtime which silently forced Excel-only mode.
+/// 0.4.3: + Relocate logs to %LocalAppData%\Stem\DeviceManager\logs\ per
+///          the STEM APP_DATA standard v1.9.0 (no more polluting the
+///          install dir; survives read-only Program Files installs).
+///        + Log resolved DictionaryApi:ApiKey source at startup (#114) so
+///          the silent-Excel-fallback chain is one log line away.
+///        + CI: release artifacts now ship as a single zip
+///          (stem-device-manager-<tag>.zip) so a tech can't accidentally
+///          download an incomplete set.
 ///
 /// TODO:
 /// - Completare decodifica faults
