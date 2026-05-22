@@ -73,6 +73,12 @@ namespace GUI.Windows
                 .AddEnvironmentVariables()
                 .Build();
 
+            // Source-of-truth for the Azure dictionary API key (#114). Captured
+            // here so a bench post-mortem can tell at a glance which auth route
+            // the app picked without inspecting env / files by hand. The value
+            // itself is never read or logged -- only the source label.
+            var apiKeySource = Diagnostics.ApiKeySourceDetector.Detect(configuration);
+
             // Configurazione della dependency injection
             var services = new ServiceCollection();
 
@@ -114,6 +120,15 @@ namespace GUI.Windows
 
             // Provider di servizi per dependency injection
             var serviceProvider = services.BuildServiceProvider();
+
+            // #114: log the resolved DictionaryApi:ApiKey source (Empty /
+            // AppSettings / ProductionFile / Env / Unknown). One Information
+            // line on the GUI.Windows.Program category, no key value, just the
+            // label. This is the first log line a bench post-mortem reads
+            // when chasing a silent-Excel-fallback.
+            serviceProvider.GetRequiredService<ILoggerFactory>()
+                .CreateLogger("GUI.Windows.Program")
+                .LogInformation("Dictionary API key source: {Source}", apiKeySource);
 
 #if DEBUG
             // spec-001 T004 (research.md R8): Debug-only shutdown audit.
