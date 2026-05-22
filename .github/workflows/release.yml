@@ -65,11 +65,18 @@ jobs:
             -p:Version=${{ steps.v.outputs.version }} `
             -o publish/${{ steps.v.outputs.tag }}
 
-      - name: Upload exe to release
+      - name: Stage technician-facing README alongside the exe
+        shell: pwsh
+        run: |
+          Copy-Item Docs/SHIPPED_README.txt publish/${{ steps.v.outputs.tag }}/README.txt
+
+      - name: Upload release artifacts (exe + appsettings.json + README.txt)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: pwsh
         run: |
           gh release upload ${{ steps.v.outputs.tag }} `
             publish/${{ steps.v.outputs.tag }}/GUI.Windows.exe `
+            publish/${{ steps.v.outputs.tag }}/appsettings.json `
+            publish/${{ steps.v.outputs.tag }}/README.txt `
             --clobber
