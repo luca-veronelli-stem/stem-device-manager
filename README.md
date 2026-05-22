@@ -1,12 +1,12 @@
 ﻿# Stem.Device.Manager
 
-[![Version](https://img.shields.io/badge/version-0.3.0-blue)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.4.0-blue)](./CHANGELOG.md)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
-[![Tests](https://img.shields.io/badge/tests-292%20%2F%20470-brightgreen)](./Tests/)
+[![Tests](https://img.shields.io/badge/tests-350%20%2F%20552-brightgreen)](./Tests/)
 [![License](https://img.shields.io/badge/license-Proprietary-red)](#license)
 
 > **Desktop application for managing, diagnosing and communicating with STEM devices over the proprietary multi-channel protocol (CAN, BLE, Serial).**
-> **Last updated:** 2026-04-29
+> **Last updated:** 2026-05-21
 
 ---
 
@@ -25,7 +25,7 @@ Stem Device Manager is a Windows desktop tool used to:
 The codebase is being modernized incrementally. Phases 1–4 of the refactor are complete:
 
 - `Form1.cs` has been reduced to a thin shell (~731 LOC) on top of `ConnectionManager` + `DictionaryCache`.
-- **292 cross-platform tests** + **470 Windows-only tests** (xUnit).
+- **350 cross-platform tests** + **552 Windows-only tests** (xUnit).
 - Multi-project layout:
   - **Core** (`net10.0`) — domain models + interfaces.
   - **Infrastructure.Persistence** (`net10.0`) — dictionary providers (Azure API + Excel + Fallback).
@@ -53,7 +53,7 @@ The codebase is being modernized incrementally. Phases 1–4 of the refactor are
 | **Bootloader** | ✅ | Firmware update (classic + Spark batch) |
 | **Telemetry** | ✅ | Variable reads + OxyPlot charts (slow + fast) |
 | **Code generator** | ✅ | Generates `sp_config.h` |
-| **Automated tests** | ✅ | 292 cross-platform + 470 Windows (xUnit) |
+| **Automated tests** | ✅ | 350 cross-platform + 552 Windows (xUnit) |
 
 ---
 
@@ -109,7 +109,7 @@ dotnet publish GUI.Windows/GUI.Windows.csproj `
     -p:PublishSingleFile=true `
     -p:IncludeNativeLibrariesForSelfExtract=true `
     -p:EnableCompressionInSingleFile=true `
-    -o publish/v0.3.0
+    -o publish/v0.4.0
 ```
 
 The Excel dictionary (`Resources/Dizionari STEM.xlsx`) is already an embedded resource, so the fallback works without shipping a separate file. `appsettings.json` is the only loose file copied next to the `.exe`; if you want it embedded too, set `Device:Variant` and `DictionaryApi:*` via environment variables (see [Configuration](#configuration)) and remove the `appsettings.json` from the publish folder.
@@ -142,15 +142,9 @@ $env:DictionaryApi__BaseUrl  = "https://..."
 $env:Device__Variant         = "TopLift"
 ```
 
-### Security note (v0.3.0 field test)
+### API key (v0.4.0 stopgap)
 
-- The Azure dictionary API requires an API key. v0.3.0 ships with the test key in `appsettings.json` to keep the field-test loop fast.
-- Risk is low: the API only serves dictionaries (commands / addresses / variables) — no device control, no PII.
-- Mitigations applied for the field test:
-  1. Single-file publish bundles `appsettings.json` next to the `.exe` — no separate config file to leak in transit.
-  2. The Excel fallback works offline: a temporary key revocation does not brick the tool.
-  3. The key can be overridden at runtime via the `DictionaryApi__ApiKey` env var, so each technician's machine can be moved to a per-user key without rebuilding.
-- Before v1.0: rotate the key, remove it from `appsettings.json`, require it from `DPAPI`-encrypted user secrets or Windows Credential Manager (`CredRead`/`CredWrite`).
+The Azure dictionary API key is **not committed**. `appsettings.json` ships with an empty `ApiKey` placeholder; set `DictionaryApi__ApiKey` in the environment before first run, or place the value in a gitignored `GUI.Windows/appsettings.Production.json`. See [issue #94](https://github.com/luca-veronelli-stem/stem-device-manager/issues/94) for the full security rationale (current stopgap + deferred DPAPI / zero-touch provisioning posture for external supplier deployment).
 
 ---
 

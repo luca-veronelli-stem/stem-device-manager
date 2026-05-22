@@ -43,7 +43,7 @@ Infrastructure.Persistence/ [net10.0]                — dictionary data provide
 Infrastructure.Protocol/    [net10.0;net10.0-windows] — HW ports (CanPort/BlePort/SerialPort) + legacy drivers (Legacy/)
 Services/       [net10.0]                            — pure logic (ProtocolService, TelemetryService, BootService, ConnectionManager, DictionaryCache)
 GUI.Windows/            [net10.0-windows, WinForms]          — GUI + DI entry point (no more embedded protocol)
-Tests/          [dual TFM: net10.0 + net10.0-windows] — 292 tests net10.0 / 470 tests net10.0-windows
+Tests/          [dual TFM: net10.0 + net10.0-windows] — 350 tests net10.0 / 552 tests net10.0-windows
 Lean/          [Lean 4]                             — formalizations of extracted types (Phase1/)
 ```
 
