@@ -1,12 +1,12 @@
 ﻿# Stem.Device.Manager
 
-[![Version](https://img.shields.io/badge/version-0.4.0-blue)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.4.1-blue)](./CHANGELOG.md)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![Tests](https://img.shields.io/badge/tests-350%20%2F%20552-brightgreen)](./Tests/)
 [![License](https://img.shields.io/badge/license-Proprietary-red)](#license)
 
 > **Desktop application for managing, diagnosing and communicating with STEM devices over the proprietary multi-channel protocol (CAN, BLE, Serial).**
-> **Last updated:** 2026-05-21
+> **Last updated:** 2026-05-22
 
 ---
 
@@ -111,7 +111,7 @@ dotnet publish GUI.Windows/GUI.Windows.csproj `
     -p:PublishSingleFile=true `
     -p:IncludeNativeLibrariesForSelfExtract=true `
     -p:EnableCompressionInSingleFile=true `
-    -o publish/v0.4.0
+    -o publish/v0.4.1
 ```
 
 The Excel dictionary (`Resources/Dizionari STEM.xlsx`) is already an embedded resource, so the fallback works without shipping a separate file. `appsettings.json` is the only loose file copied next to the `.exe`; if you want it embedded too, set `Device:Variant` and `DictionaryApi:*` via environment variables (see [Configuration](#configuration)) and remove the `appsettings.json` from the publish folder.
