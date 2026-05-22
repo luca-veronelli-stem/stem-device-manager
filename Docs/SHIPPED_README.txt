@@ -1,5 +1,5 @@
 ================================================================================
-					   STEM DEVICE MANAGER v0.3.0
+					   STEM DEVICE MANAGER v0.4.1
 							  STEM E.m.s.
 ================================================================================
 
@@ -71,35 +71,55 @@ non valido, viene usata la variante "Generic".
 ================================================================================
 
 L'applicazione scarica i dizionari di comandi/variabili dall'API Azure
-"Stem.Dictionaries.Manager". I valori di default sono gia' inclusi e
-funzionano senza configurazione aggiuntiva (la chiave di test e' embedded).
+"Stem.Dictionaries.Manager". A partire dalla v0.4.0 la chiave API NON e'
+piu' inclusa nell'eseguibile: deve essere configurata prima del primo
+avvio (vedi PROCEDURA piu' sotto), altrimenti l'applicazione si avvia
+comunque ma funziona offline contro il dizionario Excel embedded (che
+potrebbe non essere aggiornato - vedi sezione USO OFFLINE).
 
-Per sovrascrivere la configurazione (chiave personale, endpoint diverso,
-timeout piu' alto) impostare le seguenti variabili d'ambiente:
+VARIABILE OBBLIGATORIA:
+-----------------------
+1. DictionaryApi__ApiKey
+   Chiave API per l'autenticazione. Senza questa chiave l'applicazione
+   parte ma non riesce a contattare l'API Azure (errore 401 dal server)
+   e ricade silenziosamente sul dizionario Excel embedded.
 
 VARIABILI OPZIONALI:
 --------------------
-1. DictionaryApi__ApiKey
-   Chiave API per l'autenticazione. Se non configurata viene usata quella
-   di default embedded nel file appsettings.json.
-
-2. DictionaryApi__BaseUrl
+1. DictionaryApi__BaseUrl
    URL base dell'API (default:
    https://app-dictionaries-manager-prod.azurewebsites.net/).
 
-3. DictionaryApi__TimeoutSeconds
+2. DictionaryApi__TimeoutSeconds
    Timeout in secondi per le chiamate HTTP (default: 30).
 
-4. Device__SenderId
+3. Device__SenderId
    Indirizzo STEM del mittente (default: 8). Cambiarlo solo se richiesto
    esplicitamente dal supporto.
 
 PROCEDURA:
-1. Richiedere la chiave API personale al contatto di supporto (se necessario).
-2. Aprire Windows PowerShell ed eseguire:
+1. Richiedere la chiave API personale al contatto di supporto.
+
+2. Scegliere UNA delle due opzioni di configurazione:
+
+   OPZIONE A - Variabile d'ambiente.
+   Aprire Windows PowerShell ed eseguire:
 		[Environment]::SetEnvironmentVariable("DictionaryApi__ApiKey", "<API_KEY>", "User")
    Oppure da Prompt dei comandi:
 		setx DictionaryApi__ApiKey "<API_KEY>"
+
+   OPZIONE B - File appsettings.Production.json accanto all'eseguibile.
+   Creare nella stessa cartella di GUI.Windows.exe un file di nome
+   "appsettings.Production.json" con il seguente contenuto:
+		{
+		  "DictionaryApi": {
+		    "ApiKey": "<API_KEY>"
+		  }
+		}
+   Il file viene letto a ogni avvio dell'applicazione; non viene scritto
+   ne' modificato. Custodirlo come un segreto: NON committarlo in alcun
+   repository, NON condividerlo via email/chat.
+
 3. Chiudere e riaprire l'applicazione.
 
 Nota: sostituire <API_KEY> con la chiave fornita.
@@ -109,9 +129,17 @@ Nota: sostituire <API_KEY> con la chiave fornita.
 						 USO OFFLINE
 ================================================================================
 
-Se l'API Azure non e' raggiungibile (rete assente, chiave revocata, server
-down), l'applicazione passa automaticamente al dizionario Excel embedded:
+L'applicazione passa automaticamente al dizionario Excel embedded nei
+seguenti casi:
 
+- API Azure non raggiungibile (rete assente, server down).
+- Chiave API revocata o scaduta (errore 401 dal server).
+- Chiave API non configurata o vuota. ATTENZIONE: questo accade in modo
+  silenzioso al primo avvio se non e' stata seguita la procedura di
+  CONFIGURAZIONE API DIZIONARI - non viene mostrato alcun messaggio
+  d'errore in GUI; l'unica traccia e' nel file di log sotto logs/.
+
+In modalita' offline:
 - I dizionari di comandi/variabili vengono letti dal file Excel incorporato
   nell'eseguibile (nessun file esterno richiesto).
 - Tutte le funzionalita' di comunicazione (CAN/BLE/Serial), bootloader e
