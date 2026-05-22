@@ -111,6 +111,11 @@ StyleCopReport.xml
 # Never merged; kept in the working tree for long-running branches.
 WIP/
 
+# Local-only appsettings override holding the Azure dictionary API key (#94).
+# The committed appsettings.json ships with an empty ApiKey; this file (or the
+# DictionaryApi__ApiKey env var) supplies the real value at runtime.
+GUI.Windows/appsettings.Production.json
+
 # Chutzpah Test files
 _Chutzpah*
 
