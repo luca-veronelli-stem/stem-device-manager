@@ -20,6 +20,15 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+---
+
+## [0.4.0] - 2026-05-21
+
+Maintenance release on top of v0.3.0: one minor feature (file logger sink + decoder /
+telemetry silent-drop warnings), four bench-driven fixes, and a security rotation
+relocating the Azure dictionary API key out of the committed `appsettings.json`. No
+breaking changes.
+
 ### Added
 
 - **Restored Boot Interface tab** for non-SPARK firmware uploads (#95). PR #80 removed
@@ -27,6 +36,83 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   used path — true for SPARK, but every other variant (TopLift, Eden, Optimus,
   R3L, Eden-BS8, Sherpa Slim, Gradino, Sally-Cab, O3Z-Tech) has no other firmware-upload
   UI. The tab now ships unconditionally; SPARK users can simply ignore it.
+
+- **Per-process file logger sink** + structured `LogWarning` on every silent-drop in
+  `PacketDecoder` and `TelemetryService`. Surfaced during the #96 investigation: the
+  previous Debug-only sink discarded discard-frame events as soon as a non-debugger
+  session exited, leaving bench post-mortems with no audit trail. The new sink writes
+  to `<AppContext.BaseDirectory>/logs/app-<yyyyMMdd-HHmmss>.log` and is disposed
+  explicitly on exit (DI does not transfer ownership for instance-registered
+  providers). Both `PacketDecoder` and `TelemetryService` now emit a `LogWarning` when
+  a frame is dropped silently, with the frame fields needed to correlate against the
+  API DataType vocabulary captured in
+  [`Docs/Investigations/telemetry-datatype-vocabulary.md`](Docs/Investigations/telemetry-datatype-vocabulary.md).
+
+### Fixed
+
+- **#96 — API DataType normalization at the boundary.** `DictionaryApiProvider` was
+  receiving free-form type strings (`"int8"`, `"INT16"`, `"sint32"`) from the Azure
+  dictionary API while `PacketDecoder` / `TelemetryService` expected C-style names
+  (`Int8`, `Int16`, `Int32`, `UInt8`, …). Result: telemetry and read-reply frames for
+  variables typed with anything outside the strict C-style list were silently dropped
+  — no exception, no log. Fix: normalize all incoming DataType strings at the API
+  boundary to the C-style canonical form, and extend `DataTypeWidth` to cover signed
+  Int8/16/32 (the previous table only handled unsigned widths). Bench-confirmed
+  against the SPARK-UC reference machine; full evidence in
+  [`Docs/Investigations/telemetry-datatype-vocabulary.md`](Docs/Investigations/telemetry-datatype-vocabulary.md).
+
+- **#100 — `PacketDecoder` tolerance of unknown high-bit-set reply commands.** The
+  decoder previously rejected any command whose high-order bit was set if it wasn't
+  in its known-replies table, treating them as malformed. Firmware in the wild emits
+  a growing set of reply commands (vendor extensions, debug responses) that aren't
+  yet in our vocabulary. Fix: log a warning and skip unknown high-bit-set commands
+  instead of throwing.
+
+- **#104 — Telemetry can be stopped after BLE reconnect.** `TelemetryService` cached
+  the recipient address from the first connection and didn't refresh it on reconnect;
+  subsequent stop attempts sent `CMD_STOP_TELEMETRY` to the stale recipient, the
+  device ignored it, and the GUI was left believing telemetry was still streaming.
+  Two-part fix: `ConnectionManager` now preserves the telemetry source recipient
+  across the reconnect (commit `a900b9c`), and `TelemetryService` sends stop
+  unconditionally on reconnect instead of guarding on a desynced internal state flag
+  (commit `66aead4`). Bench-confirmed on the SPARK-UC after the BLE notification
+  thread was suspected of partially desyncing service state during the disconnect
+  window.
+
+- **#107 — `Form1.SelectedCommand` uses command bytes, not combobox index.** A
+  refactor regression: `SendPS_Async` was assembling the command payload from the
+  combobox `SelectedIndex` rather than the underlying `Bytes` property of the
+  selected `Command` record. With dictionaries where the displayed order did not
+  match the on-wire ordinal, the wrong command was sent every time. Fix: derive
+  bytes from the selected `Command` directly.
+
+### Investigated (no code change)
+
+- **#97 — `senderId` byte order on the wire.** Bench observation suggested the RX
+  `senderId` may be reversed relative to the firmware-side encoding. After
+  investigation: no code change warranted; the apparent inversion is a property of
+  the firmware-side packing, not a decoder bug. Notes in
+  [`Docs/Investigations/senderid-endianness.md`](Docs/Investigations/senderid-endianness.md)
+  for the next time this comes up.
+
+### Security
+
+- **#94 — Azure dictionary API key relocated to environment variable (stopgap).**
+  The `ApiKeys:StemDeviceManager` slot on the Azure App Service was **rotated** as
+  part of this release. The old key was burned (it sat in git history, in the
+  `bitbucket/main` mirror, and in `GUI.Windows/appsettings.json` on every developer's
+  disk) and is now inert. The committed `appsettings.json` ships with an empty
+  `ApiKey` placeholder; the real key is provided at runtime via the
+  `DictionaryApi__ApiKey` environment variable, or via a gitignored
+  `GUI.Windows/appsettings.Production.json` override. Cross-consumer isolation:
+  rotating the `StemDeviceManager` slot does not affect any other consumer
+  (`ButtonPanelTester`, `ButtonPanelTesterSeedRefresh`, `GlobalService`,
+  `ProductionTracker` each have their own slot in `stem-dictionaries-manager`'s
+  `ApiKeyMiddleware`). No git history rewrite — the rotation is what makes the
+  historical key safe; force-push across two remotes is more risk than benefit.
+  Closes #94 partially (stopgap portion only); the deferred DPAPI / zero-touch /
+  per-installation revocation work remains open for when `stem-device-manager`
+  starts shipping externally.
 
 ---
 
@@ -395,6 +481,7 @@ State of the legacy project before the modernization wave. ~330 commits, ~56k LO
 
 ## Version URLs
 
-[Unreleased]: https://github.com/luca-veronelli-stem/stem-device-manager/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/luca-veronelli-stem/stem-device-manager/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.4.0
 [0.3.0]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.3.0
 [0.2.15]: https://bitbucket.org/stem-fw/stem-device-manager/src/80bf9c6/
