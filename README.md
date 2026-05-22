@@ -99,7 +99,9 @@ Two configurations: `Debug` and `Release`. The device variant (TopLift / Eden / 
 
 ### Single-file publish (field-test executable)
 
-For field tests, publish a self-contained single-file executable that bundles the embedded Excel fallback dictionary (no external files required):
+The **recommended** path is the [`Release` GitHub Actions workflow](./.github/workflows/release.yml): pushing a `v*.*.*` tag (after creating the GitHub Release with `gh release create`) automatically builds the self-contained single-file exe and attaches it to the release. The workflow can also be re-run on demand via `gh workflow run release.yml -f tag=v0.4.0` to attach the exe to a release that was cut before the workflow existed. The workflow is marked **temporary** until this repo adopts the STEM standards — see [issue #111](https://github.com/luca-veronelli-stem/stem-device-manager/issues/111).
+
+For local field tests (or when Actions is unavailable), the same recipe runs by hand:
 
 ```powershell
 dotnet publish GUI.Windows/GUI.Windows.csproj `
