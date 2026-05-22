@@ -22,6 +22,80 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.4.3] - 2026-05-22
+
+Diagnostics + release-shape patch bundling three changes that close out
+the rough edges surfaced by the v0.4.1 → v0.4.2 silent-Excel-fallback
+incident. Same-day follow-up to v0.4.2. All three changes target the
+"why did my app silently fall back to Excel?" question from different
+angles: a discoverable log line that names the resolved key source, a
+log path that no longer breaks under read-only installs, and a
+release-artifact shape that makes partial downloads impossible.
+
+### Added
+
+- **#114 — Resolved API key source logged at startup.** New
+  `ApiKeySourceDetector` (in `GUI.Windows/Diagnostics/`) inspects
+  `IConfigurationRoot.Providers` in reverse precedence order and
+  classifies the provider that supplied a non-empty
+  `DictionaryApi:ApiKey`. One `LogInformation` line at startup on the
+  `GUI.Windows.Program` category emits the resolved label (`Empty` /
+  `AppSettings` / `ProductionFile` / `Env` / `Unknown`). The key value
+  itself is never read or logged — only the source label. Seven xunit
+  tests cover the 4 supported cases + the precedence ordering
+  (env overrides production, production overrides appsettings) +
+  defensive guard against non-`ConfigurationRoot` inputs. Test count:
+  552 → 559 windows-only. Closes #114.
+
+- **`StemAppData` path-resolution helper** (in
+  `GUI.Windows/Diagnostics/`) — implements the per-app data root
+  convention from the new STEM `APP_DATA` standard
+  ([luca-veronelli-stem/standards#109](https://github.com/luca-veronelli-stem/standards/issues/109),
+  shipped in `standards v1.9.0`). Exposes `GetAppRoot()`, `GetLogsDir()`,
+  `GetCacheDir()`, `GetCredentialsDir()`, `GetDbDir()` helpers that
+  resolve subfolders under `%LocalAppData%\Stem\DeviceManager\` and
+  create them on demand.
+
+### Fixed
+
+- **Logs no longer live next to the exe.** `Program.cs` now writes log
+  files to `%LocalAppData%\Stem\DeviceManager\logs\app-<timestamp>.log`
+  via `StemAppData.GetLogsDir()`, replacing the previous
+  `AppContext.BaseDirectory/logs/` path. The old location broke under
+  read-only install locations (Program Files), lost per-user separation
+  on shared bench machines, and was a contributing factor to the v0.4.2
+  silent-fallback (no writable logs/ folder means no diagnostic when
+  things went sideways). v0.4.3 is the first APP_DATA reference adopter
+  — no migration helper ships because the previous data was per-process
+  session logs with no longterm value (greenfield-adopter pattern per
+  the standard). Technicians who want the legacy `logs/` folder gone
+  can delete it by hand; no in-app cleanup.
+
+### Changed
+
+- **Release artifacts now ship as a single zip.** The Actions release
+  workflow previously uploaded three loose files
+  (`GUI.Windows.exe`, `appsettings.json`, `README.txt`); now it
+  bundles them into `stem-device-manager-<tag>.zip` via
+  `Compress-Archive` before a single `gh release upload --clobber`.
+  The zip shape exists specifically to prevent the v0.4.1-style failure
+  where a technician downloaded only the exe and silently lost the
+  sibling config + procedure. There's no shape of partial download that
+  yields a misconfigured installation from this point forward. The
+  manual `dotnet publish` recipe in `README.md` was updated with a
+  matching `Compress-Archive` step for parity between Actions and local
+  builds.
+
+- **`Docs/SHIPPED_README.txt` rewritten for v0.4.3.** Header bump to
+  v0.4.3. The AVVIO section gains an `IMPORTANTE` line noting that the
+  three extracted files must stay in the same folder. A new section
+  `FILE DI LOG` documents the new log location, how to open the folder
+  via `%LocalAppData%`, and what the `Dictionary API key source` log
+  line tells the technician — also notes that the legacy `logs/`
+  folder next to the exe is no longer used. The `USO OFFLINE` section's
+  "no GUI error message" warning now cross-references the new log token
+  as the diagnostic of record.
+
 ## [0.4.2] - 2026-05-22
 
 Same-day follow-up to v0.4.1. The v0.4.1 release page attached only
@@ -552,7 +626,8 @@ State of the legacy project before the modernization wave. ~330 commits, ~56k LO
 
 ## Version URLs
 
-[Unreleased]: https://github.com/luca-veronelli-stem/stem-device-manager/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/luca-veronelli-stem/stem-device-manager/compare/v0.4.3...HEAD
+[0.4.3]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.4.3
 [0.4.2]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.4.2
 [0.4.1]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.4.1
 [0.4.0]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.4.0

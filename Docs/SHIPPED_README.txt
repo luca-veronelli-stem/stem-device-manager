@@ -1,5 +1,5 @@
 ================================================================================
-					   STEM DEVICE MANAGER v0.4.2
+					   STEM DEVICE MANAGER v0.4.3
 							  STEM E.m.s.
 ================================================================================
 
@@ -28,6 +28,11 @@ REQUISITI
 AVVIO
 -----
 Doppio click su: GUI.Windows.exe
+
+IMPORTANTE: i tre file scompattati dallo zip (GUI.Windows.exe,
+appsettings.json, README.txt) devono restare nella stessa cartella.
+Spostare o cancellare appsettings.json fa partire l'app in modalita'
+offline (vedi sezione USO OFFLINE).
 
 NOTA: al primo avvio Windows SmartScreen potrebbe segnalare l'eseguibile
 come "non riconosciuto". Cliccare "Ulteriori informazioni" -> "Esegui comunque".
@@ -137,7 +142,10 @@ seguenti casi:
 - Chiave API non configurata o vuota. ATTENZIONE: questo accade in modo
   silenzioso al primo avvio se non e' stata seguita la procedura di
   CONFIGURAZIONE API DIZIONARI - non viene mostrato alcun messaggio
-  d'errore in GUI; l'unica traccia e' nel file di log sotto logs/.
+  d'errore in GUI. Per diagnosi, controllare il file di log piu' recente
+  (vedi sezione FILE DI LOG): la prima riga "Dictionary API key source"
+  indica quale fonte e' stata effettivamente usata (Empty / AppSettings
+  / ProductionFile / Env).
 
 In modalita' offline:
 - I dizionari di comandi/variabili vengono letti dal file Excel incorporato
@@ -149,6 +157,43 @@ In modalita' offline:
 
 Per forzare l'uso del fallback offline (debug): scollegare la rete o
 impostare DictionaryApi__BaseUrl ad un indirizzo non valido.
+
+
+================================================================================
+							 FILE DI LOG
+================================================================================
+
+A partire dalla v0.4.3 l'applicazione scrive un file di log per ogni
+avvio sotto:
+
+	%LocalAppData%\Stem\DeviceManager\logs\app-<data-ora>.log
+
+(percorso completo tipico:
+C:\Users\<utente>\AppData\Local\Stem\DeviceManager\logs\app-20260522-093609.log)
+
+Per aprire la cartella in Esplora risorse: Win+R, incollare
+"%LocalAppData%\Stem\DeviceManager\logs", invio.
+
+Le prime righe di ogni file di log indicano:
+- timestamp di avvio;
+- la fonte della chiave API risolta a runtime, riga "Dictionary API key
+  source" con uno di questi valori:
+	* Env             -> chiave letta dalla variabile d'ambiente
+					     DictionaryApi__ApiKey;
+	* ProductionFile  -> chiave letta dal file appsettings.Production.json
+					     accanto all'eseguibile;
+	* AppSettings     -> chiave letta da appsettings.json (non dovrebbe
+					     accadere in v0.4.x - il file committato e' vuoto);
+	* Empty           -> nessuna fonte ha fornito un valore. L'app passa
+					     in modalita' offline (Excel embedded).
+
+Quando si segnala un problema al supporto, allegare il file di log piu'
+recente.
+
+NOTA: le versioni precedenti alla v0.4.3 scrivevano i log accanto
+all'eseguibile (cartella logs\ relativa a GUI.Windows.exe). Quel
+percorso non e' piu' usato; i file gia' presenti possono essere
+cancellati a mano.
 
 
 ================================================================================
