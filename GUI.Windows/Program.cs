@@ -9,7 +9,7 @@ using Services;
 ///*****************************************************************************
 /// @file    Program.cs
 /// @author  Michele Pignedoli, Luca Veronelli
-///@version  0.4.0
+///@version  0.4.1
 /// @date    20/10/2025
 /// @brief   STEM Device Manager Main program body
 ///*****************************************************************************
@@ -32,6 +32,10 @@ using Services;
 ///          Command not combobox index (#107).
 ///        + Security: rotated Azure dictionary API key; key relocated to
 ///          DictionaryApi__ApiKey env var (#94 stopgap).
+/// 0.4.1: + Fix: appsettings.Production.json overlay now actually loads at
+///          runtime, matching the v0.4.0 docs (#110, refs #94).
+///        + SHIPPED_README.txt rewritten for v0.4.1 — API key is required,
+///          no longer claims an embedded test key is present.
 ///
 /// TODO:
 /// - Completare decodifica faults
