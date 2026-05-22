@@ -27,7 +27,7 @@ namespace StemPC
         private readonly BLEManager _bleManager;
         private readonly ILogger<Form1> _logger;
 
-        public const string Software_Version = "0.4.2";
+        public const string Software_Version = "0.4.3";
 
         // Canale hardware corrente selezionato. Le mutazioni vengono propagate a
         // ConnectionManager via SwitchToAsync.
