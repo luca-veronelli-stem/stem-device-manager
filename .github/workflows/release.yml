@@ -1,0 +1,75 @@
+# =============================================================================
+# TEMPORARY — delete on STEM standards adoption.
+#
+# This hand-authored release workflow is a stopgap until stem-device-manager
+# adopts the STEM standards via eng/apply-repo-standard.ps1. At that point the
+# rollout script overwrites this file with the archetype A caller stub that
+# delegates to the reusable workflow at:
+#   luca-veronelli-stem/standards/.github/workflows/release-archetype-a.yml
+#
+# We can't use the reusable workflow today because this repo doesn't yet
+# follow the canonical archetype A layout (no src/, no global.json, app name
+# is "GUI.Windows" not "<App>.GUI", and the README publish recipe relies on
+# IncludeNativeLibrariesForSelfExtract + EnableCompressionInSingleFile which
+# the current reusable workflow doesn't expose as inputs).
+#
+# Tracked in:
+#   - This repo:    https://github.com/luca-veronelli-stem/stem-device-manager/issues/111
+#   - Standards:    https://github.com/luca-veronelli-stem/standards/issues/106
+# =============================================================================
+
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag (e.g. v0.4.1) — must already exist as a Git tag and a published GitHub Release.'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build + attach single-file exe
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Determine version
+        id: v
+        shell: pwsh
+        run: |
+          $tag = if ($env:GITHUB_REF_NAME -match '^v\d') { $env:GITHUB_REF_NAME } else { '${{ inputs.tag }}' }
+          "tag=$tag"                       | Out-File $env:GITHUB_OUTPUT -Append
+          "version=$($tag.TrimStart('v'))" | Out-File $env:GITHUB_OUTPUT -Append
+
+      - name: Restore
+        run: dotnet restore Stem.Device.Manager.slnx
+
+      - name: Publish (win-x64, single-file, native libs packed, compressed)
+        shell: pwsh
+        run: |
+          dotnet publish GUI.Windows/GUI.Windows.csproj `
+            -c Release -r win-x64 --self-contained `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:EnableCompressionInSingleFile=true `
+            -p:Version=${{ steps.v.outputs.version }} `
+            -o publish/${{ steps.v.outputs.tag }}
+
+      - name: Upload exe to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          gh release upload ${{ steps.v.outputs.tag }} `
+            publish/${{ steps.v.outputs.tag }}/GUI.Windows.exe `
+            --clobber
