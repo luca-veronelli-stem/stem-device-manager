@@ -9,7 +9,7 @@ using Services;
 ///*****************************************************************************
 /// @file    Program.cs
 /// @author  Michele Pignedoli, Luca Veronelli
-///@version  0.4.1
+///@version  0.4.2
 /// @date    20/10/2025
 /// @brief   STEM Device Manager Main program body
 ///*****************************************************************************
@@ -36,6 +36,10 @@ using Services;
 ///          runtime, matching the v0.4.0 docs (#110, refs #94).
 ///        + SHIPPED_README.txt rewritten for v0.4.1 — API key is required,
 ///          no longer claims an embedded test key is present.
+/// 0.4.2: + CI fix: release workflow now also uploads appsettings.json +
+///          README.txt (technician config + procedure) alongside the exe.
+///          v0.4.1 release shipped exe-only, leaving DictionaryApi:BaseUrl
+///          null at runtime which silently forced Excel-only mode.
 ///
 /// TODO:
 /// - Completare decodifica faults
