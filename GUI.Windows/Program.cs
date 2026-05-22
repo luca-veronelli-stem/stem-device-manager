@@ -9,7 +9,7 @@ using Services;
 ///*****************************************************************************
 /// @file    Program.cs
 /// @author  Michele Pignedoli, Luca Veronelli
-///@version  0.3.0
+///@version  0.4.0
 /// @date    20/10/2025
 /// @brief   STEM Device Manager Main program body
 ///*****************************************************************************
@@ -24,6 +24,14 @@ using Services;
 ///          ProtocolService/TelemetryService/BootService, ConnectionManager,
 ///          DictionaryCache, removal of #if device variants (runtime selection),
 ///          Spark BLE firmware stabilization (spec-001), Lean 4 invariants.
+/// 0.4.0: + File logger sink + decoder/telemetry silent-drop warnings.
+///        + Restored Boot Interface tab for non-SPARK firmware uploads (#95).
+///        + Fix: API DataType normalization + signed Int8/16/32 widths (#96),
+///          telemetry stop after BLE reconnect (#104), unknown reply commands
+///          tolerated by PacketDecoder (#100), command bytes from selected
+///          Command not combobox index (#107).
+///        + Security: rotated Azure dictionary API key; key relocated to
+///          DictionaryApi__ApiKey env var (#94 stopgap).
 ///
 /// TODO:
 /// - Completare decodifica faults
