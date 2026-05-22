@@ -70,13 +70,21 @@ jobs:
         run: |
           Copy-Item Docs/SHIPPED_README.txt publish/${{ steps.v.outputs.tag }}/README.txt
 
-      - name: Upload release artifacts (exe + appsettings.json + README.txt)
+      - name: Bundle release artifacts into a single zip
+        shell: pwsh
+        run: |
+          $zip = "stem-device-manager-${{ steps.v.outputs.tag }}.zip"
+          Compress-Archive `
+            -Path publish/${{ steps.v.outputs.tag }}/GUI.Windows.exe,publish/${{ steps.v.outputs.tag }}/appsettings.json,publish/${{ steps.v.outputs.tag }}/README.txt `
+            -DestinationPath "publish/${{ steps.v.outputs.tag }}/$zip" `
+            -Force
+          Write-Host "Bundled: publish/${{ steps.v.outputs.tag }}/$zip"
+
+      - name: Upload release zip
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: pwsh
         run: |
           gh release upload ${{ steps.v.outputs.tag }} `
-            publish/${{ steps.v.outputs.tag }}/GUI.Windows.exe `
-            publish/${{ steps.v.outputs.tag }}/appsettings.json `
-            publish/${{ steps.v.outputs.tag }}/README.txt `
+            "publish/${{ steps.v.outputs.tag }}/stem-device-manager-${{ steps.v.outputs.tag }}.zip" `
             --clobber
