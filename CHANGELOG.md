@@ -22,6 +22,41 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.4.1] - 2026-05-22
+
+Patch release closing the docs/code drift introduced by the v0.4.0 security
+stopgap (#94, PR #109). The runtime override for the Azure dictionary API key
+via `GUI.Windows/appsettings.Production.json` was documented in three places
+(CHANGELOG, README, `.gitignore` comment) but `Program.cs` never registered
+the overlay, so the file was silently ignored — leaving technicians who
+followed the documented procedure on the embedded Excel fallback with no
+error message. The shipped end-user README still claimed an embedded test
+key was bundled, which was no longer true after the rotation.
+
+### Fixed
+
+- **#110 — `appsettings.Production.json` overlay now actually loads.**
+  `GUI.Windows/Program.cs` registers the overlay between the committed
+  `appsettings.json` and `AddEnvironmentVariables()`; the documented Route 2
+  for `DictionaryApi:ApiKey` finally works as advertised. `reloadOnChange:
+  false` because credentials are not expected to mutate live. No behavior
+  change for the env-var route (Route 3) or the empty-key fallback (Route 1).
+
+### Changed
+
+- **`Docs/SHIPPED_README.txt` rewritten for v0.4.1** (Italian, end-user-facing
+  for STEM technicians installing the published exe). The previous v0.3.0
+  text stated *"la chiave di test e' embedded"* and listed `DictionaryApi__ApiKey`
+  as optional — both flatly false after the v0.4.0 rotation. New text:
+  - Marks the API key as **mandatory** (sezione VARIABILE OBBLIGATORIA) and
+    documents the silent-401 → Excel-fallback chain that happens if it's
+    missing.
+  - Documents both override routes: env var (OPZIONE A) and gitignored
+    `appsettings.Production.json` next to the exe (OPZIONE B, with a JSON
+    template and an explicit "custodirlo come un segreto" warning).
+  - Adds the unset/empty-key bullet to the `USO OFFLINE` section so the
+    silent-fallback symptom now has a documented mitigation.
+
 ## [0.4.0] - 2026-05-21
 
 Maintenance release on top of v0.3.0: one minor feature (file logger sink + decoder /
@@ -481,7 +516,8 @@ State of the legacy project before the modernization wave. ~330 commits, ~56k LO
 
 ## Version URLs
 
-[Unreleased]: https://github.com/luca-veronelli-stem/stem-device-manager/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/luca-veronelli-stem/stem-device-manager/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.4.1
 [0.4.0]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.4.0
 [0.3.0]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.3.0
 [0.2.15]: https://bitbucket.org/stem-fw/stem-device-manager/src/80bf9c6/
