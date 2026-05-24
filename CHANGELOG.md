@@ -20,6 +20,16 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **`PCANManager` implements `IAsyncDisposable`.** Background connection
+  monitoring + read loops now share a single `CancellationTokenSource`; on
+  `DisposeAsync()` the CTS is cancelled, both loops exit, and the PCAN
+  channel is uninitialised. Enables consumers (e.g. the upcoming
+  `button-panel-tester` `PcanCanLink`) to shut down cleanly without the
+  loops leaking past application teardown. Internal-only; the
+  `IPcanDriver` abstraction is unchanged.
+
 ---
 
 ## [0.4.3] - 2026-05-22
