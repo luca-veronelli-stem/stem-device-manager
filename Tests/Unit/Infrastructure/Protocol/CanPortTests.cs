@@ -25,14 +25,20 @@ public class CanPortTests
     }
 
     [Fact]
-    public void Ctor_DriverConnected_InitialStateIsConnected()
+    public void Ctor_DriverConnected_InitialStateIsDisconnected()
     {
+        // Post-#127: the constructor no longer snapshots driver.IsConnected.
+        // The initial state is always Disconnected regardless of the driver's
+        // pre-construction state. A subscriber attached after the constructor
+        // must drive `ConnectAsync` (or wait for an external `ConnectionStatusChanged`)
+        // to observe the Connected transition. See `ConnectAsync_DriverAlreadyConnected_TransitionsToConnected`
+        // for the cold-start success path that the snapshot used to mask.
         var driver = new FakePcanDriver { IsConnected = true };
 
         using var port = new CanPort(driver);
 
-        Assert.Equal(ConnectionState.Connected, port.State);
-        Assert.True(port.IsConnected);
+        Assert.Equal(ConnectionState.Disconnected, port.State);
+        Assert.False(port.IsConnected);
     }
 
     [Fact]
@@ -54,8 +60,13 @@ public class CanPortTests
     [Fact]
     public async Task ConnectAsync_AlreadyConnected_NoStateChange()
     {
+        // Idempotency of a second ConnectAsync once the port is already
+        // Connected: no event fires, state stays Connected. The first
+        // ConnectAsync brings the port into the Connected state (post-#127
+        // there is no ctor-time snapshot to short-circuit that).
         var driver = new FakePcanDriver { IsConnected = true };
         using var port = new CanPort(driver);
+        await port.ConnectAsync();
         var stateEvents = new List<ConnectionState>();
         port.StateChanged += (_, s) => stateEvents.Add(s);
 
@@ -68,11 +79,16 @@ public class CanPortTests
     [Fact]
     public async Task ConnectAsync_DriverAlreadyConnected_TransitionsToConnected()
     {
-        // Driver già attivo ma port parte da Disconnected (non realistico in prod,
-        // utile per testare la transizione esplicita).
-        var driver = new FakePcanDriver { IsConnected = false };
+        // Post-#127, this is the canonical cold-start success path: the
+        // driver reports IsConnected = true at construction time (e.g. after
+        // PCANManager's eager PCANBasic.Initialize), and the port's
+        // ConnectAsync poll loop transitions Disconnected → Connecting →
+        // Connected on attempt 0. Subscribers attached after construction
+        // observe both events. Pre-#127 the constructor snapshot pinned the
+        // initial state to Connected and ConnectAsync early-returned without
+        // firing any transition, stranding cold-start subscribers.
+        var driver = new FakePcanDriver { IsConnected = true };
         using var port = new CanPort(driver);
-        driver.IsConnected = true; // driver connette prima di ConnectAsync
         var stateEvents = new List<ConnectionState>();
         port.StateChanged += (_, s) => stateEvents.Add(s);
 
@@ -103,6 +119,7 @@ public class CanPortTests
     {
         var driver = new FakePcanDriver { IsConnected = true };
         using var port = new CanPort(driver);
+        await port.ConnectAsync();
         var stateEvents = new List<ConnectionState>();
         port.StateChanged += (_, s) => stateEvents.Add(s);
 
@@ -146,6 +163,7 @@ public class CanPortTests
     {
         var driver = new FakePcanDriver { IsConnected = true };
         using var port = new CanPort(driver);
+        await port.ConnectAsync();
         var payload = new byte[] { 0x01, 0x02, 0x03 }; // solo 3 byte
 
         await Assert.ThrowsAsync<ArgumentException>(
@@ -157,6 +175,7 @@ public class CanPortTests
     {
         var driver = new FakePcanDriver { IsConnected = true };
         using var port = new CanPort(driver);
+        await port.ConnectAsync();
         // 4 byte arbId + 9 byte dati = 13 totali (massimo CAN = 4+8 = 12)
         var payload = new byte[13];
 
@@ -184,6 +203,7 @@ public class CanPortTests
     {
         var driver = new FakePcanDriver { IsConnected = true };
         using var port = new CanPort(driver);
+        await port.ConnectAsync();
         // arbId = 0x12345678 LE → 78 56 34 12
         // dati  = DE AD BE EF
         var payload = new byte[] { 0x78, 0x56, 0x34, 0x12, 0xDE, 0xAD, 0xBE, 0xEF };
@@ -202,6 +222,7 @@ public class CanPortTests
     {
         var driver = new FakePcanDriver { IsConnected = true };
         using var port = new CanPort(driver);
+        await port.ConnectAsync();
         var payload = new byte[] { 0x01, 0x00, 0x00, 0x00 }; // solo arbId
 
         await port.SendAsync(payload);
@@ -216,6 +237,7 @@ public class CanPortTests
     {
         var driver = new FakePcanDriver { IsConnected = true };
         using var port = new CanPort(driver);
+        await port.ConnectAsync();
         // 4 byte arbId + 8 byte dati = 12 (limite CAN extended)
         var payload = new byte[12];
         payload[0] = 0xFF;
@@ -268,10 +290,11 @@ public class CanPortTests
     // --- StateChanged dagli eventi driver ---
 
     [Fact]
-    public void DriverConnectionStatusChanged_ConnectedToDisconnected_FiresStateChanged()
+    public async Task DriverConnectionStatusChanged_ConnectedToDisconnected_FiresStateChanged()
     {
         var driver = new FakePcanDriver { IsConnected = true };
         using var port = new CanPort(driver);
+        await port.ConnectAsync();
         var stateEvents = new List<ConnectionState>();
         port.StateChanged += (_, s) => stateEvents.Add(s);
 
@@ -282,10 +305,11 @@ public class CanPortTests
     }
 
     [Fact]
-    public void DriverConnectionStatusChanged_SameState_NoEventEmitted()
+    public async Task DriverConnectionStatusChanged_SameState_NoEventEmitted()
     {
         var driver = new FakePcanDriver { IsConnected = true };
         using var port = new CanPort(driver);
+        await port.ConnectAsync();
         var stateEvents = new List<ConnectionState>();
         port.StateChanged += (_, s) => stateEvents.Add(s);
 
@@ -311,10 +335,11 @@ public class CanPortTests
     }
 
     [Fact]
-    public void Dispose_FromConnected_CallsDriverDisconnect()
+    public async Task Dispose_FromConnected_CallsDriverDisconnect()
     {
         var driver = new FakePcanDriver { IsConnected = true };
         var port = new CanPort(driver);
+        await port.ConnectAsync();
 
         port.Dispose();
 
@@ -355,10 +380,11 @@ public class CanPortTests
     }
 
     [Fact]
-    public void Dispose_CalledTwice_IsIdempotent()
+    public async Task Dispose_CalledTwice_IsIdempotent()
     {
         var driver = new FakePcanDriver { IsConnected = true };
         var port = new CanPort(driver);
+        await port.ConnectAsync();
 
         port.Dispose();
         port.Dispose();

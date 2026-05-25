@@ -30,6 +30,36 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   loops leaking past application teardown. Internal-only; the
   `IPcanDriver` abstraction is unchanged.
 
+### Fixed
+
+- **`CanPort` no longer snapshots `driver.IsConnected` at construction.**
+  The constructor used to set `_state = driver.IsConnected ? Connected :
+  Disconnected` before subscribing to `ConnectionStatusChanged`. If the
+  driver had already reported `IsConnected = true` (e.g. after
+  `PCANManager`'s eager `PCANBasic.Initialize` inside its own
+  constructor), `_state` was pinned to `Connected` and any subscriber that
+  attached to `StateChanged` after `new CanPort(...)` missed the only
+  state transition the port would ever emit on the cold-start success
+  path. `ConnectAsync` then early-returned at the `State == Connected`
+  guard without firing any `Transition`. Surfaced as a CAN-link wrapper
+  hang in `button-panel-tester` (issue #127): the GUI's CAN status row
+  sat on `Initializing…` indefinitely on plugged-in startup.
+
+  Fix is a one-line change to the constructor: `_state` is unconditionally
+  initialised to `Disconnected`. The first `ConnectAsync` then takes its
+  existing poll loop, observes `_driver.IsConnected = true` on attempt 0,
+  and fires `Transition(Connected)` against the now-subscribed handler.
+  The fail-fast path (driver never reaches Connected → 2 s timeout →
+  `Transition(Error)` + throw) is preserved unchanged. Production
+  consumers in this repo were unaffected (`ConnectionManager.SwitchToAsync`
+  always invokes `ConnectAsync` after constructing the port). Unit tests
+  that asserted the now-removed snapshot contract were rewritten:
+  `Ctor_DriverConnected_InitialStateIsDisconnected` (the renamed inverse
+  of the deleted snapshot test) and `ConnectAsync_AlreadyConnected_NoStateChange`
+  (now a re-Connect idempotency test); the SendAsync/Dispose tests that
+  relied on the ctor-time Connected state now call `await
+  port.ConnectAsync()` explicitly before exercising the contract.
+
 ---
 
 ## [0.4.3] - 2026-05-22
