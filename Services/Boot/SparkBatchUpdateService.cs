@@ -31,6 +31,19 @@ public sealed record SparkAreaProgress(
     SparkFirmwareArea Area, int CurrentOffset, int TotalLength)
 {
     public double Fraction => TotalLength <= 0 ? 0.0 : (double)CurrentOffset / TotalLength;
+
+    /// <summary>
+    /// Pages (1024-B <c>CMD_PROGRAM_BLOCK</c>s) sent and acked so far for this
+    /// area: <c>ceil(CurrentOffset / FirmwareBlockSize)</c>. Increments by one
+    /// per acked page, ending at <see cref="TotalPages"/>.
+    /// </summary>
+    public int CurrentPage => CeilDiv(CurrentOffset, BootService.FirmwareBlockSize);
+
+    /// <summary>Total pages this area's firmware spans.</summary>
+    public int TotalPages => CeilDiv(TotalLength, BootService.FirmwareBlockSize);
+
+    private static int CeilDiv(int bytes, int blockSize)
+        => bytes <= 0 ? 0 : (bytes + blockSize - 1) / blockSize;
 }
 
 /// <summary>
