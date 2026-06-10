@@ -313,6 +313,15 @@ public sealed class Spark_FirmwareUpdate_WF_Tab : TabPage
             string path = row.PathBox.Text;
             if (string.IsNullOrWhiteSpace(path)) continue;
             byte[] bytes = File.ReadAllBytes(path);
+            // Header dump for boot diagnosis: BootService derives fwType from
+            // bytes 14..15 (STEM application-header convention), so the first
+            // 32 bytes tell whether the selected file actually carries that
+            // header or fwType is being read out of raw data.
+            int headerLen = Math.Min(32, bytes.Length);
+            _logger.LogInformation(
+                "SPARK batch file: {Area} path={Path} length={Length} header={HeaderHex}",
+                row.Definition.DisplayName, path, bytes.Length,
+                Convert.ToHexString(bytes.AsSpan(0, headerLen)));
             batch.Add(new SparkBatchItem(row.Definition.Area, bytes));
         }
         return batch;
