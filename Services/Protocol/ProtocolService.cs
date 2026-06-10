@@ -109,6 +109,13 @@ public sealed class ProtocolService : IProtocolService
                 PacketId: packetId,
                 Version: DefaultVersion);
             var wireFrame = BuildWireFrame(netInfo, recipientId, chunks[i]);
+            _logger.LogDebug(
+                "TX wire frame to {RecipientId:X8}, chunk={Chunk}/{Chunks}, length={Length}: {Frame}",
+                recipientId,
+                i + 1,
+                chunks.Count,
+                wireFrame.Length,
+                Convert.ToHexString(wireFrame));
             await _port.SendAsync(wireFrame, ct);
         }
     }
@@ -182,6 +189,9 @@ public sealed class ProtocolService : IProtocolService
                 _port.Kind, raw.Timestamp);
             return;
         }
+        _logger.LogDebug(
+            "RX {Channel} frame, length={Length}: {Frame}",
+            _port.Kind, raw.Payload.Length, Convert.ToHexString(raw.Payload.AsSpan()));
         var normalized = StripChannelFraming(raw.Payload.AsSpan(), _port.Kind);
         if (normalized.IsEmpty)
         {
@@ -202,6 +212,13 @@ public sealed class ProtocolService : IProtocolService
         var evt = _decoder.Decode(applicationPacket);
         if (evt is not null)
         {
+            // Diagnostic visibility for replies that decode fine but match no
+            // waiter: without this line a wrong-but-known reply command is
+            // indistinguishable from device silence in the file log.
+            _logger.LogDebug(
+                "RX decoded: cmd={CodeHigh}{CodeLow} ({Name}) from {SenderId:X8}, payload={Payload}",
+                evt.Command.CodeHigh, evt.Command.CodeLow, evt.Command.Name,
+                evt.SenderId, Convert.ToHexString(evt.Payload.AsSpan()));
             AppLayerDecoded?.Invoke(this, evt);
             return;
         }
