@@ -173,17 +173,18 @@ public class BootServiceTests
     [Fact]
     public async Task Start_NoReplyForBlock_TransitionsToFailedAfterRetries()
     {
-        using var fixture = new Fixture(replyForCommandLo: 0x05); // only START gets a reply
+        // Only START gets a reply. Block 0 is governed by the first-block
+        // budget (shrunk here to keep the test fast); once exhausted the
+        // upload fails without sending END/RESTART. spec-001 R10/Q1.
+        using var fixture = new Fixture(replyForCommandLo: 0x05, firstBlockRetryBudget: 4);
         var firmware = BuildFirmware(length: 16, fwTypeLow: 0x05, fwTypeHigh: 0x00);
 
         await fixture.Service.StartFirmwareUploadAsync(firmware, TargetRecipientId);
 
         Assert.Equal(BootState.Failed, fixture.Service.State);
-        // START once (succeeded), BLOCK RetryBudget times (all failed), no END, no RESTART.
-        // spec-001 R10/Q1: RetryBudget default = 3, shared across steps.
         var codes = fixture.GetSentCommandCodes();
         int blockAttempts = codes.Count(c => c.Item2 == 0x07);
-        Assert.Equal(BootService.DefaultRetryBudget, blockAttempts);
+        Assert.Equal(4, blockAttempts);
         Assert.DoesNotContain((0x00, 0x06), codes);
         Assert.DoesNotContain((0x00, 0x0A), codes);
     }
@@ -404,6 +405,69 @@ public class BootServiceTests
         Assert.Equal(BootState.Failed, fixture.Service.State);
     }
 
+    // --- First-block retry budget (SPARK area-erase latency) ---
+    // Bench evidence (2026-06-10): the SPARK HMI bootloader acks CMD_START_PROCEDURE
+    // immediately, then stays silent on the first CMD_PROGRAM_BLOCK until the
+    // target area erase completes (~13 s for 651 KB; est. ~110 s for the 5.5 MB
+    // images area). The first block of each upload therefore gets a dedicated,
+    // much larger retry budget; blocks 1+ keep the standard fast-fail budget.
+
+    [Fact]
+    public void Ctor_DefaultFirstBlockRetryBudget_IsSixty()
+    {
+        using var fixture = new Fixture();
+        Assert.Equal(60, fixture.Service.FirstBlockRetryBudget);
+        Assert.Equal(
+            BootService.DefaultFirstBlockRetryBudget,
+            fixture.Service.FirstBlockRetryBudget);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Ctor_FirstBlockRetryBudgetLessThanOne_Throws(int invalid)
+    {
+        using var port = new FakeCommunicationPort(ChannelKind.Ble);
+        var decoder = new PacketDecoder(ReplyCommands, [], []);
+        using var protocol = new ProtocolService(port, decoder, OwnRecipientId);
+
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new BootService(protocol, firstBlockRetryBudget: invalid));
+    }
+
+    [Fact]
+    public async Task Start_FirstBlockSlowAck_RetriesBeyondStandardBudgetAndCompletes()
+    {
+        using var fixture = new Fixture();
+        // Silence the first 5 block sends (erase in progress), ack from the 6th.
+        // The standard budget (3) would abort; the first-block budget must not.
+        fixture.BlockReplyFilter = n => n > 5;
+        var firmware = BuildFirmware(length: 1500, fwTypeLow: 0x05, fwTypeHigh: 0x00);
+
+        await fixture.Service.StartFirmwareUploadAsync(firmware, TargetRecipientId);
+
+        Assert.Equal(BootState.Completed, fixture.Service.State);
+        // Page 0: 5 silent attempts + 1 acked; page 1: 1 acked.
+        int blockSends = fixture.GetSentCommandCodes().Count(c => c.Item2 == 0x07);
+        Assert.Equal(7, blockSends);
+    }
+
+    [Fact]
+    public async Task Start_SecondBlockNoReply_StillFailsAfterStandardBudget()
+    {
+        using var fixture = new Fixture();
+        // Page 0 acked on its first send; everything after stays silent. The
+        // patient budget must NOT leak to blocks 1+ — they fail fast.
+        fixture.BlockReplyFilter = n => n == 1;
+        var firmware = BuildFirmware(length: 1500, fwTypeLow: 0x05, fwTypeHigh: 0x00);
+
+        await fixture.Service.StartFirmwareUploadAsync(firmware, TargetRecipientId);
+
+        Assert.Equal(BootState.Failed, fixture.Service.State);
+        int blockSends = fixture.GetSentCommandCodes().Count(c => c.Item2 == 0x07);
+        Assert.Equal(1 + BootService.DefaultRetryBudget, blockSends);
+    }
+
     // --- Helpers ---
 
     private static byte[] BuildFirmware(int length, byte fwTypeLow, byte fwTypeHigh)
@@ -429,7 +493,8 @@ public class BootServiceTests
             bool autoReply = true,
             byte? replyForCommandLo = null,
             int retryBudget = BootService.DefaultRetryBudget,
-            Func<bool>? isSessionAlive = null)
+            Func<bool>? isSessionAlive = null,
+            int firstBlockRetryBudget = BootService.DefaultFirstBlockRetryBudget)
         {
             AutoReplyEnabled = autoReply;
             ReplyForCommandLo = replyForCommandLo;
@@ -439,12 +504,21 @@ public class BootServiceTests
             Service = new BootService(
                 Protocol, FastResponseTimeout, FastRestartInterval,
                 retryBudget: retryBudget,
-                isSessionAlive: isSessionAlive);
+                isSessionAlive: isSessionAlive,
+                firstBlockRetryBudget: firstBlockRetryBudget);
             Port.OnSent = OnPortSent;
         }
 
         public bool AutoReplyEnabled { get; set; }
         public byte? ReplyForCommandLo { get; }
+
+        /// <summary>
+        /// Per-block reply gate: receives the 1-based count of completed
+        /// CMD_PROGRAM_BLOCK sends (retries included) and returns whether the
+        /// auto-reply fires for that send. Null = always reply. Models the
+        /// SPARK bootloader staying silent during the area erase.
+        /// </summary>
+        public Func<int, bool>? BlockReplyFilter { get; set; }
         public FakeCommunicationPort Port { get; }
         public ProtocolService Protocol { get; }
         public BootService Service { get; }
@@ -515,6 +589,8 @@ public class BootServiceTests
 
             if (!AutoReplyEnabled) return;
             if (ReplyForCommandLo.HasValue && ReplyForCommandLo.Value != info.CmdLo) return;
+            if (info.CmdLo == 0x07 && BlockReplyFilter is not null
+                && !BlockReplyFilter(_blocksSent)) return;
             // RESTART (00, 0A) è fire-and-forget — non auto-reply.
             if (info.CmdLo == 0x0A) return;
 

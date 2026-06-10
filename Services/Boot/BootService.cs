@@ -37,7 +37,7 @@ namespace Services.Boot;
 /// <para><b>spec-001 contract hooks</b> (see
 /// <c>specs/001-spark-ble-fw-stabilize/contracts/boot-service.md</c>):</para>
 /// <list type="bullet">
-/// <item><description>Q1 — every waited step is bounded by <see cref="RetryBudget"/> (default <see cref="DefaultRetryBudget"/>, constructor-configurable, enforced inside <c>SendWithRetry</c>).</description></item>
+/// <item><description>Q1 — every waited step is bounded by <see cref="RetryBudget"/> (default <see cref="DefaultRetryBudget"/>, constructor-configurable, enforced inside <c>SendWithRetry</c>). Exception: the first <c>CMD_PROGRAM_BLOCK</c> of an upload is bounded by <see cref="FirstBlockRetryBudget"/> instead — still a finite constructor-set constant, sized to outlast the device-side area erase.</description></item>
 /// <item><description>P3 — <see cref="CancellationToken"/> is observed at the top of each retry iteration and before each block send.</description></item>
 /// <item><description>I1 — the optional <see cref="Func{TResult}"/> session-alive probe is evaluated every retry iteration; when it returns <c>false</c> the step aborts immediately with <see cref="BootSessionLostException"/> (transient reply timeouts still retry; only a lost BLE session short-circuits the loop).</description></item>
 /// </list>
@@ -50,6 +50,18 @@ public sealed class BootService : IBootService, IDisposable
     /// integration tests and diagnostic harnesses can shrink the budget.
     /// </summary>
     public const int DefaultRetryBudget = 3;
+
+    /// <summary>
+    /// Default retry budget for the FIRST <c>CMD_PROGRAM_BLOCK</c> of an upload.
+    /// The SPARK HMI bootloader acks <c>CMD_START_PROCEDURE</c> immediately but
+    /// stays silent on block 0 until the target-area flash erase completes
+    /// (bench 2026-06-10: ~13 s for the 651 KB application area; the 5.5 MB
+    /// images area scales to ~110 s). 60 attempts × 4 s response timeout gives
+    /// ~240 s of patience — ~2× margin over the worst measured-area estimate.
+    /// Blocks 1+ keep <see cref="DefaultRetryBudget"/> so a dead link still
+    /// fails fast everywhere slowness is not expected.
+    /// </summary>
+    public const int DefaultFirstBlockRetryBudget = 60;
 
     /// <summary>
     /// Size of one firmware "page": the fixed <c>CMD_PROGRAM_BLOCK</c> payload
@@ -80,6 +92,7 @@ public sealed class BootService : IBootService, IDisposable
     private readonly TimeSpan _responseTimeout;
     private readonly TimeSpan _restartInterval;
     private readonly int _retryBudget;
+    private readonly int _firstBlockRetryBudget;
     private readonly Func<bool>? _isSessionAlive;
     private readonly Lock _stateLock = new();
     private BootState _state = BootState.Idle;
@@ -97,14 +110,16 @@ public sealed class BootService : IBootService, IDisposable
         IProtocolService protocol,
         int retryBudget = DefaultRetryBudget,
         Func<bool>? isSessionAlive = null,
-        ILogger<BootService>? logger = null)
+        ILogger<BootService>? logger = null,
+        int firstBlockRetryBudget = DefaultFirstBlockRetryBudget)
         : this(
             protocol,
             DefaultResponseTimeout,
             DefaultRestartInterval,
             retryBudget,
             isSessionAlive,
-            logger)
+            logger,
+            firstBlockRetryBudget)
     { }
 
     /// <summary>
@@ -126,7 +141,8 @@ public sealed class BootService : IBootService, IDisposable
         TimeSpan restartInterval,
         int retryBudget = DefaultRetryBudget,
         Func<bool>? isSessionAlive = null,
-        ILogger<BootService>? logger = null)
+        ILogger<BootService>? logger = null,
+        int firstBlockRetryBudget = DefaultFirstBlockRetryBudget)
     {
         ArgumentNullException.ThrowIfNull(protocol);
         if (retryBudget < 1)
@@ -134,11 +150,17 @@ public sealed class BootService : IBootService, IDisposable
                 nameof(retryBudget),
                 retryBudget,
                 "RetryBudget must be >= 1 (spec-001 R10).");
+        if (firstBlockRetryBudget < 1)
+            throw new ArgumentOutOfRangeException(
+                nameof(firstBlockRetryBudget),
+                firstBlockRetryBudget,
+                "FirstBlockRetryBudget must be >= 1 (spec-001 Q1 stays bounded).");
         _protocol = protocol;
         _logger = logger ?? NullLogger<BootService>.Instance;
         _responseTimeout = responseTimeout;
         _restartInterval = restartInterval;
         _retryBudget = retryBudget;
+        _firstBlockRetryBudget = firstBlockRetryBudget;
         _isSessionAlive = isSessionAlive;
     }
 
@@ -148,6 +170,14 @@ public sealed class BootService : IBootService, IDisposable
     /// parameter; default <see cref="DefaultRetryBudget"/>.
     /// </summary>
     public int RetryBudget => _retryBudget;
+
+    /// <summary>
+    /// Retry budget for the first <c>CMD_PROGRAM_BLOCK</c> of each upload,
+    /// sized to ride out the device-side area erase (see
+    /// <see cref="DefaultFirstBlockRetryBudget"/>). Blocks 1+ use
+    /// <see cref="RetryBudget"/>.
+    /// </summary>
+    public int FirstBlockRetryBudget => _firstBlockRetryBudget;
 
     /// <inheritdoc/>
     public event EventHandler<BootProgress>? ProgressChanged;
@@ -377,25 +407,30 @@ public sealed class BootService : IBootService, IDisposable
         int totalBlocks = (firmware.Length + FirmwareBlockSize - 1) / FirmwareBlockSize;
         _logger.LogInformation(
             "Boot blocks: uploading {Bytes} bytes ({Blocks} blocks of {BlockSize}B) " +
-            "fwType=0x{FwType:X4} to {Recipient:X8}",
-            firmware.Length, totalBlocks, FirmwareBlockSize, fwType, recipientId);
+            "fwType=0x{FwType:X4} to {Recipient:X8} " +
+            "(first-block budget {FirstBlockBudget}, then {Budget})",
+            firmware.Length, totalBlocks, FirmwareBlockSize, fwType, recipientId,
+            _firstBlockRetryBudget, _retryBudget);
         uint pageNum = 0;
         for (int offset = 0; offset < firmware.Length; offset += FirmwareBlockSize)
         {
             ct.ThrowIfCancellationRequested();
             var block = BuildPaddedBlock(firmware, offset);
             var payload = BuildProgramBlockPayload(fwType, pageNum, FirmwareBlockSize, block);
+            // Block 0 waits out the device-side area erase (the bootloader only
+            // acks once the flash is ready); blocks 1+ fail fast as usual.
+            int budget = pageNum == 0 ? _firstBlockRetryBudget : _retryBudget;
             bool ok = await SendWithRetry(
                 recipientId, CmdProgramBlock, payload,
-                _retryBudget, SparkBatchPhase.UploadBlocks, ct).ConfigureAwait(false);
+                budget, SparkBatchPhase.UploadBlocks, ct).ConfigureAwait(false);
             if (!ok)
             {
                 _logger.LogError(
                     "Boot blocks failed: block {PageNum}/{TotalBlocks} not acknowledged " +
                     "after {Retries} retries (recipient {Recipient:X8})",
-                    pageNum, totalBlocks, _retryBudget, recipientId);
+                    pageNum, totalBlocks, budget, recipientId);
                 throw new BootProtocolException(
-                    $"Block {pageNum} programming failed after {_retryBudget} attempts.");
+                    $"Block {pageNum} programming failed after {budget} attempts.");
             }
             LogBlockProgress(pageNum, totalBlocks);
             pageNum++;
