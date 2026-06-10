@@ -51,7 +51,12 @@ public sealed class BootService : IBootService, IDisposable
     /// </summary>
     public const int DefaultRetryBudget = 3;
 
-    private const int FirmwareBlockSize = 1024;
+    /// <summary>
+    /// Size of one firmware "page": the fixed <c>CMD_PROGRAM_BLOCK</c> payload
+    /// block (1024 B, <c>Docs/PROTOCOL.md</c>). Public so progress consumers can
+    /// frame byte offsets as page counts without duplicating the constant.
+    /// </summary>
+    public const int FirmwareBlockSize = 1024;
     private const int FwTypeOffsetLow = 14;
     private const int FwTypeOffsetHigh = 15;
     private const int MinFirmwareLength = 16;

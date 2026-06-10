@@ -20,6 +20,7 @@ public sealed class Spark_FirmwareUpdate_WF_Tab : TabPage
     private Label _lblStatus = null!;
     private ProgressBar _pbCurrentArea = null!;
     private ProgressBar _pbTotal = null!;
+    private Label _lblPageCounter = null!;
 
     public Spark_FirmwareUpdate_WF_Tab(
         ConnectionManager connMgr, ILoggerFactory? loggerFactory = null)
@@ -171,11 +172,12 @@ public sealed class Spark_FirmwareUpdate_WF_Tab : TabPage
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
-            RowCount = 2,
+            RowCount = 3,
             Padding = new Padding(0, 10, 0, 0),
         };
         panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
         panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
@@ -196,6 +198,21 @@ public sealed class Spark_FirmwareUpdate_WF_Tab : TabPage
         }, 0, 1);
         _pbTotal = new ProgressBar { Dock = DockStyle.Top, Height = 22 };
         panel.Controls.Add(_pbTotal, 1, 1);
+
+        // Per-firmware page counter, pinned at the bottom. A "page" is one
+        // 1024-B CMD_PROGRAM_BLOCK; the count resets on each area and ends at
+        // that area's total page count.
+        _lblPageCounter = new Label
+        {
+            Text = "Pages: —",
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft,
+            AutoSize = true,
+            Margin = new Padding(0, 8, 0, 0),
+            Font = new Font(Font, FontStyle.Bold),
+        };
+        panel.Controls.Add(_lblPageCounter, 0, 2);
+        panel.SetColumnSpan(_lblPageCounter, 2);
         return panel;
     }
 
@@ -222,6 +239,7 @@ public sealed class Spark_FirmwareUpdate_WF_Tab : TabPage
         SetUiBusy(true);
         _pbCurrentArea.Value = 0;
         _pbTotal.Value = 0;
+        _lblPageCounter.Text = "Pages: —";
         SetStatus("Starting batch...");
 
         int totalAreas = batch.Count;
@@ -232,6 +250,7 @@ public sealed class Spark_FirmwareUpdate_WF_Tab : TabPage
         {
             SetStatus($"[{areasDone + 1}/{totalAreas}] {def.DisplayName} — starting...");
             _pbCurrentArea.Value = 0;
+            _lblPageCounter.Text = $"{def.DisplayName}: page 0";
         });
         orchestrator.AreaProgress += (_, p) => RunOnUi(() =>
         {
@@ -241,6 +260,8 @@ public sealed class Spark_FirmwareUpdate_WF_Tab : TabPage
             _pbCurrentArea.Value = pct;
             int batchPct = (int)(((areasDone + p.Fraction) / totalAreas) * 100);
             _pbTotal.Value = Math.Min(100, Math.Max(0, batchPct));
+            _lblPageCounter.Text =
+                $"{SparkAreas.Get(p.Area).DisplayName}: page {p.CurrentPage} / {p.TotalPages}";
         });
         orchestrator.AreaCompleted += (_, def) => RunOnUi(() =>
         {
