@@ -380,8 +380,10 @@ public class SparkBleStabilizationTests
     /// third area, **fires zero <c>RESTART_MACHINE</c> commands** (a half-flashed
     /// device must not be auto-rebooted), and the first area completes
     /// fully. The "corrupted WEMOTOR1.corrupt.bin" from the bench runbook
-    /// maps to the fake injecting a failure on Motor1's recipient — bytes
-    /// stay valid because the orchestrator never inspects payload.
+    /// maps to the fake injecting a failure on the second UploadBlocks call
+    /// (Motor1) — bytes stay valid because the orchestrator never inspects
+    /// payload, and all areas share the HMI recipient so the fake targets
+    /// the call ordinal.
     /// </summary>
     [Fact]
     public async Task Us4_CanonicalBatch_And_FaultInjected_Abort()
@@ -411,15 +413,13 @@ public class SparkBleStabilizationTests
 
         // SC-007: 5 fault-injected batches, second area fails at UploadBlocks.
         var secondArea = CanonicalBatch[1];
-        var secondRecipient = SparkAreas.Get(secondArea).RecipientId;
         var firstArea = CanonicalBatch[0];
-        var thirdRecipient = SparkAreas.Get(CanonicalBatch[2]).RecipientId;
 
         for (int run = 0; run < 5; run++)
         {
             var fake = new FakeBootService
             {
-                UploadBlocksFailsForRecipient = secondRecipient,
+                UploadBlocksFailsAtCall = 2,
             };
             var orchestrator = new SparkBatchUpdateService(fake);
             var completed = new List<SparkFirmwareArea>();
@@ -430,11 +430,11 @@ public class SparkBleStabilizationTests
 
             Assert.Equal(secondArea, ex.Area.Area);
             Assert.Equal(SparkBatchPhase.UploadBlocks, ex.Phase);
-            // Third area must never have been StartBoot-ed.
-            Assert.DoesNotContain(
-                fake.Calls,
-                c => c.Kind == FakeBootCallKind.StartBoot
-                     && c.Recipient == thirdRecipient);
+            // Third area must never have been StartBoot-ed: only the first
+            // two areas opened a boot session (recipients are all HMI, so
+            // the call count is the only discriminator).
+            Assert.Equal(
+                2, fake.Calls.Count(c => c.Kind == FakeBootCallKind.StartBoot));
             // First area completed fully (emitted AreaCompleted).
             Assert.Contains(firstArea, completed);
             // Issue #74: zero RESTART_MACHINE on the abort path — a half-flashed
@@ -458,7 +458,10 @@ public class SparkBleStabilizationTests
     private sealed class FakeBootService : IBootService
     {
         public List<FakeBootCall> Calls { get; } = new();
-        public uint? UploadBlocksFailsForRecipient { get; set; }
+
+        // All SPARK areas share the HMI recipient, so the failure target is
+        // the 1-based ordinal of the UploadBlocksOnly call (canonical order).
+        public int? UploadBlocksFailsAtCall { get; set; }
 
         public BootState State { get; private set; } = BootState.Idle;
         public double Progress => 0;
@@ -492,7 +495,8 @@ public class SparkBleStabilizationTests
         {
             Calls.Add(new(FakeBootCallKind.UploadBlocksOnly, recipientId));
             ProgressChanged?.Invoke(this, new BootProgress(firmware.Length, firmware.Length));
-            if (UploadBlocksFailsForRecipient == recipientId)
+            int ordinal = Calls.Count(c => c.Kind == FakeBootCallKind.UploadBlocksOnly);
+            if (UploadBlocksFailsAtCall == ordinal)
             {
                 State = BootState.Failed;
                 return Task.CompletedTask;
