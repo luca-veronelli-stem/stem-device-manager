@@ -37,29 +37,33 @@ public class SparkBatchUpdateServiceTests
     {
         var fake = new FakeBootService();
         var orchestrator = new SparkBatchUpdateService(fake);
+        // All areas share the HMI recipient, so order is observed through the
+        // firmware payload each area uploads: one distinct byte per area.
+        var fwByArea = SparkAreas.All.ToDictionary(
+            a => a.Area, a => new byte[] { (byte)a.Order });
         // Submit in a deliberately scrambled order; orchestrator must reorder.
         var items = new List<SparkBatchItem>
         {
-            new(SparkFirmwareArea.Rostrum,        Fw),
-            new(SparkFirmwareArea.HmiApplication, Fw),
-            new(SparkFirmwareArea.Motor1,         Fw),
-            new(SparkFirmwareArea.BootloaderHmi,  Fw),
-            new(SparkFirmwareArea.Motor2,         Fw),
-            new(SparkFirmwareArea.HmiImages,      Fw),
+            new(SparkFirmwareArea.Rostrum,        fwByArea[SparkFirmwareArea.Rostrum]),
+            new(SparkFirmwareArea.HmiApplication, fwByArea[SparkFirmwareArea.HmiApplication]),
+            new(SparkFirmwareArea.Motor1,         fwByArea[SparkFirmwareArea.Motor1]),
+            new(SparkFirmwareArea.BootloaderHmi,  fwByArea[SparkFirmwareArea.BootloaderHmi]),
+            new(SparkFirmwareArea.Motor2,         fwByArea[SparkFirmwareArea.Motor2]),
+            new(SparkFirmwareArea.HmiImages,      fwByArea[SparkFirmwareArea.HmiImages]),
         };
 
         await orchestrator.ExecuteAsync(items);
 
         // Each area = 3 calls: StartBoot, UploadBlocksOnly, EndBoot. RESTART_MACHINE
         // is hoisted to the batch end (issue #74) and not part of the per-area sequence.
-        // The "Start" calls (one per area) reveal the order.
-        var startedAreas = fake.Calls
-            .Where(c => c.Kind == FakeBootCallKind.StartBoot)
-            .Select(c => c.Recipient)
+        // The uploaded payloads (one per area) reveal the order.
+        var uploadedAreaTags = fake.Calls
+            .Where(c => c.Kind == FakeBootCallKind.UploadBlocksOnly)
+            .Select(c => c.Firmware![0])
             .ToList();
         Assert.Equal(
-            SparkAreas.All.Select(a => a.RecipientId).ToList(),
-            startedAreas);
+            SparkAreas.All.Select(a => (byte)a.Order).ToList(),
+            uploadedAreaTags);
     }
 
     [Fact]
@@ -67,31 +71,49 @@ public class SparkBatchUpdateServiceTests
     {
         var fake = new FakeBootService();
         var orchestrator = new SparkBatchUpdateService(fake);
+        byte[] imagesFw = [1];
+        byte[] rostrumFw = [2];
         var items = new List<SparkBatchItem>
         {
-            new(SparkFirmwareArea.Rostrum,   Fw),
-            new(SparkFirmwareArea.HmiImages, Fw),
+            new(SparkFirmwareArea.Rostrum,   rostrumFw),
+            new(SparkFirmwareArea.HmiImages, imagesFw),
         };
 
         await orchestrator.ExecuteAsync(items);
 
-        var startedAreas = fake.Calls
-            .Where(c => c.Kind == FakeBootCallKind.StartBoot)
-            .Select(c => c.Recipient)
+        var uploadedFw = fake.Calls
+            .Where(c => c.Kind == FakeBootCallKind.UploadBlocksOnly)
+            .Select(c => c.Firmware)
             .ToList();
-        Assert.Equal(
-            new[]
-            {
-                SparkAreas.Get(SparkFirmwareArea.HmiImages).RecipientId,
-                SparkAreas.Get(SparkFirmwareArea.Rostrum).RecipientId,
-            },
-            startedAreas);
+        Assert.Equal(new[] { imagesFw, rostrumFw }, uploadedFw);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_AllAreas_AddressesEveryCallToHmiRecipient()
+    {
+        // Confirmed routing design (fw team + bench 2026-06-11): the HMI
+        // orchestrates the whole machine update, so every device call —
+        // ECU areas included — is addressed to the HMI recipient. Direct
+        // per-ECU addressing gets no reply over BLE.
+        const uint HmiRecipient = 0x000702C1u;
+        var fake = new FakeBootService();
+        var orchestrator = new SparkBatchUpdateService(fake);
+        var items = SparkAreas.All
+            .Select(a => new SparkBatchItem(a.Area, Fw))
+            .ToList();
+
+        await orchestrator.ExecuteAsync(items);
+
+        Assert.All(fake.Calls, c => Assert.Equal(HmiRecipient, c.Recipient));
     }
 
     [Fact]
     public async Task ExecuteAsync_StartBootFails_ThrowsAndStopsBatch()
     {
-        var fake = new FakeBootService { StartBootFailsForRecipient = SparkAreas.Get(SparkFirmwareArea.Motor1).RecipientId };
+        // All areas share the HMI recipient, so the fake targets the 4th
+        // StartBoot call = Motor1 in canonical order (BootloaderHmi,
+        // HmiApplication, HmiImages, Motor1, Motor2, Rostrum).
+        var fake = new FakeBootService { StartBootFailsAtCall = 4 };
         var orchestrator = new SparkBatchUpdateService(fake);
         var items = SparkAreas.All
             .Select(a => new SparkBatchItem(a.Area, Fw))
@@ -102,22 +124,16 @@ public class SparkBatchUpdateServiceTests
 
         Assert.Equal(SparkFirmwareArea.Motor1, ex.Area.Area);
         Assert.Equal(SparkBatchPhase.StartBoot, ex.Phase);
-        // Areas after Motor1 must not have been started.
-        var started = fake.Calls
-            .Where(c => c.Kind == FakeBootCallKind.StartBoot)
-            .Select(c => c.Recipient)
-            .ToList();
-        Assert.DoesNotContain(SparkAreas.Get(SparkFirmwareArea.Motor2).RecipientId, started);
-        Assert.DoesNotContain(SparkAreas.Get(SparkFirmwareArea.Rostrum).RecipientId, started);
+        // Areas after Motor1 must not have been started: exactly 4 StartBoot
+        // calls (the failing one included), none for Motor2/Rostrum.
+        Assert.Equal(4, fake.Calls.Count(c => c.Kind == FakeBootCallKind.StartBoot));
     }
 
     [Fact]
     public async Task ExecuteAsync_UploadBlocksFails_ThrowsWithUploadBlocksPhase()
     {
-        // Use Rostrum: distinct recipient so the fake can target precisely
-        // (BootloaderHmi/HmiApplication/HmiImages currently share the same
-        // recipient address — see SparkAreas.All).
-        var fake = new FakeBootService { UploadBlocksFailsForRecipient = SparkAreas.Get(SparkFirmwareArea.Rostrum).RecipientId };
+        // 6th UploadBlocksOnly call = Rostrum, last area in canonical order.
+        var fake = new FakeBootService { UploadBlocksFailsAtCall = 6 };
         var orchestrator = new SparkBatchUpdateService(fake);
         var items = SparkAreas.All
             .Select(a => new SparkBatchItem(a.Area, Fw))
@@ -133,7 +149,8 @@ public class SparkBatchUpdateServiceTests
     [Fact]
     public async Task ExecuteAsync_EndBootFails_ThrowsWithEndBootPhase()
     {
-        var fake = new FakeBootService { EndBootFailsForRecipient = SparkAreas.Get(SparkFirmwareArea.Motor2).RecipientId };
+        // 5th EndBoot call = Motor2 in canonical order.
+        var fake = new FakeBootService { EndBootFailsAtCall = 5 };
         var orchestrator = new SparkBatchUpdateService(fake);
         var items = SparkAreas.All
             .Select(a => new SparkBatchItem(a.Area, Fw))
@@ -149,15 +166,11 @@ public class SparkBatchUpdateServiceTests
     [Fact]
     public async Task Execute_SecondAreaFailsAfterRetries_AbortsAndNamesArea()
     {
-        // Three areas with DISTINCT recipient ids, in canonical order:
-        // Motor1 (Order=3) → Motor2 (Order=4) → Rostrum (Order=5).
-        // The fake is configured to fail UploadBlocks for the SECOND area
-        // (Motor2), so the first must complete fully and the third must never
-        // be StartBoot-ed.
-        var fake = new FakeBootService
-        {
-            UploadBlocksFailsForRecipient = SparkAreas.Get(SparkFirmwareArea.Motor2).RecipientId,
-        };
+        // Three areas in canonical order: Motor1 (Order=3) → Motor2 (Order=4)
+        // → Rostrum (Order=5). The fake fails the SECOND UploadBlocks call
+        // (Motor2), so the first area must complete fully and the third must
+        // never be StartBoot-ed.
+        var fake = new FakeBootService { UploadBlocksFailsAtCall = 2 };
         var orchestrator = new SparkBatchUpdateService(fake);
         var items = new List<SparkBatchItem>
         {
@@ -172,23 +185,21 @@ public class SparkBatchUpdateServiceTests
         Assert.Equal(SparkFirmwareArea.Motor2, ex.Area.Area);
         Assert.Equal(SparkBatchPhase.UploadBlocks, ex.Phase);
 
-        // Third area (Rostrum) must never have been StartBoot-ed.
-        var rostrumRecipient = SparkAreas.Get(SparkFirmwareArea.Rostrum).RecipientId;
-        Assert.DoesNotContain(
-            fake.Calls,
-            c => c.Kind == FakeBootCallKind.StartBoot && c.Recipient == rostrumRecipient);
+        // Third area (Rostrum) must never have been StartBoot-ed: only the
+        // first two areas opened a boot session.
+        Assert.Equal(2, fake.Calls.Count(c => c.Kind == FakeBootCallKind.StartBoot));
 
-        // First area (Motor1) must have the three per-area call kinds observed —
+        // First area (Motor1) completed its three per-area steps in order —
         // but NOT Restart, since RESTART_MACHINE is hoisted to the batch end
         // and the abort path skips it entirely (issue #74).
-        var motor1Recipient = SparkAreas.Get(SparkFirmwareArea.Motor1).RecipientId;
-        var motor1Kinds = fake.Calls
-            .Where(c => c.Recipient == motor1Recipient)
-            .Select(c => c.Kind)
-            .ToList();
-        Assert.Contains(FakeBootCallKind.StartBoot,        motor1Kinds);
-        Assert.Contains(FakeBootCallKind.UploadBlocksOnly, motor1Kinds);
-        Assert.Contains(FakeBootCallKind.EndBoot,          motor1Kinds);
+        Assert.Equal(
+            new[]
+            {
+                FakeBootCallKind.StartBoot,
+                FakeBootCallKind.UploadBlocksOnly,
+                FakeBootCallKind.EndBoot,
+            },
+            fake.Calls.Take(3).Select(c => c.Kind).ToArray());
         // Issue #74: on the abort path, no RESTART_MACHINE fires anywhere
         // — half-flashed devices must not be auto-rebooted.
         Assert.DoesNotContain(FakeBootCallKind.Restart, fake.Calls.Select(c => c.Kind));
@@ -288,14 +299,19 @@ public class SparkBatchUpdateServiceTests
     // --- Manual fake (no mocking library) ---
 
     private enum FakeBootCallKind { StartBoot, UploadBlocksOnly, EndBoot, Restart }
-    private sealed record FakeBootCall(FakeBootCallKind Kind, uint Recipient);
+    private sealed record FakeBootCall(
+        FakeBootCallKind Kind, uint Recipient, byte[]? Firmware = null);
 
     private sealed class FakeBootService : IBootService
     {
         public List<FakeBootCall> Calls { get; } = new();
-        public uint? StartBootFailsForRecipient { get; set; }
-        public uint? UploadBlocksFailsForRecipient { get; set; }
-        public uint? EndBootFailsForRecipient { get; set; }
+
+        // All SPARK areas share the HMI recipient, so failures are targeted by
+        // the 1-based ordinal of the call among calls of the same kind. Areas
+        // run in canonical order, so ordinal N = Nth area in the sorted batch.
+        public int? StartBootFailsAtCall { get; set; }
+        public int? UploadBlocksFailsAtCall { get; set; }
+        public int? EndBootFailsAtCall { get; set; }
 
         public BootState State { get; private set; } = BootState.Idle;
         public double Progress => 0;
@@ -309,13 +325,15 @@ public class SparkBatchUpdateServiceTests
         public Task<bool> StartBootAsync(uint recipientId, CancellationToken ct = default)
         {
             Calls.Add(new(FakeBootCallKind.StartBoot, recipientId));
-            return Task.FromResult(StartBootFailsForRecipient != recipientId);
+            return Task.FromResult(
+                StartBootFailsAtCall != OrdinalOf(FakeBootCallKind.StartBoot));
         }
 
         public Task<bool> EndBootAsync(uint recipientId, CancellationToken ct = default)
         {
             Calls.Add(new(FakeBootCallKind.EndBoot, recipientId));
-            return Task.FromResult(EndBootFailsForRecipient != recipientId);
+            return Task.FromResult(
+                EndBootFailsAtCall != OrdinalOf(FakeBootCallKind.EndBoot));
         }
 
         public Task RestartAsync(uint recipientId, CancellationToken ct = default)
@@ -327,9 +345,9 @@ public class SparkBatchUpdateServiceTests
         public Task UploadBlocksOnlyAsync(
             byte[] firmware, uint recipientId, CancellationToken ct = default)
         {
-            Calls.Add(new(FakeBootCallKind.UploadBlocksOnly, recipientId));
+            Calls.Add(new(FakeBootCallKind.UploadBlocksOnly, recipientId, firmware));
             ProgressChanged?.Invoke(this, new BootProgress(firmware.Length, firmware.Length));
-            if (UploadBlocksFailsForRecipient == recipientId)
+            if (UploadBlocksFailsAtCall == OrdinalOf(FakeBootCallKind.UploadBlocksOnly))
             {
                 State = BootState.Failed;
                 return Task.CompletedTask;
@@ -337,5 +355,9 @@ public class SparkBatchUpdateServiceTests
             State = BootState.Completed;
             return Task.CompletedTask;
         }
+
+        /// <summary>1-based ordinal of the call just recorded for <paramref name="kind"/>.</summary>
+        private int OrdinalOf(FakeBootCallKind kind)
+            => Calls.Count(c => c.Kind == kind);
     }
 }
