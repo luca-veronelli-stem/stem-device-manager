@@ -187,7 +187,10 @@ namespace GUI.Windows
             finally
             {
 #if DEBUG
-                serviceProvider.Dispose();
+                // PCANManager is IAsyncDisposable-only (PR #117), so the sync
+                // ServiceProvider.Dispose() throws InvalidOperationException.
+                // Blocking here is safe: the message loop has already exited.
+                serviceProvider.DisposeAsync().AsTask().GetAwaiter().GetResult();
 #endif
                 // AddProvider(instance) does not transfer ownership to the DI container,
                 // so the file logger must be disposed explicitly to flush + close.
