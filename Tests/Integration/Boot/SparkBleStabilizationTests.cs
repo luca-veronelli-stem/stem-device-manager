@@ -395,7 +395,7 @@ public class SparkBleStabilizationTests
         for (int run = 0; run < 10; run++)
         {
             var fake = new FakeBootService();
-            var orchestrator = new SparkBatchUpdateService(fake);
+            var orchestrator = new SparkBatchUpdateService(fake, postBlocksSettle: TimeSpan.Zero, postEndSettle: TimeSpan.Zero);
             var completed = new List<SparkFirmwareArea>();
             orchestrator.AreaCompleted += (_, def) => completed.Add(def.Area);
 
@@ -421,7 +421,7 @@ public class SparkBleStabilizationTests
             {
                 UploadBlocksFailsAtCall = 2,
             };
-            var orchestrator = new SparkBatchUpdateService(fake);
+            var orchestrator = new SparkBatchUpdateService(fake, postBlocksSettle: TimeSpan.Zero, postEndSettle: TimeSpan.Zero);
             var completed = new List<SparkFirmwareArea>();
             orchestrator.AreaCompleted += (_, def) => completed.Add(def.Area);
 
