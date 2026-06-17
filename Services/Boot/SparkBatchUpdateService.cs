@@ -77,13 +77,34 @@ public sealed class SparkBatchUpdateService
 {
     private readonly IBootService _boot;
     private readonly ILogger<SparkBatchUpdateService> _logger;
+    private readonly TimeSpan _postBlocksSettle;
+    private readonly TimeSpan _postEndSettle;
+
+    /// <summary>Default settle after the last block, before <c>CMD_END_PROCEDURE</c>.</summary>
+    public static readonly TimeSpan DefaultPostBlocksSettle = TimeSpan.FromSeconds(5);
+
+    /// <summary>
+    /// Default settle after <c>CMD_END_PROCEDURE</c>, before the end-of-batch
+    /// <c>CMD_RESTART_MACHINE</c>. Bench (2026-06-15): the ECU finalizes its freshly-written
+    /// image on END (closes the flash session, writes the validity marker, switches the boot
+    /// vector). Rebooting before that finishes leaves the image invalid → the ECU comes up at
+    /// v0.0.0.0. A manual flash that worked left ~3.4 s between the END reply and RESTART; the
+    /// automated batch fired them ~3 ms apart and bricked the ECU. These settles reinstate that
+    /// commit window. Tunable; a device-readiness poll would be the longer-term replacement.
+    /// </summary>
+    public static readonly TimeSpan DefaultPostEndSettle = TimeSpan.FromSeconds(5);
 
     public SparkBatchUpdateService(
-        IBootService boot, ILogger<SparkBatchUpdateService>? logger = null)
+        IBootService boot,
+        ILogger<SparkBatchUpdateService>? logger = null,
+        TimeSpan? postBlocksSettle = null,
+        TimeSpan? postEndSettle = null)
     {
         ArgumentNullException.ThrowIfNull(boot);
         _boot = boot;
         _logger = logger ?? NullLogger<SparkBatchUpdateService>.Instance;
+        _postBlocksSettle = postBlocksSettle ?? DefaultPostBlocksSettle;
+        _postEndSettle = postEndSettle ?? DefaultPostEndSettle;
     }
 
     /// <summary>Raised when an area is about to start uploading.</summary>
@@ -182,7 +203,24 @@ public sealed class SparkBatchUpdateService
     {
         await StartBootAsync(def, ct).ConfigureAwait(false);
         await UploadBlocksAsync(item, def, ct).ConfigureAwait(false);
+        await SettleAsync(_postBlocksSettle, "after last block, before END", def, ct)
+            .ConfigureAwait(false);
         await EndBootAsync(def, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Waits out the device-side commit window between boot steps (bench 2026-06-15;
+    /// see <see cref="DefaultPostEndSettle"/>). No-op when the configured settle is zero,
+    /// so tests can disable the wait.
+    /// </summary>
+    private async Task SettleAsync(
+        TimeSpan settle, string why, SparkAreaDefinition def, CancellationToken ct)
+    {
+        if (settle <= TimeSpan.Zero) return;
+        _logger.LogInformation(
+            "SPARK settle: waiting {Seconds:0.0}s {Why} ({Area})",
+            settle.TotalSeconds, why, def.DisplayName);
+        await Task.Delay(settle, ct).ConfigureAwait(false);
     }
 
     private async Task RestartAtEndOfBatchAsync(CancellationToken ct)
@@ -193,6 +231,8 @@ public sealed class SparkBatchUpdateService
             hmiRecipient);
         try
         {
+            await SettleAsync(_postEndSettle, "after END, before RESTART (ECU commit window)",
+                SparkAreas.Get(SparkFirmwareArea.HmiApplication), ct).ConfigureAwait(false);
             await _boot.RestartAsync(hmiRecipient, ct).ConfigureAwait(false);
         }
         catch (BootSessionLostException ex)

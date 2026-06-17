@@ -16,7 +16,8 @@ public class SparkBatchUpdateServiceTests
     [Fact]
     public async Task ExecuteAsync_NullItems_Throws()
     {
-        var orchestrator = new SparkBatchUpdateService(new FakeBootService());
+        var orchestrator = new SparkBatchUpdateService(
+            new FakeBootService(), postBlocksSettle: TimeSpan.Zero, postEndSettle: TimeSpan.Zero);
         await Assert.ThrowsAsync<ArgumentNullException>(
             () => orchestrator.ExecuteAsync(null!));
     }
@@ -25,7 +26,7 @@ public class SparkBatchUpdateServiceTests
     public async Task ExecuteAsync_EmptyItems_DoesNothing()
     {
         var fake = new FakeBootService();
-        var orchestrator = new SparkBatchUpdateService(fake);
+        var orchestrator = new SparkBatchUpdateService(fake, postBlocksSettle: TimeSpan.Zero, postEndSettle: TimeSpan.Zero);
 
         await orchestrator.ExecuteAsync([]);
 
@@ -36,7 +37,7 @@ public class SparkBatchUpdateServiceTests
     public async Task ExecuteAsync_AllAreas_RunsInCanonicalOrder()
     {
         var fake = new FakeBootService();
-        var orchestrator = new SparkBatchUpdateService(fake);
+        var orchestrator = new SparkBatchUpdateService(fake, postBlocksSettle: TimeSpan.Zero, postEndSettle: TimeSpan.Zero);
         // All areas share the HMI recipient, so order is observed through the
         // firmware payload each area uploads: one distinct byte per area.
         var fwByArea = SparkAreas.All.ToDictionary(
@@ -70,7 +71,7 @@ public class SparkBatchUpdateServiceTests
     public async Task ExecuteAsync_Subset_RunsOnlySelectedInCanonicalOrder()
     {
         var fake = new FakeBootService();
-        var orchestrator = new SparkBatchUpdateService(fake);
+        var orchestrator = new SparkBatchUpdateService(fake, postBlocksSettle: TimeSpan.Zero, postEndSettle: TimeSpan.Zero);
         byte[] imagesFw = [1];
         byte[] rostrumFw = [2];
         var items = new List<SparkBatchItem>
@@ -97,7 +98,7 @@ public class SparkBatchUpdateServiceTests
         // per-ECU addressing gets no reply over BLE.
         const uint HmiRecipient = 0x000702C1u;
         var fake = new FakeBootService();
-        var orchestrator = new SparkBatchUpdateService(fake);
+        var orchestrator = new SparkBatchUpdateService(fake, postBlocksSettle: TimeSpan.Zero, postEndSettle: TimeSpan.Zero);
         var items = SparkAreas.All
             .Select(a => new SparkBatchItem(a.Area, Fw))
             .ToList();
@@ -114,7 +115,7 @@ public class SparkBatchUpdateServiceTests
         // StartBoot call = Motor1 in canonical order (BootloaderHmi,
         // HmiApplication, HmiImages, Motor1, Motor2, Rostrum).
         var fake = new FakeBootService { StartBootFailsAtCall = 4 };
-        var orchestrator = new SparkBatchUpdateService(fake);
+        var orchestrator = new SparkBatchUpdateService(fake, postBlocksSettle: TimeSpan.Zero, postEndSettle: TimeSpan.Zero);
         var items = SparkAreas.All
             .Select(a => new SparkBatchItem(a.Area, Fw))
             .ToList();
@@ -134,7 +135,7 @@ public class SparkBatchUpdateServiceTests
     {
         // 6th UploadBlocksOnly call = Rostrum, last area in canonical order.
         var fake = new FakeBootService { UploadBlocksFailsAtCall = 6 };
-        var orchestrator = new SparkBatchUpdateService(fake);
+        var orchestrator = new SparkBatchUpdateService(fake, postBlocksSettle: TimeSpan.Zero, postEndSettle: TimeSpan.Zero);
         var items = SparkAreas.All
             .Select(a => new SparkBatchItem(a.Area, Fw))
             .ToList();
@@ -151,7 +152,7 @@ public class SparkBatchUpdateServiceTests
     {
         // 5th EndBoot call = Motor2 in canonical order.
         var fake = new FakeBootService { EndBootFailsAtCall = 5 };
-        var orchestrator = new SparkBatchUpdateService(fake);
+        var orchestrator = new SparkBatchUpdateService(fake, postBlocksSettle: TimeSpan.Zero, postEndSettle: TimeSpan.Zero);
         var items = SparkAreas.All
             .Select(a => new SparkBatchItem(a.Area, Fw))
             .ToList();
@@ -171,7 +172,7 @@ public class SparkBatchUpdateServiceTests
         // (Motor2), so the first area must complete fully and the third must
         // never be StartBoot-ed.
         var fake = new FakeBootService { UploadBlocksFailsAtCall = 2 };
-        var orchestrator = new SparkBatchUpdateService(fake);
+        var orchestrator = new SparkBatchUpdateService(fake, postBlocksSettle: TimeSpan.Zero, postEndSettle: TimeSpan.Zero);
         var items = new List<SparkBatchItem>
         {
             new(SparkFirmwareArea.Motor1, Fw),
@@ -213,7 +214,7 @@ public class SparkBatchUpdateServiceTests
         // restart out of RunAreaAsync and emit exactly one CMD_RESTART_MACHINE
         // (recipient = HMI) after the last area completes.
         var fake = new FakeBootService();
-        var orchestrator = new SparkBatchUpdateService(fake);
+        var orchestrator = new SparkBatchUpdateService(fake, postBlocksSettle: TimeSpan.Zero, postEndSettle: TimeSpan.Zero);
         var items = new List<SparkBatchItem>
         {
             new(SparkFirmwareArea.HmiApplication, Fw),
@@ -238,7 +239,7 @@ public class SparkBatchUpdateServiceTests
         // First item has zero-length firmware → precondition must reject
         // BEFORE any device call, regardless of the rest of the batch.
         var fake = new FakeBootService();
-        var orchestrator = new SparkBatchUpdateService(fake);
+        var orchestrator = new SparkBatchUpdateService(fake, postBlocksSettle: TimeSpan.Zero, postEndSettle: TimeSpan.Zero);
         var offendingArea = SparkFirmwareArea.Motor1;
         var items = new List<SparkBatchItem>
         {
@@ -258,7 +259,7 @@ public class SparkBatchUpdateServiceTests
     public async Task ExecuteAsync_RaisesAreaStartedAndCompletedEvents()
     {
         var fake = new FakeBootService();
-        var orchestrator = new SparkBatchUpdateService(fake);
+        var orchestrator = new SparkBatchUpdateService(fake, postBlocksSettle: TimeSpan.Zero, postEndSettle: TimeSpan.Zero);
         var startedAreas = new List<SparkFirmwareArea>();
         var completedAreas = new List<SparkFirmwareArea>();
         orchestrator.AreaStarted += (_, a) => startedAreas.Add(a.Area);
@@ -281,7 +282,7 @@ public class SparkBatchUpdateServiceTests
     public async Task ExecuteAsync_AreaProgress_TaggedWithCurrentArea()
     {
         var fake = new FakeBootService();
-        var orchestrator = new SparkBatchUpdateService(fake);
+        var orchestrator = new SparkBatchUpdateService(fake, postBlocksSettle: TimeSpan.Zero, postEndSettle: TimeSpan.Zero);
         var observed = new List<SparkAreaProgress>();
         orchestrator.AreaProgress += (_, p) => observed.Add(p);
         // Fake will emit a single progress event during UploadBlocksOnlyAsync.

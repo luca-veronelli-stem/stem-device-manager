@@ -32,6 +32,25 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **SPARK batch firmware update: settle before the reboot so ECUs commit
+  their image.** The batch fired `CMD_RESTART_MACHINE` ~3 ms after the
+  `CMD_END_PROCEDURE` reply. `END` triggers the target board's image
+  finalize (close flash session, write the validity marker, switch the boot
+  vector), which takes a few seconds; rebooting mid-finalize left the ECU
+  image invalid and the board came up at `v0.0.0.0` (bricked). The HMI
+  application/images survived — the HMI is the board the soft restart
+  reboots — but the ECUs (Motor1/Motor2/Rostrum) did not.
+  `SparkBatchUpdateService` now waits a configurable **commit settle**
+  (default 5 s, constructor-injectable, no-op at `TimeSpan.Zero` so tests
+  don't real-sleep): one after the last block before `END` (per area), and
+  one after `END` before the single end-of-batch `RESTART_MACHINE`.
+  Bench-validated on Egicon SN 2225998 with two consecutive clean full
+  5-area batches (no battery pull). New docs:
+  [`Docs/SPARK_BATCH_COMMANDS.md`](Docs/SPARK_BATCH_COMMANDS.md) (exact
+  command sequence, first-page erase wait, settle) and
+  [`Docs/SPARK_BATCH_OPERATOR_NOTES.md`](Docs/SPARK_BATCH_OPERATOR_NOTES.md)
+  (file identification by work-code, what's normal during a flash, recovery).
+
 - **`CanPort` no longer snapshots `driver.IsConnected` at construction.**
   The constructor used to set `_state = driver.IsConnected ? Connected :
   Disconnected` before subscribing to `ConnectionStatusChanged`. If the
