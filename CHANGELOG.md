@@ -34,6 +34,13 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **In-app version was hardcoded and shipped as `0.4.3`.** The title bar,
+  terminal banner, and splash screen read `Form1.Software_Version`, a literal
+  constant the v0.4.4 bump missed, so the GUI displayed `0.4.3`. It is now
+  derived from the assembly version (`Directory.Build.props`) and tracks the
+  release automatically; the shipped `SHIPPED_README.txt` header and the repo
+  version badge were bumped to match.
+
 - **SPARK batch firmware update: settle before the reboot so ECUs commit
   their image.** The batch fired `CMD_RESTART_MACHINE` ~3 ms after the
   `CMD_END_PROCEDURE` reply. `END` triggers the target board's image
@@ -687,7 +694,8 @@ State of the legacy project before the modernization wave. ~330 commits, ~56k LO
 
 ## Version URLs
 
-[Unreleased]: https://github.com/luca-veronelli-stem/stem-device-manager/compare/v0.4.3...HEAD
+[Unreleased]: https://github.com/luca-veronelli-stem/stem-device-manager/compare/v0.4.4...HEAD
+[0.4.4]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.4.4
 [0.4.3]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.4.3
 [0.4.2]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.4.2
 [0.4.1]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.4.1

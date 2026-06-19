@@ -1,6 +1,6 @@
 ﻿# Stem.Device.Manager
 
-[![Version](https://img.shields.io/badge/version-0.4.3-blue)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.4.4-blue)](./CHANGELOG.md)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![Tests](https://img.shields.io/badge/tests-350%20%2F%20552-brightgreen)](./Tests/)
 [![License](https://img.shields.io/badge/license-Proprietary-red)](#license)

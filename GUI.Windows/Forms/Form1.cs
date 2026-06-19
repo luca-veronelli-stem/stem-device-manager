@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Services.Cache;
 using System.Globalization;
+using System.Reflection;
 
 namespace StemPC
 {
@@ -27,7 +28,11 @@ namespace StemPC
         private readonly BLEManager _bleManager;
         private readonly ILogger<Form1> _logger;
 
-        public const string Software_Version = "0.4.3";
+        // Single-sourced from the assembly version (Directory.Build.props
+        // <AssemblyVersion>) so the title bar, terminal banner, and splash
+        // screen never drift from the released version.
+        public static readonly string Software_Version =
+            Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
 
         // Canale hardware corrente selezionato. Le mutazioni vengono propagate a
         // ConnectionManager via SwitchToAsync.
