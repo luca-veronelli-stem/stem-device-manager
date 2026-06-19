@@ -70,6 +70,10 @@ public sealed class CanPort : ICommunicationPort
         ThrowIfDisposed();
         if (State == ConnectionState.Connected) return;
         Transition(ConnectionState.Connecting);
+        // Bring the PCAN channel up on demand. No-op if it was already auto-started
+        // at boot (Can:AutoStart=true) or previously started; required when boot
+        // auto-start is disabled so selecting the CAN channel still connects.
+        _driver.Start();
         for (int attempt = 0; attempt < ConnectPollAttempts; attempt++)
         {
             ct.ThrowIfCancellationRequested();

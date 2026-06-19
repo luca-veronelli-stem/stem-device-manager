@@ -82,10 +82,31 @@ public class PCANManager : IPcanDriver, IAsyncDisposable
         }
     }
 
-    public PCANManager(TPCANBaudrate initialBaudRate = TPCANBaudrate.PCAN_BAUD_100K)
+    /// <param name="autoStart">
+    /// When <c>true</c> (default) the PCAN channel is opened and the connection
+    /// monitor starts immediately — the historical boot-time behavior. When
+    /// <c>false</c> the channel stays closed until <see cref="Start"/> is called
+    /// (e.g. when the CAN channel is selected), so the app does not claim the
+    /// PCAN-USB bus at boot and another process can use it. Driven by
+    /// <c>Can:AutoStart</c> in <c>appsettings.json</c>.
+    /// </param>
+    public PCANManager(
+        TPCANBaudrate initialBaudRate = TPCANBaudrate.PCAN_BAUD_100K, bool autoStart = true)
     {
         _currentBaudRate = initialBaudRate;
-        Initialize(initialBaudRate);
+        if (autoStart) Start();
+    }
+
+    /// <summary>
+    /// Opens the PCAN-USB channel and starts the 1 s connection-monitor loop.
+    /// Idempotent: a call while the monitor is already running (or after dispose)
+    /// is a no-op. Invoked from the constructor when auto-start is enabled, and on
+    /// demand by <see cref="CanPort"/> when the CAN channel is selected.
+    /// </summary>
+    public void Start()
+    {
+        if (_disposed != 0 || _monitorTask is not null) return;
+        Initialize(_currentBaudRate);
         StartConnectionMonitoring();
     }
 

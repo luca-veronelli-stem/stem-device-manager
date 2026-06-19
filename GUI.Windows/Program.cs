@@ -117,8 +117,13 @@ namespace GUI.Windows
             services.AddSingleton<SerialPortManager>();
             services.AddSingleton<ISerialDriver>(sp => sp.GetRequiredService<SerialPortManager>());
 
-            // Adapter HW (CanPort/BlePort/SerialPort) + driver PCAN-USB
-            services.AddProtocolInfrastructure();
+            // Adapter HW (CanPort/BlePort/SerialPort) + driver PCAN-USB.
+            // CAN auto-start: open the PCAN-USB channel at boot only when
+            // Can:AutoStart is true (default). Set Can:AutoStart=false (or env
+            // Can__AutoStart=false) to leave the bus free for another process;
+            // CAN then connects on demand when its channel is selected.
+            bool autoStartCan = !bool.TryParse(configuration["Can:AutoStart"], out var canAuto) || canAuto;
+            services.AddProtocolInfrastructure(autoStartCan);
 
             // Servizi pure-logic: IDeviceVariantConfig + IPacketDecoder vuoto
             // (UpdateDictionary chiamato dal consumer post-load Azure).
@@ -134,9 +139,12 @@ namespace GUI.Windows
             // line on the GUI.Windows.Program category, no key value, just the
             // label. This is the first log line a bench post-mortem reads
             // when chasing a silent-Excel-fallback.
-            serviceProvider.GetRequiredService<ILoggerFactory>()
-                .CreateLogger("GUI.Windows.Program")
-                .LogInformation("Dictionary API key source: {Source}", apiKeySource);
+            var programLogger = serviceProvider.GetRequiredService<ILoggerFactory>()
+                .CreateLogger("GUI.Windows.Program");
+            programLogger.LogInformation("Dictionary API key source: {Source}", apiKeySource);
+            programLogger.LogInformation(
+                "CAN auto-start: {AutoStart} (Can:AutoStart) — when false the PCAN-USB " +
+                "bus is left free until the CAN channel is selected", autoStartCan);
 
 #if DEBUG
             // spec-001 T004 (research.md R8): Debug-only shutdown audit.

@@ -33,12 +33,19 @@ public static class DependencyInjection
     /// questo metodo, altrimenti la risoluzione di <see cref="BlePort"/> e
     /// <see cref="SerialPort"/> fallirà a runtime.
     /// </summary>
+    /// <param name="autoStartCan">
+    /// When <c>true</c> (default) the PCAN-USB channel is opened at construction
+    /// (historical behavior). When <c>false</c> the bus is left free until the CAN
+    /// channel is selected (<see cref="CanPort.ConnectAsync"/> calls
+    /// <see cref="IPcanDriver.Start"/>), so another process can hold the bus. Host
+    /// passes the value from <c>Can:AutoStart</c>.
+    /// </param>
     public static IServiceCollection AddProtocolInfrastructure(
-        this IServiceCollection services)
+        this IServiceCollection services, bool autoStartCan = true)
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddSingleton<IPcanDriver, PCANManager>();
+        services.AddSingleton<IPcanDriver>(_ => new PCANManager(autoStart: autoStartCan));
         services.AddSingleton<CanPort>();
         services.AddSingleton<BlePort>();
         services.AddSingleton<SerialPort>();

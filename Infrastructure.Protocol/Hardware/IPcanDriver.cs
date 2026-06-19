@@ -21,6 +21,14 @@ public interface IPcanDriver
     /// </summary>
     Task<bool> SendMessageAsync(uint canId, byte[] data, bool isExtended);
 
+    /// <summary>
+    /// Opens the CAN channel and starts the connection-monitor loop. Idempotent
+    /// (a call while already running is a no-op). Lets the host defer claiming the
+    /// PCAN-USB bus until the CAN channel is actually selected, rather than at
+    /// construction — see <c>Can:AutoStart</c>.
+    /// </summary>
+    void Start();
+
     /// <summary>Chiude il canale PCAN.</summary>
     void Disconnect();
 }
