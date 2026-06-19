@@ -9,7 +9,7 @@ using Services;
 ///*****************************************************************************
 /// @file    Program.cs
 /// @author  Michele Pignedoli, Luca Veronelli
-///@version  0.4.3
+///@version  0.4.4
 /// @date    20/10/2025
 /// @brief   STEM Device Manager Main program body
 ///*****************************************************************************
@@ -48,6 +48,11 @@ using Services;
 ///        + CI: release artifacts now ship as a single zip
 ///          (stem-device-manager-<tag>.zip) so a tech can't accidentally
 ///          download an incomplete set.
+/// 0.4.4: + Fix: SPARK batch settles before reboot so ECUs commit their image
+///          (Motor1/Motor2/Rostrum no longer brick to v0.0.0.0); CanPort no
+///          longer snapshots IsConnected at construction (#127).
+///        + In-app version derived from the assembly version — no more a
+///          hardcoded literal drifting from the released version.
 ///
 /// TODO:
 /// - Completare decodifica faults
