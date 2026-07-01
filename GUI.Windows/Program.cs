@@ -9,7 +9,7 @@ using Services;
 ///*****************************************************************************
 /// @file    Program.cs
 /// @author  Michele Pignedoli, Luca Veronelli
-///@version  0.4.4
+///@version  0.4.5
 /// @date    20/10/2025
 /// @brief   STEM Device Manager Main program body
 ///*****************************************************************************
@@ -53,6 +53,10 @@ using Services;
 ///          longer snapshots IsConnected at construction (#127).
 ///        + In-app version derived from the assembly version — no more a
 ///          hardcoded literal drifting from the released version.
+/// 0.4.5: + CAN baud rate menu now switches the bus bitrate at runtime
+///          (100/125/250/500 kbps); previously the items only re-selected the
+///          CAN channel. Fixed the PCANManager kbps->TPCANBaudrate mapping that
+///          rejected the documented 100/125/250/500 values.
 ///
 /// TODO:
 /// - Completare decodifica faults
