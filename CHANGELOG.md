@@ -20,6 +20,24 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.5] - 2026-07-01
+
+### Added
+
+- **CAN baud rate menu now switches the bus bitrate at runtime.** The
+  100/125/250/500 Kbps menu items previously only re-selected the CAN channel
+  and left the PCAN driver at its DI-constructed default; each item now
+  reconfigures the channel bitrate on the driver before activating CAN.
+  `IPcanDriver` gains `ChangeBaudRate(int kbps)` and `CanPort` forwards to it.
+
+### Fixed
+
+- **`PCANManager` rejected the documented CAN bitrates.** `ChangeBaudRate`
+  matched bit/s values (`100000..`) while its parameter, docs and error string
+  all specified kbit/s (`100/125/250/500`), so a call with the documented value
+  fell through to "unsupported". The kbps → `TPCANBaudrate` mapping is now a
+  pure, unit-tested `TryMapBaudRate` helper shared by both call sites.
+
 ## [0.4.4] - 2026-06-17
 
 ### Added
@@ -694,7 +712,8 @@ State of the legacy project before the modernization wave. ~330 commits, ~56k LO
 
 ## Version URLs
 
-[Unreleased]: https://github.com/luca-veronelli-stem/stem-device-manager/compare/v0.4.4...HEAD
+[Unreleased]: https://github.com/luca-veronelli-stem/stem-device-manager/compare/v0.4.5...HEAD
+[0.4.5]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.4.5
 [0.4.4]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.4.4
 [0.4.3]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.4.3
 [0.4.2]: https://github.com/luca-veronelli-stem/stem-device-manager/releases/tag/v0.4.2
