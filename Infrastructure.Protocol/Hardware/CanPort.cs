@@ -127,6 +127,19 @@ public sealed class CanPort : ICommunicationPort
         await _driver.SendMessageAsync(arbitrationId, data, isExtended: true);
     }
 
+    /// <summary>
+    /// Reconfigures the underlying CAN channel bitrate at runtime by forwarding
+    /// to the driver. CAN-specific, so it lives on <see cref="CanPort"/> rather
+    /// than on the channel-agnostic <see cref="ICommunicationPort"/> contract.
+    /// </summary>
+    /// <param name="baudRateKbps">Bus bitrate in kbit/s (100, 125, 250, or 500).</param>
+    /// <returns><c>true</c> if the driver reinitialized at the new bitrate.</returns>
+    public bool ChangeBaudRate(int baudRateKbps)
+    {
+        ThrowIfDisposed();
+        return _driver.ChangeBaudRate(baudRateKbps);
+    }
+
     /// <inheritdoc/>
     public void Dispose()
     {

@@ -165,32 +165,34 @@ public class PCANManager : IPcanDriver, IAsyncDisposable
     }
 
     /// <summary>
+    /// Maps a bus bitrate in kbit/s (100, 125, 250, or 500) to the matching
+    /// <see cref="TPCANBaudrate"/>. Pure, so it is unit-testable without touching
+    /// the native PCAN driver.
+    /// </summary>
+    /// <returns><c>true</c> for a supported bitrate; <c>false</c> otherwise.</returns>
+    public static bool TryMapBaudRate(int baudRateKbps, out TPCANBaudrate baudRate)
+    {
+        switch (baudRateKbps)
+        {
+            case 100: baudRate = TPCANBaudrate.PCAN_BAUD_100K; return true;
+            case 125: baudRate = TPCANBaudrate.PCAN_BAUD_125K; return true;
+            case 250: baudRate = TPCANBaudrate.PCAN_BAUD_250K; return true;
+            case 500: baudRate = TPCANBaudrate.PCAN_BAUD_500K; return true;
+            default: baudRate = default; return false;
+        }
+    }
+
+    /// <summary>
     /// Cambia il baud rate del canale CAN a runtime
     /// </summary>
     /// <param name="newBaudRateKbps">Baud rate in kbps (100, 125, 250, 500)</param>
     /// <returns>True se il cambio è avvenuto con successo, False altrimenti</returns>
     public bool ChangeBaudRate(int newBaudRateKbps)
     {
-        TPCANBaudrate newBaudRate;
-
-        // Converti il valore in kbps nell'enum TPCANBaudrate
-        switch (newBaudRateKbps)
+        if (!TryMapBaudRate(newBaudRateKbps, out var newBaudRate))
         {
-            case 100000:
-                newBaudRate = TPCANBaudrate.PCAN_BAUD_100K;
-                break;
-            case 125000:
-                newBaudRate = TPCANBaudrate.PCAN_BAUD_125K;
-                break;
-            case 250000:
-                newBaudRate = TPCANBaudrate.PCAN_BAUD_250K;
-                break;
-            case 500000:
-                newBaudRate = TPCANBaudrate.PCAN_BAUD_500K;
-                break;
-            default:
-                ErrorOccurred?.Invoke(this, $"Baud rate non supportato: {newBaudRateKbps} kbps. Valori validi: 100, 125, 250, 500");
-                return false;
+            ErrorOccurred?.Invoke(this, $"Baud rate non supportato: {newBaudRateKbps} kbps. Valori validi: 100, 125, 250, 500");
+            return false;
         }
 
         try
