@@ -21,6 +21,13 @@ public interface IPcanDriver
     /// </summary>
     Task<bool> SendMessageAsync(uint canId, byte[] data, bool isExtended);
 
+    /// <summary>
+    /// Reconfigures the CAN channel bitrate at runtime.
+    /// </summary>
+    /// <param name="baudRateKbps">Bus bitrate in kbit/s (100, 125, 250, or 500).</param>
+    /// <returns><c>true</c> if the channel was reinitialized at the new bitrate.</returns>
+    bool ChangeBaudRate(int baudRateKbps);
+
     /// <summary>Chiude il canale PCAN.</summary>
     void Disconnect();
 }

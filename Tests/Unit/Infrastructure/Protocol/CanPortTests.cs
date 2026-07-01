@@ -248,6 +248,46 @@ public class CanPortTests
         Assert.Equal(8, driver.SentMessages[0].Data.Length);
     }
 
+    // --- ChangeBaudRate: forwarding al driver ---
+
+    [Fact]
+    public void ChangeBaudRate_ForwardsKbpsToDriver_ReturnsDriverResult()
+    {
+        var driver = new FakePcanDriver { IsConnected = true };
+        using var port = new CanPort(driver);
+
+        var ok = port.ChangeBaudRate(500);
+
+        Assert.True(ok);
+        Assert.Equal(new[] { 500 }, driver.BaudRateChanges);
+    }
+
+    [Fact]
+    public void ChangeBaudRate_DriverReportsFailure_ReturnsFalse()
+    {
+        var driver = new FakePcanDriver
+        {
+            IsConnected = true,
+            ChangeBaudRateResult = _ => false,
+        };
+        using var port = new CanPort(driver);
+
+        var ok = port.ChangeBaudRate(250);
+
+        Assert.False(ok);
+        Assert.Equal(new[] { 250 }, driver.BaudRateChanges);
+    }
+
+    [Fact]
+    public void AfterDispose_ChangeBaudRate_ThrowsObjectDisposed()
+    {
+        var driver = new FakePcanDriver { IsConnected = true };
+        var port = new CanPort(driver);
+        port.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => port.ChangeBaudRate(500));
+    }
+
     // --- PacketReceived: convention payload ---
 
     [Fact]

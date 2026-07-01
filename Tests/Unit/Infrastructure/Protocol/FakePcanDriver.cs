@@ -18,10 +18,20 @@ internal sealed class FakePcanDriver : IPcanDriver
     public Func<uint, byte[], bool, bool> SendResult { get; set; } = (_, _, _) => true;
     public int DisconnectCount { get; private set; }
 
+    /// <summary>kbit/s values passed to <see cref="ChangeBaudRate"/>, in call order.</summary>
+    public List<int> BaudRateChanges { get; } = [];
+    public Func<int, bool> ChangeBaudRateResult { get; set; } = _ => true;
+
     public Task<bool> SendMessageAsync(uint canId, byte[] data, bool isExtended)
     {
         SentMessages.Add((canId, data, isExtended));
         return Task.FromResult(SendResult(canId, data, isExtended));
+    }
+
+    public bool ChangeBaudRate(int baudRateKbps)
+    {
+        BaudRateChanges.Add(baudRateKbps);
+        return ChangeBaudRateResult(baudRateKbps);
     }
 
     public void Disconnect()

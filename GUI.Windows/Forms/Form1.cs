@@ -26,6 +26,11 @@ namespace StemPC
         // propaga ConnectionStatusChanged al port.
         private readonly SerialPortManager _serialPortManager;
         private readonly BLEManager _bleManager;
+        // Referenziato come tipo concreto per il cambio bitrate CAN a runtime dal menu:
+        // ChangeBaudRate è CAN-specifico e non vive sul contratto ICommunicationPort.
+        // È lo stesso singleton usato da ConnectionManager, quindi il nuovo bitrate vale
+        // per il canale attivo.
+        private readonly CanPort _canPort;
         private readonly ILogger<Form1> _logger;
 
         // Single-sourced from the assembly version (Directory.Build.props
@@ -112,6 +117,7 @@ namespace StemPC
             _variantConfig = serviceProvider.GetRequiredService<IDeviceVariantConfig>();
             _serialPortManager = serviceProvider.GetRequiredService<SerialPortManager>();
             _bleManager = serviceProvider.GetRequiredService<BLEManager>();
+            _canPort = serviceProvider.GetRequiredService<CanPort>();
             _logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Form1>();
 
             // Canale hardware di default dalla variante.
@@ -737,21 +743,33 @@ namespace StemPC
             }
         }
 
-        // I 4 handler baudrate (100/125/250/500 kbps) mantengono il switch a CAN ma non
-        // applicano più runtime change del baudrate: col nuovo stack PCAN il bitrate è
-        // configurato alla creazione di CanPort. TODO: esporre baudrate runtime via CanPort
-        // se serve (ora fix 250kbps).
+        // I 4 handler baudrate applicano il bitrate CAN selezionato (100/125/250/500 kbps)
+        // sul driver PCAN e poi attivano il canale CAN. ChangeBaudRate reinizializza il
+        // canale PEAK al nuovo bitrate.
         private async void toolStripMenuItem2_Click(object? sender, EventArgs e)
-            => await SwitchChannelAsync(ChannelKind.Can);
+            => await SetCanBaudRateAsync(100);
 
         private async void toolStripMenuItem3_Click(object? sender, EventArgs e)
-            => await SwitchChannelAsync(ChannelKind.Can);
+            => await SetCanBaudRateAsync(250);
 
         private async void kbpsToolStripMenuItem1_Click(object? sender, EventArgs e)
-            => await SwitchChannelAsync(ChannelKind.Can);
+            => await SetCanBaudRateAsync(125);
 
         private async void kbpsToolStripMenuItem_Click(object? sender, EventArgs e)
-            => await SwitchChannelAsync(ChannelKind.Can);
+            => await SetCanBaudRateAsync(500);
+
+        /// <summary>
+        /// Applies the selected CAN bitrate on the PCAN driver, then activates the CAN
+        /// channel. The driver-side reinit briefly blocks, so it runs off the UI thread.
+        /// </summary>
+        private async Task SetCanBaudRateAsync(int baudRateKbps)
+        {
+            var ok = await Task.Run(() => _canPort.ChangeBaudRate(baudRateKbps));
+            if (!ok)
+                _logger.LogWarning(
+                    "CAN baud rate change to {BaudRateKbps} kbps failed", baudRateKbps);
+            await SwitchChannelAsync(ChannelKind.Can);
+        }
 
         /// <summary>
         /// Attiva il canale indicato tramite <see cref="ConnectionManager.SwitchToAsync"/>,
